@@ -11,20 +11,29 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@ventura/auth": "workspace:*",
     "@ventura/config": "workspace:*",
+    "@ventura/db": "workspace:*",
+    "@ventura/integrations": "workspace:*",
+    "@ventura/security": "workspace:*",
+    "@ventura/tenants": "workspace:*",
     "@ventura/ui": "workspace:*",
+    "better-auth": "^1.7.7",
+    "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.55.0",
     "next": "^16.4.0",
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.1.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^24.0.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3",
-    "eslint": "^9.39.0"
+    "typescript": "^5.9.3"
   }
 }
