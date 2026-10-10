@@ -1,8 +1,9 @@
 name: CI
 
+# PR'da bir marta ishlaydi; push'da faqat main (PR branch'iga push qilinganda ikki marta ishlamasin)
 on:
   push:
-    branches: ["**"]
+    branches: [main]
   pull_request:
 
 concurrency:
