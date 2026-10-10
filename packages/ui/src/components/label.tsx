@@ -12,7 +12,11 @@ export function FieldHint({
 }: React.HTMLAttributes<HTMLParagraphElement> & { error?: boolean }) {
   return (
     <p
-      className={cn("mt-1.5 text-xs", error ? "font-semibold text-destructive-text" : "text-muted-foreground", className)}
+      className={cn(
+        "mt-1.5 text-xs",
+        error ? "font-semibold text-destructive-text" : "text-muted-foreground",
+        className,
+      )}
       {...props}
     />
   );

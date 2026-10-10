@@ -28,7 +28,13 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
 export function toast(input: { title: string; description?: string; tone?: ToastTone }) {
-  const item: ToastItem = { id: ++seq, title: input.title, description: input.description, tone: input.tone ?? "info", open: true };
+  const item: ToastItem = {
+    id: ++seq,
+    title: input.title,
+    description: input.description,
+    tone: input.tone ?? "info",
+    open: true,
+  };
   items = [...items, item].slice(-4);
   emit();
 }
@@ -58,7 +64,11 @@ const TONE: Record<ToastTone, { icon: React.ComponentType<{ className?: string }
 };
 
 export function Toaster() {
-  const list = React.useSyncExternalStore(subscribe, () => items, () => EMPTY);
+  const list = React.useSyncExternalStore(
+    subscribe,
+    () => items,
+    () => EMPTY,
+  );
   return (
     <ToastPrimitive.Provider swipeDirection="right" duration={4000}>
       {list.map((t) => {

@@ -30,7 +30,9 @@ function apply(dark: boolean) {
   document.documentElement.classList.toggle("dark", dark);
   try {
     localStorage.setItem(THEME_STORAGE_KEY, dark ? "dark" : "light");
-  } catch {}
+  } catch {
+    // saqlab bo'lmasa (yashirin rejim, bloklangan storage) — tanlov faqat shu sahifada qoladi
+  }
 }
 
 export function ThemeToggle() {

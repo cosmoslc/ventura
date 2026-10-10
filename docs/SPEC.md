@@ -429,14 +429,14 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 ### 0-bosqich. Tayyorgarlik
 
-- [ ] Eski Cosmos CRM stillarini tahlil qilish (faqat o'qish): `docs/design/STYLE.md` — ranglar, shrift, padding, radius, soya; sidebar, topbar, button, card, table, input, badge, modal
-- [ ] Turborepo + pnpm monorepo, `apps/panel`, `packages/config`, `packages/ui`, `packages/db`
-- [ ] `packages/config`: Tailwind preset, `docs/design/STYLE.md` asosidagi design tokenlar (CSS o'zgaruvchilar, light va dark)
-- [ ] `packages/ui`: shadcn/ui asosida TypeScript komponentlar, eski CRM ko'rinishida
-- [ ] `apps/panel` ichida `/ui-preview` sahifasi: barcha komponentlar light va dark rejimda
-- [ ] TypeScript strict, ESLint, Prettier, Vitest
-- [ ] GitHub Actions: lint, typecheck, test, build har PR'da
-- [ ] `docs/SPEC.md` (shu hujjat) va `CLAUDE.md`
+- [x] Eski Cosmos CRM stillarini tahlil qilish (faqat o'qish): `docs/design/STYLE.md` — ranglar, shrift, padding, radius, soya; sidebar, topbar, button, card, table, input, badge, modal
+- [x] Turborepo + pnpm monorepo, `apps/panel`, `packages/config`, `packages/ui`, `packages/db`
+- [x] `packages/config`: Tailwind preset, `docs/design/STYLE.md` asosidagi design tokenlar (CSS o'zgaruvchilar, light va dark)
+- [x] `packages/ui`: shadcn/ui asosida TypeScript komponentlar, eski CRM ko'rinishida
+- [x] `apps/panel` ichida `/ui-preview` sahifasi: barcha komponentlar light va dark rejimda
+- [x] TypeScript strict, ESLint, Prettier, Vitest
+- [x] GitHub Actions: lint, typecheck, test, build har PR'da
+- [x] `docs/SPEC.md` (shu hujjat) va `CLAUDE.md`
 
 * **Qabul:** `pnpm dev` panelni ochadi; `/ui-preview` eski CRM ko'rinishiga o'xshaydi; CI yashil.
 

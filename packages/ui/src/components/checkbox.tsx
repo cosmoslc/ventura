@@ -29,10 +29,7 @@ export const RadioGroup = ({ className, ...props }: React.ComponentProps<typeof 
 
 export function Radio({ className, ...props }: React.ComponentProps<typeof RadioPrimitive.Item>) {
   return (
-    <RadioPrimitive.Item
-      className={cn(boxBase, "rounded-full data-[state=checked]:bg-input-bg", className)}
-      {...props}
-    >
+    <RadioPrimitive.Item className={cn(boxBase, "rounded-full data-[state=checked]:bg-input-bg", className)} {...props}>
       <RadioPrimitive.Indicator className="size-2 rounded-full bg-primary" />
     </RadioPrimitive.Item>
   );

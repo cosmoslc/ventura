@@ -44,7 +44,13 @@ export function Topbar({
           "max-[900px]:w-auto max-[900px]:border-r-0 max-[900px]:px-4",
         )}
       >
-        <Logo name={brandName} mark={brandMark} subtitle={brandSubtitle} collapsed={collapsed} className="max-[900px]:[&>span:last-child]:hidden" />
+        <Logo
+          name={brandName}
+          mark={brandMark}
+          subtitle={brandSubtitle}
+          collapsed={collapsed}
+          className="max-[900px]:[&>span:last-child]:hidden"
+        />
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-4 px-5 max-[900px]:gap-2 max-[900px]:px-3">
         <Button variant="icon" size="icon" onClick={onToggleSidebar} aria-label="Menyuni ochish/yopish">

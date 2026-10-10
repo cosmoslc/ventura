@@ -49,7 +49,14 @@ import { toast } from "@ventura/ui/toast";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { ProfileButton, Topbar } from "@ventura/ui/topbar";
-import { navSections, projects as allProjects, stats, statusMeta, type ProjectRow, type ProjectStatus } from "@/lib/mock-data";
+import {
+  navSections,
+  projects as allProjects,
+  stats,
+  statusMeta,
+  type ProjectRow,
+  type ProjectStatus,
+} from "@/lib/mock-data";
 
 const STAT_ICONS = [FolderKanban, Rocket, TriangleAlert, Server];
 const PAGE_SIZE = 10;
@@ -72,9 +79,7 @@ export function PreviewScreen() {
     message: React.ReactNode;
     onConfirm: () => void;
     requireText?: string;
-  } | null>(
-    null,
-  );
+  } | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const setConfirm = (c: NonNullable<typeof confirm>) => {
     setConfirmData(c);
@@ -113,7 +118,12 @@ export function PreviewScreen() {
 
   return (
     <div className="min-h-dvh">
-      <Topbar collapsed={collapsed} onToggleSidebar={toggleSidebar} brandSubtitle="Boshqaruv paneli" searchPlaceholder="Loyiha, domen, server…">
+      <Topbar
+        collapsed={collapsed}
+        onToggleSidebar={toggleSidebar}
+        brandSubtitle="Boshqaruv paneli"
+        searchPlaceholder="Loyiha, domen, server…"
+      >
         <div className="relative">
           <Button variant="icon" size="icon" aria-label="Bildirishnomalar (3)">
             <Bell />
@@ -276,7 +286,10 @@ export function PreviewScreen() {
                         </div>
                       </Td>
                       <Td>
-                        <a href="#" className="inline-flex items-center gap-1 font-mono text-xs text-primary-text hover:underline">
+                        <a
+                          href="#"
+                          className="inline-flex items-center gap-1 font-mono text-xs text-primary-text hover:underline"
+                        >
                           {r.domain}
                           <ExternalLink className="size-3 opacity-60" />
                         </a>
@@ -329,7 +342,9 @@ export function PreviewScreen() {
                           <Search className="size-5" />
                         </div>
                         <div className="type-heading text-title text-foreground">Hech narsa topilmadi</div>
-                        <div className="mt-1 text-body text-muted-foreground">Qidiruv yoki filtrni o'zgartirib ko'ring.</div>
+                        <div className="mt-1 text-body text-muted-foreground">
+                          Qidiruv yoki filtrni o'zgartirib ko'ring.
+                        </div>
                       </td>
                     </tr>
                   ) : null}
@@ -347,11 +362,16 @@ export function PreviewScreen() {
 
           {/* Forma + komponentlar */}
           <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-            <ClientForm onDelete={() => setConfirm({
-              title: "Mijozni o'chirasizmi?",
-              message: "Mijoz va unga bog'langan 2 ta loyiha savatga o'tkaziladi. Bu amal audit jurnaliga yoziladi.",
-              onConfirm: () => {},
-            })} />
+            <ClientForm
+              onDelete={() =>
+                setConfirm({
+                  title: "Mijozni o'chirasizmi?",
+                  message:
+                    "Mijoz va unga bog'langan 2 ta loyiha savatga o'tkaziladi. Bu amal audit jurnaliga yoziladi.",
+                  onConfirm: () => {},
+                })
+              }
+            />
 
             <Card>
               <CardHeader>
@@ -413,28 +433,48 @@ export function PreviewScreen() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toast({ tone: "success", title: "Saqlandi", description: "O'zgarishlar audit jurnaliga yozildi." })}
+                      onClick={() =>
+                        toast({
+                          tone: "success",
+                          title: "Saqlandi",
+                          description: "O'zgarishlar audit jurnaliga yozildi.",
+                        })
+                      }
                     >
                       Muvaffaqiyat
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toast({ tone: "info", title: "Deploy boshlandi", description: "bilim.ventura.uz · navbatda 1-o'rinda" })}
+                      onClick={() =>
+                        toast({
+                          tone: "info",
+                          title: "Deploy boshlandi",
+                          description: "bilim.ventura.uz · navbatda 1-o'rinda",
+                        })
+                      }
                     >
                       Ma'lumot
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toast({ tone: "warning", title: "SSL tugashiga 14 kun qoldi", description: "crm.bilim.uz" })}
+                      onClick={() =>
+                        toast({ tone: "warning", title: "SSL tugashiga 14 kun qoldi", description: "crm.bilim.uz" })
+                      }
                     >
                       Ogohlantirish
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toast({ tone: "danger", title: "Build yiqildi", description: "Oldingi versiya ishlashda davom etyapti." })}
+                      onClick={() =>
+                        toast({
+                          tone: "danger",
+                          title: "Build yiqildi",
+                          description: "Oldingi versiya ishlashda davom etyapti.",
+                        })
+                      }
                     >
                       Xato
                     </Button>
@@ -448,9 +488,11 @@ export function PreviewScreen() {
             onDelete={() =>
               setConfirm({
                 title: "Loyihani butunlay o'chirasizmi?",
-                message: "Bilim akademiyasi savatga o'tkaziladi, 30 kundan keyin butunlay o'chadi. Bu amal audit jurnaliga yoziladi.",
+                message:
+                  "Bilim akademiyasi savatga o'tkaziladi, 30 kundan keyin butunlay o'chadi. Bu amal audit jurnaliga yoziladi.",
                 requireText: "bilim",
-                onConfirm: () => toast({ tone: "danger", title: "Loyiha savatga o'tkazildi", description: "bilim.ventura.uz" }),
+                onConfirm: () =>
+                  toast({ tone: "danger", title: "Loyiha savatga o'tkazildi", description: "bilim.ventura.uz" }),
               })
             }
           />
@@ -593,7 +635,14 @@ function ClientForm({ onDelete }: { onDelete: () => void }) {
           </div>
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4 sm:col-span-2">
             <Button type="submit">Saqlash</Button>
-            <Button variant="ghost" type="reset" onClick={() => { setPhone(""); setTried(false); }}>
+            <Button
+              variant="ghost"
+              type="reset"
+              onClick={() => {
+                setPhone("");
+                setTried(false);
+              }}
+            >
               Bekor qilish
             </Button>
             <Button variant="danger" className="ml-auto" onClick={onDelete}>
@@ -656,9 +705,17 @@ function ProjectFields() {
       <div>
         <Label>Baza strategiyasi</Label>
         <RadioGroup defaultValue="db_per_tenant" aria-label="Baza strategiyasi">
-          <RadioCard value="db_per_tenant" title="Alohida baza" description="Standart: to'liq ajratilgan, alohida zahira" />
+          <RadioCard
+            value="db_per_tenant"
+            title="Alohida baza"
+            description="Standart: to'liq ajratilgan, alohida zahira"
+          />
           <RadioCard value="shared_db" title="Umumiy baza" description="Eng arzon, tenant_id + RLS" />
-          <RadioCard value="dedicated_server" title="Alohida server" description="Katta mijoz yoki qonun talabi bo'lsa" />
+          <RadioCard
+            value="dedicated_server"
+            title="Alohida server"
+            description="Katta mijoz yoki qonun talabi bo'lsa"
+          />
         </RadioGroup>
       </div>
     </>
@@ -671,7 +728,14 @@ const FEATURES = [
   { key: "coins", name: "Coinlar", desc: "O'quvchilarni rag'batlantirish tizimi", on: true },
   { key: "exams", name: "Imtihonlar", desc: "Oylik imtihon va natijalar", on: false },
   { key: "sms", name: "SMS xabarnomalar", desc: "Qarzdorlik va davomat haqida SMS", on: false },
-  { key: "branches", name: "Ko'p filialli rejim", desc: "Loyiha sozlamasi boshqaradi", on: false, kind: "Rejim", locked: true },
+  {
+    key: "branches",
+    name: "Ko'p filialli rejim",
+    desc: "Loyiha sozlamasi boshqaradi",
+    on: false,
+    kind: "Rejim",
+    locked: true,
+  },
 ] as const;
 
 function ProjectSettings({ onDelete }: { onDelete: () => void }) {
@@ -760,11 +824,19 @@ function ProjectSettings({ onDelete }: { onDelete: () => void }) {
             >
               <div className="lg:col-span-2">
                 <Label htmlFor="s-note">Ichki izoh</Label>
-                <Textarea id="s-note" placeholder="Mijoz bilan kelishuvlar, eslatmalar…" defaultValue="To'lov har oyning 5-sanasigacha." />
+                <Textarea
+                  id="s-note"
+                  placeholder="Mijoz bilan kelishuvlar, eslatmalar…"
+                  defaultValue="To'lov har oyning 5-sanasigacha."
+                />
               </div>
               <fieldset className="space-y-3">
                 <legend className="type-label mb-2 text-(--label-fg)">Telegram ogohlantirishlari</legend>
-                <ChoiceField control={<Checkbox defaultChecked />} label="Build yiqilsa" description="Oxirgi ishlagan versiya joyida qoladi" />
+                <ChoiceField
+                  control={<Checkbox defaultChecked />}
+                  label="Build yiqilsa"
+                  description="Oxirgi ishlagan versiya joyida qoladi"
+                />
                 <ChoiceField control={<Checkbox defaultChecked />} label="SSL tugashiga 14 kun qolsa" />
                 <ChoiceField control={<Checkbox />} label="Yangi qurilmadan kirilsa" />
               </fieldset>
@@ -776,7 +848,12 @@ function ProjectSettings({ onDelete }: { onDelete: () => void }) {
                     ["dedicated", "Mijozga alohida deploy"],
                     ["fork", "Alohida GitHub repo"],
                   ].map(([v, d]) => (
-                    <ChoiceField key={v} control={<Radio value={v!} />} label={<span className="font-mono">{v}</span>} description={d} />
+                    <ChoiceField
+                      key={v}
+                      control={<Radio value={v!} />}
+                      label={<span className="font-mono">{v}</span>}
+                      description={d}
+                    />
                   ))}
                 </RadioGroup>
               </fieldset>

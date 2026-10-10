@@ -127,11 +127,18 @@ export function Sidebar({
           collapsed ? "w-(--sidebar-collapsed-w)" : "w-(--sidebar-w)",
           "max-[900px]:fixed max-[900px]:z-(--z-modal) max-[900px]:top-0 max-[900px]:left-0 max-[900px]:h-dvh max-[900px]:w-[280px]",
           "max-[900px]:transition-transform max-[900px]:duration-300 max-[900px]:ease-ios",
-          mobileOpen ? "max-[900px]:translate-x-0 max-[900px]:shadow-[0_20px_40px_rgb(0_0_0/0.25)]" : "max-[900px]:-translate-x-full",
+          mobileOpen
+            ? "max-[900px]:translate-x-0 max-[900px]:shadow-[0_20px_40px_rgb(0_0_0/0.25)]"
+            : "max-[900px]:-translate-x-full",
         )}
         aria-label="Asosiy menyu"
       >
-        <nav className={cn("flex-1 overflow-y-auto overflow-x-hidden", collapsed ? "px-2 pt-3.5 pb-5" : "px-3.5 pt-5 pb-6")}>
+        <nav
+          className={cn(
+            "flex-1 overflow-y-auto overflow-x-hidden",
+            collapsed ? "px-2 pt-3.5 pb-5" : "px-3.5 pt-5 pb-6",
+          )}
+        >
           <div ref={listRef} className="relative">
             <div
               ref={indicatorRef}
@@ -149,7 +156,9 @@ export function Sidebar({
             {sections.map((section, si) => (
               <div key={section.title} className={cn(si > 0 && "mt-4")}>
                 {collapsed ? (
-                  si > 0 ? <div className="mx-3 mb-3 h-px bg-(--sidebar-border)" /> : null
+                  si > 0 ? (
+                    <div className="mx-3 mb-3 h-px bg-(--sidebar-border)" />
+                  ) : null
                 ) : (
                   <div className="type-eyebrow mb-2 flex items-center gap-2 px-3 text-(--nav-section-fg)">
                     {section.title}
@@ -190,7 +199,11 @@ export function Sidebar({
                         <span className="grid size-8 shrink-0 place-items-center">
                           <Icon
                             className="size-[19px] transition-transform duration-200 group-hover/nav:scale-110"
-                            style={{ color: isActive ? "currentColor" : `var(--nav-icon-color, ${item.color ?? "currentColor"})` }}
+                            style={{
+                              color: isActive
+                                ? "currentColor"
+                                : `var(--nav-icon-color, ${item.color ?? "currentColor"})`,
+                            }}
                           />
                         </span>
                         {!collapsed ? (
@@ -242,7 +255,10 @@ export function Sidebar({
                                     )}
                                   >
                                     <span
-                                      className={cn("size-[5px] shrink-0 rounded-full", on ? "bg-(--sub-dot-active)" : "bg-(--sub-dot)")}
+                                      className={cn(
+                                        "size-[5px] shrink-0 rounded-full",
+                                        on ? "bg-(--sub-dot-active)" : "bg-(--sub-dot)",
+                                      )}
                                       style={on ? { boxShadow: "var(--sub-dot-ring)" } : undefined}
                                     />
                                     <span className="truncate">{child.label}</span>
@@ -273,7 +289,10 @@ export function Sidebar({
                                     )}
                                   >
                                     <span
-                                      className={cn("size-[5px] shrink-0 rounded-full", on ? "bg-(--sub-dot-active)" : "bg-(--sub-dot)")}
+                                      className={cn(
+                                        "size-[5px] shrink-0 rounded-full",
+                                        on ? "bg-(--sub-dot-active)" : "bg-(--sub-dot)",
+                                      )}
                                       style={on ? { boxShadow: "var(--sub-dot-ring)" } : undefined}
                                     />
                                     <span className="truncate">{child.label}</span>

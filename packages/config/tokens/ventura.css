@@ -52,11 +52,21 @@
   --search-ring: 0 0 0 3px var(--primary-soft);
   --kbd-bg: #ffffff;
 
-  --success-fg: #047857; --success-bg: #ecfdf5; --success-border: #a7f3d099;
-  --warning-fg: #b45309; --warning-bg: #fffbeb; --warning-border: #fde68a99;
-  --danger-fg: #be123c;  --danger-bg: #fff1f2;  --danger-border: #fecdd399;
-  --info-fg: #4338ca;    --info-bg: #eef2ff;    --info-border: #c7d2fe99;
-  --neutral-fg: #475569; --neutral-bg: #f1f5f9; --neutral-border: #e2e8f0;
+  --success-fg: #047857;
+  --success-bg: #ecfdf5;
+  --success-border: #a7f3d099;
+  --warning-fg: #b45309;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a99;
+  --danger-fg: #be123c;
+  --danger-bg: #fff1f2;
+  --danger-border: #fecdd399;
+  --info-fg: #4338ca;
+  --info-bg: #eef2ff;
+  --info-border: #c7d2fe99;
+  --neutral-fg: #475569;
+  --neutral-bg: #f1f5f9;
+  --neutral-border: #e2e8f0;
   --money-in: #059669;
   --money-out: #e11d48;
 
@@ -94,7 +104,9 @@
   --btn-primary-bg-hover: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
   --btn-primary-fg: #ffffff;
   --btn-primary-fg-hover: #ffffff;
-  --btn-primary-shadow: 0 4px 6px -1px color-mix(in srgb, var(--primary) 20%, transparent), 0 2px 4px -2px color-mix(in srgb, var(--primary) 20%, transparent);
+  --btn-primary-shadow:
+    0 4px 6px -1px color-mix(in srgb, var(--primary) 20%, transparent),
+    0 2px 4px -2px color-mix(in srgb, var(--primary) 20%, transparent);
   --btn-hover-y: 0px;
   /* Danger — primary kabi chapdan o'ngga gradient: red-600 → rose-600 → pink-600 */
   --btn-danger-bg: linear-gradient(90deg, #dc2626, #e11d48, #db2777);
@@ -125,10 +137,14 @@
   --profile-hover-bg: #f4f6fb;
 
   /* Stat-card ikonkalari */
-  --stat-1-bg: linear-gradient(135deg, #8b7bff, #6d4aff); --stat-1-fg: #ffffff;
-  --stat-2-bg: linear-gradient(135deg, #34d399, #16a34a); --stat-2-fg: #ffffff;
-  --stat-3-bg: linear-gradient(135deg, #fb7185, #e11d48); --stat-3-fg: #ffffff;
-  --stat-4-bg: linear-gradient(135deg, #38bdf8, #0284c7); --stat-4-fg: #ffffff;
+  --stat-1-bg: linear-gradient(135deg, #8b7bff, #6d4aff);
+  --stat-1-fg: #ffffff;
+  --stat-2-bg: linear-gradient(135deg, #34d399, #16a34a);
+  --stat-2-fg: #ffffff;
+  --stat-3-bg: linear-gradient(135deg, #fb7185, #e11d48);
+  --stat-3-fg: #ffffff;
+  --stat-4-bg: linear-gradient(135deg, #38bdf8, #0284c7);
+  --stat-4-fg: #ffffff;
   --stat-icon-ring: none;
 
   /* Shakl */
@@ -210,7 +226,6 @@
   --nav-size: 13.5px;
   --nav-weight: 600;
   --icon-stroke: 2;
-
 }
 
 [data-brand="ventura"].dark {
@@ -251,11 +266,21 @@
   --search-focus-bg: #0f172a;
   --kbd-bg: #0f172a;
 
-  --success-fg: #34d399; --success-bg: rgb(6 78 59 / 0.5);    --success-border: rgb(5 150 105 / 0.4);
-  --warning-fg: #fbbf24; --warning-bg: rgb(120 53 15 / 0.5);  --warning-border: rgb(217 119 6 / 0.4);
-  --danger-fg: #fb7185;  --danger-bg: rgb(136 19 55 / 0.5);   --danger-border: rgb(225 29 72 / 0.4);
-  --info-fg: #818cf8;    --info-bg: rgb(49 46 129 / 0.5);     --info-border: rgb(79 70 229 / 0.4);
-  --neutral-fg: #cbd5e1; --neutral-bg: #1e293b;               --neutral-border: #334155;
+  --success-fg: #34d399;
+  --success-bg: rgb(6 78 59 / 0.5);
+  --success-border: rgb(5 150 105 / 0.4);
+  --warning-fg: #fbbf24;
+  --warning-bg: rgb(120 53 15 / 0.5);
+  --warning-border: rgb(217 119 6 / 0.4);
+  --danger-fg: #fb7185;
+  --danger-bg: rgb(136 19 55 / 0.5);
+  --danger-border: rgb(225 29 72 / 0.4);
+  --info-fg: #818cf8;
+  --info-bg: rgb(49 46 129 / 0.5);
+  --info-border: rgb(79 70 229 / 0.4);
+  --neutral-fg: #cbd5e1;
+  --neutral-bg: #1e293b;
+  --neutral-border: #334155;
   --money-in: #34d399;
   --money-out: #fb7185;
 
@@ -323,7 +348,7 @@
     --btn-primary-bg-hover: linear-gradient(
       90deg,
       oklch(from var(--primary) calc(l + 0.02) c h),
-      oklch(from var(--primary) calc(l + 0.0) c calc(h + 15)),
+      oklch(from var(--primary) calc(l + 0) c calc(h + 15)),
       oklch(from var(--primary) calc(l + 0.02) c calc(h + 30))
     );
     --nav-active-bg: linear-gradient(135deg, var(--primary), oklch(from var(--primary) l c calc(h + 12)));
