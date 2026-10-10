@@ -4,7 +4,10 @@
 
 Bu hujjat hozirgi kod holatini tasvirlaydi. Qiymatlar manbai — kod: `packages/config/tokens/ventura.css` va `packages/config/theme.css`. Hujjat va kod farq qilsa, kod to'g'ri; hujjatni yangilang.
 
-Jonli ko'rinish: `pnpm dev` → http://localhost:3000/preview/ventura
+Jonli ko'rinish (`pnpm dev`):
+
+- http://localhost:3000/ui-preview — komponentlar katalogi, har biri light va dark rejimda yonma-yon
+- http://localhost:3000/preview/ventura — namunaviy ekran (shell, jadval, forma, modallar)
 
 ## 0. Fayllar xaritasi
 
@@ -469,7 +472,7 @@ Qoidalar:
 7. Input turidagi element — `controlClass` dan; menyu bandi — `menuItemClass` dan.
 8. Ochiladigan element — `DropdownMenuContent` yoki `Modal` ustida (morph va fokus mantiqi tayyor).
 9. Ikonka o'lchami — 10-bo'lim jadvali.
-10. Light va dark'da tekshiring; `prefers-reduced-motion` ni buzmang.
+10. Light va dark'da tekshiring; `prefers-reduced-motion` ni buzmang. Komponentni `/ui-preview` katalogiga qo'shing.
 11. Yangi token kerak bo'lsa, `ventura.css` ga ikkala rejim uchun qo'shing va shu hujjatni yangilang.
 
 ## 14. Qarorlar jurnali
@@ -496,7 +499,6 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 ## 15. Ochiq masalalar
 
-- `/ui-preview` katalog sahifasi (SPEC 0-bosqich): barcha komponentlar light va dark'da yonma-yon.
 - Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
 - Select'da harf bilan qidirish (typeahead).
 - Keyingi bosqichlar komponentlari: stepper ("Yangi loyiha" ustozi), bo'sh holat, skeleton, tooltip, log ko'rsatgich, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.
