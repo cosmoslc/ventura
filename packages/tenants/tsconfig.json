@@ -1,0 +1,4 @@
+{
+  "extends": "@ventura/config/tsconfig/base.json",
+  "include": ["src"]
+}

@@ -9,7 +9,13 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "db:migrate": "pnpm --filter @ventura/db db:migrate",
+    "db:generate": "pnpm --filter @ventura/db db:generate",
+    "admin:create": "pnpm --filter @ventura/scripts admin:create",
+    "admin:reset-2fa": "pnpm --filter @ventura/scripts admin:reset-2fa",
+    "admin:unlock": "pnpm --filter @ventura/scripts admin:unlock",
+    "templates:sync": "pnpm --filter @ventura/scripts templates:sync"
   },
   "devDependencies": {
     "turbo": "^2.11.7",
