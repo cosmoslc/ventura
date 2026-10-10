@@ -1,0 +1,10 @@
+node_modules
+.next
+.turbo
+coverage
+dist
+pnpm-lock.yaml
+next-env.d.ts
+# Hujjatlar qo'lda tekislangan jadvallarga ega
+docs
+ventura-premium (1).html

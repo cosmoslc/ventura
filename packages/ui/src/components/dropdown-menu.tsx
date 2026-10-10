@@ -161,12 +161,8 @@ export function DropdownMenuContent({
   const hideTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
   const doneTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  React.useLayoutEffect(() => {
-    if (open) {
-      clearTimeout(hideTimer.current);
-      setMounted(true);
-    }
-  }, [open]);
+  // Ochilganda darhol (render paytida) DOM'ga qo'shiladi; yopilish animatsiyasidan keyin olib tashlanadi
+  if (open && !mounted) setMounted(true);
 
   React.useEffect(
     () => () => {
@@ -212,6 +208,7 @@ export function DropdownMenuContent({
 
     if (open) {
       clearTimeout(doneTimer.current);
+      clearTimeout(hideTimer.current); // yopilayotgan paytda qayta ochilsa
       // 1. Tabiiy o'lchamni o'lchash
       panel.classList.add("is-animating");
       panel.classList.toggle("has-stagger", !reduce);
@@ -297,7 +294,7 @@ export function DropdownMenuContent({
       clearTimeout(doneTimer.current);
       clearTimeout(hideTimer.current);
       if (reduce) {
-        setMounted(false);
+        hideTimer.current = setTimeout(() => setMounted(false), 0);
         return;
       }
       panel.classList.add("is-animating");
@@ -393,7 +390,11 @@ export function DropdownMenuContent({
         role={role}
         onMouseDown={keepFocus}
         data-state={open ? "open" : "closed"}
-        style={{ position: "fixed", willChange: "top, left, width, height, border-radius, opacity", visibility: "hidden" }}
+        style={{
+          position: "fixed",
+          willChange: "top, left, width, height, border-radius, opacity",
+          visibility: "hidden",
+        }}
         className={cn(
           "morph-panel pointer-events-auto z-(--z-popover) min-w-[200px] overflow-hidden rounded-menu border border-border bg-popover text-popover-foreground shadow-popover outline-none",
           className,
@@ -436,7 +437,9 @@ export function DropdownMenuItem({
       data-menu-item=""
       aria-disabled={disabled || undefined}
       data-disabled={disabled || undefined}
-      onPointerMove={(e) => !disabled && !e.currentTarget.hasAttribute("data-highlighted") && highlight(e.currentTarget)}
+      onPointerMove={(e) =>
+        !disabled && !e.currentTarget.hasAttribute("data-highlighted") && highlight(e.currentTarget)
+      }
       onPointerLeave={() => highlight(null)}
       onClick={(e) => {
         onClick?.(e);

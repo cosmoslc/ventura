@@ -1,14 +1,4 @@
-import {
-  Activity,
-  Bell,
-  Blocks,
-  FolderKanban,
-  LayoutDashboard,
-  Plug,
-  Server,
-  Settings,
-  Users,
-} from "lucide-react";
+import { Activity, Bell, Blocks, FolderKanban, LayoutDashboard, Plug, Server, Settings, Users } from "lucide-react";
 import type { NavSection } from "@ventura/ui/sidebar";
 
 // Soxta ma'lumotlar — faqat vizual sinov uchun. Baza va login yo'q.
@@ -75,7 +65,10 @@ export interface ProjectRow {
   phone: string;
 }
 
-export const statusMeta: Record<ProjectStatus, { label: string; tone: "success" | "info" | "danger" | "warning" | "neutral" }> = {
+export const statusMeta: Record<
+  ProjectStatus,
+  { label: string; tone: "success" | "info" | "danger" | "warning" | "neutral" }
+> = {
   active: { label: "Ishlayapti", tone: "success" },
   building: { label: "Build", tone: "info" },
   failed: { label: "Yiqildi", tone: "danger" },
@@ -105,7 +98,18 @@ const names = [
   ["Andijon Mebel", "Anvar Mahmudov"],
 ] as const;
 
-const statuses: ProjectStatus[] = ["active", "active", "active", "building", "active", "failed", "active", "paused", "trial", "active"];
+const statuses: ProjectStatus[] = [
+  "active",
+  "active",
+  "active",
+  "building",
+  "active",
+  "failed",
+  "active",
+  "paused",
+  "trial",
+  "active",
+];
 const targets: ProjectRow["target"][] = ["Uydagi server", "Online VPS", "Uydagi server", "Vercel"];
 const modes: ProjectRow["mode"][] = ["shared", "shared", "dedicated", "shared", "fork"];
 

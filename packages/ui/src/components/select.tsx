@@ -100,7 +100,15 @@ export function SelectContent({ className, children }: { className?: string; chi
   );
 }
 
-export function SelectItem({ value, className, children }: { value: string; className?: string; children: React.ReactNode }) {
+export function SelectItem({
+  value,
+  className,
+  children,
+}: {
+  value: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   const { value: selected, setValue } = useSelect();
   const on = selected === value;
   return (

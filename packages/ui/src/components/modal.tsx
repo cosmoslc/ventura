@@ -4,7 +4,14 @@ import * as React from "react";
 import { Dialog } from "radix-ui";
 import { AlertTriangle, X } from "lucide-react";
 import { cn } from "../lib/utils";
-import { consumeOrigin, installTriggerRecorder, MORPH_EASE, reducedMotion, uniformScale, type Origin } from "../lib/morph";
+import {
+  consumeOrigin,
+  installTriggerRecorder,
+  MORPH_EASE,
+  reducedMotion,
+  uniformScale,
+  type Origin,
+} from "../lib/morph";
 import { Button } from "./button";
 import { Input } from "./input";
 import { MORPH_LAYER_ATTR } from "./dropdown-menu";
@@ -23,9 +30,8 @@ installTriggerRecorder();
 /** open=false bo'lgach ham yopilish animatsiyasi tugaguncha DOM'da qoldiradi. */
 function usePresence(open: boolean) {
   const [rendered, setRendered] = React.useState(open);
-  React.useLayoutEffect(() => {
-    if (open) setRendered(true);
-  }, [open]);
+  // Ochilganda darhol (render paytida) — effektsiz, ortiqcha qayta chizishsiz
+  if (open && !rendered) setRendered(true);
   return [rendered, () => setRendered(false)] as const;
 }
 
@@ -39,7 +45,8 @@ const layerSafe = {
   },
 };
 
-const overlayBase = "fixed inset-0 z-(--z-overlay) bg-(--overlay) backdrop-blur-(--overlay-blur) transition-opacity ease-ios";
+const overlayBase =
+  "fixed inset-0 z-(--z-overlay) bg-(--overlay) backdrop-blur-(--overlay-blur) transition-opacity ease-ios";
 
 /** Markaziy dialog uchun morph: ochilish (mount) va yopilish (open=false). */
 function useMorphDialog(open: boolean, rendered: boolean, onClosed: () => void, originEl?: HTMLElement | null) {
@@ -56,19 +63,27 @@ function useMorphDialog(open: boolean, rendered: boolean, onClosed: () => void, 
   const [contentIn, setContentIn] = React.useState(false);
   const origin = React.useRef<Origin | null>(null);
   const timer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
-  const closedRef = React.useRef(onClosed);
-  closedRef.current = onClosed;
+  const onClosedEvent = React.useEffectEvent(onClosed);
+  // Yopilish boshlanganda kontent darhol yashirinadi
+  if (!open && contentIn) setContentIn(false);
 
   const rest = (p: HTMLDivElement) =>
-    Object.assign(p.style, { top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "", height: "", borderRadius: "" });
+    Object.assign(p.style, {
+      top: "50%",
+      left: "50%",
+      transform: "translate(-50%, -50%)",
+      width: "",
+      height: "",
+      borderRadius: "",
+    });
 
   // Ochilish
   React.useLayoutEffect(() => {
     if (!open || !rendered || started.current) return;
     const o = overlay.current;
-    const p = panelEl;
+    const p = panel.current;
     const c = content.current;
-    if (!o || !p || !c) return;
+    if (!o || !p || !c || !panelEl) return;
     started.current = true;
     clearTimeout(timer.current);
     origin.current = consumeOrigin(originEl);
@@ -78,7 +93,7 @@ function useMorphDialog(open: boolean, rendered: boolean, onClosed: () => void, 
     rest(p);
     p.style.opacity = "1";
     if (reducedMotion()) {
-      setContentIn(true);
+      requestAnimationFrame(() => setContentIn(true));
       return;
     }
 
@@ -141,10 +156,9 @@ function useMorphDialog(open: boolean, rendered: boolean, onClosed: () => void, 
     const p = panel.current;
     const c = content.current;
     clearTimeout(timer.current);
-    setContentIn(false);
     if (o) o.style.opacity = "0";
     const done = (ms: number) => {
-      timer.current = setTimeout(() => closedRef.current(), ms);
+      timer.current = setTimeout(() => onClosedEvent(), ms);
     };
     if (!p || !c || reducedMotion()) return done(0);
 
@@ -196,7 +210,7 @@ function useMorphDialog(open: boolean, rendered: boolean, onClosed: () => void, 
 
   React.useEffect(() => () => clearTimeout(timer.current), []);
 
-  return { refs: { overlay, panel: panelRef, content }, contentIn };
+  return { overlayRef: overlay, panelRef, contentRef: content, contentIn };
 }
 
 export interface ModalProps {
@@ -250,6 +264,7 @@ function ModalFooter({ children }: { children?: React.ReactNode }) {
 function DrawerModal({ open, onOpenChange, title, description, wide, footer, children }: ModalProps) {
   const [rendered, unmount] = usePresence(open);
   const [entered, setEntered] = React.useState(false);
+  if (!open && entered) setEntered(false);
 
   React.useEffect(() => {
     if (open && rendered) {
@@ -257,7 +272,6 @@ function DrawerModal({ open, onOpenChange, title, description, wide, footer, chi
       return () => cancelAnimationFrame(id);
     }
     if (!open && rendered) {
-      setEntered(false);
       const t = setTimeout(unmount, reducedMotion() ? 0 : 320);
       return () => clearTimeout(t);
     }
@@ -267,7 +281,10 @@ function DrawerModal({ open, onOpenChange, title, description, wide, footer, chi
   return (
     <Dialog.Root open={rendered} onOpenChange={(o) => !o && onOpenChange(false)}>
       <Dialog.Portal>
-        <Dialog.Overlay data-modal className={cn(overlayBase, "duration-[320ms]", entered ? "opacity-100" : "opacity-0")} />
+        <Dialog.Overlay
+          data-modal
+          className={cn(overlayBase, "duration-[320ms]", entered ? "opacity-100" : "opacity-0")}
+        />
         <Dialog.Content
           {...layerSafe}
           data-modal
@@ -289,15 +306,20 @@ function DrawerModal({ open, onOpenChange, title, description, wide, footer, chi
 
 function CenterModal({ open, onOpenChange, title, description, wide, footer, children }: ModalProps) {
   const [rendered, unmount] = usePresence(open);
-  const { refs, contentIn } = useMorphDialog(open, rendered, unmount);
+  const { overlayRef, panelRef, contentRef, contentIn } = useMorphDialog(open, rendered, unmount);
 
   return (
     <Dialog.Root open={rendered} onOpenChange={(o) => !o && onOpenChange(false)}>
       <Dialog.Portal>
-        <Dialog.Overlay ref={refs.overlay} data-modal className={cn(overlayBase, "duration-[350ms]")} style={{ opacity: 0 }} />
+        <Dialog.Overlay
+          ref={overlayRef}
+          data-modal
+          className={cn(overlayBase, "duration-[350ms]")}
+          style={{ opacity: 0 }}
+        />
         <Dialog.Content
           {...layerSafe}
-          ref={refs.panel}
+          ref={panelRef}
           data-modal
           style={{ opacity: 0 }}
           className={cn(
@@ -305,7 +327,7 @@ function CenterModal({ open, onOpenChange, title, description, wide, footer, chi
             wide ? "w-[min(42rem,calc(100vw-2rem))]" : "w-[min(28rem,calc(100vw-2rem))]",
           )}
         >
-          <div ref={refs.content} className="flex max-h-[85vh] shrink-0 origin-center flex-col">
+          <div ref={contentRef} className="flex max-h-[85vh] shrink-0 origin-center flex-col">
             <div
               className={cn(
                 "flex min-h-0 flex-col transition-opacity duration-[220ms] ease-ios",
@@ -351,13 +373,15 @@ export function ConfirmModal({
 }: ConfirmModalProps) {
   const [rendered, unmount] = usePresence(open);
   const [typed, setTyped] = React.useState("");
-  React.useEffect(() => {
+  const [wasOpen, setWasOpen] = React.useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) setTyped("");
-  }, [open]);
+  }
   const locked = !!requireText && typed.trim() !== requireText;
   const typeId = React.useId();
   const pending = React.useRef<(() => void) | null>(null);
-  const { refs, contentIn } = useMorphDialog(
+  const { overlayRef, panelRef, contentRef, contentIn } = useMorphDialog(
     open,
     rendered,
     () => {
@@ -372,15 +396,20 @@ export function ConfirmModal({
   return (
     <Dialog.Root open={rendered} onOpenChange={(o) => !o && onOpenChange(false)}>
       <Dialog.Portal>
-        <Dialog.Overlay ref={refs.overlay} data-modal className={cn(overlayBase, "duration-[350ms]")} style={{ opacity: 0 }} />
+        <Dialog.Overlay
+          ref={overlayRef}
+          data-modal
+          className={cn(overlayBase, "duration-[350ms]")}
+          style={{ opacity: 0 }}
+        />
         <Dialog.Content
           {...layerSafe}
-          ref={refs.panel}
+          ref={panelRef}
           data-modal
           style={{ opacity: 0 }}
           className="fixed z-(--z-modal) w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-modal border border-border bg-popover text-popover-foreground shadow-modal outline-none"
         >
-          <div ref={refs.content} className="shrink-0 origin-center">
+          <div ref={contentRef} className="shrink-0 origin-center">
             <div
               className={cn(
                 "p-6 transition-opacity duration-[220ms] ease-ios",

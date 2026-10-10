@@ -66,7 +66,8 @@ export function installTriggerRecorder() {
 export function consumeOrigin(explicit?: HTMLElement | null): Origin | null {
   let origin: Origin | null = null;
   if (explicit?.isConnected) origin = toOrigin(explicit);
-  if (!origin && last.element?.isConnected && !last.element.closest(MODAL_IGNORE_SELECTOR)) origin = toOrigin(last.element);
+  if (!origin && last.element?.isConnected && !last.element.closest(MODAL_IGNORE_SELECTOR))
+    origin = toOrigin(last.element);
   if (!origin && last.origin && Date.now() - last.timestamp < 3000) origin = last.origin;
   const active = document.activeElement;
   if (!origin && active instanceof HTMLElement && active !== document.body && !active.closest(MODAL_IGNORE_SELECTOR)) {

@@ -22,9 +22,7 @@ export function Tr({ className, ...props }: React.HTMLAttributes<HTMLTableRowEle
 }
 
 export function Th({ className, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
-  return (
-    <th className={cn("type-th px-4 py-2.5 whitespace-nowrap text-muted-foreground", className)} {...props} />
-  );
+  return <th className={cn("type-th px-4 py-2.5 whitespace-nowrap text-muted-foreground", className)} {...props} />;
 }
 
 export function Td({ className, ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) {
