@@ -1,0 +1,20 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "../config/theme.css",
+    "baseColor": "neutral",
+    "cssVariables": true
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@ventura/ui",
+    "utils": "@ventura/ui/lib/utils",
+    "ui": "@ventura/ui",
+    "lib": "@ventura/ui/lib",
+    "hooks": "@ventura/ui/lib"
+  }
+}

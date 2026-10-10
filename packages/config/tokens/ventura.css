@@ -1,0 +1,339 @@
+/*
+ * Ventura tokenlari — boshqaruv paneli ko'rinishi (light va dark).
+ * Hujjat: docs/design/STYLE.md (qiymatlar, qoidalar va qarorlar jurnali).
+ */
+
+[data-brand="ventura"] {
+  /* Ranglar */
+  --background: #f4f6fb;
+  --foreground: #1c2333;
+  --card: #ffffff;
+  --card-foreground: #1c2333;
+  --popover: #ffffff;
+  --popover-foreground: #1c2333;
+  /* Brend rangi: shu bitta qiymatdan hover, yumshoq fon, fokus, sidebar urg'usi va soyalar hosil bo'ladi */
+  --primary: #3f6df6;
+  --primary-hover: color-mix(in oklab, var(--primary), black 15%);
+  --primary-soft: color-mix(in oklab, var(--primary) 11%, white);
+  --primary-foreground: #ffffff;
+  --primary-text: var(--primary);
+  --secondary: #f1f5f9;
+  --secondary-hover: #e2e8f0;
+  --secondary-foreground: #334155;
+  --muted: #f8fafc;
+  --muted-foreground: #64748b;
+  --accent: #f5f7fb;
+  --accent-foreground: #1c2333;
+  --border: #e2e8f0;
+  --border-soft: #edeff5;
+  --input: #e2e8f0;
+  --input-bg: var(--background); /* input foni = sahifa foni */
+  --input-hover: #cbd5e1;
+  --placeholder: #94a3b8;
+  --destructive: #f43f5e;
+  --destructive-hover: #e11d48;
+  --destructive-foreground: #ffffff;
+  --destructive-text: #e11d48;
+  --table-head: #f8fafcb3;
+  --table-row-hover: #f8fafccc;
+  --table-foot: #f8fafc80;
+  --overlay: rgb(2 6 23 / 0.6);
+  --overlay-blur: 4px;
+  --scrollbar: rgb(15 23 42 / 0.15);
+  /* Asosiy rangdan hosil bo'ladiganlar var(--primary...) orqali — mijoz rangi almashsa, ular ham almashadi */
+  --focus-outline: var(--primary);
+  --ring-border: color-mix(in oklab, var(--primary) 70%, white);
+  /* Halqalar bir xil qalinlikda: fokus, xato, qidiruv — 3px */
+  --ring-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 28%, white);
+  --error-ring: 0 0 0 3px var(--danger-bg);
+  --search-bg: #f7f8fc;
+  --search-hover-bg: #eef1f8;
+  --search-focus-bg: #ffffff;
+  --search-ring: 0 0 0 3px var(--primary-soft);
+  --kbd-bg: #ffffff;
+
+  --success-fg: #047857; --success-bg: #ecfdf5; --success-border: #a7f3d099;
+  --warning-fg: #b45309; --warning-bg: #fffbeb; --warning-border: #fde68a99;
+  --danger-fg: #be123c;  --danger-bg: #fff1f2;  --danger-border: #fecdd399;
+  --info-fg: #4338ca;    --info-bg: #eef2ff;    --info-border: #c7d2fe99;
+  --neutral-fg: #475569; --neutral-bg: #f1f5f9; --neutral-border: #e2e8f0;
+  --money-in: #059669;
+  --money-out: #e11d48;
+
+  /* Shell */
+  /* Shaffof fon + blur: orqadagi kontent xira ko'rinadi (Saidakbar qarori, 2026-10-10) */
+  --topbar-bg: rgb(255 255 255 / 0.8);
+  --topbar-blur: blur(14px);
+  --topbar-border: #edeff5;
+  --sidebar-bg: #ffffff;
+  --sidebar-border: #edeff5;
+
+  --nav-fg: #3d4457;
+  --nav-hover-bg: #f5f7fb;
+  --nav-hover-fg: #1c2333;
+  --nav-active-bg: linear-gradient(135deg, var(--primary), #5b63f2);
+  --nav-active-fg: #ffffff;
+  --nav-active-shadow: 0 8px 20px -4px color-mix(in srgb, var(--primary) 45%, transparent);
+  --nav-bar: var(--primary);
+  --nav-parent-active-fg: #1e293b;
+  --nav-section-fg: #9aa3b5;
+  --nav-chevron: #a6adbd;
+  --nav-hover-anim: nav-squish;
+  /* --nav-icon-color atayin berilmagan: light'da har bandning o'z rangi */
+
+  --sub-fg: #555e75;
+  --sub-line: #e2e8f0;
+  --sub-dot: #cbd5e1;
+  --sub-active-bg: color-mix(in oklab, var(--primary) 16%, white);
+  --sub-active-fg: color-mix(in oklab, var(--primary), black 30%);
+  --sub-dot-active: var(--primary);
+  --sub-dot-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent);
+
+  /* Tugmalar */
+  --btn-primary-bg: linear-gradient(90deg, #2563eb, #4f46e5, #7c3aed);
+  --btn-primary-bg-hover: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
+  --btn-primary-fg: #ffffff;
+  --btn-primary-fg-hover: #ffffff;
+  --btn-primary-shadow: 0 4px 6px -1px color-mix(in srgb, var(--primary) 20%, transparent), 0 2px 4px -2px color-mix(in srgb, var(--primary) 20%, transparent);
+  --btn-hover-y: 0px;
+  /* Danger — primary kabi chapdan o'ngga gradient: red-600 → rose-600 → pink-600 */
+  --btn-danger-bg: linear-gradient(90deg, #dc2626, #e11d48, #db2777);
+  --btn-danger-bg-hover: linear-gradient(90deg, #ef4444, #f43f5e, #ec4899);
+  --btn-danger-shadow: 0 4px 6px -1px rgb(225 29 72 / 0.2), 0 2px 4px -2px rgb(225 29 72 / 0.2);
+  --btn-ghost-bg: #f1f5f9;
+  --btn-ghost-bg-hover: #e2e8f0;
+  --btn-ghost-fg: #334155;
+  --btn-ghost-fg-hover: #0f172a;
+  --btn-ghost-border: #e2e8f0;
+  --btn-ghost-border-hover: #e2e8f0;
+
+  --icon-btn-bg: #ffffff;
+  --icon-btn-border: #edeff5;
+  --icon-btn-fg: #5b6479;
+  --icon-btn-hover-bg: var(--primary-soft);
+  --icon-btn-hover-border: color-mix(in oklab, var(--primary) 22%, white);
+  --icon-btn-hover-fg: var(--primary-hover);
+  --icon-btn-hover-transform: translateY(-1px);
+
+  /* Brend bloki */
+  --logo-bg: #ffffff;
+  --logo-fg: var(--primary);
+  --logo-border: #edeff5;
+  --logo-shadow: 0 2px 8px rgb(0 0 0 / 0.05);
+  --avatar-bg: linear-gradient(135deg, var(--primary), #5f3ef0);
+  --avatar-fg: #ffffff;
+  --profile-hover-bg: #f4f6fb;
+
+  /* Stat-card ikonkalari */
+  --stat-1-bg: linear-gradient(135deg, #8b7bff, #6d4aff); --stat-1-fg: #ffffff;
+  --stat-2-bg: linear-gradient(135deg, #34d399, #16a34a); --stat-2-fg: #ffffff;
+  --stat-3-bg: linear-gradient(135deg, #fb7185, #e11d48); --stat-3-fg: #ffffff;
+  --stat-4-bg: linear-gradient(135deg, #38bdf8, #0284c7); --stat-4-fg: #ffffff;
+  --stat-icon-ring: none;
+
+  /* Shakl */
+  --r-card: 12px;
+  /* Tugma va input radiusi bitta manbadan: faqat --r-btn ni o'zgartiring */
+  --r-btn: 12px; /* barcha tugmalar: matnli, ikonkali, kichik, paginatsiya, profil */
+  --r-control: var(--r-btn); /* barcha inputlar: oddiy, ikonkali, select, telefon, qidiruv */
+  --r-check: calc(var(--r-btn) / 2); /* checkbox — umumiy radiusga mutanosib */
+  --r-badge: 12px;
+  --r-modal: 16px;
+  --r-menu: 16px;
+  --r-menu-item: 12px;
+  --r-nav: var(--r-btn); /* sidebar bandlari ham tugmalar bilan bir xil radiusda */
+  --r-sub: var(--r-btn);
+  --r-stat-icon: 12px;
+  --r-avatar: 12px;
+
+  /* Yumshoq, pastga cho'zilgan soyalar (Saidakbar qarori, 2026-10-10); hover nuri --primary rangida */
+  --card-shadow: 0 10px 30px -18px rgb(17 17 19 / 0.22);
+  --card-shadow-hover: 0 18px 40px -16px color-mix(in srgb, var(--primary) 35%, transparent);
+  --card-hover-y: -3px;
+  --card-hover-border: transparent;
+  --popover-shadow: 0 24px 60px rgb(17 17 19 / 0.14), 0 0 0 1px rgb(17 17 19 / 0.08);
+  --modal-shadow: 0 24px 60px rgb(17 17 19 / 0.18);
+
+  /* O'lchamlar */
+  --control-h: 38px;
+  --control-h-sm: 32px; /* kichik tugma, uch nuqta, sahifa raqamlari */
+  --btn-px: 16px;
+  --topbar-h: 68px;
+  --sidebar-w: 250px;
+  --sidebar-collapsed-w: 74px;
+  --nav-item-h: 40px;
+  --sub-item-h: 34px;
+
+  /* Tipografiya */
+  --font-body: var(--font-quicksand), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-quicksand), system-ui, sans-serif;
+  --font-numeric: var(--font-jetbrains), ui-monospace, monospace;
+  --heading-weight: 700;
+  --heading-tracking: -0.01em;
+  --heading-transform: none;
+  --page-title-size: 24px;
+  --btn-font: var(--font-body);
+  --btn-size: 14px;
+  --btn-weight: 600;
+  --btn-tracking: 0;
+  --btn-transform: none;
+  --label-font: var(--font-body);
+  --label-size: 12px;
+  --label-weight: 500;
+  --label-tracking: 0;
+  --label-transform: none;
+  --label-fg: #64748b;
+  --eyebrow-font: var(--font-body);
+  --eyebrow-size: 10.5px;
+  --eyebrow-weight: 700;
+  --eyebrow-tracking: 0.08em;
+  --th-font: var(--font-body);
+  --th-size: 12px;
+  --th-weight: 700;
+  --th-tracking: 0;
+  --th-transform: none;
+  --badge-font: var(--font-body);
+  --badge-size: 11px;
+  --badge-weight: 700;
+  --badge-tracking: 0;
+  --badge-transform: none;
+  --brand-font: var(--font-body);
+  --brand-size: 16px;
+  --brand-weight: 700;
+  --brand-tracking: -0.01em;
+  --brand-transform: none;
+  --stat-font: var(--font-body);
+  --stat-size: 19px;
+  --stat-weight: 700;
+  --stat-tracking: 0;
+  --nav-font: var(--font-body);
+  --nav-size: 13.5px;
+  --nav-weight: 600;
+  --icon-stroke: 2;
+
+}
+
+[data-brand="ventura"].dark {
+  --background: #030712;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --primary: #4f79f6;
+  --primary-hover: color-mix(in oklab, var(--primary), black 8%);
+  --primary-soft: color-mix(in srgb, var(--primary) 15%, transparent);
+  --primary-text: color-mix(in oklab, var(--primary) 70%, white);
+  --secondary: #1e293b;
+  --secondary-hover: #243048;
+  --secondary-foreground: #cbd5e1;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f8fafc;
+  --border: #1e293b;
+  --border-soft: #1e293b;
+  --input: #334155;
+  --input-hover: #475569;
+  --placeholder: #64748b;
+  --destructive: #f43f5e;
+  --destructive-hover: #e11d48;
+  --destructive-text: #fb7185;
+  --table-head: #141e33;
+  --table-row-hover: #1e293b;
+  --table-foot: #0b1222;
+  --overlay: rgb(2 6 23 / 0.8);
+  --scrollbar: #1e293b;
+  --ring-border: var(--primary);
+  --ring-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+  --search-bg: #1e293b;
+  --search-hover-bg: #243048;
+  --search-focus-bg: #0f172a;
+  --kbd-bg: #0f172a;
+
+  --success-fg: #34d399; --success-bg: rgb(6 78 59 / 0.5);    --success-border: rgb(5 150 105 / 0.4);
+  --warning-fg: #fbbf24; --warning-bg: rgb(120 53 15 / 0.5);  --warning-border: rgb(217 119 6 / 0.4);
+  --danger-fg: #fb7185;  --danger-bg: rgb(136 19 55 / 0.5);   --danger-border: rgb(225 29 72 / 0.4);
+  --info-fg: #818cf8;    --info-bg: rgb(49 46 129 / 0.5);     --info-border: rgb(79 70 229 / 0.4);
+  --neutral-fg: #cbd5e1; --neutral-bg: #1e293b;               --neutral-border: #334155;
+  --money-in: #34d399;
+  --money-out: #fb7185;
+
+  --topbar-bg: rgb(15 23 42 / 0.72);
+  --topbar-border: #1e293b;
+  --sidebar-bg: #0f172a;
+  --sidebar-border: #1e293b;
+
+  --nav-fg: #cbd5e1;
+  --nav-hover-bg: #1e293b;
+  --nav-hover-fg: #ffffff;
+  --nav-active-bg: linear-gradient(135deg, #4338ca, #6366f1);
+  --nav-active-shadow: 0 8px 20px -4px color-mix(in srgb, var(--primary) 40%, transparent);
+  --nav-parent-active-fg: #f1f5f9;
+  --nav-section-fg: #64748b;
+  --nav-chevron: #64748b;
+  --nav-icon-color: #94a3b8;
+
+  --sub-fg: #94a3b8;
+  --sub-line: #1e293b;
+  --sub-dot: #334155;
+  --sub-active-bg: color-mix(in srgb, var(--primary) 25%, transparent);
+  --sub-active-fg: color-mix(in oklab, var(--primary) 35%, white);
+  --sub-dot-active: color-mix(in oklab, var(--primary) 70%, white);
+  --sub-dot-ring: 0 0 0 3px color-mix(in srgb, var(--primary) 25%, transparent);
+
+  --btn-ghost-bg: #1e293b;
+  --btn-ghost-bg-hover: #243048;
+  --btn-ghost-fg: #cbd5e1;
+  --btn-ghost-fg-hover: #ffffff;
+  --btn-ghost-border: #1e293b;
+  --btn-ghost-border-hover: #334155;
+
+  --icon-btn-bg: #1e293b;
+  --icon-btn-border: #334155;
+  --icon-btn-fg: #cbd5e1;
+  --icon-btn-hover-border: var(--primary-hover);
+  --icon-btn-hover-fg: #ffffff;
+
+  --logo-bg: #1e293b;
+  --logo-fg: color-mix(in oklab, var(--primary) 70%, white);
+  --logo-border: #334155;
+  --profile-hover-bg: #1e293b;
+
+  /* Dark: chuqurlik soya emas, fon farqi va ingichka chiziq bilan */
+  --card-shadow: none;
+  --card-shadow-hover: 0 18px 50px color-mix(in srgb, var(--primary) 18%, transparent);
+  --popover-shadow: 0 24px 60px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(248 250 252 / 0.1);
+  --modal-shadow: 0 0 0 1px rgb(248 250 252 / 0.1);
+  --label-fg: #94a3b8;
+}
+
+/*
+ * Gradientlar ham brend rangidan: rang tonini (hue) biroz aylantirib ko'k → indigo → binafsha
+ * effekti olinadi. Eski brauzerlarda (relative color yo'q) yuqoridagi qat'iy qiymatlar qoladi.
+ */
+@supports (color: oklch(from red l c h)) {
+  [data-brand="ventura"] {
+    --btn-primary-bg: linear-gradient(
+      90deg,
+      oklch(from var(--primary) calc(l - 0.05) c h),
+      oklch(from var(--primary) calc(l - 0.07) c calc(h + 15)),
+      oklch(from var(--primary) calc(l - 0.05) c calc(h + 30))
+    );
+    --btn-primary-bg-hover: linear-gradient(
+      90deg,
+      oklch(from var(--primary) calc(l + 0.02) c h),
+      oklch(from var(--primary) calc(l + 0.0) c calc(h + 15)),
+      oklch(from var(--primary) calc(l + 0.02) c calc(h + 30))
+    );
+    --nav-active-bg: linear-gradient(135deg, var(--primary), oklch(from var(--primary) l c calc(h + 12)));
+    --avatar-bg: linear-gradient(135deg, var(--primary), oklch(from var(--primary) l c calc(h + 22)));
+  }
+  [data-brand="ventura"].dark {
+    --nav-active-bg: linear-gradient(
+      135deg,
+      oklch(from var(--primary) calc(l - 0.15) c calc(h + 12)),
+      oklch(from var(--primary) calc(l - 0.05) c calc(h + 14))
+    );
+  }
+}

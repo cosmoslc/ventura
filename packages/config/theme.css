@@ -1,0 +1,271 @@
+/*
+ * Ventura design-system bridge for Tailwind v4.
+ *
+ * Komponentlar faqat shu fayldagi semantik nomlarni ishlatadi. Qiymatlar
+ * tokens/ventura.css da beriladi va <html data-brand="ventura"> hamda .dark
+ * klassi bilan tanlanadi.
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-text: var(--primary-text);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-border-soft: var(--border-soft);
+  --color-input: var(--input);
+  --color-input-bg: var(--input-bg);
+  --color-placeholder: var(--placeholder);
+  --color-destructive: var(--destructive);
+  --color-destructive-hover: var(--destructive-hover);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-text: var(--destructive-text);
+  --color-table-head: var(--table-head);
+  --color-table-row-hover: var(--table-row-hover);
+
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-display);
+  --font-mono: var(--font-numeric);
+
+  --radius-card: var(--r-card);
+  --radius-control: var(--r-control);
+  --radius-btn: var(--r-btn);
+  --radius-badge: var(--r-badge);
+  --radius-modal: var(--r-modal);
+  --radius-menu: var(--r-menu);
+  --radius-menu-item: var(--r-menu-item);
+  --radius-nav: var(--r-nav);
+  --radius-sub: var(--r-sub);
+  --radius-stat-icon: var(--r-stat-icon);
+  --radius-check: var(--r-check);
+  --radius-avatar: var(--r-avatar);
+
+  --shadow-card: var(--card-shadow);
+  --shadow-card-hover: var(--card-shadow-hover);
+  --shadow-popover: var(--popover-shadow);
+  --shadow-modal: var(--modal-shadow);
+
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Matn o'lchamlari shkalasi — Tailwind'ning xs (12px) va sm (14px) oralig'idagi panel o'lchamlari */
+@theme {
+  --text-2xs: 0.625rem; /* 10px — sanoq nuqtasi, klaviatura yorlig'i */
+  --text-caption: 0.6875rem; /* 11px — ikkinchi qator, trend, rol */
+  --text-body: 0.8125rem; /* 13px — izoh, menyu bandi, jadvaldagi asosiy matn */
+  --text-title: 0.9375rem; /* 15px — kartochka sarlavhasi */
+}
+
+/* Qatlamlar (z-index) shkalasi — docs/design/STYLE.md, 8-bo'lim */
+:root {
+  --z-sidebar: 30;
+  --z-topbar: 40;
+  --z-overlay: 50; /* modal va mobil menyu orqa foni; DOM tartibida kontentdan oldin turadi */
+  --z-modal: 50;
+  --z-popover: 60; /* dropdown, select */
+  --z-toast: 70;
+}
+
+/* ---------- Tipografiya rollari (tokenlar orqali) ---------- */
+
+@utility type-heading {
+  font-family: var(--font-display);
+  font-weight: var(--heading-weight);
+  letter-spacing: var(--heading-tracking);
+  text-transform: var(--heading-transform);
+}
+@utility type-btn {
+  font-family: var(--btn-font);
+  font-size: var(--btn-size);
+  font-weight: var(--btn-weight);
+  letter-spacing: var(--btn-tracking);
+  text-transform: var(--btn-transform);
+}
+@utility type-label {
+  font-family: var(--label-font);
+  font-size: var(--label-size);
+  font-weight: var(--label-weight);
+  letter-spacing: var(--label-tracking);
+  text-transform: var(--label-transform);
+}
+@utility type-eyebrow {
+  font-family: var(--eyebrow-font);
+  font-size: var(--eyebrow-size);
+  font-weight: var(--eyebrow-weight);
+  letter-spacing: var(--eyebrow-tracking);
+  text-transform: uppercase;
+}
+@utility type-th {
+  font-family: var(--th-font);
+  font-size: var(--th-size);
+  font-weight: var(--th-weight);
+  letter-spacing: var(--th-tracking);
+  text-transform: var(--th-transform);
+}
+@utility type-badge {
+  font-family: var(--badge-font);
+  font-size: var(--badge-size);
+  font-weight: var(--badge-weight);
+  letter-spacing: var(--badge-tracking);
+  text-transform: var(--badge-transform);
+}
+@utility type-brand {
+  font-family: var(--brand-font);
+  font-size: var(--brand-size);
+  font-weight: var(--brand-weight);
+  letter-spacing: var(--brand-tracking);
+  text-transform: var(--brand-transform);
+}
+@utility type-stat {
+  font-family: var(--stat-font);
+  font-size: var(--stat-size);
+  font-weight: var(--stat-weight);
+  letter-spacing: var(--stat-tracking);
+}
+@utility type-nav {
+  font-family: var(--nav-font);
+  font-size: var(--nav-size);
+  font-weight: var(--nav-weight);
+}
+
+/* ---------- Gradient bo'lishi mumkin bo'lgan fonlar ---------- */
+
+@utility btn-primary-surface {
+  background: var(--btn-primary-bg);
+  background-origin: border-box; /* gradient shaffof chegara ostida takrorlanmasin */
+  color: var(--btn-primary-fg);
+  box-shadow: var(--btn-primary-shadow);
+  &:hover:not(:disabled) {
+    background: var(--btn-primary-bg-hover);
+    color: var(--btn-primary-fg-hover);
+    transform: translateY(var(--btn-hover-y));
+  }
+}
+@utility btn-danger-surface {
+  background: var(--btn-danger-bg);
+  background-origin: border-box;
+  color: var(--destructive-foreground);
+  box-shadow: var(--btn-danger-shadow);
+  &:hover:not(:disabled) {
+    background: var(--btn-danger-bg-hover);
+    transform: translateY(var(--btn-hover-y));
+  }
+}
+@utility nav-active-surface {
+  background: var(--nav-active-bg);
+  box-shadow: var(--nav-active-shadow);
+}
+
+/* ---------- Asos ---------- */
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--focus-outline);
+    outline-offset: 2px;
+  }
+  svg.lucide {
+    stroke-width: var(--icon-stroke);
+  }
+  ::selection {
+    background: var(--primary-soft);
+  }
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar) transparent;
+  }
+}
+
+/* ---------- Morph dropdown: bandlar ketma-ket ----------
+   O'tish faqat .content-in qoidasida: yashirish bir zumda, ochilish esa kechikish bilan. */
+
+.morph-panel.has-stagger .morph-menu-item {
+  opacity: 0;
+  transform: translateY(6px);
+  transition: none;
+}
+.morph-panel.has-stagger.content-in .morph-menu-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 220ms var(--ease-ios),
+    transform 220ms var(--ease-ios);
+}
+.morph-panel.is-animating .morph-content {
+  overflow: hidden;
+}
+
+/* ---------- Animatsiyalar ---------- */
+
+@keyframes nav-squish {
+  0% { transform: scaleX(1); }
+  40% { transform: scaleX(0.93); }
+  100% { transform: scaleX(1); }
+}
+@keyframes dd-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes dd-out {
+  from { opacity: 1; transform: scale(1); }
+  to { opacity: 0; transform: scale(0.9); }
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(calc(100% + 16px)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes toast-out {
+  from { opacity: 1; transform: translateX(var(--radix-toast-swipe-end-x, 0)); }
+  to { opacity: 0; transform: translateX(calc(100% + 16px)); }
+}
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+}

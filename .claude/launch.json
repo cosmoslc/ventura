@@ -1,0 +1,15 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "panel",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ventura/panel", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "panel-attach",
+      "url": "http://localhost:3000"
+    }
+  ]
+}

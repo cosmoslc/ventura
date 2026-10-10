@@ -1,0 +1,22 @@
+# Bog'liqliklar va build natijalari
+node_modules
+.next
+.turbo
+dist
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Muhit o'zgaruvchilari — hech qachon repoga tushmaydi (faqat .env.example)
+.env
+.env.*
+!.env.example
+
+# Tizim va muharrir fayllari
+.DS_Store
+Thumbs.db
+*.log
+.claude/settings.local.json
+
+# Dizayn manbasi (premium landing) — repoga kiritilmaydi
+ventura-premium (1).html

@@ -1,0 +1,4 @@
+{
+  "extends": "@ventura/config/tsconfig/react-library.json",
+  "include": ["src"]
+}

@@ -1,0 +1,6 @@
+# Repoda hamma matn fayli LF bilan saqlanadi (CI Linux, Prettier)
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff2 binary
