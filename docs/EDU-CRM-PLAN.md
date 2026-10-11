@@ -1,6 +1,6 @@
 # edu-crm: eski CRM'ni Ventura qolipiga ko'chirish rejasi
 
-2026-10-11 · holat: reja, ish boshlanmagan · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
+2026-10-11 · holat: E0 tayyor, E1 navbatda · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
 
 ## 1. Maqsad
 
@@ -80,16 +80,18 @@ Har bosqich alohida branch va PR. Qabul mezoni bajarilmaguncha keyingisiga o'til
 
 ### E0. Skelet
 
-- [ ] `apps/edu-crm`: Next.js, TypeScript strict, `packages/ui`, tema va tokenlar, o'zbekcha matnlar bitta faylda
-- [ ] `packages/db/schema/tenant`: boshlang'ich sxema (foydalanuvchilar, rollar, sozlamalar) va migratsiyalar
-- [ ] Kirish: `packages/auth` (panel bilan bir xil mexanizm); foydalanuvchilar mijoz bazasida
-- [ ] Tayyor rollar va `can(role, permission)`; filial bo'yicha cheklov
-- [ ] Qobiq: sidebar, topbar, light/dark, bo'sh bosh sahifa
-- [ ] `hasFeature()` va brend sozlamasini (rang, nom, logotip) o'qish
-- [ ] Mijozni domen bo'yicha aniqlash, `getTenantDb()`, `tenant_id` va RLS; ajratish testi (A mijoz B mijoz ma'lumotini ololmaydi)
-- [ ] CI'ga qo'shish; `/health` manzili (deploy tekshiruvi uchun)
+- [x] `apps/edu-crm`: Next.js, TypeScript strict, `packages/ui`, tema va tokenlar, o'zbekcha matnlar bitta faylda
+- [x] `packages/db/schema/tenant`: boshlang'ich sxema (foydalanuvchilar, rollar, sozlamalar) va migratsiyalar
+- [x] Kirish: `packages/auth` (panel bilan bir xil mexanizm); foydalanuvchilar mijoz bazasida
+- [x] Tayyor rollar va `can(role, permission)`; filial bo'yicha cheklov
+- [x] Qobiq: sidebar, topbar, light/dark, bo'sh bosh sahifa
+- [x] `hasFeature()` va brend sozlamasini (rang, nom, logotip) o'qish
+- [x] Mijozni domen bo'yicha aniqlash, `getTenantDb()`, `tenant_id` va RLS; ajratish testi (A mijoz B mijoz ma'lumotini ololmaydi)
+- [x] CI'ga qo'shish; `/health` manzili (deploy tekshiruvi uchun)
 
 **Qabul:** ilova mahalliy va PM2 ostida ochiladi; direktor kiradi; o'chirilgan bo'lim menyuda ko'rinmaydi va manziliga kirib bo'lmaydi; ajratish testi umumiy bazada ham, alohida bazalarda ham o'tadi. Ventura 2-bosqichi shu skeletni deploy qilib sinaydi.
+
+**Holat (2026-10-11):** skelet tayyor, qarorlar — `docs/decisions/0006-edu-crm-skelet.md`. Mahalliy production build'da sinalgan: uch mijoz (ikkitasi umumiy bazada, bittasi alohida bazada), direktor birinchi kirishdan (vaqtinchalik parol → yangi parol → bot → kod) bosh sahifagacha, o'chirilgan bo'lim 404, kassir menyusi va ruxsatlari, bir mijoz sessiyasi boshqasida ishlamasligi. Ajratish testi CI'da (`tenant-db`). Qoldi: serverda maxfiy fayl va mijoz bazasini panel yaratishi (Ventura 2-bosqich, "Baza strategiyalari") — shundan keyin PM2'dagi ilovaga direktor kira oladi; hozir PM2 ostida ilova ochiladi va kirish sahifasi "tizim hali sozlanmagan" deydi.
 
 ### E1. Asos: o'quv jarayoni
 

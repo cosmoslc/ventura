@@ -10,7 +10,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./policy": "./src/policy.ts"
+    "./policy": "./src/policy.ts",
+    "./staff": "./src/staff/index.ts",
+    "./staff/policy": "./src/staff/policy.ts"
   },
   "dependencies": {
     "@ventura/db": "workspace:*",

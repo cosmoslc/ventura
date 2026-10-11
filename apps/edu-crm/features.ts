@@ -6,14 +6,35 @@ export const template = {
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.1.0",
+  version: "0.2.0",
 } satisfies TemplateInfo;
 
 export const features = [
   // Asos
-  { key: "students", name: "O'quvchilar", group: "Asos", type: "permanent", routes: ["/api/students"] },
-  { key: "courses", name: "Kurslar", group: "Asos", type: "core", routes: ["/api/courses"] },
-  { key: "teachers", name: "O'qituvchilar", group: "Asos", type: "core", routes: ["/api/teachers"] },
+  {
+    key: "students",
+    name: "O'quvchilar",
+    group: "Asos",
+    type: "permanent",
+    routes: ["/api/students"],
+    nav: [{ label: "O'quvchilar", href: "/students" }],
+  },
+  {
+    key: "courses",
+    name: "Kurslar",
+    group: "Asos",
+    type: "core",
+    routes: ["/api/courses"],
+    nav: [{ label: "Kurslar", href: "/courses" }],
+  },
+  {
+    key: "teachers",
+    name: "O'qituvchilar",
+    group: "Asos",
+    type: "core",
+    routes: ["/api/teachers"],
+    nav: [{ label: "O'qituvchilar", href: "/teachers" }],
+  },
   {
     key: "groups",
     name: "Guruhlar",
@@ -21,6 +42,7 @@ export const features = [
     type: "core",
     requires: ["students", "courses", "teachers"],
     routes: ["/api/groups"],
+    nav: [{ label: "Guruhlar", href: "/groups" }],
   },
   {
     key: "branches",
@@ -28,10 +50,18 @@ export const features = [
     group: "Asos",
     type: "mode",
     description: "Loyiha sozlamasi boshqaradi",
+    nav: [{ label: "Filiallar", href: "/branches" }],
   },
 
   // Davomat
-  { key: "holidays", name: "Dam olish kunlari", group: "Davomat", type: "regular", routes: ["/api/holidays"] },
+  {
+    key: "holidays",
+    name: "Dam olish kunlari",
+    group: "Davomat",
+    type: "regular",
+    routes: ["/api/holidays"],
+    nav: [{ label: "Dam olish kunlari", href: "/holidays" }],
+  },
   {
     key: "attendance",
     name: "Davomat",
@@ -50,6 +80,7 @@ export const features = [
     type: "core",
     requires: ["students"],
     routes: ["/api/payments"],
+    nav: [{ label: "To'lovlar", href: "/payments" }],
   },
   {
     key: "debtors",
@@ -58,8 +89,16 @@ export const features = [
     type: "regular",
     requires: ["payments"],
     routes: ["/api/debtors"],
+    nav: [{ label: "Qarzdorlar", href: "/debtors" }],
   },
-  { key: "expenses", name: "Xarajatlar", group: "Moliya", type: "regular", routes: ["/api/expenses"] },
+  {
+    key: "expenses",
+    name: "Xarajatlar",
+    group: "Moliya",
+    type: "regular",
+    routes: ["/api/expenses"],
+    nav: [{ label: "Xarajatlar", href: "/expenses" }],
+  },
   {
     key: "salaries",
     name: "Ish haqi",
@@ -67,6 +106,7 @@ export const features = [
     type: "regular",
     requires: ["teachers", "payments"],
     routes: ["/api/salaries"],
+    nav: [{ label: "Ish haqi", href: "/salaries" }],
   },
 
   // O'quv jarayoni
@@ -77,6 +117,7 @@ export const features = [
     type: "regular",
     requires: ["groups"],
     routes: ["/api/exams"],
+    nav: [{ label: "Imtihonlar", href: "/exams" }],
   },
   {
     key: "coins",
@@ -86,11 +127,26 @@ export const features = [
     requires: ["students"],
     description: "O'quvchilarni rag'batlantirish",
     routes: ["/api/coins"],
+    nav: [{ label: "Coinlar", href: "/coins" }],
   },
 
   // Sotuv va aloqa
-  { key: "leads", name: "Lidlar", group: "Sotuv va aloqa", type: "regular", routes: ["/api/leads"] },
-  { key: "sms", name: "SMS xabarnomalar", group: "Sotuv va aloqa", type: "regular", routes: ["/api/sms"] },
+  {
+    key: "leads",
+    name: "Lidlar",
+    group: "Sotuv va aloqa",
+    type: "regular",
+    routes: ["/api/leads"],
+    nav: [{ label: "Lidlar", href: "/leads" }],
+  },
+  {
+    key: "sms",
+    name: "SMS xabarnomalar",
+    group: "Sotuv va aloqa",
+    type: "regular",
+    routes: ["/api/sms"],
+    nav: [{ label: "SMS xabarnomalar", href: "/sms" }],
+  },
   { key: "telegram_bot", name: "Telegram bot", group: "Sotuv va aloqa", type: "regular", routes: ["/api/telegram"] },
 
   // Hisobotlar
@@ -101,5 +157,6 @@ export const features = [
     type: "regular",
     requires: ["payments"],
     routes: ["/api/reports"],
+    nav: [{ label: "Hisobotlar", href: "/reports" }],
   },
 ] satisfies FeatureManifest;

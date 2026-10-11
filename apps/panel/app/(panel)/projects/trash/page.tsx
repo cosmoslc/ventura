@@ -1,5 +1,5 @@
 import { can } from "@ventura/auth";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@ventura/ui/page-header";
 import { listProjects } from "@/lib/server/projects-query";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";

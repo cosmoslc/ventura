@@ -20,7 +20,7 @@ import { Pagination } from "@ventura/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
-import { EmptyState } from "@/components/page-header";
+import { EmptyState } from "@ventura/ui/page-header";
 import { daysLeft, formatDate } from "@/lib/format";
 import type { ProjectListRow } from "@/lib/server/projects-query";
 import { uz } from "@/lib/uz";

@@ -39,7 +39,7 @@ Jonli ko'rinish (`pnpm dev`):
 | Brend tanlash | `<html data-brand="ventura">` — tokenlar `[data-brand="ventura"]` ga yozilgan |
 | Dark rejim | `<html class="dark">`; Tailwind'da `@custom-variant dark (&:where(.dark, .dark *))` |
 | Boshlang'ich tanlov | saqlangan tanlov (`localStorage["ventura-theme"]`) → qurilma sozlamasi (`prefers-color-scheme`) |
-| Miltillashsiz yuklash | `themeInitScript` `<head>` da birinchi chizishdan oldin `.dark` ni qo'yadi |
+| Miltillashsiz yuklash | `themeInitScript` / `themeScript(appearance)` (`packages/ui/src/lib/theme.ts`, server komponentdan import qilinadi) `<head>` da birinchi chizishdan oldin `.dark` ni qo'yadi; shablonlarda standart ko'rinish mijoz brendidan |
 | Almashtirish | `ThemeToggle` — bir zumda, animatsiyasiz |
 
 Tokenlar `<html>` ga qo'yilgani uchun portal orqali `body` ga chiqadigan elementlar (modal, dropdown, toast) ham ularni oladi.
@@ -128,6 +128,7 @@ Xavfli amal tugmasi: `--destructive` `#f43f5e`, hover `#e11d48`, matn uchun `--d
 | `--nav-active-fg` | `#ffffff` | `#ffffff` |
 | `--nav-section-fg` / `--nav-chevron` | `#9aa3b5` / `#a6adbd` | `#64748b` / `#64748b` |
 | `--nav-icon-color` | berilmagan — har bandning o'z rangi | `#94a3b8` (hammasi bir xil) |
+| `--nav-hue-*` (`blue`, `sky`, `violet`, `purple`, `orange`, `amber`, `green`, `emerald`, `teal`, `rose`, `pink`, `slate`) | eski CRM menyusi ranglari: `#006aff`, `#0ea5e9`, `#8b5cf6`, `#7c3aed`, `#f97316`, `#f39c12`, `#27ae60`, `#059669`, `#16a085`, `#e11d48`, `#ff6b81`, `#64748b` | ishlatilmaydi (`--nav-icon-color` ustun) |
 | `--search-bg` / hover / focus | `#f7f8fc` / `#eef1f8` / `#ffffff` | `#1e293b` / `#243048` / `#0f172a` |
 
 Stat-card ikonkalari (135° gradient, oq ikonka): 1 binafsha `#8b7bff → #6d4aff`, 2 yashil `#34d399 → #16a34a`, 3 qizil `#fb7185 → #e11d48`, 4 havorang `#38bdf8 → #0284c7`.
@@ -288,7 +289,7 @@ Kutubxona: `lucide-react`; chiziq qalinligi `--icon-stroke` (2).
 | 14px | Strelkalar (select, sidebar, profil), kichik tugma ikonkasi |
 | 20px | Toast holat ikonkasi, tasdiqlash oynasi ikonkasi |
 
-Sidebar ikonkalari light rejimda har bandning o'z rangida (`item.color`), dark'da hammasi `--nav-icon-color`.
+Sidebar ikonkalari light rejimda har bandning o'z rangida (`item.color`, qiymati `var(--nav-hue-…)` — komponentda `#hex` yozilmaydi), dark'da hammasi `--nav-icon-color`.
 
 ## 11. Komponentlar
 
@@ -490,6 +491,12 @@ Qoidalar:
 - `tone`: `info` (standart), `success`, `warning`, `danger` — Badge bilan bir xil holat ranglari.
 - `warning` va `danger` — `role="alert"`, qolganlari `role="status"`.
 
+### 11.26 PageHeader, EmptyState — `page-header.tsx`
+
+- `PageHeader`: sahifa sarlavhasi (`type-heading`, `--page-title-size`), ostida 13px izoh, o'ngda amallar; pastdan 24px oraliq.
+- `EmptyState`: kartochka ichida markazda 48px ikonka qutisi (`--r-card`, `bg-muted`), sarlavha, izoh va ixtiyoriy tugma.
+- Panel va shablonlar uchun umumiy (avval panel ichida edi).
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
@@ -540,4 +547,4 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 - Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
 - Select'da harf bilan qidirish (typeahead).
-- Keyingi bosqichlar komponentlari: bo'sh holat (hozircha panel ichida — `apps/panel/components/page-header.tsx`), skeleton, tooltip, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.
+- Keyingi bosqichlar komponentlari: skeleton, tooltip, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.

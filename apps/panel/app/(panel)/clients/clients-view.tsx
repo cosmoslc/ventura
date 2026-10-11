@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
-import { EmptyState } from "@/components/page-header";
+import { EmptyState } from "@ventura/ui/page-header";
 import { formatDate } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { saveClientAction } from "./actions";

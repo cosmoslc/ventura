@@ -51,6 +51,50 @@ jobs:
       - name: Build
         run: pnpm build
 
+  tenant-db:
+    # E0 qabuli: A mijoz B mijoz ma'lumotini ololmaydi — umumiy bazada ham, alohida bazalarda ham (RLS, FORCE)
+    name: mijoz bazasi · ajratish va jurnal
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ventura
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: ventura_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ventura -d ventura_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Faqat shu vazifa ichidagi vaqtinchalik baza; testlar o'z bazalari va rollarini yaratadi
+      TENANT_TEST_ADMIN_URL: postgres://ventura:e2e@localhost:5432/ventura_e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Bog'liqliklar
+        run: pnpm install --frozen-lockfile
+
+      - name: Migratsiyalar sxema bilan mos (drizzle-kit generate yangi fayl chiqarmaydi)
+        run: |
+          pnpm --filter @ventura/db exec drizzle-kit generate --config drizzle.tenant.config.ts
+          git diff --exit-code -- packages/db/migrations
+          test -z "$(git status --porcelain -- packages/db/migrations)"
+
+      - name: Ajratish testi va faoliyat jurnali
+        run: pnpm --filter @ventura/db --filter @ventura/security test
+
   e2e:
     name: e2e · kirish + 2FA, yangi loyiha formasi
     runs-on: ubuntu-latest
@@ -228,8 +272,10 @@ jobs:
           pnpm --silent deploy:run -- --project demo-a | tee "$RUNNER_TEMP/deploy-a.txt"
           grep -q "Deploy tayyor" "$RUNNER_TEMP/deploy-a.txt"
           curl -fsS -H "Host: demo-a.localhost" http://127.0.0.1/health | grep '"tenant":"demo-a"'
-          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "Demo A"
-          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q -- "--primary:#059669"
+          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/login | grep -q "Demo A"
+          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/login | grep -q -- "--primary:#059669"
+          # Kirmagan foydalanuvchi /login ga, o'z domeni bilan
+          curl -sS -o /dev/null -w "%{redirect_url}" -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "://demo-a.ventura.uz/login"
 
       - name: Ikkinchi mijoz o'sha ilovaga ulanadi (qayta build qilinmaydi)
         run: |
@@ -237,10 +283,10 @@ jobs:
           grep -q "kod va build qayta bajarilmaydi" "$RUNNER_TEMP/deploy-b.txt"
           if grep -q "pnpm install" "$RUNNER_TEMP/deploy-b.txt"; then echo "ikkinchi deploy'da qayta o'rnatildi"; exit 1; fi
           curl -fsS -H "Host: demo-b.localhost" http://127.0.0.1/health | grep '"tenant":"demo-b"'
-          curl -fsS -H "Host: demo-b.ventura.uz" http://127.0.0.1/ | grep -q "Demo B"
+          curl -fsS -H "Host: demo-b.ventura.uz" http://127.0.0.1/login | grep -q "Demo B"
           # birinchi mijoz o'z nomi bilan qolgan
           curl -fsS -H "Host: demo-a.localhost" http://127.0.0.1/health | grep '"tenant":"demo-a"'
-          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "Demo A"
+          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/login | grep -q "Demo A"
           # bitta jarayon ikkalasiga xizmat qiladi
           test "$(sudo -u deploy -i pm2 jlist | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" = "1"
 

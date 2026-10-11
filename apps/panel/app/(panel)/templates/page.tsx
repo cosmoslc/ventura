@@ -4,7 +4,7 @@ import { templates } from "@ventura/db/schema/panel";
 import { FEATURE_TYPE_LABELS, type Feature } from "@ventura/tenants";
 import { Badge } from "@ventura/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ventura/ui/card";
-import { EmptyState, PageHeader } from "@/components/page-header";
+import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { formatDateTime } from "@/lib/format";
 import { deps } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";

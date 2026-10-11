@@ -6,7 +6,7 @@ import { providerFor } from "@ventura/deploy";
 import { hasSecret } from "@ventura/security";
 import type { Feature } from "@ventura/tenants";
 import { Badge } from "@ventura/ui/badge";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@ventura/ui/page-header";
 import { listDeployments, workerAlive } from "@/lib/server/deployments-query";
 import { deps } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";

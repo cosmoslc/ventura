@@ -6,7 +6,7 @@ import { knownDevices } from "@ventura/db/schema/panel";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ventura/ui/card";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@ventura/ui/page-header";
 import { formatDateTime } from "@/lib/format";
 import { deps } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";

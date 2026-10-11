@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { themeInitScript } from "@ventura/ui/theme-toggle";
+import { themeInitScript } from "@ventura/ui/lib/theme";
 import { Toaster } from "@ventura/ui/toast";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";

@@ -1,7 +1,7 @@
 import { count, desc, eq, isNull, sql } from "drizzle-orm";
 import { can } from "@ventura/auth";
 import { clients, projects } from "@ventura/db/schema/panel";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@ventura/ui/page-header";
 import { deps } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";

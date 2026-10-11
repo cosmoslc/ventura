@@ -6,7 +6,7 @@ import { auditEvents, clients, projects, users } from "@ventura/db/schema/panel"
 import { Button } from "@ventura/ui/button";
 import { Card, CardHeader, CardTitle } from "@ventura/ui/card";
 import { StatCard } from "@ventura/ui/stat-card";
-import { EmptyState, PageHeader } from "@/components/page-header";
+import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { AuditRow } from "@/components/audit-row";
 import { deps } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";

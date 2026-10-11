@@ -15,6 +15,8 @@
 - `pnpm format` — Prettier (`pnpm format:check` — faqat tekshirish)
 - `pnpm db:generate` · `pnpm db:migrate` — Drizzle migratsiyasini yaratish va qo'llash (`PANEL_MIGRATE_URL`)
 - `pnpm templates:sync` — shablon manifestlarini (`apps/*/features.ts`) bazaga ko'chirish
+- `pnpm db:generate:tenant` · `pnpm db:migrate:tenant` — mijoz (shablon) bazasi migratsiyasi (`TENANT_MIGRATE_URL`)
+- `pnpm edu:tenant` · `pnpm edu:staff` — edu-crm mijozi va xodimini terminaldan qo'shish (apps/edu-crm/README.md)
 - `pnpm admin:create` · `pnpm admin:unlock` · `pnpm admin:reset-2fa` — adminlar bilan ishlash, faqat server terminalida
 - `pnpm server:add` · `pnpm server:check` — serverni ro'yxatga olish (SSH kalit yaratadi) va tekshirish; serverning o'zida bir marta `sudo bash tooling/server/setup.sh --key "..."`
 - `pnpm deploy:run -- --project <slug>` — loyihani terminaldan deploy qilish (paneldagi tugma bilan bir xil yo'l)
@@ -27,7 +29,8 @@
 - Baza o'zgarishi faqat Drizzle migratsiyasi orqali (drizzle-kit generate). Bazani qo'lda o'zgartirma.
 - Tashqi API'lar (GitHub, Vercel, Cloudflare, Telegram) faqat packages/integrations orqali chaqiriladi.
 - Deploy, tekshiruv, zahira faqat pg-boss fon vazifasi sifatida. So'rov ichida uzoq ish qilma.
-- Har o'zgartiruvchi amal audit.record() chaqiradi.
+- Har o'zgartiruvchi amal audit.record() chaqiradi (mijoz tizimida — tenantAudit.record()).
+- Mijoz bazasiga faqat getTenantDb() orqali. Yangi jadvalda tenantId(), tenantPolicy() va migratsiyada FORCE ROW LEVEL SECURITY (ajratish testi tekshiradi).
 - Mijozga xos farq faqat bo'lim (hasFeature) yoki sozlama orqali. `if (tenant.slug === ...)` taqiqlangan.
 - UI faqat packages/ui komponentlaridan. Interfeys matnlari o'zbekcha, bitta faylda.
 
