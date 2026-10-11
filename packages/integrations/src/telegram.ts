@@ -3,7 +3,8 @@
  * Token faqat server kodida; logga yozilmaydi.
  */
 
-const API = "https://api.telegram.org";
+/** Standart manzil. `TELEGRAM_API_URL` — o'z Bot API serveri yoki e2e testlardagi soxta server uchun. */
+const DEFAULT_API = "https://api.telegram.org";
 
 export interface TelegramUser {
   id: number;
@@ -42,10 +43,13 @@ export function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-export function createTelegram(token: string | undefined = process.env.TELEGRAM_BOT_TOKEN) {
+export function createTelegram(
+  token: string | undefined = process.env.TELEGRAM_BOT_TOKEN,
+  api: string = process.env.TELEGRAM_API_URL || DEFAULT_API,
+) {
   async function call<T>(method: string, body?: Record<string, unknown>, timeoutMs = 15_000): Promise<T> {
     if (!token) throw new TelegramError("TELEGRAM_BOT_TOKEN berilmagan");
-    const res = await fetch(`${API}/bot${token}/${method}`, {
+    const res = await fetch(`${api}/bot${token}/${method}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body ?? {}),

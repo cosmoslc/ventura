@@ -10,6 +10,7 @@
 
 - `pnpm dev` — panel (http://localhost:3000)
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` — CI'dagi tekshiruvlar
+- `pnpm e2e` — Playwright (alohida test bazasi kerak: apps/panel/e2e/README.md)
 - `pnpm format` — Prettier (`pnpm format:check` — faqat tekshirish)
 - `pnpm db:generate` · `pnpm db:migrate` — Drizzle migratsiyasini yaratish va qo'llash (`PANEL_MIGRATE_URL`)
 - `pnpm templates:sync` — shablon manifestlarini (`apps/*/features.ts`) bazaga ko'chirish

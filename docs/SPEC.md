@@ -442,11 +442,11 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 ### 1-bosqich. Panel asosi
 
-- [ ] Better Auth: login, 2FA majburiy, rollar
-- [ ] `packages/security`: shifrlash va `audit.record()` (xesh zanjiri bilan)
-- [ ] Layout: sidebar, light/dark, o'zbekcha matnlar bitta faylda
-- [ ] Shablonlar sahifasi: `edu-crm` manifestini o'qish
-- [ ] Loyihalar: ro'yxat, yaratish (deploysiz), tahrirlash, "savat"ga o'chirish
+- [x] Better Auth: login, 2FA majburiy, rollar
+- [x] `packages/security`: shifrlash va `audit.record()` (xesh zanjiri bilan)
+- [x] Layout: sidebar, light/dark, o'zbekcha matnlar bitta faylda
+- [x] Shablonlar sahifasi: `edu-crm` manifestini o'qish
+- [x] Loyihalar: ro'yxat, yaratish (deploysiz), tahrirlash, "savat"ga o'chirish
 
 * **Qabul:** 2FA'siz kirib bo'lmaydi; har o'zgarish audit jurnalida ko'rinadi; xesh zanjiri testi o'tadi.
 
