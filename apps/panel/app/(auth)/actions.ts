@@ -19,6 +19,7 @@ import {
   revokeAllSessions,
   setUserPassword,
   signPending,
+  secureCookies,
   verifyUserPassword,
 } from "@ventura/auth";
 import { users, verifications } from "@ventura/db/schema/panel";
@@ -68,7 +69,7 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
     (await cookies()).set(PENDING_COOKIE, signPending(user.id, secret()), {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: secureCookies(),
       maxAge: 600,
       path: "/",
     });
