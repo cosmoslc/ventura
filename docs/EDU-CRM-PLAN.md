@@ -19,7 +19,8 @@ Eski kod **o'qish uchun namuna**: nima qilishi va qanday ko'rinishi undan olinad
 | 5 | Stack SPEC bo'yicha: Next.js (server), Drizzle, PostgreSQL, PM2. Supabase ishlatilmaydi. |
 | 6 | Eski CRM muzlatiladi: yangi imkoniyat qo'shilmaydi, faqat xato tuzatiladi. U hozir sinovda, markaz to'liq o'tmagan. |
 | 7 | Birinchi foydalanuvchi — o'z markazimiz, toza bazadan boshlaydi. |
-| 8 | Kirish Ventura panelidagi bilan bir xil: `packages/auth` (telefon + parol, Telegram kodi, bloklash, sessiya muddati). Alohida auth yozilmaydi. |
+| 8 | Kirish Ventura panelidagi bilan bir xil mexanizm: `packages/auth` (telefon + parol, Telegram kodi, bloklash, sessiya muddati). Alohida auth yozilmaydi. Foydalanuvchilar bazasi umumiy emas: har mijozning xodimlari o'z bazasida, panel adminlari alohida. |
+| 8a | Kirish kodini har mijozning o'z Telegram boti yuboradi. Token "Yangi loyiha" ustozida kiritiladi va shifrlangan holda saqlanadi; botsiz loyihada xodimlar kira olmaydi. |
 | 9 | Ruxsatlar tayyor rollar orqali (direktor, menejer va boshqalar) va filial bo'yicha cheklov. Eski tizimdagi har menejerga alohida sozlash birinchi versiyada yo'q. |
 | 10 | Birinchi versiyaga kirmaydi: coin va ball tizimi, SMS yuborish, imtihonlar va sertifikatlar. Excel import kiradi. |
 | 11 | Interfeys faqat o'zbekcha; matnlar bitta faylda. |
@@ -159,8 +160,6 @@ E1–E6 Ventura bosqichlari bilan yonma-yon boradi va ularni to'xtatib turmaydi.
 Tegishli bosqich boshlanishidan oldin hal qilinadi.
 
 - **Ko'rinishlar ro'yxati.** 78 ta ko'rinishning qaysilari olinadi, qaysilari tashlanadi? Har bosqich boshida shu bosqich sahifalari Saidakbar bilan ko'rib chiqiladi.
-- **Auth chegarasi.** "Bitta auth" bir xil mexanizmni anglatadi deb olindi: har mijozning foydalanuvchilari o'z bazasida, panel adminlari alohida. Umumiy foydalanuvchilar bazasi (bitta hisob bilan ham panelga, ham CRM'ga kirish) kerak bo'lsa, bu mijozlar ajratilishini o'zgartiradi va alohida qaror talab qiladi (E0).
-- **Telegram bot.** Kod yuboradigan bot hamma mijozga bitta (Ventura boti) bo'ladimi yoki har mijozning o'z boti? Har xodim botga ulanishi shart bo'ladi (E0).
 - **Rollar ro'yxati.** Direktor va menejerdan tashqari qaysi tayyor rollar kerak: kassir, administrator, faqat ko'ruvchi (E0)?
 - **Manifest.** `apps/edu-crm/features.ts` hozir 17 bo'lim. Ko'chirish davomida haqiqiy sahifalarga qarab aniqlashtiriladi.
 
