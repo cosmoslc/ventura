@@ -142,14 +142,25 @@ jobs:
           SSH="ssh -p 2222 -i $RUNNER_TEMP/panel_key -o StrictHostKeyChecking=no -o BatchMode=yes deploy@127.0.0.1"
           mkdir -p "$RUNNER_TEMP/site" && echo "ventura-ok" > "$RUNNER_TEMP/site/index.html"
           (cd "$RUNNER_TEMP/site" && python3 -m http.server 4100 --bind 127.0.0.1 >/dev/null 2>&1 &)
-          sleep 1
+          # nginx qayta yuklanishi bir zumda emas: javob kelguncha bir necha marta uriniladi
+          via_nginx() {
+            for _ in $(seq 1 20); do
+              [ "$(curl -fsS -H "Host: $1" http://127.0.0.1/ 2>/dev/null)" = "ventura-ok" ] && return 0
+              sleep 0.5
+            done
+            echo "nginx orqali javob kelmadi: $1"
+            curl -sS -i -H "Host: $1" http://127.0.0.1/ | head -20 || true
+            curl -sS -i http://127.0.0.1:4100/ | head -5 || true
+            sudo cat /etc/nginx/conf.d/ventura-demo.conf || true
+            return 1
+          }
           $SSH 'sudo -n /usr/local/sbin/ventura-site set demo 4100 demo.localhost,demo.ventura.uz'
-          test "$(curl -fsS -H 'Host: demo.localhost' http://127.0.0.1/)" = "ventura-ok"
-          test "$(curl -fsS -H 'Host: demo.ventura.uz' http://127.0.0.1/)" = "ventura-ok"
+          via_nginx demo.localhost
+          via_nginx demo.ventura.uz
           # noto'g'ri kirish rad etiladi va sozlama o'zgarmaydi
           for bad in 'set Demo 4100 demo.localhost' 'set demo 80 demo.localhost' 'set demo 4100 a.b;reboot' 'remove ../nginx'; do
             if $SSH "sudo -n /usr/local/sbin/ventura-site $bad" 2>/dev/null; then echo "rad etilmadi: $bad"; exit 1; fi
           done
-          test "$(curl -fsS -H 'Host: demo.localhost' http://127.0.0.1/)" = "ventura-ok"
+          via_nginx demo.localhost
           $SSH 'sudo -n /usr/local/sbin/ventura-site remove demo'
           test ! -e /etc/nginx/conf.d/ventura-demo.conf
