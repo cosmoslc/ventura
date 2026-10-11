@@ -4,15 +4,30 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ventura/tenants": "workspace:*"
+    "@ventura/config": "workspace:*",
+    "@ventura/tenants": "workspace:*",
+    "@ventura/ui": "workspace:*",
+    "lucide-react": "^1.55.0",
+    "next": "^16.4.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.1.0"
   },
   "devDependencies": {
-    "@ventura/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.0",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3"
   }
 }

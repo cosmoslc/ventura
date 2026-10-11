@@ -133,3 +133,35 @@ export const servers = pgTable(
   },
   (t) => [uniqueIndex("servers_name_uq").on(t.name)],
 );
+
+/* ---------- Ishlab turgan ilovalar ---------- */
+
+/**
+ * Serverdagi bitta ilova nusxasi. `shared` rejimda bitta shablon ilovasi shu serverdagi hamma mijozga
+ * xizmat qiladi (mijoz domen bo'yicha aniqlanadi); `dedicated` rejimda (3-bosqich) har loyihaning o'zi.
+ */
+export const apps = pgTable(
+  "apps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    serverId: uuid("server_id")
+      .notNull()
+      .references(() => servers.id, { onDelete: "restrict" }),
+    templateKey: text("template_key").notNull(),
+    /** Serverdagi papka va PM2 jarayoni nomi, masalan `edu-crm` */
+    name: text("name").notNull(),
+    /** Ilova tinglaydigan mahalliy port (nginx shu portga yo'naltiradi) */
+    port: integer("port").notNull(),
+    commitSha: text("commit_sha"),
+    releasePath: text("release_path"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    uniqueIndex("apps_server_name_uq").on(t.serverId, t.name),
+    uniqueIndex("apps_server_port_uq").on(t.serverId, t.port),
+  ],
+);

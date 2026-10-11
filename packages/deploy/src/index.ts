@@ -1,4 +1,5 @@
 import { createSimDriver } from "./drivers/sim";
+import { type SshDriverDeps, createSshDriver } from "./drivers/ssh";
 import type { DriverFactory } from "./types";
 
 export * from "./types";
@@ -24,11 +25,15 @@ export {
   type RequestResult,
 } from "./service";
 export { createSimDriver } from "./drivers/sim";
+export { createSshDriver } from "./drivers/ssh";
 export { SshError, connect, fingerprint, generateKeyPair, sh, type SshSession, type SshTarget } from "./ssh";
 export { addServer, checkServer, findServer, openSession, type CheckResult, type ServerRow } from "./servers";
 
-/** Drayverni nomi bo'yicha beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
-export const drivers: DriverFactory = (kind) => {
-  if (kind === "sim") return createSimDriver();
-  throw new Error(`"${kind}" deploy drayveri hali qo'shilmagan`);
-};
+/** Har deploy uchun yangi drayver beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
+export function createDrivers(deps: SshDriverDeps): DriverFactory {
+  return (kind) => {
+    if (kind === "sim") return createSimDriver();
+    if (kind === "ssh") return createSshDriver(deps);
+    throw new Error(`"${kind}" deploy drayveri hali qo'shilmagan`);
+  };
+}

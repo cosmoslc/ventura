@@ -96,6 +96,8 @@ export const projects = pgTable(
     /** Mijoz tizimining ega login'i (paroli secrets jadvalida, shifrlangan) */
     ownerLogin: text("owner_login").notNull(),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    /** Qaysi serverga joylangan — `servers.id` (birinchi deploy'da belgilanadi) */
+    serverId: uuid("server_id"),
     /** Savat: o'chirilgan vaqt (30 kundan keyin butunlay o'chadi — 2-bosqich fon vazifasi) */
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     ...timestamps,

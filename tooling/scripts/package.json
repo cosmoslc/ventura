@@ -12,7 +12,8 @@
     "templates:sync": "tsx src/templates-sync.ts",
     "e2e:seed": "tsx src/e2e-seed.ts",
     "server:add": "tsx src/server-add.ts",
-    "server:check": "tsx src/server-check.ts"
+    "server:check": "tsx src/server-check.ts",
+    "deploy:run": "tsx src/deploy-run.ts"
   },
   "dependencies": {
     "@ventura/auth": "workspace:*",

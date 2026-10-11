@@ -19,7 +19,8 @@
     "e2e": "pnpm --filter @ventura/panel e2e",
     "worker": "pnpm --filter @ventura/worker start",
     "server:add": "pnpm --filter @ventura/scripts server:add",
-    "server:check": "pnpm --filter @ventura/scripts server:check"
+    "server:check": "pnpm --filter @ventura/scripts server:check",
+    "deploy:run": "pnpm --filter @ventura/scripts deploy:run"
   },
   "devDependencies": {
     "turbo": "^2.11.7",

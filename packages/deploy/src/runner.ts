@@ -2,6 +2,7 @@ import type { DeployStatus, StepStatus } from "@ventura/db/schema/panel";
 import { clip, redact } from "./redact";
 import {
   type DeployContext,
+  type DeployDriver,
   type DriverFactory,
   type LogStream,
   OPTIONAL_STEPS,
@@ -69,9 +70,10 @@ const FLUSH_LINES = 40;
 
 export async function runDeployment(deps: RunnerDeps, deploymentId: string): Promise<DeployStatus | "skipped"> {
   const { store } = deps;
-  const job = await store.load(deploymentId);
+  const loaded = await store.load(deploymentId);
   // Navbat vazifani qayta yetkazsa yoki deploy bekor qilingan bo'lsa — ikkinchi marta bajarilmaydi
-  if (!job || job.status !== "queued" || !(await store.claim(deploymentId))) return "skipped";
+  if (!loaded || loaded.status !== "queued" || !(await store.claim(deploymentId))) return "skipped";
+  const job: DeploymentJob = loaded;
 
   const emit = async (event: Omit<DeployEvent, "job">) => {
     try {
@@ -119,67 +121,75 @@ export async function runDeployment(deps: RunnerDeps, deploymentId: string): Pro
     return "failed";
   }
 
-  await emit({ type: "building" });
-  let phase: DeployStatus = "building";
-  let switched = false;
-
-  for (const [index, step] of STEPS.entries()) {
-    if (STEP_PHASE[step] !== phase) {
-      phase = STEP_PHASE[step];
-      await store.setStatus(deploymentId, phase);
-      await emit({ type: "deploying" });
-    }
-    const log = logger(step);
-    await store.setStep(deploymentId, step, "running");
-    try {
-      const result = await driver.run(step, ctx, log);
-      if (result?.commitSha) ctx.commitSha = result.commitSha;
-      if (result?.releasePath) ctx.releasePath = result.releasePath;
-      await flush();
-      await store.setStep(deploymentId, step, "ok", 0);
-      if (step === SWITCH_STEP) switched = true;
-    } catch (e) {
-      const error = safe((e as Error).message || "Noma'lum xato");
-      const exitCode = e instanceof StepError ? e.exitCode : 1;
-      log(error, "err");
-      await flush();
-      await store.setStep(deploymentId, step, "failed", exitCode);
-
-      if (OPTIONAL_STEPS.has(step)) {
-        log("Bu qadam majburiy emas — deploy davom etadi.", "info");
-        await flush();
-        continue;
-      }
-
-      // Sayt yangi relizga o'tib bo'lgan: oldingi ishlagan versiyaga qaytariladi (SPEC 6, 7-qadam)
-      let rolledBack = false;
-      if (switched) {
-        log("Oldingi relizga qaytarilmoqda…", "info");
-        try {
-          await driver.rollback(ctx, log);
-          rolledBack = true;
-          log("Oldingi reliz tiklandi.", "info");
-        } catch (rollbackError) {
-          log(`Qaytarib bo'lmadi: ${safe((rollbackError as Error).message)}`, "err");
-        }
-        await flush();
-      }
-
-      for (const rest of STEPS.slice(index + 1)) await store.setStep(deploymentId, rest, "skipped");
-      await store.finish(deploymentId, {
-        status: "failed",
-        error,
-        commitSha: ctx.commitSha,
-        releasePath: ctx.releasePath,
-      });
-      await emit({ type: "failed", error, failedStep: step, rolledBack });
-      return "failed";
-    }
+  try {
+    return await steps(driver);
+  } finally {
+    await driver.dispose?.().catch(() => {});
   }
 
-  await flush();
-  await store.finish(deploymentId, { status: "ready", commitSha: ctx.commitSha, releasePath: ctx.releasePath });
-  await store.activateProject(job.project.id);
-  await emit({ type: "ready" });
-  return "ready";
+  async function steps(driver: DeployDriver): Promise<DeployStatus> {
+    await emit({ type: "building" });
+    let phase: DeployStatus = "building";
+    let switched = false;
+
+    for (const [index, step] of STEPS.entries()) {
+      if (STEP_PHASE[step] !== phase) {
+        phase = STEP_PHASE[step];
+        await store.setStatus(deploymentId, phase);
+        await emit({ type: "deploying" });
+      }
+      const log = logger(step);
+      await store.setStep(deploymentId, step, "running");
+      try {
+        const result = await driver.run(step, ctx, log);
+        if (result?.commitSha) ctx.commitSha = result.commitSha;
+        if (result?.releasePath) ctx.releasePath = result.releasePath;
+        await flush();
+        await store.setStep(deploymentId, step, "ok", 0);
+        if (step === SWITCH_STEP) switched = true;
+      } catch (e) {
+        const error = safe((e as Error).message || "Noma'lum xato");
+        const exitCode = e instanceof StepError ? e.exitCode : 1;
+        log(error, "err");
+        await flush();
+        await store.setStep(deploymentId, step, "failed", exitCode);
+
+        if (OPTIONAL_STEPS.has(step)) {
+          log("Bu qadam majburiy emas — deploy davom etadi.", "info");
+          await flush();
+          continue;
+        }
+
+        // Sayt yangi relizga o'tib bo'lgan: oldingi ishlagan versiyaga qaytariladi (SPEC 6, 7-qadam)
+        let rolledBack = false;
+        if (switched) {
+          log("Oldingi relizga qaytarilmoqda…", "info");
+          try {
+            await driver.rollback(ctx, log);
+            rolledBack = true;
+            log("Oldingi reliz tiklandi.", "info");
+          } catch (rollbackError) {
+            log(`Qaytarib bo'lmadi: ${safe((rollbackError as Error).message)}`, "err");
+          }
+          await flush();
+        }
+
+        for (const rest of STEPS.slice(index + 1)) await store.setStep(deploymentId, rest, "skipped");
+        await store.finish(deploymentId, {
+          status: "failed",
+          error,
+          commitSha: ctx.commitSha,
+          releasePath: ctx.releasePath,
+        });
+        await emit({ type: "failed", error, failedStep: step, rolledBack });
+        return "failed";
+      }
+    }
+
+    await flush();
+    await store.finish(deploymentId, { status: "ready", commitSha: ctx.commitSha, releasePath: ctx.releasePath });
+    await store.activateProject(job.project.id);
+    await emit({ type: "ready" });
+    return "ready";
+  }
 }

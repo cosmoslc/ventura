@@ -226,6 +226,7 @@ export const uz = {
       migrate: "Baza migratsiyasi",
       release: "Yangi versiyaga o'tish",
       health: "Tekshiruv",
+      route: "Manzilni ulash",
       cleanup: "Eski relizlarni tozalash",
     },
     errors: {
