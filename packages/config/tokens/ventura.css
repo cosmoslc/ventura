@@ -97,6 +97,19 @@
   --nav-chevron: #a6adbd;
   --nav-hover-anim: nav-squish;
   /* --nav-icon-color atayin berilmagan: light'da har bandning o'z rangi */
+  /* Bandlar ikonkasi uchun palitra (eski CRM menyusi ranglari): item.color = "var(--nav-hue-…)" */
+  --nav-hue-blue: #006aff;
+  --nav-hue-sky: #0ea5e9;
+  --nav-hue-violet: #8b5cf6;
+  --nav-hue-purple: #7c3aed;
+  --nav-hue-orange: #f97316;
+  --nav-hue-amber: #f39c12;
+  --nav-hue-green: #27ae60;
+  --nav-hue-emerald: #059669;
+  --nav-hue-teal: #16a085;
+  --nav-hue-rose: #e11d48;
+  --nav-hue-pink: #ff6b81;
+  --nav-hue-slate: #64748b;
 
   --sub-fg: #555e75;
   --sub-line: #e2e8f0;

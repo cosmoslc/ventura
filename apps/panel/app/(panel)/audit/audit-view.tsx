@@ -9,7 +9,7 @@ import { Modal } from "@ventura/ui/modal";
 import { Pagination } from "@ventura/ui/pagination";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { actionLabel, actionTone, actorLabel } from "@/components/audit-row";
-import { EmptyState } from "@/components/page-header";
+import { EmptyState } from "@ventura/ui/page-header";
 import { formatDateTime } from "@/lib/format";
 import { uz } from "@/lib/uz";
 

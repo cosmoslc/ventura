@@ -1,7 +1,7 @@
 import { asc } from "drizzle-orm";
 import { ROLE_LABELS, accessState, formatPhone } from "@ventura/auth";
 import { users } from "@ventura/db/schema/panel";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@ventura/ui/page-header";
 import { deps } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";

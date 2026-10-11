@@ -49,6 +49,19 @@ describe("mijozlar ro'yxati", () => {
     expect(removeTenant(registry, "bilim").tenants).toEqual([]);
   });
 
+  it("logotip faqat https yoki ilova ichidagi yo'l", () => {
+    const withLogo = (logoUrl: string) =>
+      JSON.stringify({
+        version: 1,
+        tenants: [{ ...tenant("bilim", ["bilim.uz"]), brand: { primary: "#3f6df6", appearance: "light", logoUrl } }],
+      });
+    expect(parseRegistry(withLogo("https://cdn.bilim.uz/logo.png")).tenants[0]!.brand.logoUrl).toBeDefined();
+    expect(parseRegistry(withLogo("/brand/bilim.svg")).tenants).toHaveLength(1);
+    expect(() => parseRegistry(withLogo("javascript:alert(1)"))).toThrow();
+    expect(() => parseRegistry(withLogo("//evil.example/x.png"))).toThrow();
+    expect(() => parseRegistry(withLogo("http://bilim.uz/logo.png"))).toThrow();
+  });
+
   it("buzilgan faylni jim qabul qilmaydi", () => {
     expect(() => parseRegistry("{")).toThrow();
     expect(() => parseRegistry('{"version":2,"tenants":[]}')).toThrow();

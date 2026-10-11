@@ -1,5 +1,8 @@
 /**
- * Shablon (mijoz) bazalari sxemasi. Har jadvalda tenant_id bo'ladi (SPEC 9-bo'lim) — baza strategiyasi
+ * Shablon (mijoz) bazalari sxemasi. Har jadvalda tenant_id va RLS bo'ladi (SPEC 9-bo'lim) — baza strategiyasi
  * (shared_db / db_per_tenant / dedicated_server) qaysi bo'lishidan qat'i nazar sxema bir xil.
+ * O'zgarish faqat drizzle-kit migratsiyasi orqali: `pnpm db:generate:tenant`.
  */
-export {};
+export * from "./auth";
+export * from "./columns";
+export * from "./core";

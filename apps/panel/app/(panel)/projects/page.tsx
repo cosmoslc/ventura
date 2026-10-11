@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { can } from "@ventura/auth";
 import { Button } from "@ventura/ui/button";
-import { PageHeader } from "@/components/page-header";
+import { PageHeader } from "@ventura/ui/page-header";
 import { listProjects } from "@/lib/server/projects-query";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";

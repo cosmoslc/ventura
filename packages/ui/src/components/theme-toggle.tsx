@@ -2,15 +2,8 @@
 
 import * as React from "react";
 import { Moon, Sun } from "lucide-react";
+import { THEME_STORAGE_KEY } from "../lib/theme";
 import { Button } from "./button";
-
-export const THEME_STORAGE_KEY = "ventura-theme";
-
-/**
- * <head> ichida birinchi chizishdan oldin ishlaydigan skript:
- * saqlangan tanlov → qurilma sozlamasi.
- */
-export const themeInitScript = `(function(){try{var s=localStorage.getItem("${THEME_STORAGE_KEY}");var d=s?s==="dark":matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}})()`;
 
 function subscribe(cb: () => void) {
   const obs = new MutationObserver(cb);

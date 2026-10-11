@@ -10,7 +10,7 @@ import { type LogLine, LogView } from "@ventura/ui/log-view";
 import { Notice } from "@ventura/ui/notice";
 import { StepList } from "@ventura/ui/step-list";
 import { toast } from "@ventura/ui/toast";
-import { EmptyState } from "@/components/page-header";
+import { EmptyState } from "@ventura/ui/page-header";
 import { formatDateTime } from "@/lib/format";
 import type { DeploymentRow, DeploymentState } from "@/lib/server/deployments-query";
 import { uz } from "@/lib/uz";
