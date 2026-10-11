@@ -158,7 +158,8 @@ jobs:
           via_nginx demo.localhost
           via_nginx demo.ventura.uz
           # noto'g'ri kirish rad etiladi va sozlama o'zgarmaydi
-          for bad in 'set Demo 4100 demo.localhost' 'set demo 80 demo.localhost' 'set demo 4100 a.b;reboot' 'remove ../nginx'; do
+          # Xavfli belgilar bitta argument bo'lib yetib borishi uchun ichki qo'shtirnoq bilan (drayver ham shunday qiladi)
+          for bad in "set Demo 4100 demo.localhost" "set demo 80 demo.localhost" "set demo 4100 'a.b;reboot'" "set demo 4100 '\$(id)'" "remove ../nginx"; do
             if $SSH "sudo -n /usr/local/sbin/ventura-site $bad" 2>/dev/null; then echo "rad etilmadi: $bad"; exit 1; fi
           done
           via_nginx demo.localhost

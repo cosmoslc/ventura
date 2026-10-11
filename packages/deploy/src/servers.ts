@@ -58,7 +58,8 @@ const PROBES = {
   os: `. /etc/os-release && printf %s "$PRETTY_NAME"`,
   node: "node --version",
   pnpm: "pnpm --version",
-  pm2: "pm2 --version",
+  // Birinchi chaqiruvda PM2 tanishtiruv matnini ham chiqaradi; versiya oxirgi qatorda
+  pm2: "pm2 --version 2>/dev/null | tail -n 1",
   nginx: "nginx -v 2>&1 | sed 's/.*nginx\\///'",
   postgres: "psql --version | awk '{print $3}'",
   memoryMb: "awk '/MemTotal/ {printf \"%d\", $2/1024}' /proc/meminfo",
