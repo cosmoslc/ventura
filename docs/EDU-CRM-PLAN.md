@@ -63,6 +63,16 @@ Ishni yengillashtiradigan narsa: Supabase'ga 125 murojaatning 123 tasi bitta pap
 5. **Pul bilan bog'liq hamma narsa testda.** To'lov, qaytarish, qarz, chegirma, ish haqi hisobi uchun Vitest; asosiy oqimlar uchun Playwright.
 6. **Mijozga xos farq faqat bo'lim yoki sozlama orqali** (CLAUDE.md). Markaz nomi, logotipi, aloqa ma'lumotlari kodda yozilmaydi.
 7. **Har o'zgartiruvchi amal jurnalga yoziladi** (eski tizimdagi "faoliyat jurnali" o'rniga).
+8. **Kod uchala joylashtirish variantida bitta** (SPEC 3- va 4-bo'limlar). Bazaga ulanish faqat `getTenantDb(tenant)` orqali olinadi; sahifa va server amallari qaysi variantda ishlayotganini bilmaydi.
+9. **Har jadvalda `tenant_id`**, har so'rov shu bo'yicha filtrlanadi. Umumiy bazada (`shared_db`) ikkinchi qavat — PostgreSQL RLS: filtr unutilsa ham baza boshqa mijoz qatorini bermaydi.
+
+### Joylashtirish variantlari
+
+| Variant | SPEC'dagi nomi | Qachon |
+| --- | --- | --- |
+| Bitta ilova, har mijozga o'z bazasi (standart) | `shared` + `db_per_tenant` | Ventura 2-bosqichi |
+| Bitta ilova, bitta umumiy baza | `shared` + `shared_db` | Ventura 2-bosqichi |
+| Har mijozga alohida ilova va baza | `dedicated` | Ventura 3-bosqichi |
 
 ## 5. Bosqichlar
 
@@ -76,9 +86,10 @@ Har bosqich alohida branch va PR. Qabul mezoni bajarilmaguncha keyingisiga o'til
 - [ ] Tayyor rollar va `can(role, permission)`; filial bo'yicha cheklov
 - [ ] Qobiq: sidebar, topbar, light/dark, bo'sh bosh sahifa
 - [ ] `hasFeature()` va brend sozlamasini (rang, nom, logotip) o'qish
+- [ ] Mijozni domen bo'yicha aniqlash, `getTenantDb()`, `tenant_id` va RLS; ajratish testi (A mijoz B mijoz ma'lumotini ololmaydi)
 - [ ] CI'ga qo'shish; `/health` manzili (deploy tekshiruvi uchun)
 
-**Qabul:** ilova mahalliy va PM2 ostida ochiladi; direktor kiradi; o'chirilgan bo'lim menyuda ko'rinmaydi va manziliga kirib bo'lmaydi. Ventura 2-bosqichi shu skeletni deploy qilib sinaydi.
+**Qabul:** ilova mahalliy va PM2 ostida ochiladi; direktor kiradi; o'chirilgan bo'lim menyuda ko'rinmaydi va manziliga kirib bo'lmaydi; ajratish testi umumiy bazada ham, alohida bazalarda ham o'tadi. Ventura 2-bosqichi shu skeletni deploy qilib sinaydi.
 
 ### E1. Asos: o'quv jarayoni
 
@@ -177,6 +188,7 @@ Tegishli bosqich boshlanishidan oldin hal qilinadi.
 | --- | --- |
 | Hajm katta (~87 000 qator), ish cho'zilib ketadi | Vertikal bo'laklar: har bosqich oxirida ishlatsa bo'ladigan natija; keraksiz ko'rinishlar boshida tashlanadi |
 | Pul hisobida eski tizimdan farq | Eski SQL testlar ssenariylari Vitest'ga ko'chiriladi; E3 qabuli shunga bog'langan |
+| Umumiy bazada bir mijoz boshqasining ma'lumotini ko'rib qoladi | `tenant_id` filtri bitta o'ramda (qo'lda yozilmaydi) va RLS; ajratish testi har yangi jadval uchun majburiy |
 | Ruxsat tekshiruvi biror amalda unutiladi | Server amallari bitta o'ram orqali yoziladi (ruxsatsiz amal yozib bo'lmaydi); har rol uchun Playwright testi |
 | Eski tizim o'zgarishda davom etadi | Har bosqich boshida eski repozitoriyning o'sha modul qismi qayta ko'riladi |
 | `packages/ui`da komponent yetishmaydi (sana tanlash, qidiruvli select, grafik) | Kerak bo'lgan bosqichda avval komponent qo'shiladi; STYLE.md 15-bo'limidagi ro'yxat |
