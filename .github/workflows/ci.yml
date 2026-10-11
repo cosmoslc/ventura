@@ -209,11 +209,11 @@ jobs:
 
       - name: Serverni panelga qo'shish (panel o'z kalitini yaratadi)
         run: |
-          pnpm --silent server:add -- --name ci --kind home --host 127.0.0.1 --port 2222 | tee "$RUNNER_TEMP/server-add.txt"
+          pnpm --silent server:add -- --name ci-runner --kind home --host 127.0.0.1 --port 2222 | tee "$RUNNER_TEMP/server-add.txt"
           KEY="$(grep -m1 '^ssh-ed25519 ' "$RUNNER_TEMP/server-add.txt")"
           sudo bash tooling/server/setup.sh --ssh-port 2222 --key "$KEY"
           test "$(sudo grep -c '^restrict ssh-ed25519' /home/deploy/.ssh/authorized_keys)" = "2"
-          pnpm --silent server:check -- --name ci
+          pnpm --silent server:check -- --name ci-runner
 
       - name: Sinov loyihalari va ishchi jarayon
         run: |
