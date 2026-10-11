@@ -21,8 +21,9 @@ export interface Viewer {
  * sessiya bekor qilinadi va null qaytadi. Bir so'rov ichida bir marta bajariladi (cache).
  */
 export const getViewer = cache(async (): Promise<Viewer | null> => {
-  const { auth, db } = deps();
+  // headers() birinchi: build paytida sahifa dinamik deb belgilanadi va bazaga ulanishga urinilmaydi
   const h = await headers();
+  const { auth, db } = deps();
   const data = await auth.api.getSession({ headers: h });
   if (!data) return null;
   const u = data.user as typeof data.user & {
