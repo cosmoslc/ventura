@@ -25,6 +25,7 @@ Eski kod **o'qish uchun namuna**: nima qilishi va qanday ko'rinishi undan olinad
 | 10 | Birinchi versiyaga kirmaydi: coin va ball tizimi, SMS yuborish, imtihonlar va sertifikatlar. Excel import kiradi. |
 | 11 | Interfeys faqat o'zbekcha; matnlar bitta faylda. |
 | 12 | Tartib: avval Ventura 2-bosqichi (deploy), keyin E0. |
+| 13 | edu-crm cosmoslc CRM bilan bir xil bo'lishi kerak: har bo'lim ko'rinishi, maydonlari, hisob-kitobi va oqimi eski tizimdagidek (2026-10-11). Farq faqat texnologiyada (TypeScript, server, tokenlar) va 10-qarordagi birinchi versiyaga kirmaydiganlarda. |
 
 ## 3. Eski tizim: nima bor
 
@@ -91,7 +92,7 @@ Har bosqich alohida branch va PR. Qabul mezoni bajarilmaguncha keyingisiga o'til
 
 **Qabul:** ilova mahalliy va PM2 ostida ochiladi; direktor kiradi; o'chirilgan bo'lim menyuda ko'rinmaydi va manziliga kirib bo'lmaydi; ajratish testi umumiy bazada ham, alohida bazalarda ham o'tadi. Ventura 2-bosqichi shu skeletni deploy qilib sinaydi.
 
-**Holat (2026-10-11):** skelet tayyor, qarorlar — `docs/decisions/0006-edu-crm-skelet.md`. Mahalliy production build'da sinalgan: uch mijoz (ikkitasi umumiy bazada, bittasi alohida bazada), direktor birinchi kirishdan (vaqtinchalik parol → yangi parol → bot → kod) bosh sahifagacha, o'chirilgan bo'lim 404, kassir menyusi va ruxsatlari, bir mijoz sessiyasi boshqasida ishlamasligi. Ajratish testi CI'da (`tenant-db`). Qoldi: serverda maxfiy fayl va mijoz bazasini panel yaratishi (Ventura 2-bosqich, "Baza strategiyalari") — shundan keyin PM2'dagi ilovaga direktor kira oladi; hozir PM2 ostida ilova ochiladi va kirish sahifasi "tizim hali sozlanmagan" deydi.
+**Holat (2026-10-11):** skelet tayyor, qarorlar — `docs/decisions/0006-edu-crm-skelet.md`. Mahalliy production build'da sinalgan: uch mijoz (ikkitasi umumiy bazada, bittasi alohida bazada), direktor birinchi kirishdan (vaqtinchalik parol → yangi parol → bot → kod) bosh sahifagacha, o'chirilgan bo'lim 404, kassir menyusi va ruxsatlari, bir mijoz sessiyasi boshqasida ishlamasligi. Ajratish testi CI'da (`tenant-db`). Serverdagi mijoz bazasi, maxfiy fayl va birinchi direktorni endi deploy yaratadi (ADR 0007): Yangi loyiha formasi → "Deploy" → direktor formadagi telefon bilan kiradi.
 
 ### E1. Asos: o'quv jarayoni
 

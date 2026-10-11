@@ -1,9 +1,11 @@
 import { execFile } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { promisify } from "node:util";
-import { and, asc, eq, max } from "drizzle-orm";
+import { and, asc, eq, isNull, max, ne } from "drizzle-orm";
 import type { PanelDb } from "@ventura/db";
 import { apps, domains, projectFeatures, projects, servers, templates } from "@ventura/db/schema/panel";
-import { type Tenant, emptyRegistry, parseRegistry, upsertTenant } from "@ventura/tenants";
+import { readSecret, putSecret } from "@ventura/security";
+import { type Tenant, emptyRegistry, emptySecrets, parseRegistry, parseSecrets, upsertTenant } from "@ventura/tenants";
 import { openSession } from "../servers";
 import { type SshSession, sh } from "../ssh";
 import { type DeployContext, type DeployDriver, StepError, type StepKey, type StepLog } from "../types";
@@ -24,6 +26,10 @@ const APP_PATH_RE = /^apps\/[a-z0-9][a-z0-9-]*$/;
 const ROOT_RE = /^\/[A-Za-z0-9._/-]+$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 const RELEASE_RE = /^\d{14}-[0-9a-f]{7}$/;
+const DB_NAME_RE = /^[a-z][a-z0-9_]{2,62}$/;
+const DB_PASSWORD_RE = /^[A-Za-z0-9_-]{24,128}$/;
+/** Shablon o'z bazasini tayyorlaydigan skript (bo'lmasa, baza qadami o'tkazib yuboriladi) */
+const PROVISION_SCRIPT = "scripts/provision.ts";
 const FIRST_PORT = 4100;
 const KEEP_RELEASES = 5;
 const MINUTE = 60_000;
@@ -36,6 +42,10 @@ export interface SshDriverDeps {
 
 interface Plan {
   session: SshSession;
+  projectId: string;
+  serverId: string;
+  dbStrategy: string;
+  owner: { name: string | null; phone: string | null };
   slug: string;
   appName: string;
   appPath: string;
@@ -60,11 +70,15 @@ function must(value: string, pattern: RegExp, what: string): string {
 export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   let plan: Plan | null = null;
 
-  /** Buyruqni bajaradi: o'zi `cmd`, natijasi `out` / `err` bo'lib logga tushadi. Nol bo'lmagan kod — xato. */
-  async function remote(log: StepLog, command: string, timeoutMs = 2 * MINUTE): Promise<string> {
+  /**
+   * Buyruqni bajaradi: o'zi `cmd`, natijasi `out` / `err` bo'lib logga tushadi. Nol bo'lmagan kod — xato.
+   * `input` — stdin (sirlar shu yo'l bilan beriladi; logga yozilmaydi).
+   */
+  async function remote(log: StepLog, command: string, timeoutMs = 2 * MINUTE, input?: string): Promise<string> {
     log(command, "cmd");
     const result = await plan!.session.exec(`bash -lc ${sh(command)}`, {
       timeoutMs,
+      input,
       onLine: (line, stream) => log(line, stream === "err" ? "err" : "out"),
     });
     if (result.code !== 0) throw new StepError(`Buyruq ${result.code} kodi bilan tugadi`, result.code);
@@ -138,6 +152,10 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const session = await openSession(db, server);
     plan = {
       session,
+      projectId: project.id,
+      serverId: server.id,
+      dbStrategy: project.dbStrategy,
+      owner: { name: project.ownerName, phone: project.ownerPhone },
       slug,
       appName,
       appPath,
@@ -225,6 +243,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
             NODE_ENV: "production",
             NEXT_TELEMETRY_DISABLED: "1",
             VENTURA_TENANTS_FILE: file,
+            VENTURA_TENANT_SECRETS_FILE: `${p.root}/shared/tenant-secrets.json`,
             VENTURA_COMMIT_FILE: `${p.root}/current/.ventura-commit`,
           },
           max_memory_restart: "512M",
@@ -298,6 +317,148 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     log(`Manzillar ulandi: ${p.hosts.map((h) => `http://${h}`).join(", ")}`, "info");
   }
 
+  /** Panel sirlaridan o'qiydi; bo'lmasa yaratib saqlaydi (keyingi deploylarda o'sha qiymat). */
+  async function ensureSecret(owner: { type: string; id: string }, name: string): Promise<string> {
+    const existing = await readSecret(db, owner, name);
+    if (existing) return existing;
+    const value = randomBytes(32).toString("base64url");
+    await putSecret(db, owner, name, value);
+    return value;
+  }
+
+  /**
+   * Mijoz bazasi (SPEC 4, ADR 0007): serverda baza va uning roli (`ventura-db`), migratsiyalar va birinchi direktor
+   * (shablonning `scripts/provision.ts`), keyin ilova uchun maxfiy fayl. Sirlar faqat stdin va SFTP orqali.
+   */
+  async function migrate(log: StepLog) {
+    const p = plan!;
+    const appDir = `${p.release}/${p.appPath}`;
+    if (!(await probe(`test -f ${sh(`${appDir}/${PROVISION_SCRIPT}`)} && echo bor`))) {
+      return void log("Shablonda mijoz bazasi yo'q — o'tkazib yuborildi.", "info");
+    }
+    if (p.dbStrategy === "dedicated_server") {
+      throw new StepError("Alohida baza serveri (dedicated_server) hali qo'llab-quvvatlanmaydi (3-bosqich)");
+    }
+    const { shared, dbName, passwordOwner, passwordName } = dbFor(p.dbStrategy, p.slug, p.projectId);
+
+    const helper = await p.session.exec(`bash -lc ${sh("sudo -n /usr/local/sbin/ventura-db check")}`, {
+      timeoutMs: 30_000,
+    });
+    if (helper.code !== 0) {
+      throw new StepError(
+        "Serverda ventura-db yordamchisi yo'q: serverda setup.sh ni qayta ishga tushiring (yangi versiyasi bazani ham tayyorlaydi)",
+      );
+    }
+
+    // Umumiy baza — server sirlari ichida (shu serverdagi hamma mijoz bitta baza); alohida baza — loyiha sirlari ichida
+    const dbPassword = await ensureSecret(passwordOwner, passwordName);
+    must(dbPassword, DB_PASSWORD_RE, "Baza paroli");
+    await remote(
+      log,
+      `sudo -n /usr/local/sbin/ventura-db ensure ${sh(dbName)} ${sh(dbName)}`,
+      MINUTE,
+      `${dbPassword}\n`,
+    );
+    log(`Baza: ${dbName} (${shared ? "umumiy baza" : "alohida baza"})`, "info");
+
+    const project = { type: "project", id: p.projectId };
+    const databaseUrl = `postgres://${dbName}:${dbPassword}@127.0.0.1:5432/${dbName}`;
+    const authSecret = await ensureSecret(project, "auth_secret");
+    const [ownerPassword, botToken] = await Promise.all([
+      readSecret(db, project, "owner_password"),
+      readSecret(db, project, "telegram_bot_token"),
+    ]);
+    const owner =
+      p.owner.name && p.owner.phone && ownerPassword
+        ? { name: p.owner.name, phone: p.owner.phone, password: ownerPassword }
+        : null;
+    await remote(
+      log,
+      `cd ${sh(appDir)} && node_modules/.bin/tsx ${PROVISION_SCRIPT}`,
+      5 * MINUTE,
+      JSON.stringify({ slug: p.slug, name: p.tenant.name, databaseUrl, authSecret, owner }),
+    );
+
+    // Ilova uchun maxfiy fayl: boshqa mijozlar yozuvlari saqlanadi; mazmuni logga chiqmaydi
+    const file = `${p.root}/shared/tenant-secrets.json`;
+    const existing = await probe(`cat ${sh(file)}`);
+    let secrets = emptySecrets();
+    if (existing) {
+      try {
+        secrets = parseSecrets(existing);
+      } catch {
+        throw new StepError(
+          "Serverdagi maxfiy sozlamalar fayli (tenant-secrets.json) buzilgan — qo'lda tekshirish kerak",
+        );
+      }
+    }
+    secrets.tenants[p.slug] = { databaseUrl, authSecret, ...(botToken ? { telegramBotToken: botToken } : {}) };
+    await p.session.writeFile(`${file}.tmp`, `${JSON.stringify(secrets, null, 2)}\n`, 0o600);
+    await remote(log, `chmod 600 ${sh(`${file}.tmp`)} && mv -f ${sh(`${file}.tmp`)} ${sh(file)}`);
+    log("Maxfiy sozlamalar yozildi: baza, sessiya kaliti, bot (qiymatlar ko'rsatilmaydi)", "info");
+    if (!botToken) log("Diqqat: loyihada Telegram bot tokeni yo'q — xodimlar tizimga kira olmaydi.", "info");
+    if (!owner) log("Diqqat: ega (telefon, ism, parol) to'liq emas — direktor yaratilmadi.", "info");
+
+    // Yangi kod shu serverdagi hamma mijozga birdan tushadi (bitta ilova): ularning bazalari ham yangilanadi.
+    // Biri yiqilsa deploy shu yerda to'xtaydi — reliz almashtirilmaydi, eski versiya ishlashda davom etadi.
+    if (!p.reuse) await migrateOthers(log, appDir);
+  }
+
+  /** Baza nomi va paroli qayerda saqlanishi: umumiy baza — server sirlari, alohida baza — loyiha sirlari. */
+  function dbFor(strategy: string, slug: string, projectId: string) {
+    const p = plan!;
+    const shared = strategy === "shared_db";
+    const base = p.appName.replace(/-/g, "_");
+    const dbName = must(shared ? `${base}_shared` : `${base}_${slug.replace(/-/g, "_")}`, DB_NAME_RE, "Baza nomi");
+    return {
+      shared,
+      dbName,
+      passwordOwner: shared ? { type: "server", id: p.serverId } : { type: "project", id: projectId },
+      passwordName: shared ? `db:${dbName}` : "db_password",
+    };
+  }
+
+  async function migrateOthers(log: StepLog, appDir: string) {
+    const p = plan!;
+    const others = await db
+      .select({ id: projects.id, slug: projects.slug, name: projects.name, dbStrategy: projects.dbStrategy })
+      .from(projects)
+      .where(
+        and(
+          eq(projects.serverId, p.serverId),
+          eq(projects.templateKey, p.appName),
+          ne(projects.id, p.projectId),
+          isNull(projects.deletedAt),
+        ),
+      );
+    let done = 0;
+    for (const other of others) {
+      if (other.dbStrategy === "dedicated_server" || !SLUG_RE.test(other.slug)) continue;
+      const { dbName, passwordOwner, passwordName } = dbFor(other.dbStrategy, other.slug, other.id);
+      const [dbPassword, authSecret] = await Promise.all([
+        readSecret(db, passwordOwner, passwordName),
+        readSecret(db, { type: "project", id: other.id }, "auth_secret"),
+      ]);
+      // Hali deploy qilinmagan loyiha: bazasi yo'q, o'z deploy'ida yaratiladi
+      if (!dbPassword || !authSecret) continue;
+      log(`Mijoz bazasi yangilanmoqda: ${other.slug}`, "info");
+      await remote(
+        log,
+        `cd ${sh(appDir)} && node_modules/.bin/tsx ${PROVISION_SCRIPT}`,
+        5 * MINUTE,
+        JSON.stringify({
+          slug: other.slug,
+          name: other.name,
+          databaseUrl: `postgres://${dbName}:${dbPassword}@127.0.0.1:5432/${dbName}`,
+          authSecret,
+          owner: null,
+        }),
+      );
+      done++;
+    }
+    if (done) log(`Shu serverdagi boshqa mijozlar bazasi ham yangilandi: ${done} ta`, "info");
+  }
+
   async function cleanup(log: StepLog) {
     const p = plan!;
     const listing = await probe(`ls -1t ${sh(`${p.root}/releases`)}`);
@@ -311,10 +472,11 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `rm -rf -- ${old.map((name) => sh(`${p.root}/releases/${name}`)).join(" ")}`);
   }
 
-  const steps: Record<Exclude<StepKey, "prepare" | "migrate">, (log: StepLog) => Promise<void>> = {
+  const steps: Record<Exclude<StepKey, "prepare">, (log: StepLog) => Promise<void>> = {
     fetch,
     env,
     build,
+    migrate,
     release,
     health,
     route,
@@ -326,7 +488,6 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     async run(step, ctx, log) {
       if (step === "prepare") return prepare(ctx, log);
       if (!plan) throw new StepError("Deploy rejasi tuzilmagan");
-      if (step === "migrate") return void log("Mijoz bazasi keyingi qismda (3/4) qo'shiladi.", "info");
       await steps[step](log);
       // Oxirgi majburiy qadam o'tdi: ilova holati eslab qolinadi
       if (step === "route") {

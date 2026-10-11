@@ -16,7 +16,7 @@
 - `pnpm db:generate` · `pnpm db:migrate` — Drizzle migratsiyasini yaratish va qo'llash (`PANEL_MIGRATE_URL`)
 - `pnpm templates:sync` — shablon manifestlarini (`apps/*/features.ts`) bazaga ko'chirish
 - `pnpm db:generate:tenant` · `pnpm db:migrate:tenant` — mijoz (shablon) bazasi migratsiyasi (`TENANT_MIGRATE_URL`)
-- `pnpm edu:tenant` · `pnpm edu:staff` — edu-crm mijozi va xodimini terminaldan qo'shish (apps/edu-crm/README.md)
+- `pnpm edu:tenant` · `pnpm edu:staff` — faqat mahalliy ishlab chiqish uchun; serverda mijoz bazasi va direktorni deploy yaratadi (ADR 0007)
 - `pnpm admin:create` · `pnpm admin:unlock` · `pnpm admin:reset-2fa` — adminlar bilan ishlash, faqat server terminalida
 - `pnpm server:add` · `pnpm server:check` — serverni ro'yxatga olish (SSH kalit yaratadi) va tekshirish; serverning o'zida bir marta `sudo bash tooling/server/setup.sh --key "..."`
 - `pnpm deploy:run -- --project <slug>` — loyihani terminaldan deploy qilish (paneldagi tugma bilan bir xil yo'l)

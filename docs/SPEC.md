@@ -467,7 +467,7 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 - [ ] Cloudflare Tunnel orqali `admin.ventura.uz` va `*.ventura.uz`ni internetga chiqarish
 - [x] `packages/deploy`: `DeployDriver` interfeysi va SSH drayveri (relizlar, `pm2 reload`, health check, rollback)
 - [x] pg-boss navbati, deploy vazifasi, jonli loglar (`deployment_steps`)
-- [ ] Baza strategiyalari: `shared_db` va `db_per_tenant`, `getTenantDb()`, barcha bazalarda migratsiya
+- [x] Baza strategiyalari: `shared_db` va `db_per_tenant`, `getTenantDb()`, barcha bazalarda migratsiya (ADR 0006, 0007)
 - [ ] `edu-crm`ni bepul subdomenda ishga tushirish
 - [ ] Deploylar tabi: tarix, holat, loglar, qayta deploy, rollback
 

@@ -62,6 +62,12 @@ export async function login(page: Page) {
   await expectSignedIn(page);
 }
 
+/** Formaning "Ega" qadami: ism va telefon majburiy (birinchi deploy'da direktor bo'ladi). */
+export async function fillOwner(page: Page, id: string) {
+  await page.locator("#w-owner-name").fill(`E2E direktor ${id}`);
+  await page.locator("#w-owner-phone").fill("901234567");
+}
+
 /** Yangi loyiha formasi orqali loyiha yaratadi va uning sahifasida to'xtaydi. */
 export async function createProject(page: Page): Promise<{ name: string; slug: string }> {
   const id = Date.now().toString(36);
@@ -80,6 +86,7 @@ export async function createProject(page: Page): Promise<{ name: string; slug: s
   const newClient = page.locator("#w-cname");
   if (await newClient.isVisible()) await newClient.fill(`E2E mijoz ${id}`);
   for (let i = 2; i < steps.length; i++) {
+    if (i === 4) await fillOwner(page, id);
     await page.getByRole("button", { name: uz.common.next }).click();
     await expect(current).toContainText(steps[i]!);
   }

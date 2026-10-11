@@ -59,10 +59,9 @@ export const projectInputSchema = z
       primary: z.string().regex(/^#[0-9a-f]{6}$/i),
       appearance: z.enum(["light", "dark", "system"]),
     }),
-    ownerLogin: z
-      .string()
-      .trim()
-      .regex(/^[a-z0-9._-]{3,32}$/i),
+    ownerName: z.string().trim().min(2, uz.projects.ownerNameInvalid).max(120),
+    /** 9 raqam (PhoneInput): 901234567 */
+    ownerPhone: z.string().regex(/^\d{9}$/, uz.projects.ownerPhoneInvalid),
     ownerPassword: z.string().min(8).max(128),
     features: z.array(z.string()),
     mode: z.enum(DEPLOY_MODES),

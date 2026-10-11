@@ -20,7 +20,14 @@ rollar va filial bo'yicha cheklov, bo'limlarga qarab menyu. Qarorlar: `docs/deci
 
 Mijoz bazasi sxemasi — `packages/db/src/schema/tenant`, xodimlar kirishi va rollar — `packages/auth/src/staff`.
 
-## Mahalliy ishga tushirish
+## Serverda (panel orqali)
+
+Panelda Yangi loyiha → ega (ism, telefon, vaqtinchalik parol) va Telegram bot tokeni → "Deploy". Deploy markaz bazasini,
+maxfiy faylni va birinchi direktorni o'zi yaratadi (`scripts/provision.ts`, ADR 0007). Direktor formadagi telefon va
+vaqtinchalik parol bilan kiradi, parolni almashtiradi va markaz botini ulaydi. Serverda `setup.sh` ning yangi versiyasi
+ishga tushirilgan bo'lishi kerak (`ventura-db` yordamchisi).
+
+## Mahalliy ishga tushirish (faqat ishlab chiqish uchun)
 
 PostgreSQL va `.env` (namunasi `.env.example`da: `VENTURA_TENANTS_FILE`, `VENTURA_TENANT_SECRETS_FILE`) kerak.
 

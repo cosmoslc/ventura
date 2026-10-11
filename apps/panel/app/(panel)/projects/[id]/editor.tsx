@@ -16,6 +16,7 @@ import { Button } from "@ventura/ui/button";
 import { Card, CardContent } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
+import { formatUzPhone } from "@ventura/ui/phone-input";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ventura/ui/tabs";
@@ -43,7 +44,8 @@ interface EditorProps {
     target: Target;
     dbStrategy: DbStrategy;
     brand: ProjectBrand;
-    ownerLogin: string;
+    ownerName: string | null;
+    ownerPhone: string | null;
     templateName: string;
   };
   clients: { id: string; name: string }[];
@@ -243,11 +245,16 @@ export function ProjectEditor({
             <TabsContent value="owner">
               <dl className="max-w-lg divide-y divide-border-soft rounded-card border border-border text-body">
                 {[
+                  [uz.projects.ownerName, project.ownerName ?? "—"],
                   [
-                    uz.projects.ownerLogin,
-                    <span key="l" className="font-mono">
-                      {project.ownerLogin}
-                    </span>,
+                    uz.projects.ownerPhone,
+                    project.ownerPhone ? (
+                      <span key="p" className="font-mono">
+                        +998 {formatUzPhone(project.ownerPhone.slice(-9))}
+                      </span>
+                    ) : (
+                      "—"
+                    ),
                   ],
                   [
                     uz.projects.ownerPassword,

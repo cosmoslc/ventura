@@ -223,6 +223,16 @@ jobs:
           # parol bilan kirib bo'lmaydi
           if ssh -p 2222 -o StrictHostKeyChecking=no -o BatchMode=yes -o PubkeyAuthentication=no deploy@127.0.0.1 true 2>/dev/null; then exit 1; fi
 
+      - name: Baza yordamchisi (ventura-db)
+        run: |
+          SSH="ssh -p 2222 -i $RUNNER_TEMP/panel_key -o StrictHostKeyChecking=no -o BatchMode=yes deploy@127.0.0.1"
+          $SSH 'sudo -n /usr/local/sbin/ventura-db check'
+          # Parol faqat stdin'dan; noto'g'ri nom, tizim bazasi va qisqa parol rad etiladi
+          for bad in "ensure Edu x_role" "ensure postgres edu_x" "ensure edu_x postgres" "ensure 'a;drop' edu_x" "ensure edu_x"; do
+            if echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH "sudo -n /usr/local/sbin/ventura-db $bad" 2>/dev/null; then echo "rad etilmadi: $bad"; exit 1; fi
+          done
+          if echo "qisqa" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_probe edu_ci_probe' 2>/dev/null; then exit 1; fi
+
       - name: nginx yordamchisi (ventura-site)
         run: |
           SSH="ssh -p 2222 -i $RUNNER_TEMP/panel_key -o StrictHostKeyChecking=no -o BatchMode=yes deploy@127.0.0.1"
@@ -262,7 +272,7 @@ jobs:
       - name: Sinov loyihalari va ishchi jarayon
         run: |
           pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-a --name "Demo A" --color "#059669"
-          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-b --name "Demo B" --color "#7c3aed"
+          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-b --name "Demo B" --color "#7c3aed" --db shared_db --owner-phone +998907654321
           nohup pnpm worker > "$RUNNER_TEMP/worker.log" 2>&1 &
           for _ in $(seq 1 60); do grep -q "worker. tayyor" "$RUNNER_TEMP/worker.log" && break; sleep 1; done
           grep -q "worker. tayyor" "$RUNNER_TEMP/worker.log"
@@ -289,6 +299,28 @@ jobs:
           curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/login | grep -q "Demo A"
           # bitta jarayon ikkalasiga xizmat qiladi
           test "$(sudo -u deploy -i pm2 jlist | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" = "1"
+
+      - name: Mijoz bazalari, direktorlar va maxfiy fayl (deploy yaratgan)
+        run: |
+          # Ilova ikkala mijozni ham "sozlangan" deb biladi (baza va sessiya kaliti bor)
+          curl -fsS -H "Host: demo-a.localhost" http://127.0.0.1/health | grep '"configured":true'
+          curl -fsS -H "Host: demo-b.localhost" http://127.0.0.1/health | grep '"configured":true'
+          # demo-a — alohida baza, demo-b — umumiy baza; har birida formadagi ega direktor bo'lib yaratilgan
+          test "$(sudo -u postgres psql -XAtd edu_crm_demo_a -c "select tenant_id||'|'||role||'|'||phone_number||'|'||must_change_password from users")" = "demo-a|director|+998901234567|true"
+          test "$(sudo -u postgres psql -XAtd edu_crm_shared -c "select tenant_id||'|'||role||'|'||phone_number from users")" = "demo-b|director|+998907654321"
+          # Maxfiy fayl faqat deploy foydalanuvchisiga ochiq, ikkala mijoz ham unda
+          test "$(sudo stat -c %a /home/deploy/apps/edu-crm/shared/tenant-secrets.json)" = "600"
+          sudo python3 -c 'import json; t=json.load(open("/home/deploy/apps/edu-crm/shared/tenant-secrets.json"))["tenants"]; assert sorted(t)==["demo-a","demo-b"], t'
+          # Bir mijoz roli boshqa mijoz bazasiga ulana olmaydi (manzil ekranga chiqarilmaydi)
+          B_URL="$(sudo python3 -c 'import json; print(json.load(open("/home/deploy/apps/edu-crm/shared/tenant-secrets.json"))["tenants"]["demo-b"]["databaseUrl"])')"
+          psql "$B_URL" -XAtc "select 1" >/dev/null
+          if psql "${B_URL%/*}/edu_crm_demo_a" -XAtc "select 1" >/dev/null 2>&1; then echo "umumiy baza roli demo-a bazasiga kirdi"; exit 1; fi
+          # Qayta deploy: baza, direktor va kalit o'zgarmaydi (ikkinchi direktor yaratilmaydi)
+          pnpm --silent deploy:run -- --project demo-a | tee "$RUNNER_TEMP/deploy-a2.txt"
+          grep -q "Direktor allaqachon bor" "$RUNNER_TEMP/deploy-a2.txt"
+          test "$(sudo -u postgres psql -XAtd edu_crm_demo_a -c "select count(*) from users")" = "1"
+          # Deploy logida sir yo'q
+          if grep -E "postgres://[^:]+:[A-Za-z0-9_-]{20,}@" "$RUNNER_TEMP"/deploy-*.txt; then echo "logda baza paroli"; exit 1; fi
 
       - name: Yiqilganda tafsilot
         if: failure()

@@ -93,8 +93,12 @@ export const projects = pgTable(
     status: text("status", { enum: PROJECT_STATUSES }).notNull().default("draft"),
     brand: jsonb("brand").$type<ProjectBrand>().notNull(),
     settings: jsonb("settings").$type<Record<string, unknown>>().notNull().default({}),
-    /** Mijoz tizimining ega login'i (paroli secrets jadvalida, shifrlangan) */
-    ownerLogin: text("owner_login").notNull(),
+    /** Eski: ega login'i (0006 gacha). Endi ega telefon bilan kiradi — ownerPhone */
+    ownerLogin: text("owner_login"),
+    /** Mijoz tizimining egasi (birinchi direktor): ismi va telefoni; vaqtinchalik paroli secrets jadvalida */
+    ownerName: text("owner_name"),
+    /** +998XXXXXXXXX */
+    ownerPhone: text("owner_phone"),
     createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
     /** Qaysi serverga joylangan — `servers.id` (birinchi deploy'da belgilanadi) */
     serverId: uuid("server_id"),

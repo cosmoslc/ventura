@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "provision": "tsx scripts/provision.ts"
   },
   "dependencies": {
     "@ventura/auth": "workspace:*",
@@ -34,6 +35,7 @@
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.0",
     "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3"
   }
 }
