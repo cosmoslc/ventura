@@ -20,7 +20,11 @@
     "worker": "pnpm --filter @ventura/worker start",
     "server:add": "pnpm --filter @ventura/scripts server:add",
     "server:check": "pnpm --filter @ventura/scripts server:check",
-    "deploy:run": "pnpm --filter @ventura/scripts deploy:run"
+    "deploy:run": "pnpm --filter @ventura/scripts deploy:run",
+    "db:generate:tenant": "pnpm --filter @ventura/db db:generate:tenant",
+    "db:migrate:tenant": "pnpm --filter @ventura/db db:migrate:tenant",
+    "edu:tenant": "pnpm --filter @ventura/scripts edu:tenant",
+    "edu:staff": "pnpm --filter @ventura/scripts edu:staff"
   },
   "devDependencies": {
     "turbo": "^2.11.7",

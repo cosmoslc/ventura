@@ -11,9 +11,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ventura/auth": "workspace:*",
     "@ventura/config": "workspace:*",
+    "@ventura/db": "workspace:*",
+    "@ventura/integrations": "workspace:*",
+    "@ventura/security": "workspace:*",
     "@ventura/tenants": "workspace:*",
     "@ventura/ui": "workspace:*",
+    "better-auth": "^1.7.7",
+    "drizzle-orm": "^0.45.4",
     "lucide-react": "^1.55.0",
     "next": "^16.4.0",
     "react": "^19.3.0",
