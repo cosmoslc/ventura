@@ -309,7 +309,7 @@ Panel o'z alohida PostgreSQL bazasiga ega. Barcha jadvallarda `id` (uuid), `crea
 
 | Jadval | Asosiy maydonlar | Izoh |
 | --- | --- | --- |
-| `users` | email, name, role (`super_admin` / `admin` / `viewer`), two\_factor\_enabled | Panel adminlari (Better Auth jadvallari bilan) |
+| `users` | phone\_number, name, role (`super_admin` / `admin` / `viewer`), two\_factor\_enabled | Panel adminlari (Better Auth jadvallari bilan) |
 | `clients` | name, phone, company, status | Mijozlar |
 | `templates` | key, name, category, repo, app\_path, version, manifest (jsonb) | Shablonlar va bo'limlar manifesti |
 | `projects` | client\_id, template\_id, slug, name, mode, target\_id, db\_strategy (`shared_db` / `db_per_tenant` / `dedicated_server`), status, brand (jsonb), settings (jsonb) | Mijoz loyihalari |
@@ -364,10 +364,10 @@ Panel barcha serverlar va repolarning kalitlarini saqlaydi, shuning uchun u eng 
 
 ### Panelga kirish
 
-- Barcha adminlar uchun 2FA (TOTP) majburiy; 2FA'siz panelga kirib bo'lmaydi.
+- Kirish telefon raqam va parol bilan. Barcha adminlar uchun 2FA majburiy: har kirishda Telegram bot 6 xonali kod yuboradi; 2FA'siz panelga kirib bo'lmaydi (`docs/decisions/0001-panelga-kirish.md`).
 - Rollar: `super_admin` (hammasi), `admin` (loyihalar, deploy), `viewer` (faqat ko'rish).
 - Xavfli amallar (loyiha o'chirish, bazani tozalash, sirni ko'rsatish, serverni o'chirish) uchun parol + 2FA qayta so'raladi va nomini yozib tasdiqlash kerak.
-- Login sahifasida urinishlar soni cheklanadi; 5 ta xatodan keyin vaqtinchalik bloklanadi.
+- Login sahifasida urinishlar soni cheklanadi; 5 ta xatodan keyin hisob bloklanadi va uni super admin ochadi.
 - Panel alohida domenda ishlaydi; ixtiyoriy ravishda faqat ruxsat berilgan IP'lardan kirish.
 
 ### Sirlar (kalitlar, tokenlar, parollar)

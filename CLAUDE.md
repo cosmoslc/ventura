@@ -11,6 +11,9 @@
 - `pnpm dev` — panel (http://localhost:3000)
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` — CI'dagi tekshiruvlar
 - `pnpm format` — Prettier (`pnpm format:check` — faqat tekshirish)
+- `pnpm db:generate` · `pnpm db:migrate` — Drizzle migratsiyasini yaratish va qo'llash (`PANEL_MIGRATE_URL`)
+- `pnpm templates:sync` — shablon manifestlarini (`apps/*/features.ts`) bazaga ko'chirish
+- `pnpm admin:create` · `pnpm admin:unlock` · `pnpm admin:reset-2fa` — adminlar bilan ishlash, faqat server terminalida
 
 ## Kod
 
