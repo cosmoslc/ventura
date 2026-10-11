@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@ventura/ui/dropdown-menu";
 import { type NavChild, type NavSection, Sidebar } from "@ventura/ui/sidebar";
+import { cn } from "@ventura/ui/lib/utils";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { ProfileButton, Topbar } from "@ventura/ui/topbar";
 import { uz } from "@/lib/uz";
@@ -84,6 +85,24 @@ export function PanelShell({
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const nav = React.useMemo(() => sections(viewer.role), [viewer.role]);
+  // Bosilgan band darhol aktiv ko'rinadi; sahifa serverdan kelguncha kontent xiralashadi.
+  // useTransition ishlatilmaydi: o'lchovda u bilan sahifa ~300ms kechroq almashdi.
+  const [target, setTarget] = React.useState<{ id: string | null; from: string } | null>(null);
+  const navigating = target !== null && target.from === pathname;
+  const activeId = navigating && target.id ? target.id : activeFor(pathname);
+
+  // Manzil o'zgarmay qolsa (masalan ruxsat yo'qligi sababli shu sahifaga qaytarilsa) kutish holati qotib qolmasin
+  React.useEffect(() => {
+    if (!target) return;
+    const timer = setTimeout(() => setTarget(null), 8000);
+    return () => clearTimeout(timer);
+  }, [target]);
+
+  function go(href: string, id: string | null = null) {
+    if (href === pathname) return;
+    setTarget({ id, from: pathname });
+    router.push(href);
+  }
 
   function toggleSidebar() {
     if (window.matchMedia("(max-width: 900px)").matches) setMobileOpen((v) => !v);
@@ -109,7 +128,7 @@ export function PanelShell({
               <div className="text-caption text-muted-foreground">{viewer.roleLabel}</div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => router.push("/account/password")}>
+            <DropdownMenuItem onSelect={() => go("/account/password")}>
               <KeyRound /> {uz.nav.profile}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
@@ -123,17 +142,26 @@ export function PanelShell({
       <div className="flex">
         <Sidebar
           sections={nav}
-          activeId={activeFor(pathname)}
+          activeId={activeId}
           onSelect={(id) => {
             setMobileOpen(false);
             const href = HREF[id];
-            if (href) router.push(href);
+            if (href) go(href, id);
           }}
           collapsed={collapsed}
           mobileOpen={mobileOpen}
           onMobileClose={() => setMobileOpen(false)}
         />
-        <main className="min-w-0 flex-1 animate-[page-in_480ms_var(--ease-ios)] p-4 sm:p-6 lg:p-8">{children}</main>
+        <main
+          aria-busy={navigating || undefined}
+          className={cn(
+            "min-w-0 flex-1 animate-[page-in_480ms_var(--ease-ios)] p-4 transition-opacity duration-200 sm:p-6 lg:p-8",
+            // Tez kelgan sahifada miltillamasligi uchun xiralashish kechikib boshlanadi
+            navigating && "opacity-50 delay-150",
+          )}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );
