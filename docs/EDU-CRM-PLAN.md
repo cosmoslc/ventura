@@ -20,7 +20,7 @@ Eski kod **o'qish uchun namuna**: nima qilishi va qanday ko'rinishi undan olinad
 | 6 | Eski CRM muzlatiladi: yangi imkoniyat qo'shilmaydi, faqat xato tuzatiladi. U hozir sinovda, markaz to'liq o'tmagan. |
 | 7 | Birinchi foydalanuvchi — o'z markazimiz, toza bazadan boshlaydi. |
 | 8 | Kirish Ventura panelidagi bilan bir xil mexanizm: `packages/auth` (telefon + parol, Telegram kodi, bloklash, sessiya muddati). Alohida auth yozilmaydi. Foydalanuvchilar bazasi umumiy emas: har mijozning xodimlari o'z bazasida, panel adminlari alohida. |
-| 8a | Kirish kodini har mijozning o'z Telegram boti yuboradi. Token "Yangi loyiha" ustozida kiritiladi va shifrlangan holda saqlanadi; botsiz loyihada xodimlar kira olmaydi. |
+| 8a | Kirish kodini har mijozning o'z Telegram boti yuboradi. Token Yangi loyiha formasida kiritiladi va shifrlangan holda saqlanadi; botsiz loyihada xodimlar kira olmaydi. |
 | 9 | Ruxsatlar tayyor rollar orqali (direktor, menejer va boshqalar) va filial bo'yicha cheklov. Eski tizimdagi har menejerga alohida sozlash birinchi versiyada yo'q. |
 | 10 | Birinchi versiyaga kirmaydi: coin va ball tizimi, SMS yuborish, imtihonlar va sertifikatlar. Excel import kiradi. |
 | 11 | Interfeys faqat o'zbekcha; matnlar bitta faylda. |

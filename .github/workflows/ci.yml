@@ -52,7 +52,7 @@ jobs:
         run: pnpm build
 
   e2e:
-    name: e2e · kirish + 2FA, ustoz
+    name: e2e · kirish + 2FA, yangi loyiha formasi
     runs-on: ubuntu-latest
     timeout-minutes: 20
     services:

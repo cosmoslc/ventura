@@ -137,7 +137,7 @@ export const uz = {
     deleted: "O'chirilgan",
     daysLeft: (n: number) => `${n} kun qoldi`,
     empty: "Hali loyiha yo'q",
-    emptyHint: "Yangi loyiha ustozi orqali birinchi mijoz tizimini yarating.",
+    emptyHint: "Yangi loyiha formasi orqali birinchi mijoz tizimini yarating.",
     trashEmpty: "Savat bo'sh",
     statusLabels: { draft: "Qoralama", active: "Faol", paused: "To'xtatilgan" },
     modeHints: {

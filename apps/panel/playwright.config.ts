@@ -2,7 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 import { APP_PORT, APP_URL, TELEGRAM_PORT, TELEGRAM_URL, appEnv } from "./e2e/env";
 
 /*
- * Asosiy oqimlar (CLAUDE.md): kirish + 2FA va "Yangi loyiha" ustozi.
+ * Asosiy oqimlar (CLAUDE.md): kirish + 2FA va Yangi loyiha formasi.
  * Panel production build'da ishga tushadi (avval `pnpm build`), Telegram o'rnida soxta server.
  */
 export default defineConfig({

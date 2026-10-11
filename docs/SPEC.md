@@ -131,7 +131,7 @@ Chap tomonda sidebar, o'ngda kontent. Interfeys tili o'zbekcha, light/dark/tizim
 | --- | --- | --- |
 | Bosh sahifa | `/` | Faol loyihalar soni, oxirgi deploylar, yiqilgan buildlar, ogohlantirishlar |
 | Loyihalar | `/projects` | Kartochkalar: nom, domen, holat, rejim, manzil, yoqilgan bo'limlar soni |
-| Yangi loyiha | `/projects/new` | Bosqichma-bosqich ustoz (pastda) |
+| Yangi loyiha | `/projects/new` | Qadamli forma (pastda) |
 | Loyiha sahifasi | `/projects/[id]` | Tablar: Umumiy · Brend · Bo'limlar · Sozlamalar · Domenlar · Deploylar · Muhit o'zgaruvchilari · Zahira · Audit |
 | Shablonlar | `/templates` | Shablonlar ro'yxati, versiyasi, bo'limlar manifesti |
 | Bo'limlar xaritasi | `/features` | Har bo'lim nimani talab qiladi va unga kim tayanadi, API yo'llari |
@@ -143,7 +143,7 @@ Chap tomonda sidebar, o'ngda kontent. Interfeys tili o'zbekcha, light/dark/tizim
 | Xavfsizlik | `/settings/security` | 2FA, sessiyalar, adminlar va rollar |
 | Xavfli hudud | `/settings/danger` | Qaytarib bo'lmaydigan amallar, qayta tasdiq bilan |
 
-### "Yangi loyiha" ustozi
+### Yangi loyiha formasi
 
 1. **Shablon:** o'quv markaz, pilorama va h.k.
 2. **Nom va domen:** loyiha nomi va `slug`. Domen tanlanadi: **bepul subdomen** (`<slug>.ventura.uz`) yoki **mijozning o'z domeni** (`crm.bilim.uz`). O'z domeni tanlansa, yaratilgandan keyin DNS uchun IP va yozuvlar ko'rsatiladi.
@@ -460,7 +460,7 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 - [ ] `edu-crm`ni bepul subdomenda ishga tushirish
 - [ ] Deploylar tabi: tarix, holat, loglar, qayta deploy, rollback
 
-* **Qabul:** "Yangi loyiha" ustozi orqali yaratilgan loyiha `<slug>.ventura.uz`da SSL bilan ochiladi; build yiqilsa, oldingi versiya ishlashda davom etadi.
+* **Qabul:** Yangi loyiha formasi orqali yaratilgan loyiha `<slug>.ventura.uz`da SSL bilan ochiladi; build yiqilsa, oldingi versiya ishlashda davom etadi.
 
 ### 3-bosqich. Online VPS va domenlar
 
@@ -537,7 +537,7 @@ Bu hujjatni repoda `docs/SPEC.md` sifatida saqlang. Quyidagi qoidalarni `CLAUDE.
 
 ## Test
 - Mantiq: Vitest (tashqi API'lar mock qilinadi).
-- Asosiy oqimlar (login + 2FA, Yangi loyiha ustozi): Playwright.
+- Asosiy oqimlar (login + 2FA, Yangi loyiha formasi): Playwright.
 
 ## Xavfsizlik
 - .env ni hech qachon commit qilma. Yangi o'zgaruvchi qo'shilsa, .env.example ni yangila.

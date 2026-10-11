@@ -31,7 +31,7 @@
 ## Test
 
 - Mantiq: Vitest (tashqi API'lar mock qilinadi).
-- Asosiy oqimlar (login + 2FA, Yangi loyiha ustozi): Playwright.
+- Asosiy oqimlar (login + 2FA, Yangi loyiha formasi): Playwright.
 
 ## Xavfsizlik
 

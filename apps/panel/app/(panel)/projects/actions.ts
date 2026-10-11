@@ -63,7 +63,7 @@ export async function checkSlugAction(
   return taken ? { available: false, error: uz.projects.slugTaken } : { available: true };
 }
 
-/* ---------- Yaratish (ustoz) ---------- */
+/* ---------- Yaratish (Yangi loyiha formasi) ---------- */
 
 export async function createProjectAction(input: unknown): Promise<Result<{ id: string }>> {
   const { viewer, actor, meta, db, telegram } = await ctx();

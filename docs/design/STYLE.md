@@ -453,7 +453,7 @@ Qoidalar:
 
 ### 11.22 Stepper — `stepper.tsx`
 
-- Ko'p qadamli ustoz sarlavhasi ("Yangi loyiha"). Parametrlar: `steps`, `current`, `canGoTo`, `onStepClick`.
+- Ko'p qadamli forma sarlavhasi (Yangi loyiha formasi). Parametrlar: `steps`, `current`, `canGoTo`, `onStepClick`.
 - Qadam: 24px doira (mono, 11px / 700) + nom (12px / 600, faqat ≥1024px); qadamlar orasida 1px chiziq.
 - Holatlar: o'tilgan — `--primary` fon va belgi, chizig'i ham `--primary`; joriy — `--primary-soft` fon, `--primary` chegara, `aria-current="step"`; kelgusi — `--card` fon, `--border` chegara.
 - O'tilgan qadamga bosib qaytiladi (hover — `--secondary` fon); kelgusi qadam bosilmaydi, `canGoTo` bilan o'zgartiriladi.

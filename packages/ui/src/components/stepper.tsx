@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import { cn } from "../lib/utils";
 
 /*
- * Bosqichma-bosqich ustoz sarlavhasi ("Yangi loyiha"). O'tilgan qadamga bosib qaytish mumkin;
+ * Ko'p qadamli forma sarlavhasi (Yangi loyiha formasi). O'tilgan qadamga bosib qaytish mumkin;
  * kichik ekranda faqat joriy qadam ko'rinadi.
  */
 
