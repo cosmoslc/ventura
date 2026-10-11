@@ -315,9 +315,16 @@ jobs:
           B_URL="$(sudo python3 -c 'import json; print(json.load(open("/home/deploy/apps/edu-crm/shared/tenant-secrets.json"))["tenants"]["demo-b"]["databaseUrl"])')"
           psql "$B_URL" -XAtc "select 1" >/dev/null
           if psql "${B_URL%/*}/edu_crm_demo_a" -XAtc "select 1" >/dev/null 2>&1; then echo "umumiy baza roli demo-a bazasiga kirdi"; exit 1; fi
-          # Qayta deploy: baza, direktor va kalit o'zgarmaydi (ikkinchi direktor yaratilmaydi)
+          # Qayta deploy: baza, direktor va kalit o'zgarmaydi (ikkinchi direktor yaratilmaydi).
+          # Ilovaga qo'llangan PM2 sozlamasi belgisi yo'q (eski versiyadan qolgan server) — ilova qayta yuklanadi
+          sudo rm -f /home/deploy/apps/edu-crm/shared/ecosystem.applied
           pnpm --silent deploy:run -- --project demo-a | tee "$RUNNER_TEMP/deploy-a2.txt"
           grep -q "Direktor allaqachon bor" "$RUNNER_TEMP/deploy-a2.txt"
+          grep -q "PM2 sozlamasi o'zgardi" "$RUNNER_TEMP/deploy-a2.txt"
+          sudo test -s /home/deploy/apps/edu-crm/shared/ecosystem.applied
+          # Sozlama o'zgarmasa ilova qayta yuklanmaydi
+          pnpm --silent deploy:run -- --project demo-a | tee "$RUNNER_TEMP/deploy-a3.txt"
+          if grep -q "PM2 sozlamasi o'zgardi" "$RUNNER_TEMP/deploy-a3.txt"; then echo "keraksiz qayta yuklash"; exit 1; fi
           test "$(sudo -u postgres psql -XAtd edu_crm_demo_a -c "select count(*) from users")" = "1"
           # Deploy logida sir yo'q
           if grep -E "postgres://[^:]+:[A-Za-z0-9_-]{20,}@" "$RUNNER_TEMP"/deploy-*.txt; then echo "logda baza paroli"; exit 1; fi

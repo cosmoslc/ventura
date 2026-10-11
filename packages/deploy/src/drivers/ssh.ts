@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { promisify } from "node:util";
 import { and, asc, eq, isNull, max, ne } from "drizzle-orm";
 import type { PanelDb } from "@ventura/db";
@@ -60,6 +60,12 @@ interface Plan {
   reuse: boolean;
   release: string;
   previous: string | null;
+  /** PM2 sozlamasining xeshi. Ilovaga oxirgi qo'llangani `ecosystem.applied` faylida saqlanadi */
+  envHash: string;
+  /** Ishlab turgan ilovaga qo'llangan sozlama bundan farq qiladi: ilova qayta yuklanishi kerak */
+  envChanged: boolean;
+  /** Mijoz bazasi va maxfiy sozlama shu deploy'da tayyorlandi: ilova ularni ko'rishi shart */
+  provisioned: boolean;
 }
 
 function must(value: string, pattern: RegExp, what: string): string {
@@ -174,6 +180,9 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       reuse: false,
       release: "",
       previous: null,
+      envHash: "",
+      envChanged: false,
+      provisioned: false,
     };
 
     await remote(log, `mkdir -p ${sh(`${root}/releases`)} ${sh(`${root}/shared`)}`);
@@ -251,11 +260,13 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
         },
       ],
     };
-    await p.session.writeFile(
-      `${p.root}/shared/ecosystem.config.cjs`,
-      `// Ventura boshqaradi — qo'lda o'zgartirmang\nmodule.exports = ${JSON.stringify(ecosystem, null, 2)};\n`,
-      0o600,
-    );
+    const ecosystemFile = `${p.root}/shared/ecosystem.config.cjs`;
+    const content = `// Ventura boshqaradi — qo'lda o'zgartirmang\nmodule.exports = ${JSON.stringify(ecosystem, null, 2)};\n`;
+    p.envHash = createHash("sha256").update(content).digest("hex");
+    // Fayl bilan emas, ilovaga qo'llangan sozlama bilan solishtiriladi: fayl yangilanib, ilova qayta yuklanmay
+    // qolgan bo'lsa (oldingi deploy shu yerda to'xtagan) ham keyingi deploy buni sezadi
+    p.envChanged = (await probe(`cat ${sh(`${p.root}/shared/ecosystem.applied`)}`)) !== p.envHash;
+    await p.session.writeFile(ecosystemFile, content, 0o600);
     log(`PM2 sozlamasi yozildi: ${p.appName} → 127.0.0.1:${p.port}`, "info");
   }
 
@@ -272,13 +283,19 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   }
 
   const pm2Reload = (p: Plan) =>
-    `pm2 startOrReload ${sh(`${p.root}/shared/ecosystem.config.cjs`)} --update-env && pm2 save`;
+    `pm2 startOrReload ${sh(`${p.root}/shared/ecosystem.config.cjs`)} --update-env && pm2 save && printf %s ${sh(p.envHash)} > ${sh(`${p.root}/shared/ecosystem.applied`)}`;
   const pointCurrent = (p: Plan, target: string) =>
     `ln -sfn ${sh(target)} ${sh(`${p.root}/current.new`)} && mv -Tf ${sh(`${p.root}/current.new`)} ${sh(`${p.root}/current`)}`;
 
   async function release(log: StepLog) {
     const p = plan!;
     if (p.reuse) {
+      if (p.envChanged) {
+        // Masalan yangi muhit o'zgaruvchisi qo'shilgan: ishlab turgan jarayon uni o'zi ko'rmaydi
+        log("PM2 sozlamasi o'zgardi — ilova yangi muhit bilan qayta yuklanadi.", "info");
+        await remote(log, pm2Reload(p));
+        return;
+      }
       // Ilova ishlab turgan bo'lsa tegilmaydi: yangi mijozni u ro'yxat faylidan o'zi o'qiydi
       await remote(log, `pm2 describe ${sh(p.appName)} >/dev/null 2>&1 || (${pm2Reload(p)})`);
       return;
@@ -293,7 +310,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       `curl -fsS --retry 20 --retry-delay 1 --retry-connrefused --max-time 5 -H ${sh(`Host: ${p.hosts[0]}`)} ${sh(`http://127.0.0.1:${p.port}/health`)}`,
       MINUTE,
     );
-    let body: { ok?: boolean; tenant?: string | null; commit?: string | null };
+    let body: { ok?: boolean; tenant?: string | null; commit?: string | null; configured?: boolean };
     try {
       body = JSON.parse(out);
     } catch {
@@ -301,6 +318,9 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     }
     if (body.tenant !== p.slug) throw new StepError(`Ilova bu domenni "${p.slug}" deb tanimadi`);
     if (body.commit !== p.sha) throw new StepError("Ilova eski versiyada ishlayapti");
+    if (p.provisioned && body.configured !== true) {
+      throw new StepError("Ilova mijozning baza sozlamasini ko'rmayapti (VENTURA_TENANT_SECRETS_FILE)");
+    }
   }
 
   async function route(log: StepLog) {
@@ -395,6 +415,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     secrets.tenants[p.slug] = { databaseUrl, authSecret, ...(botToken ? { telegramBotToken: botToken } : {}) };
     await p.session.writeFile(`${file}.tmp`, `${JSON.stringify(secrets, null, 2)}\n`, 0o600);
     await remote(log, `chmod 600 ${sh(`${file}.tmp`)} && mv -f ${sh(`${file}.tmp`)} ${sh(file)}`);
+    p.provisioned = true;
     log("Maxfiy sozlamalar yozildi: baza, sessiya kaliti, bot (qiymatlar ko'rsatilmaydi)", "info");
     if (!botToken) log("Diqqat: loyihada Telegram bot tokeni yo'q — xodimlar tizimga kira olmaydi.", "info");
     if (!owner) log("Diqqat: ega (telefon, ism, parol) to'liq emas — direktor yaratilmadi.", "info");
