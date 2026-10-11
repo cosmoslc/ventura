@@ -11,11 +11,12 @@ const config: NextConfig = {
     "@ventura/ui",
     "@ventura/auth",
     "@ventura/db",
+    "@ventura/deploy",
     "@ventura/integrations",
     "@ventura/security",
     "@ventura/tenants",
   ],
-  serverExternalPackages: ["postgres"],
+  serverExternalPackages: ["postgres", "pg", "pg-boss"],
   devIndicators: false,
 };
 

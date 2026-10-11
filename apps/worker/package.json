@@ -1,0 +1,26 @@
+{
+  "name": "@ventura/worker",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ventura/db": "workspace:*",
+    "@ventura/deploy": "workspace:*",
+    "@ventura/integrations": "workspace:*",
+    "@ventura/security": "workspace:*",
+    "drizzle-orm": "^0.45.4",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@ventura/config": "workspace:*",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.3"
+  }
+}

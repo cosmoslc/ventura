@@ -1,11 +1,12 @@
 # E2E testlar (Playwright)
 
-Asosiy oqimlar: kirish + 2FA (`auth.spec.ts`) va Yangi loyiha formasi (`wizard.spec.ts`).
+Asosiy oqimlar: kirish + 2FA (`auth.spec.ts`), Yangi loyiha formasi (`wizard.spec.ts`) va deploy navbati (`deploy.spec.ts`).
 
 - Panel production build'da `http://localhost:3100` da ishga tushadi.
 - Telegram o'rnida soxta server (`telegram-mock.mjs`, port 3199): testlar kirish kodini shundan o'qiydi.
 - Baza — **alohida test bazasi**. `E2E_DATABASE_URL` berilmasa testlar boshlanmaydi; `.env` dagi bazaga tegilmaydi.
-- Har ishga tushishda migratsiyalar, `templates:sync` va test foydalanuvchisi (`e2e:seed`) tayyorlanadi.
+- Har ishga tushishda migratsiyalar, `templates:sync` va test foydalanuvchisi (`e2e:seed`) tayyorlanadi, keyin ishchi jarayon (`apps/worker`) ishga tushadi.
+- Deploy sinov drayveri (`DEPLOY_DRIVER=sim`) bilan ishlaydi: hech qaysi serverga ulanmaydi.
 
 ## Ishga tushirish
 

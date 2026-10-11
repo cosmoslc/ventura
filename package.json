@@ -16,7 +16,8 @@
     "admin:reset-2fa": "pnpm --filter @ventura/scripts admin:reset-2fa",
     "admin:unlock": "pnpm --filter @ventura/scripts admin:unlock",
     "templates:sync": "pnpm --filter @ventura/scripts templates:sync",
-    "e2e": "pnpm --filter @ventura/panel e2e"
+    "e2e": "pnpm --filter @ventura/panel e2e",
+    "worker": "pnpm --filter @ventura/worker start"
   },
   "devDependencies": {
     "turbo": "^2.11.7",

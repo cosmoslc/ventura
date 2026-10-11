@@ -11,6 +11,8 @@ export function actionLabel(action: string): string {
 
 export function actionTone(action: string): "success" | "warning" | "danger" | "info" | "neutral" {
   if (action === "auth.locked" || action === "auth.failed" || action === "project.trash") return "danger";
+  if (action === "deploy.failed") return "danger";
+  if (action === "deploy.ready") return "success";
   if (action.startsWith("auth.")) return "neutral";
   if (action.startsWith("user.") || action.startsWith("settings.")) return "warning";
   if (action.endsWith(".create") || action === "project.restore") return "success";

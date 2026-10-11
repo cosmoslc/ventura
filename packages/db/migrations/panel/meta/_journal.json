@@ -15,6 +15,20 @@
       "when": 1791657312434,
       "tag": "0001_audit_immutable",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791729265520,
+      "tag": "0002_deployments",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791729278114,
+      "tag": "0003_queue_schema_grant",
+      "breakpoints": true
     }
   ]
 }

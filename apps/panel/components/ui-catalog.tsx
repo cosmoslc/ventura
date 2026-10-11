@@ -33,12 +33,15 @@ import {
 } from "@ventura/ui/dropdown-menu";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
+import { LogView } from "@ventura/ui/log-view";
 import { Logo } from "@ventura/ui/logo";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
+import { Notice } from "@ventura/ui/notice";
 import { Pagination } from "@ventura/ui/pagination";
 import { PhoneInput } from "@ventura/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
+import { StepList } from "@ventura/ui/step-list";
 import { Stepper } from "@ventura/ui/stepper";
 import { Switch } from "@ventura/ui/switch";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
@@ -62,6 +65,7 @@ const SECTIONS = [
   ["menyu", "Menyu"],
   ["topbar", "Topbar"],
   ["modal", "Modal va toast"],
+  ["jarayon", "Jarayon va log"],
   ["avatar", "Avatar va logo"],
 ] as const;
 
@@ -600,6 +604,47 @@ function Overlays() {
   );
 }
 
+const DEMO_STEPS = [
+  { key: "fetch", label: "Kodni olish", status: "ok", meta: "3 s" },
+  { key: "build", label: "O'rnatish va build", status: "running" },
+  { key: "release", label: "Yangi versiyaga o'tish", status: "pending" },
+  { key: "health", label: "Tekshiruv", status: "pending" },
+] as const;
+
+const DEMO_FAILED = [
+  { key: "build", label: "O'rnatish va build", status: "ok", meta: "48 s" },
+  { key: "migrate", label: "Baza migratsiyasi", status: "failed", meta: "2 s" },
+  { key: "release", label: "Yangi versiyaga o'tish", status: "skipped" },
+] as const;
+
+const DEMO_LOG = [
+  { id: 1, kind: "info", text: "Sinov rejimi: buyruqlar bajarilmaydi." },
+  { id: 2, kind: "cmd", text: "pnpm install --frozen-lockfile" },
+  { id: 3, kind: "out", text: "Lockfile is up to date, resolution step is skipped" },
+  { id: 4, kind: "out", text: "Packages: +612" },
+  { id: 5, kind: "cmd", text: "pnpm db:migrate" },
+  { id: 6, kind: "err", text: 'error: relation "students" already exists' },
+] as const;
+
+function Progress() {
+  const [selected, setSelected] = React.useState<string | null>(null);
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Notice>Sinov rejimi: buyruqlar hech qaysi serverda bajarilmaydi.</Notice>
+        <Notice tone="warning">Ishchi jarayon ishlamayapti — navbatdagi deploylar boshlanmaydi.</Notice>
+        <Notice tone="danger">Baza migratsiyasi yiqildi: oldingi versiya ishlashda davom etmoqda.</Notice>
+        <Notice tone="success">Deploy tayyor.</Notice>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <StepList steps={DEMO_STEPS} selected={selected} onSelect={setSelected} aria-label="Davom etayotgan" />
+        <StepList steps={DEMO_FAILED} aria-label="Yiqilgan" />
+      </div>
+      <LogView lines={DEMO_LOG} live className="h-44" aria-label="Namuna log" />
+    </div>
+  );
+}
+
 function Identity() {
   return (
     <div className="flex flex-wrap items-center gap-6">
@@ -733,6 +778,15 @@ export function UiCatalog() {
           <div className="rounded-card border border-border bg-card p-5">
             <Overlays />
           </div>
+        </Section>
+        <Section
+          id="jarayon"
+          title="Jarayon va log"
+          description="Notice, StepList va LogView — deploy holatini ko'rsatish uchun"
+        >
+          <Both>
+            <Progress />
+          </Both>
         </Section>
         <Section id="avatar" title="Avatar va logo">
           <Both>

@@ -37,6 +37,13 @@
   --table-head: #f8fafcb3;
   --table-row-hover: #f8fafccc;
   --table-foot: #f8fafc80;
+  /* Log oynasi: ikkala rejimda ham to'q fon (terminal ko'rinishi); buyruq rangi --primary dan */
+  --log-bg: #0f172a;
+  --log-fg: #cbd5e1;
+  --log-muted: #64748b;
+  --log-cmd: color-mix(in oklab, var(--primary) 45%, white);
+  --log-err: #fda4af;
+  --log-border: #1e293b;
   --overlay: rgb(2 6 23 / 0.6);
   --overlay-blur: 4px;
   --scrollbar: rgb(15 23 42 / 0.15);
@@ -257,6 +264,8 @@
   --table-head: #141e33;
   --table-row-hover: #1e293b;
   --table-foot: #0b1222;
+  --log-bg: #060b18;
+  --log-border: #1e293b;
   --overlay: rgb(2 6 23 / 0.8);
   --scrollbar: #1e293b;
   --ring-border: var(--primary);
