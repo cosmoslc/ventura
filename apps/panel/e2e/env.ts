@@ -42,6 +42,9 @@ export function appEnv(): Record<string, string> {
     VENTURA_MASTER_KEY_FILE: MASTER_KEY_FILE,
     TELEGRAM_BOT_TOKEN: "e2e-token",
     TELEGRAM_API_URL: TELEGRAM_URL,
+    // Deploy: sinov drayveri, qadamlar tez o'tadi
+    DEPLOY_DRIVER: "sim",
+    SIM_STEP_MS: "200",
     E2E_USER_PHONE: TEST_USER.phone,
     E2E_USER_NAME: TEST_USER.name,
     E2E_USER_PASSWORD: TEST_USER.password,

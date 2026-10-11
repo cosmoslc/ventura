@@ -159,6 +159,7 @@ export const uz = {
     },
     tabs: {
       overview: "Umumiy",
+      deploys: "Deploylar",
       brand: "Brend",
       features: "Bo'limlar",
       domains: "Domenlar",
@@ -188,6 +189,52 @@ export const uz = {
     featureModeHint: "Rejim — loyiha sozlamasi boshqaradi",
     alsoEnabled: (names: string) => `Avtomatik yoqiladi: ${names}`,
     alsoDisabled: (names: string) => `Bularga ham ta'sir qiladi va o'chadi: ${names}`,
+  },
+
+  deploys: {
+    start: "Deploy qilish",
+    started: (n: number) => `Deploy #${n} navbatga qo'shildi`,
+    empty: "Hali deploy qilinmagan",
+    emptyHint: "\"Deploy qilish\" tugmasi loyihani navbatga qo'yadi, qadamlar shu yerda jonli ko'rinadi.",
+    simNotice:
+      "Sinov rejimi: buyruqlar hech qaysi serverda bajarilmaydi, faqat jarayon ko'rsatiladi. Haqiqiy deploy server ulangach ishlaydi.",
+    workerDown:
+      "Ishchi jarayon ishlamayapti — navbatdagi deploylar boshlanmaydi. Terminalda `pnpm worker` yoki `pnpm dev`ni ishga tushiring.",
+    history: "Tarix",
+    steps: "Qadamlar",
+    log: "Log",
+    logEmpty: "Hali log yo'q",
+    logWaiting: "Navbatda — ishchi jarayon olishini kutmoqda…",
+    allSteps: "Hamma qadamlar",
+    by: "Kim",
+    duration: "Davomiyligi",
+    commit: "Commit",
+    seconds: (s: number) => (s < 1 ? "<1 s" : s < 60 ? `${s} s` : `${Math.floor(s / 60)} daq ${s % 60} s`),
+    statusLabels: {
+      queued: "Navbatda",
+      building: "Yig'ilmoqda",
+      deploying: "Joylanmoqda",
+      ready: "Tayyor",
+      failed: "Yiqildi",
+      canceled: "Bekor qilingan",
+    },
+    stepLabels: {
+      prepare: "Reliz papkasi",
+      fetch: "Kodni olish",
+      env: "Muhit o'zgaruvchilari",
+      build: "O'rnatish va build",
+      migrate: "Baza migratsiyasi",
+      release: "Yangi versiyaga o'tish",
+      health: "Tekshiruv",
+      cleanup: "Eski relizlarni tozalash",
+    },
+    errors: {
+      not_found: "Loyiha topilmadi",
+      trashed: "Savatdagi loyihani deploy qilib bo'lmaydi",
+      active: "Bu loyihada tugallanmagan deploy bor",
+      queue: "Navbatga qo'shib bo'lmadi. Migratsiyalar qo'llanganini tekshiring (pnpm db:migrate).",
+    },
+    system: "Tizim",
   },
 
   wizard: {
@@ -265,6 +312,11 @@ export const uz = {
       "project.trash": "Loyiha savatga o'tkazildi",
       "project.restore": "Loyiha tiklandi",
       "template.sync": "Shablon sinxronlandi",
+      "deploy.queued": "Deploy navbatga qo'yildi",
+      "deploy.building": "Deploy boshlandi",
+      "deploy.deploying": "Yangi versiya joylanmoqda",
+      "deploy.ready": "Deploy tayyor",
+      "deploy.failed": "Deploy yiqildi",
     } as Record<string, string>,
   },
 

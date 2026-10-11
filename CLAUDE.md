@@ -8,7 +8,8 @@
 
 ## Buyruqlar
 
-- `pnpm dev` — panel (http://localhost:3000)
+- `pnpm dev` — panel (http://localhost:3000) va ishchi jarayon (navbatdagi deploylarni bajaradi)
+- `pnpm worker` — faqat ishchi jarayon (production'da panel bilan yonma-yon ishlaydi)
 - `pnpm lint` · `pnpm typecheck` · `pnpm test` · `pnpm build` — CI'dagi tekshiruvlar
 - `pnpm e2e` — Playwright (alohida test bazasi kerak: apps/panel/e2e/README.md)
 - `pnpm format` — Prettier (`pnpm format:check` — faqat tekshirish)

@@ -134,6 +134,16 @@ Stat-card ikonkalari (135° gradient, oq ikonka): 1 binafsha `#8b7bff → #6d4af
 
 Danger tugma gradienti: `#dc2626 → #e11d48 → #db2777`, hover `#ef4444 → #f43f5e → #ec4899`.
 
+Log oynasi ikkala rejimda ham to'q fonda (terminal ko'rinishi):
+
+| Token | Light | Dark |
+| --- | --- | --- |
+| `--log-bg` | `#0f172a` | `#060b18` |
+| `--log-fg` / `--log-muted` | `#cbd5e1` / `#64748b` | o'sha |
+| `--log-cmd` | `--primary` ning 45% + oq | o'sha |
+| `--log-err` | `#fda4af` | o'sha |
+| `--log-border` | `#1e293b` | o'sha |
+
 ## 4. Tipografiya
 
 ### 4.1 Shriftlar
@@ -459,6 +469,27 @@ Qoidalar:
 - O'tilgan qadamga bosib qaytiladi (hover — `--secondary` fon); kelgusi qadam bosilmaydi, `canGoTo` bilan o'zgartiriladi.
 - <768px: doiralar o'rniga joriy qadam nomi va "3 / 8" sanog'i.
 
+### 11.23 LogView — `log-view.tsx`
+
+- Deploy loglari uchun: mono 12px, to'q fon (`--log-*` tokenlari), radius `--r-card`, standart balandlik 320px, o'zi aylanadi.
+- Qator turlari (`kind`): `cmd` — bajarilgan buyruq (oldida `$`, `--log-cmd`, qalin), `out` — natija, `err` — xato (`--log-err`), `info` — izoh (kursiv, `--log-muted`).
+- Yangi qator kelganda pastga o'zi aylanadi; foydalanuvchi yuqoriga aylantirgan bo'lsa joyida qoladi.
+- `live`: oxirida miltillovchi kursor (jarayon davom etyapti). `empty`: qator yo'q paytdagi matn.
+- `role="log"`, `aria-live="polite"`.
+
+### 11.24 StepList — `step-list.tsx`
+
+- Ketma-ket bajariladigan qadamlar (deploy): 24px doira ichida holat ikonkasi, nom (13px / 600), o'ngda mono `meta` (masalan davomiylik).
+- Holatlar: `pending` — nuqta, `running` — aylanuvchi ikonka (`--primary-soft`), `ok` — belgi (success ranglari), `failed` — × (danger ranglari), `skipped` — chiziqcha. `pending` va `skipped` nomi yordamchi rangda.
+- `onSelect` berilsa qatorlar tugma bo'ladi (hover va tanlangan — `--secondary` fon); qayta bosilsa tanlov olinadi.
+- Stepper'dan farqi: Stepper — foydalanuvchi yuradigan forma qadamlari (gorizontal); StepList — tizim bajaradigan ish holati (vertikal).
+
+### 11.25 Notice — `notice.tsx`
+
+- Sahifa ichidagi doimiy xabar (toast emas): 1px chegara, radius `--r-card`, padding 16 × 12px, matn 13px, chapda 16px ikonka.
+- `tone`: `info` (standart), `success`, `warning`, `danger` — Badge bilan bir xil holat ranglari.
+- `warning` va `danger` — `role="alert"`, qolganlari `role="status"`.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
@@ -509,4 +540,4 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 - Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
 - Select'da harf bilan qidirish (typeahead).
-- Keyingi bosqichlar komponentlari: bo'sh holat (hozircha panel ichida — `apps/panel/components/page-header.tsx`), skeleton, tooltip, log ko'rsatgich, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.
+- Keyingi bosqichlar komponentlari: bo'sh holat (hozircha panel ichida — `apps/panel/components/page-header.tsx`), skeleton, tooltip, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.

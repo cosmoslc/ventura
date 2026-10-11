@@ -22,7 +22,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import { uz } from "@/lib/uz";
 import { trashProjectAction, updateBrandAction, updateFeaturesAction, updateProjectAction } from "../actions";
+import type { DeploymentRow } from "@/lib/server/deployments-query";
 import { BrandPicker, ChoiceCards, FeaturePicker } from "../parts";
+import { DeploysTab } from "./deploys-tab";
 
 type Status = (typeof PROJECT_STATUSES)[number];
 type Mode = (typeof DEPLOY_MODES)[number];
@@ -49,6 +51,7 @@ interface EditorProps {
   enabled: string[];
   domains: { hostname: string; kind: "subdomain" | "custom"; isPrimary: boolean; status: string }[];
   secrets: { ownerPassword: boolean; telegramToken: boolean };
+  deploys: { rows: DeploymentRow[]; workerAlive: boolean; simulated: boolean; canDeploy: boolean };
 }
 
 function SaveBar({ onSave, pending, disabled }: { onSave: () => void; pending: boolean; disabled?: boolean }) {
@@ -61,7 +64,16 @@ function SaveBar({ onSave, pending, disabled }: { onSave: () => void; pending: b
   );
 }
 
-export function ProjectEditor({ canWrite, project, clients, features, enabled, domains, secrets }: EditorProps) {
+export function ProjectEditor({
+  canWrite,
+  project,
+  clients,
+  features,
+  enabled,
+  domains,
+  secrets,
+  deploys,
+}: EditorProps) {
   const router = useRouter();
   const [pending, start] = React.useTransition();
 
@@ -93,6 +105,7 @@ export function ProjectEditor({ canWrite, project, clients, features, enabled, d
           <Tabs defaultValue="overview">
             <TabsList aria-label={project.name}>
               <TabsTrigger value="overview">{uz.projects.tabs.overview}</TabsTrigger>
+              <TabsTrigger value="deploys">{uz.projects.tabs.deploys}</TabsTrigger>
               <TabsTrigger value="brand">{uz.projects.tabs.brand}</TabsTrigger>
               <TabsTrigger value="features">
                 {uz.projects.tabs.features}
@@ -104,6 +117,16 @@ export function ProjectEditor({ canWrite, project, clients, features, enabled, d
               <TabsTrigger value="owner">{uz.projects.tabs.owner}</TabsTrigger>
               {canWrite ? <TabsTrigger value="danger">{uz.projects.tabs.danger}</TabsTrigger> : null}
             </TabsList>
+
+            <TabsContent value="deploys">
+              <DeploysTab
+                projectId={project.id}
+                canDeploy={deploys.canDeploy}
+                simulated={deploys.simulated}
+                initial={deploys.rows}
+                workerAlive={deploys.workerAlive}
+              />
+            </TabsContent>
 
             <TabsContent value="overview" className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">

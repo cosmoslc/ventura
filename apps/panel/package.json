@@ -15,6 +15,7 @@
     "@ventura/auth": "workspace:*",
     "@ventura/config": "workspace:*",
     "@ventura/db": "workspace:*",
+    "@ventura/deploy": "workspace:*",
     "@ventura/integrations": "workspace:*",
     "@ventura/security": "workspace:*",
     "@ventura/tenants": "workspace:*",

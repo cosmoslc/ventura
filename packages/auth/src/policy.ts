@@ -100,11 +100,26 @@ export const ROLE_LABELS: Record<Role, string> = {
   viewer: "Kuzatuvchi",
 };
 
-type Permission = "view" | "projects.write" | "clients.write" | "templates.sync" | "admins.manage" | "settings.manage";
+type Permission =
+  | "view"
+  | "projects.write"
+  | "projects.deploy"
+  | "clients.write"
+  | "templates.sync"
+  | "admins.manage"
+  | "settings.manage";
 
 const PERMISSIONS: Record<Role, readonly Permission[]> = {
-  super_admin: ["view", "projects.write", "clients.write", "templates.sync", "admins.manage", "settings.manage"],
-  admin: ["view", "projects.write", "clients.write", "templates.sync"],
+  super_admin: [
+    "view",
+    "projects.write",
+    "projects.deploy",
+    "clients.write",
+    "templates.sync",
+    "admins.manage",
+    "settings.manage",
+  ],
+  admin: ["view", "projects.write", "projects.deploy", "clients.write", "templates.sync"],
   viewer: ["view"],
 };
 

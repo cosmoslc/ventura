@@ -61,3 +61,30 @@ export async function login(page: Page) {
   await page.getByRole("button", { name: uz.auth.verify }).click();
   await expectSignedIn(page);
 }
+
+/** Yangi loyiha formasi orqali loyiha yaratadi va uning sahifasida to'xtaydi. */
+export async function createProject(page: Page): Promise<{ name: string; slug: string }> {
+  const id = Date.now().toString(36);
+  const name = `E2E loyiha ${id}`;
+  const slug = `e2e-${id}`;
+  const steps = uz.wizard.steps;
+  const current = page.locator('[aria-current="step"]');
+
+  await page.goto("/projects/new");
+  await expect(current).toContainText(steps[0]!);
+  await page.getByRole("button", { name: uz.common.next }).click();
+  await expect(current).toContainText(steps[1]!);
+  await page.locator("#w-name").fill(name);
+  await page.locator("#w-slug").fill(slug);
+  // Mijoz yo'q bo'lsa, yangi mijoz maydonlari ochiq turadi
+  const newClient = page.locator("#w-cname");
+  if (await newClient.isVisible()) await newClient.fill(`E2E mijoz ${id}`);
+  for (let i = 2; i < steps.length; i++) {
+    await page.getByRole("button", { name: uz.common.next }).click();
+    await expect(current).toContainText(steps[i]!);
+  }
+  await page.getByRole("button", { name: uz.wizard.createAndSave }).click();
+  await expect(page).toHaveURL(/\/projects\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
+  return { name, slug };
+}
