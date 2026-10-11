@@ -132,7 +132,7 @@ Chap tomonda sidebar, o'ngda kontent. Interfeys tili o'zbekcha, light/dark/tizim
 | Bosh sahifa | `/` | Faol loyihalar soni, oxirgi deploylar, yiqilgan buildlar, ogohlantirishlar |
 | Loyihalar | `/projects` | Kartochkalar: nom, domen, holat, rejim, manzil, yoqilgan bo'limlar soni |
 | Yangi loyiha | `/projects/new` | Qadamli forma (pastda) |
-| Loyiha sahifasi | `/projects/[id]` | Tablar: Umumiy · Brend · Bo'limlar · Sozlamalar · Domenlar · Deploylar · Muhit o'zgaruvchilari · Zahira · Audit |
+| Loyiha sahifasi | `/projects/[id]` | Tablar: Umumiy · Brend · Bo'limlar · Sozlamalar · Domenlar · Deploylar · Muhit o'zgaruvchilari · Baza · Zahira · Audit |
 | Shablonlar | `/templates` | Shablonlar ro'yxati, versiyasi, bo'limlar manifesti |
 | Bo'limlar xaritasi | `/features` | Har bo'lim nimani talab qiladi va unga kim tayanadi, API yo'llari |
 | Serverlar | `/servers` | VPS ro'yxati: CPU, RAM, disk, holat, loyihalar soni; VPS qo'shish |
@@ -142,6 +142,16 @@ Chap tomonda sidebar, o'ngda kontent. Interfeys tili o'zbekcha, light/dark/tizim
 | Integratsiyalar | `/settings/integrations` | GitHub App, Vercel, Cloudflare, Telegram ulanishi |
 | Xavfsizlik | `/settings/security` | 2FA, sessiyalar, adminlar va rollar |
 | Xavfli hudud | `/settings/danger` | Qaytarib bo'lmaydigan amallar, qayta tasdiq bilan |
+
+### Baza tabi
+
+Loyiha bazasini panel ichidan ko'rish va tahrirlash (Supabase'dagi Table Editor'ga o'xshash).
+
+- **Ulanish ma'lumoti:** server, baza nomi, foydalanuvchi, baza strategiyasi, sxema versiyasi. Parol ko'rsatilmaydi.
+- **Jadvallar:** ro'yxat, ustunlar va turlari, qatorlarni sahifalab ko'rish, qidirish va saralash.
+- **Tahrirlash:** qator qo'shish, o'zgartirish, o'chirish. Har o'zgarish oldin tasdiqlanadi va audit jurnaliga eski va yangi qiymat bilan yoziladi.
+- **SQL oynasi yo'q.** Qo'lda so'rov kerak bo'lsa, u serverda bajariladi.
+- Cheklovlar 11-bo'limda.
 
 ### Yangi loyiha formasi
 
@@ -398,6 +408,7 @@ Panel barcha serverlar va repolarning kalitlarini saqlaydi, shuning uchun u eng 
 - Xavfsizlik sarlavhalari: CSP, HSTS, `X-Frame-Options`.
 - `shared` rejimda mijozlar ma'lumoti RLS bilan ajratilgan; `dedicated` rejimda alohida baza va foydalanuvchi.
 - O'chirilgan loyiha 30 kun "savat"da turadi, keyin butunlay o'chadi.
+- Baza tabi (5-bo'lim) mijozning haqiqiy ma'lumotini ko'rsatadi: faqat `super_admin` ochadi; har ochilish va har o'zgarish audit jurnaliga yoziladi; parol xeshlari va shifrlangan ustunlar ko'rsatilmaydi va tahrirlanmaydi; jadval tuzilishi (ustun qo'shish, o'chirish) o'zgartirilmaydi — u faqat migratsiya orqali.
 
 ### Shaxsiy ma'lumotlar qonuni
 
@@ -486,8 +497,9 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 - [ ] Bo'limlar: bog'liqliklar bilan yoqish/o'chirish, Bo'limlar xaritasi sahifasi
 - [ ] Sozlamalar (Zod sxema asosida avtomatik forma)
 - [ ] Konfiguratsiyani deploysiz yetkazish (kesh va webhook)
+- [ ] Baza tabi: ulanish ma'lumoti, jadvallarni ko'rish va qatorlarni tahrirlash
 
-* **Qabul:** rang yoki bo'lim o'zgarishi mijoz saytida 1 daqiqa ichida deploysiz ko'rinadi; o'chirilgan bo'lim API'si 404 qaytaradi.
+* **Qabul:** rang yoki bo'lim o'zgarishi mijoz saytida 1 daqiqa ichida deploysiz ko'rinadi; o'chirilgan bo'lim API'si 404 qaytaradi; Baza tabida o'zgartirilgan qator mijoz tizimida ko'rinadi va o'zgarish audit jurnalida turadi.
 
 ### 6-bosqich. Audit, monitoring, ogohlantirishlar
 
@@ -562,12 +574,13 @@ Qabul qilingan qarorlar (2026-yil 10-oktabr):
 | Uydagi server | Uydagi kompyuter server bo'ladi, Cloudflare Tunnel orqali internetga chiqariladi va mijozlarga tarqatish uchun ishlatiladi |
 | Online VPS | O'zbekistondagi provayder |
 | Deploy | O'z SSH drayverimiz (git, pnpm, PM2, nginx, certbot); Coolify ishlatilmaydi |
-| Mavjud Cosmos CRM | Hozircha tegilmaydi |
+| Mavjud Cosmos CRM | Muzlatilgan, unga yozilmaydi. Admin qismi `apps/edu-crm` sifatida qayta yoziladi (`docs/EDU-CRM-PLAN.md`) |
+| Baza tabi | Ko'rish va tahrirlash; SQL oynasi yo'q (2026-10-11) |
 | Obuna to'lovi | Keyinroq; hozircha holat qo'lda belgilanadi |
 
 Qolgan ochiq savollar:
 
 - [ ] O'zbekistondagi qaysi provayder va qaysi tarif (CPU, RAM, disk)?
-- [ ] `ventura.uz` domeni DNS'i Cloudflare'ga o'tkazilganmi? (Cloudflare Tunnel uchun kerak)
-- [ ] Uydagi kompyuter: internet tezligi, UPS bormi, kompyuter 24/7 yoqiq turadimi?
+- [ ] `ventura.uz` DNS'ini Cloudflare'ga o'tkazish. 2026-10-11 holatiga DNS ahost'da (`rdns1–3.ahost.uz`); Cloudflare Tunnel uchun kerak
+- [ ] Uydagi kompyuter: hozircha ishlab chiqish kompyuterining o'zi (Windows, WSL orqali). Internet tezligi, UPS, 24/7 yoqiq turishi aniqlanmagan
 - [ ] Shaxsiy ma'lumotlar qonuni bo'yicha yurist bilan aniqlashtirish (Vercel'dan foydalanish chegarasi).
