@@ -1,6 +1,6 @@
 import { type Page, expect, test } from "@playwright/test";
 import { uz } from "../lib/uz";
-import { login } from "./helpers";
+import { fillOwner, login } from "./helpers";
 
 /* Yangi loyiha formasi: 8 qadam, loyiha qoralama sifatida saqlanadi (deploysiz). */
 
@@ -48,7 +48,10 @@ test("forma loyihani yaratadi, u ro'yxatda va audit jurnalida ko'rinadi", async 
   const newClient = page.locator("#w-cname");
   if (await newClient.isVisible()) await newClient.fill(`E2E mijoz ${id}`);
 
-  for (let i = 2; i < steps.length; i++) await next(page, i);
+  for (let i = 2; i < steps.length; i++) {
+    if (i === 4) await fillOwner(page, id);
+    await next(page, i);
+  }
 
   // Ko'rib chiqish: kiritilganlar ko'rinadi
   await expect(page.getByText(name).first()).toBeVisible();

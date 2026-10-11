@@ -8,7 +8,7 @@
 # Nima qiladi:
 #   1. Dasturlar: git, nginx, OpenSSH server, Node.js 24, pnpm, PM2, PostgreSQL 17
 #   2. `deploy` foydalanuvchisi (parolsiz; faqat panel kaliti bilan kiradi)
-#   3. nginx sayt sozlamasini boshqaradigan yordamchi (`ventura-site`) va unga cheklangan sudo huquqi
+#   3. Yordamchilar va ularga cheklangan sudo huquqi: nginx sayti (`ventura-site`), mijoz bazasi (`ventura-db`)
 #   4. PM2'ni tizim xizmati sifatida (server qayta yonganda ilovalar o'zi ko'tariladi)
 #
 # Nima QILMAYDI: mavjud foydalanuvchilar va ularning SSH kirishiga tegmaydi, firewall'ni o'zgartirmaydi.
@@ -191,9 +191,51 @@ HELPER
 chown root:root /usr/local/sbin/ventura-site
 chmod 0755 /usr/local/sbin/ventura-site
 
-# deploy foydalanuvchisi root nomidan FAQAT shu yordamchini ishga tushira oladi
+say "Baza yordamchisi (ventura-db)"
+cat > /usr/local/sbin/ventura-db <<'HELPER'
+#!/usr/bin/env bash
+# Ventura: mijoz bazasi va uning foydalanuvchisi. Faqat `deploy` foydalanuvchisi sudo orqali chaqiradi.
+#   ventura-db check
+#   ventura-db ensure <baza> <rol>     # parol stdin'dan (bitta qator)
+# Rol superuser emas, RLS'ni chetlab o'tolmaydi, yangi baza yaratolmaydi. Bazaga faqat o'z roli ulanadi.
+# Qayta chaqirish xavfsiz: bor narsa qayta yaratilmaydi, parol paneldagi qiymatga tenglashtiriladi.
+set -euo pipefail
+NAME_RE='^[a-z][a-z0-9_]{2,62}$'
+fail() { echo "ventura-db: $*" >&2; exit 2; }
+
+case "${1:-}" in
+  check) runuser -u postgres -- psql -XAtqc 'show server_version' ;;
+  ensure)
+    [[ $# -eq 3 ]] || fail "ensure <baza> <rol>"
+    db="$2"; role="$3"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    [[ "$role" =~ $NAME_RE ]] || fail "rol nomi noto'g'ri"
+    [[ "$db" != postgres && "$db" != template0 && "$db" != template1 ]] || fail "tizim bazasi"
+    [[ "$role" != postgres ]] || fail "tizim roli"
+    IFS= read -r pass || true
+    [[ "$pass" =~ ^[A-Za-z0-9_-]{24,128}$ ]] || fail "parol noto'g'ri (stdin)"
+    # Parol buyruq satrida emas — muhit o'zgaruvchisida (boshqa foydalanuvchilar ko'rmaydi), psql \getenv bilan
+    VENTURA_DB_PASS="$pass" runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -v db="$db" -v role="$role" -d postgres <<'SQL'
+\getenv pass VENTURA_DB_PASS
+SELECT format('CREATE ROLE %I LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS', :'role')
+  WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'role') \gexec
+SELECT format('ALTER ROLE %I WITH LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD %L', :'role', :'pass') \gexec
+SELECT format('CREATE DATABASE %I OWNER %I', :'db', :'role')
+  WHERE NOT EXISTS (SELECT 1 FROM pg_database WHERE datname = :'db') \gexec
+SELECT format('ALTER DATABASE %I OWNER TO %I', :'db', :'role') \gexec
+SELECT format('REVOKE ALL ON DATABASE %I FROM PUBLIC', :'db') \gexec
+SQL
+    echo "ventura-db: $db (egasi $role) tayyor"
+    ;;
+  *) fail "buyruq: check | ensure" ;;
+esac
+HELPER
+chown root:root /usr/local/sbin/ventura-db
+chmod 0755 /usr/local/sbin/ventura-db
+
+# deploy foydalanuvchisi root nomidan FAQAT shu ikki yordamchini ishga tushira oladi
 SUDOERS=/etc/sudoers.d/ventura
-echo "${DEPLOY_USER} ALL=(root) NOPASSWD: /usr/local/sbin/ventura-site" > "${SUDOERS}.tmp"
+echo "${DEPLOY_USER} ALL=(root) NOPASSWD: /usr/local/sbin/ventura-site, /usr/local/sbin/ventura-db" > "${SUDOERS}.tmp"
 visudo -cf "${SUDOERS}.tmp" >/dev/null
 chmod 0440 "${SUDOERS}.tmp"
 mv "${SUDOERS}.tmp" "$SUDOERS"

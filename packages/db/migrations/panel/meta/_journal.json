@@ -43,6 +43,13 @@
       "when": 1791731900593,
       "tag": "0005_apps",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791738295505,
+      "tag": "0006_project_owner_phone",
+      "breakpoints": true
     }
   ]
 }

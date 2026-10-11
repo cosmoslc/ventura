@@ -64,7 +64,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           target: p.target,
           dbStrategy: p.dbStrategy,
           brand: p.brand,
-          ownerLogin: p.ownerLogin,
+          ownerName: p.ownerName,
+          ownerPhone: p.ownerPhone,
           templateName: tpl[0]?.name ?? p.templateKey,
         }}
         clients={cls}

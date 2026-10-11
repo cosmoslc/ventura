@@ -11,7 +11,7 @@ import { Card, CardContent } from "@ventura/ui/card";
 import { RadioCard, RadioGroup } from "@ventura/ui/checkbox";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
-import { PhoneInput } from "@ventura/ui/phone-input";
+import { PhoneInput, formatUzPhone } from "@ventura/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Stepper } from "@ventura/ui/stepper";
 import { toast } from "@ventura/ui/toast";
@@ -69,7 +69,8 @@ export function ProjectWizard({
   // 3. Brend
   const [brand, setBrand] = React.useState<ProjectBrand>({ primary: "#3f6df6", appearance: "light" });
   // 4. Ega
-  const [ownerLogin, setOwnerLogin] = React.useState("admin");
+  const [ownerName, setOwnerName] = React.useState("");
+  const [ownerPhone, setOwnerPhone] = React.useState("");
   const [ownerPassword, setOwnerPassword] = React.useState(() => randomPassword());
   // 5. Bo'limlar — boshida hammasi yoqilgan (rejimlardan tashqari)
   const [features, setFeatures] = React.useState<Set<string>>(() =>
@@ -113,7 +114,8 @@ export function ProjectWizard({
       if (domainKind === "custom" && !HOST_RE.test(customDomain.trim().toLowerCase())) return uz.projects.hostInvalid;
     }
     if (i === 3) {
-      if (!/^[a-z0-9._-]{3,32}$/i.test(ownerLogin)) return uz.projects.ownerLogin;
+      if (ownerName.trim().length < 2) return uz.projects.ownerNameInvalid;
+      if (!/^\d{9}$/.test(ownerPhone)) return uz.projects.ownerPhoneInvalid;
       if (ownerPassword.length < 8) return uz.projects.ownerPassword;
     }
     return null;
@@ -142,7 +144,8 @@ export function ProjectWizard({
         domainKind,
         customDomain: customDomain.trim().toLowerCase(),
         brand,
-        ownerLogin,
+        ownerName: ownerName.trim(),
+        ownerPhone,
         ownerPassword,
         features: [...features],
         mode,
@@ -307,13 +310,12 @@ export function ProjectWizard({
             <div className="max-w-md space-y-4">
               <p className="text-body text-muted-foreground">{uz.wizard.ownerHint}</p>
               <div>
-                <Label htmlFor="w-login">{uz.projects.ownerLogin}</Label>
-                <Input
-                  id="w-login"
-                  value={ownerLogin}
-                  onChange={(e) => setOwnerLogin(e.target.value)}
-                  className="font-mono"
-                />
+                <Label htmlFor="w-owner-name">{uz.projects.ownerName}</Label>
+                <Input id="w-owner-name" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} />
+              </div>
+              <div>
+                <Label htmlFor="w-owner-phone">{uz.projects.ownerPhone}</Label>
+                <PhoneInput id="w-owner-phone" value={ownerPhone} onValueChange={setOwnerPhone} />
               </div>
               <div>
                 <Label htmlFor="w-pass">{uz.projects.ownerPassword}</Label>
@@ -421,7 +423,8 @@ export function ProjectWizard({
                   [uz.projects.client, clientName],
                   [uz.projects.domain, domainKind === "custom" ? customDomain : `${slug}.${BASE_DOMAIN}`],
                   [uz.wizard.color, brand.primary],
-                  [uz.projects.ownerLogin, ownerLogin],
+                  [uz.projects.ownerName, ownerName],
+                  [uz.projects.ownerPhone, ownerPhone ? `+998 ${formatUzPhone(ownerPhone)}` : ""],
                   [uz.projects.tabs.features, `${features.size} ${uz.templates.features}`],
                   [uz.projects.mode, mode],
                   [uz.projects.target, uz.projects.targetLabels[target]],

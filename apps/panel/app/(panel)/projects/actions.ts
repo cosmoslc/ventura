@@ -100,7 +100,8 @@ export async function createProjectAction(input: unknown): Promise<Result<{ id: 
         status: "draft",
         brand: v.brand,
         settings: v.githubRepo && v.mode === "fork" ? { githubRepo: v.githubRepo } : {},
-        ownerLogin: v.ownerLogin,
+        ownerName: v.ownerName,
+        ownerPhone: `+998${v.ownerPhone}`,
         createdBy: viewer.id,
       })
       .returning({ id: projects.id });

@@ -30,6 +30,8 @@ export interface ExecOptions {
   /** Har chiqish qatori uchun chaqiriladi (jonli log) */
   onLine?: (line: string, stream: "out" | "err") => void;
   timeoutMs?: number;
+  /** Buyruqqa stdin orqali beriladigan ma'lumot (sirlar shu yo'l bilan: buyruq satriga va logga tushmaydi) */
+  input?: string;
 }
 
 export interface SshSession {
@@ -125,6 +127,7 @@ export function connect(target: SshTarget, { timeoutMs = 20_000 } = {}): Promise
                   stderr += chunk.toString();
                   err.push(chunk);
                 });
+                if (options.input !== undefined) channel.end(options.input);
                 channel.on("close", (code: number | null) => {
                   if (timer) clearTimeout(timer);
                   out.end();
