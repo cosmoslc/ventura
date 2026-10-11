@@ -465,8 +465,8 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 - [ ] Uydagi kompyuterni server qilib tayyorlash skripti (Node, pnpm, PM2, nginx, PostgreSQL, PgBouncer)
 - [ ] Cloudflare Tunnel orqali `admin.ventura.uz` va `*.ventura.uz`ni internetga chiqarish
-- [ ] `packages/deploy`: `DeployDriver` interfeysi va SSH drayveri (relizlar, `pm2 reload`, health check, rollback)
-- [ ] pg-boss navbati, deploy vazifasi, jonli loglar (`deployment_steps`)
+- [x] `packages/deploy`: `DeployDriver` interfeysi va SSH drayveri (relizlar, `pm2 reload`, health check, rollback)
+- [x] pg-boss navbati, deploy vazifasi, jonli loglar (`deployment_steps`)
 - [ ] Baza strategiyalari: `shared_db` va `db_per_tenant`, `getTenantDb()`, barcha bazalarda migratsiya
 - [ ] `edu-crm`ni bepul subdomenda ishga tushirish
 - [ ] Deploylar tabi: tarix, holat, loglar, qayta deploy, rollback

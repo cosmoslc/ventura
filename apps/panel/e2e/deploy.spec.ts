@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { STEPS } from "@ventura/deploy/steps";
 import { uz } from "../lib/uz";
 import { createProject, login } from "./helpers";
 
@@ -27,9 +28,9 @@ test("deploy navbatga qo'yiladi, qadamlar jonli ko'rinadi, loyiha faollashadi va
 
   // Hamma qadam o'tadi va deploy "Tayyor" bo'ladi
   const steps = page.getByRole("list", { name: uz.deploys.steps }).getByRole("listitem");
-  await expect(steps).toHaveCount(8);
+  await expect(steps).toHaveCount(STEPS.length);
   await expect(badge(uz.deploys.statusLabels.ready)).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator('li[data-status="ok"]')).toHaveCount(8);
+  await expect(page.locator('li[data-status="ok"]')).toHaveCount(STEPS.length);
 
   // Log: bajarilgan buyruqlar ko'rinadi
   const log = page.getByRole("log");

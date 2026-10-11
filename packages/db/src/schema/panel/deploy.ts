@@ -1,4 +1,4 @@
-import { bigserial, index, integer, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { bigserial, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./auth";
 import { projects } from "./core";
@@ -86,4 +86,82 @@ export const deploymentLogs = pgTable(
     at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("deployment_logs_dep_idx").on(t.deploymentId, t.id)],
+);
+
+/* ---------- Serverlar (SPEC 6 va 9-bo'limlar) ---------- */
+
+/** `home` — uydagi server (hozircha WSL), `online` — VPS */
+export const SERVER_KINDS = ["home", "online"] as const;
+/** `new` — qo'shilgan, hali tekshirilmagan; `ready` — ulanish va dasturlar joyida; `error` — oxirgi tekshiruv yiqilgan */
+export const SERVER_STATUSES = ["new", "ready", "error"] as const;
+
+export interface ServerInfo {
+  os?: string;
+  node?: string;
+  pnpm?: string;
+  pm2?: string;
+  nginx?: string;
+  postgres?: string;
+  memoryMb?: number;
+  diskFreeGb?: number;
+  cpus?: number;
+}
+
+export const servers = pgTable(
+  "servers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    kind: text("kind", { enum: SERVER_KINDS }).notNull().default("online"),
+    host: text("host").notNull(),
+    sshPort: integer("ssh_port").notNull().default(22),
+    sshUser: text("ssh_user").notNull().default("deploy"),
+    /** Ochiq kalit — serverga shu qo'yiladi. Yopiq kalit `secrets` jadvalida, shifrlangan. */
+    publicKey: text("public_key").notNull(),
+    /** Serverning o'z kaliti izi (SHA256). Birinchi ulanishda eslab qolinadi, keyin o'zgarsa ulanish rad etiladi. */
+    hostKey: text("host_key"),
+    deployRoot: text("deploy_root").notNull().default("/home/deploy/apps"),
+    status: text("status", { enum: SERVER_STATUSES }).notNull().default("new"),
+    info: jsonb("info").$type<ServerInfo>().notNull().default({}),
+    lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [uniqueIndex("servers_name_uq").on(t.name)],
+);
+
+/* ---------- Ishlab turgan ilovalar ---------- */
+
+/**
+ * Serverdagi bitta ilova nusxasi. `shared` rejimda bitta shablon ilovasi shu serverdagi hamma mijozga
+ * xizmat qiladi (mijoz domen bo'yicha aniqlanadi); `dedicated` rejimda (3-bosqich) har loyihaning o'zi.
+ */
+export const apps = pgTable(
+  "apps",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    serverId: uuid("server_id")
+      .notNull()
+      .references(() => servers.id, { onDelete: "restrict" }),
+    templateKey: text("template_key").notNull(),
+    /** Serverdagi papka va PM2 jarayoni nomi, masalan `edu-crm` */
+    name: text("name").notNull(),
+    /** Ilova tinglaydigan mahalliy port (nginx shu portga yo'naltiradi) */
+    port: integer("port").notNull(),
+    commitSha: text("commit_sha"),
+    releasePath: text("release_path"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    uniqueIndex("apps_server_name_uq").on(t.serverId, t.name),
+    uniqueIndex("apps_server_port_uq").on(t.serverId, t.port),
+  ],
 );

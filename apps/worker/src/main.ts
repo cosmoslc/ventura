@@ -10,7 +10,7 @@ import {
   WORKER_HEARTBEAT_KEY,
   createDeployStore,
   createEventHandler,
-  drivers,
+  createDrivers,
   failInterrupted,
   runDeployment,
   startQueue,
@@ -37,6 +37,8 @@ const db = createPanelDb();
 const telegram = createTelegram();
 const store = createDeployStore(db);
 const onEvent = createEventHandler({ db, telegram });
+// Kod shu repozitoriydan (commit qilingan holatdan) olinadi
+const drivers = createDrivers({ db, repoRoot: ROOT });
 
 // Oldingi jarayon deploy o'rtasida o'chgan bo'lsa, o'sha deploylar "yiqilgan" deb yopiladi
 const interrupted = await failInterrupted(db, "Ishchi jarayon deploy vaqtida to'xtab qoldi");

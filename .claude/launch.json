@@ -8,6 +8,12 @@
       "port": 3000
     },
     {
+      "name": "panel-prod",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ventura/panel", "start"],
+      "port": 3000
+    },
+    {
       "name": "panel-attach",
       "url": "http://localhost:3000"
     }

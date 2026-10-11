@@ -16,6 +16,8 @@
 - `pnpm db:generate` · `pnpm db:migrate` — Drizzle migratsiyasini yaratish va qo'llash (`PANEL_MIGRATE_URL`)
 - `pnpm templates:sync` — shablon manifestlarini (`apps/*/features.ts`) bazaga ko'chirish
 - `pnpm admin:create` · `pnpm admin:unlock` · `pnpm admin:reset-2fa` — adminlar bilan ishlash, faqat server terminalida
+- `pnpm server:add` · `pnpm server:check` — serverni ro'yxatga olish (SSH kalit yaratadi) va tekshirish; serverning o'zida bir marta `sudo bash tooling/server/setup.sh --key "..."`
+- `pnpm deploy:run -- --project <slug>` — loyihani terminaldan deploy qilish (paneldagi tugma bilan bir xil yo'l)
 
 ## Kod
 

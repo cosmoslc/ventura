@@ -5,7 +5,7 @@ import type { DeployStatus } from "@ventura/db/schema/panel";
  * Drayver har qadamni alohida bajaradi; tartib, holatlar, log va xatoda orqaga qaytish — runner'da.
  */
 
-export const STEPS = ["prepare", "fetch", "env", "build", "migrate", "release", "health", "cleanup"] as const;
+export const STEPS = ["prepare", "fetch", "env", "build", "migrate", "release", "health", "route", "cleanup"] as const;
 export type StepKey = (typeof STEPS)[number];
 
 /** Qadam boshlanganda deploy qaysi holatga o'tadi. */
@@ -17,6 +17,7 @@ export const STEP_PHASE: Record<StepKey, Extract<DeployStatus, "building" | "dep
   migrate: "building",
   release: "deploying",
   health: "deploying",
+  route: "deploying",
   cleanup: "deploying",
 };
 
@@ -58,6 +59,8 @@ export interface DeployDriver {
   run(step: StepKey, ctx: DeployContext, log: StepLog): Promise<StepResult | void>;
   /** `release` dan keyingi qadam yiqilganda: saytni oldingi relizga qaytaradi. */
   rollback(ctx: DeployContext, log: StepLog): Promise<void>;
+  /** Deploy tugagach (har qanday natijada) chaqiriladi: ulanishlarni yopish uchun. */
+  dispose?(): Promise<void>;
 }
 
 export class StepError extends Error {

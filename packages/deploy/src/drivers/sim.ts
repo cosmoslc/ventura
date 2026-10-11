@@ -35,6 +35,10 @@ export function createSimDriver(options: SimOptions = {}): DeployDriver {
     migrate: () => ["pnpm db:migrate", "[✓] migrations applied successfully!"],
     release: (slug) => [`ln -sfn <reliz> current && pm2 reload ${slug}`, `[PM2] [${slug}](0) ✓`],
     health: (slug) => [`curl -fsS http://127.0.0.1:<port>/health`, `200 OK — ${slug} javob beryapti`],
+    route: (slug) => [
+      `sudo ventura-site set ${slug} <port> ${slug}.ventura.uz`,
+      `ventura-site: ${slug} -> 127.0.0.1:<port>`,
+    ],
     cleanup: () => ["eski relizlarni tozalash (oxirgi 5 tasi qoladi)", "0 ta reliz o'chirildi"],
   };
 

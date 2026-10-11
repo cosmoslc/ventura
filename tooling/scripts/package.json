@@ -10,11 +10,16 @@
     "admin:reset-2fa": "tsx src/admin-reset-2fa.ts",
     "admin:unlock": "tsx src/admin-unlock.ts",
     "templates:sync": "tsx src/templates-sync.ts",
-    "e2e:seed": "tsx src/e2e-seed.ts"
+    "e2e:seed": "tsx src/e2e-seed.ts",
+    "e2e:project": "tsx src/e2e-project.ts",
+    "server:add": "tsx src/server-add.ts",
+    "server:check": "tsx src/server-check.ts",
+    "deploy:run": "tsx src/deploy-run.ts"
   },
   "dependencies": {
     "@ventura/auth": "workspace:*",
     "@ventura/db": "workspace:*",
+    "@ventura/deploy": "workspace:*",
     "@ventura/integrations": "workspace:*",
     "@ventura/security": "workspace:*",
     "@ventura/tenants": "workspace:*",
