@@ -451,6 +451,14 @@ Qoidalar:
 - `Avatar`: bosh harflar (o'lcham × 0.38, 700), radius `--r-avatar`; `variant="brand"` — `--avatar-bg`, `variant="auto"` — ismga qarab 6 juft gradientdan biri.
 - `ThemeToggle`: `icon` tugma, Oy / Quyosh ikonkasi.
 
+### 11.22 Stepper — `stepper.tsx`
+
+- Ko'p qadamli ustoz sarlavhasi ("Yangi loyiha"). Parametrlar: `steps`, `current`, `canGoTo`, `onStepClick`.
+- Qadam: 24px doira (mono, 11px / 700) + nom (12px / 600, faqat ≥1024px); qadamlar orasida 1px chiziq.
+- Holatlar: o'tilgan — `--primary` fon va belgi, chizig'i ham `--primary`; joriy — `--primary-soft` fon, `--primary` chegara, `aria-current="step"`; kelgusi — `--card` fon, `--border` chegara.
+- O'tilgan qadamga bosib qaytiladi (hover — `--secondary` fon); kelgusi qadam bosilmaydi, `canGoTo` bilan o'zgartiriladi.
+- <768px: doiralar o'rniga joriy qadam nomi va "3 / 8" sanog'i.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
@@ -501,4 +509,4 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 - Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
 - Select'da harf bilan qidirish (typeahead).
-- Keyingi bosqichlar komponentlari: stepper ("Yangi loyiha" ustozi), bo'sh holat, skeleton, tooltip, log ko'rsatgich, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.
+- Keyingi bosqichlar komponentlari: bo'sh holat (hozircha panel ichida — `apps/panel/components/page-header.tsx`), skeleton, tooltip, log ko'rsatgich, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.

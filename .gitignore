@@ -7,6 +7,11 @@ coverage
 *.tsbuildinfo
 next-env.d.ts
 
+# Playwright (e2e) natijalari va vaqtinchalik fayllar
+test-results
+playwright-report
+apps/panel/e2e/.tmp
+
 # Muhit o'zgaruvchilari — hech qachon repoga tushmaydi (faqat .env.example)
 .env
 .env.*
@@ -18,3 +23,6 @@ Thumbs.db
 *.log
 .claude/settings.local.json
 
+
+# Mahalliy sirlar: shifrlash kaliti, baza parollari (hech qachon repoga tushmaydi)
+.secrets/

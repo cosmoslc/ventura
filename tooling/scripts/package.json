@@ -1,0 +1,30 @@
+{
+  "name": "@ventura/scripts",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "admin:create": "tsx src/admin-create.ts",
+    "admin:reset-2fa": "tsx src/admin-reset-2fa.ts",
+    "admin:unlock": "tsx src/admin-unlock.ts",
+    "templates:sync": "tsx src/templates-sync.ts",
+    "e2e:seed": "tsx src/e2e-seed.ts"
+  },
+  "dependencies": {
+    "@ventura/auth": "workspace:*",
+    "@ventura/db": "workspace:*",
+    "@ventura/integrations": "workspace:*",
+    "@ventura/security": "workspace:*",
+    "@ventura/tenants": "workspace:*",
+    "drizzle-orm": "^0.45.4"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@ventura/config": "workspace:*",
+    "eslint": "^9.39.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}

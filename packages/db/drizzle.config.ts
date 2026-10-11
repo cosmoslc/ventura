@@ -8,7 +8,8 @@ export default defineConfig({
   dialect: "postgresql",
   schema: "./src/schema/panel/index.ts",
   out: "./migrations/panel",
-  dbCredentials: { url: process.env.PANEL_DATABASE_URL ?? "" },
+  // Migratsiyalar baza egasi nomidan; panel esa cheklangan ventura_app bilan ishlaydi
+  dbCredentials: { url: process.env.PANEL_MIGRATE_URL ?? process.env.PANEL_DATABASE_URL ?? "" },
   strict: true,
   verbose: true,
 });

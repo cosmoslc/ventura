@@ -1,0 +1,18 @@
+{
+  "name": "@ventura/edu-crm",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ventura/tenants": "workspace:*"
+  },
+  "devDependencies": {
+    "@ventura/config": "workspace:*",
+    "eslint": "^9.39.0",
+    "typescript": "^5.9.3"
+  }
+}

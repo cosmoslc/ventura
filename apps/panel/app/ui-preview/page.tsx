@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { UiCatalog } from "@/components/ui-catalog";
 
@@ -7,5 +8,7 @@ export const metadata: Metadata = {
 };
 
 export default function UiPreviewPage() {
+  // Faqat ishlab chiqish uchun — production'da ochilmaydi
+  if (process.env.NODE_ENV === "production") notFound();
   return <UiCatalog />;
 }

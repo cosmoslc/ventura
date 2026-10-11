@@ -39,6 +39,7 @@ import { Pagination } from "@ventura/ui/pagination";
 import { PhoneInput } from "@ventura/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
+import { Stepper } from "@ventura/ui/stepper";
 import { Switch } from "@ventura/ui/switch";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ventura/ui/tabs";
@@ -57,6 +58,7 @@ const SECTIONS = [
   ["kartochkalar", "Kartochkalar"],
   ["jadval", "Jadval"],
   ["tablar", "Tablar"],
+  ["qadamlar", "Qadamlar"],
   ["menyu", "Menyu"],
   ["topbar", "Topbar"],
   ["modal", "Modal va toast"],
@@ -448,6 +450,25 @@ function TabsDemo() {
   );
 }
 
+const STEPS = ["Mijoz", "Shablon", "Joylashtirish", "Brend", "Tekshirish"] as const;
+
+function StepperDemo() {
+  const [step, setStep] = React.useState(2);
+  return (
+    <div className="space-y-4">
+      <Stepper steps={STEPS} current={step} onStepClick={setStep} />
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" disabled={step === 0} onClick={() => setStep(step - 1)}>
+          Orqaga
+        </Button>
+        <Button size="sm" disabled={step === STEPS.length - 1} onClick={() => setStep(step + 1)}>
+          Keyingi
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function Menus() {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -673,6 +694,15 @@ export function UiCatalog() {
         <Section id="tablar" title="Tablar" description="Aktiv tab ostida sirpanuvchi chiziq">
           <Both>
             <TabsDemo />
+          </Both>
+        </Section>
+        <Section
+          id="qadamlar"
+          title="Qadamlar"
+          description="Stepper: o'tilgan qadamga bosib qaytiladi; tor ekranda faqat joriy qadam"
+        >
+          <Both>
+            <StepperDemo />
           </Both>
         </Section>
         <Section

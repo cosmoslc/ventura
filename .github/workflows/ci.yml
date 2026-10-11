@@ -50,3 +50,58 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  e2e:
+    name: e2e · kirish + 2FA, ustoz
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ventura
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: ventura_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ventura -d ventura_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Faqat shu vazifa ichidagi vaqtinchalik baza; haqiqiy sirlar emas
+      E2E_DATABASE_URL: postgres://ventura_app:e2e@localhost:5432/ventura_e2e
+      E2E_MIGRATE_URL: postgres://ventura:e2e@localhost:5432/ventura_e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Bog'liqliklar
+        run: pnpm install --frozen-lockfile
+
+      - name: Panel roli (audit jadvalini o'zgartira olmaydigan)
+        run: psql "$E2E_MIGRATE_URL" -v ON_ERROR_STOP=1 -f apps/panel/e2e/roles.sql
+
+      - name: Playwright brauzeri
+        run: pnpm --filter @ventura/panel exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm --filter @ventura/panel build
+
+      - name: E2E
+        run: pnpm e2e
+
+      - name: Yiqilgan test izlari
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: apps/panel/test-results
+          retention-days: 7
