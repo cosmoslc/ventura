@@ -106,18 +106,60 @@ jobs:
           path: apps/panel/test-results
           retention-days: 7
 
-  server-setup:
-    # tooling/server/setup.sh haqiqiy Ubuntu'da sinaladi: runner bir martalik mashina, root huquqi bor
-    name: server · setup.sh
+  server-deploy:
+    # Haqiqiy deploy: runner bir martalik Ubuntu mashina. setup.sh uni serverga aylantiradi, keyin panel navbati,
+    # ishchi jarayon va SSH drayveri shu mashinaning o'ziga ikki loyihani joylaydi.
+    name: server · setup.sh va haqiqiy deploy
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ventura
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: ventura_e2e
+        ports:
+          # 5432 emas: setup.sh mashinaning o'ziga ham PostgreSQL o'rnatadi
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U ventura -d ventura_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Faqat shu vazifa ichidagi vaqtinchalik baza va kalitlar; haqiqiy sirlar emas
+      E2E_DATABASE_URL: postgres://ventura_app:e2e@localhost:5433/ventura_e2e
+      PANEL_DATABASE_URL: postgres://ventura_app:e2e@localhost:5433/ventura_e2e
+      PANEL_MIGRATE_URL: postgres://ventura:e2e@localhost:5433/ventura_e2e
+      BETTER_AUTH_SECRET: ci-faqat-test-uchun-maxfiy-satr-0123456789
+      BETTER_AUTH_URL: http://localhost:3000
+      DEPLOY_DRIVER: ssh
     steps:
       - uses: actions/checkout@v4
 
       - name: Toza serverga o'xshatish (runner'dagi tayyor Node olib tashlanadi)
         run: sudo rm -f /usr/local/bin/node /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /usr/local/bin/pnpm /usr/local/bin/pm2
 
-      - name: Panel kaliti (faqat shu sinov uchun)
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Bog'liqliklar
+        run: pnpm install --frozen-lockfile
+
+      - name: Panel bazasi
+        run: |
+          head -c 32 /dev/urandom | base64 > "$RUNNER_TEMP/master.key"
+          echo "VENTURA_MASTER_KEY_FILE=$RUNNER_TEMP/master.key" >> "$GITHUB_ENV"
+          psql "$PANEL_MIGRATE_URL" -v ON_ERROR_STOP=1 -f apps/panel/e2e/roles.sql
+          pnpm db:migrate
+          pnpm templates:sync
+
+      - name: Qo'lda tekshiruvlar uchun kalit
         run: ssh-keygen -t ed25519 -N "" -C ventura-panel:ci -f "$RUNNER_TEMP/panel_key" -q
 
       - name: setup.sh
@@ -126,10 +168,10 @@ jobs:
       - name: Qayta ishga tushirish xavfsiz
         run: sudo bash tooling/server/setup.sh --ssh-port 2222 --key "$(cat "$RUNNER_TEMP/panel_key.pub")"
 
-      - name: Panel kaliti bilan kirish, dasturlar va huquqlar
+      - name: Kalit bilan kirish, dasturlar va huquqlar
         run: |
           SSH="ssh -p 2222 -i $RUNNER_TEMP/panel_key -o StrictHostKeyChecking=no -o BatchMode=yes deploy@127.0.0.1"
-          $SSH 'bash -lc "node --version && pnpm --version && pm2 --version && psql --version"'
+          $SSH 'bash -lc "node --version && pnpm --version && pm2 --version | tail -n 1 && psql --version"'
           $SSH 'sudo -n /usr/local/sbin/ventura-site check'
           test "$(sudo grep -c ventura-panel:ci /home/deploy/.ssh/authorized_keys)" = "1"
           # deploy root nomidan boshqa hech narsa ishlata olmaydi
@@ -141,7 +183,8 @@ jobs:
         run: |
           SSH="ssh -p 2222 -i $RUNNER_TEMP/panel_key -o StrictHostKeyChecking=no -o BatchMode=yes deploy@127.0.0.1"
           mkdir -p "$RUNNER_TEMP/site" && echo "ventura-ok" > "$RUNNER_TEMP/site/index.html"
-          (cd "$RUNNER_TEMP/site" && python3 -m http.server 4100 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          (cd "$RUNNER_TEMP/site" && python3 -m http.server 4900 --bind 127.0.0.1 >/dev/null 2>&1 &)
+          sleep 1
           # nginx qayta yuklanishi bir zumda emas: javob kelguncha bir necha marta uriniladi
           via_nginx() {
             for _ in $(seq 1 20); do
@@ -150,18 +193,61 @@ jobs:
             done
             echo "nginx orqali javob kelmadi: $1"
             curl -sS -i -H "Host: $1" http://127.0.0.1/ | head -20 || true
-            curl -sS -i http://127.0.0.1:4100/ | head -5 || true
             sudo cat /etc/nginx/conf.d/ventura-demo.conf || true
             return 1
           }
-          $SSH 'sudo -n /usr/local/sbin/ventura-site set demo 4100 demo.localhost,demo.ventura.uz'
+          $SSH 'sudo -n /usr/local/sbin/ventura-site set demo 4900 demo.localhost,demo.ventura.uz'
           via_nginx demo.localhost
           via_nginx demo.ventura.uz
-          # noto'g'ri kirish rad etiladi va sozlama o'zgarmaydi
           # Xavfli belgilar bitta argument bo'lib yetib borishi uchun ichki qo'shtirnoq bilan (drayver ham shunday qiladi)
-          for bad in "set Demo 4100 demo.localhost" "set demo 80 demo.localhost" "set demo 4100 'a.b;reboot'" "set demo 4100 '\$(id)'" "remove ../nginx"; do
+          for bad in "set Demo 4900 demo.localhost" "set demo 80 demo.localhost" "set demo 4900 'a.b;reboot'" "set demo 4900 '\$(id)'" "remove ../nginx"; do
             if $SSH "sudo -n /usr/local/sbin/ventura-site $bad" 2>/dev/null; then echo "rad etilmadi: $bad"; exit 1; fi
           done
           via_nginx demo.localhost
           $SSH 'sudo -n /usr/local/sbin/ventura-site remove demo'
           test ! -e /etc/nginx/conf.d/ventura-demo.conf
+
+      - name: Serverni panelga qo'shish (panel o'z kalitini yaratadi)
+        run: |
+          pnpm --silent server:add -- --name ci --kind home --host 127.0.0.1 --port 2222 | tee "$RUNNER_TEMP/server-add.txt"
+          KEY="$(grep -m1 '^ssh-ed25519 ' "$RUNNER_TEMP/server-add.txt")"
+          sudo bash tooling/server/setup.sh --ssh-port 2222 --key "$KEY"
+          test "$(sudo grep -c '^restrict ssh-ed25519' /home/deploy/.ssh/authorized_keys)" = "2"
+          pnpm --silent server:check -- --name ci
+
+      - name: Sinov loyihalari va ishchi jarayon
+        run: |
+          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-a --name "Demo A" --color "#059669"
+          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-b --name "Demo B" --color "#7c3aed"
+          nohup pnpm worker > "$RUNNER_TEMP/worker.log" 2>&1 &
+          for _ in $(seq 1 60); do grep -q "worker. tayyor" "$RUNNER_TEMP/worker.log" && break; sleep 1; done
+          grep -q "worker. tayyor" "$RUNNER_TEMP/worker.log"
+
+      - name: Birinchi deploy (kod, build, PM2, nginx)
+        run: |
+          pnpm --silent deploy:run -- --project demo-a | tee "$RUNNER_TEMP/deploy-a.txt"
+          grep -q "Deploy tayyor" "$RUNNER_TEMP/deploy-a.txt"
+          curl -fsS -H "Host: demo-a.localhost" http://127.0.0.1/health | grep '"tenant":"demo-a"'
+          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "Demo A"
+          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q -- "--primary:#059669"
+
+      - name: Ikkinchi mijoz o'sha ilovaga ulanadi (qayta build qilinmaydi)
+        run: |
+          pnpm --silent deploy:run -- --project demo-b | tee "$RUNNER_TEMP/deploy-b.txt"
+          grep -q "kod va build qayta bajarilmaydi" "$RUNNER_TEMP/deploy-b.txt"
+          if grep -q "pnpm install" "$RUNNER_TEMP/deploy-b.txt"; then echo "ikkinchi deploy'da qayta o'rnatildi"; exit 1; fi
+          curl -fsS -H "Host: demo-b.localhost" http://127.0.0.1/health | grep '"tenant":"demo-b"'
+          curl -fsS -H "Host: demo-b.ventura.uz" http://127.0.0.1/ | grep -q "Demo B"
+          # birinchi mijoz o'z nomi bilan qolgan
+          curl -fsS -H "Host: demo-a.localhost" http://127.0.0.1/health | grep '"tenant":"demo-a"'
+          curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "Demo A"
+          # bitta jarayon ikkalasiga xizmat qiladi
+          test "$(sudo -u deploy -i pm2 jlist | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')" = "1"
+
+      - name: Yiqilganda tafsilot
+        if: failure()
+        run: |
+          echo "--- worker"; tail -100 "$RUNNER_TEMP/worker.log" || true
+          echo "--- pm2"; sudo -u deploy -i pm2 logs --nostream --lines 60 || true
+          echo "--- nginx"; sudo ls -la /etc/nginx/conf.d/ || true
+          echo "--- tenants"; sudo cat /home/deploy/apps/edu-crm/shared/tenants.json || true
