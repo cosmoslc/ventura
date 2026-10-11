@@ -1,6 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { accessState, can, isSessionExpired, normalizeUzPhone, passwordProblem, shouldLock } from "./policy";
+import {
+  accessState,
+  can,
+  isSessionExpired,
+  normalizeUzPhone,
+  passwordProblem,
+  shouldLock,
+  secureCookies,
+} from "./policy";
 import { readPending, signPending } from "./service";
+
+describe("cookie xavfsizligi", () => {
+  it("https manzilda Secure, http manzilda (mahalliy tarmoq, localhost) yo'q", () => {
+    expect(secureCookies("https://admin.ventura.uz")).toBe(true);
+    expect(secureCookies("http://localhost:3000")).toBe(false);
+    expect(secureCookies("http://192.168.1.10:3000")).toBe(false);
+    expect(secureCookies(undefined)).toBe(false);
+  });
+});
 
 describe("telefon", () => {
   it("turli yozuvlarni +998XXXXXXXXX ga keltiradi", () => {

@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies, headers } from "next/headers";
-import { newDeviceId, type RequestMeta } from "@ventura/auth";
+import { newDeviceId, type RequestMeta, secureCookies } from "@ventura/auth";
 
 export const DEVICE_COOKIE = "ventura.device";
 export const PENDING_COOKIE = "ventura.pending";
@@ -20,7 +20,7 @@ export async function ensureDeviceId(): Promise<string> {
   store.set(DEVICE_COOKIE, id, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: secureCookies(),
     maxAge: 365 * 24 * 60 * 60,
     path: "/",
   });

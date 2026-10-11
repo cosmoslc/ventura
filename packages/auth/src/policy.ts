@@ -23,6 +23,16 @@ export function formatPhone(phone: string): string {
 
 export const PASSWORD_MIN = 8;
 
+/**
+ * Cookie'ga `Secure` belgisi qo'yiladimi: sayt manzili (BETTER_AUTH_URL) https bo'lsa — ha.
+ * NODE_ENV ga bog'lanmaydi: production build mahalliy tarmoqda http orqali ochilganda
+ * (masalan telefondan http://192.168.x.x) brauzer `Secure` cookie'ni saqlamaydi va kirish uziladi.
+ * Better Auth o'z cookie'lari uchun ham shu qoidadan foydalanadi.
+ */
+export function secureCookies(baseURL: string | undefined = process.env.BETTER_AUTH_URL): boolean {
+  return (baseURL ?? "").startsWith("https://");
+}
+
 export function passwordProblem(password: string): string | null {
   if (password.length < PASSWORD_MIN) return `Parol kamida ${PASSWORD_MIN} belgidan iborat bo'lishi kerak`;
   if (password.length > 128) return "Parol juda uzun";
