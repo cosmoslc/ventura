@@ -17,6 +17,13 @@ Eski kod **o'qish uchun namuna**: nima qilishi va qanday ko'rinishi undan olinad
 | 3 | Eski bazadagi ma'lumot kerak emas: ma'lumot ko'chirish bosqichi yo'q, sxema toza boshlanadi. |
 | 4 | Markazning reklama sayti (landing) hozircha kirmaydi. |
 | 5 | Stack SPEC bo'yicha: Next.js (server), Drizzle, PostgreSQL, PM2. Supabase ishlatilmaydi. |
+| 6 | Eski CRM muzlatiladi: yangi imkoniyat qo'shilmaydi, faqat xato tuzatiladi. U hozir sinovda, markaz to'liq o'tmagan. |
+| 7 | Birinchi foydalanuvchi — o'z markazimiz, toza bazadan boshlaydi. |
+| 8 | Kirish Ventura panelidagi bilan bir xil: `packages/auth` (telefon + parol, Telegram kodi, bloklash, sessiya muddati). Alohida auth yozilmaydi. |
+| 9 | Ruxsatlar tayyor rollar orqali (direktor, menejer va boshqalar) va filial bo'yicha cheklov. Eski tizimdagi har menejerga alohida sozlash birinchi versiyada yo'q. |
+| 10 | Birinchi versiyaga kirmaydi: coin va ball tizimi, SMS yuborish, imtihonlar va sertifikatlar. Excel import kiradi. |
+| 11 | Interfeys faqat o'zbekcha; matnlar bitta faylda. |
+| 12 | Tartib: avval Ventura 2-bosqichi (deploy), keyin E0. |
 
 ## 3. Eski tizim: nima bor
 
@@ -64,7 +71,8 @@ Har bosqich alohida branch va PR. Qabul mezoni bajarilmaguncha keyingisiga o'til
 
 - [ ] `apps/edu-crm`: Next.js, TypeScript strict, `packages/ui`, tema va tokenlar, o'zbekcha matnlar bitta faylda
 - [ ] `packages/db/schema/tenant`: boshlang'ich sxema (foydalanuvchilar, rollar, sozlamalar) va migratsiyalar
-- [ ] Kirish: telefon + parol, sessiya; rollar: direktor, menejer
+- [ ] Kirish: `packages/auth` (panel bilan bir xil mexanizm); foydalanuvchilar mijoz bazasida
+- [ ] Tayyor rollar va `can(role, permission)`; filial bo'yicha cheklov
 - [ ] Qobiq: sidebar, topbar, light/dark, bo'sh bosh sahifa
 - [ ] `hasFeature()` va brend sozlamasini (rang, nom, logotip) o'qish
 - [ ] CI'ga qo'shish; `/health` manzili (deploy tekshiruvi uchun)
@@ -118,22 +126,18 @@ Bo'lim: `leads`.
 
 ### E5. Hisobotlar va tahlil
 
-Bo'limlar: `reports`, `exams`, `coins`.
+Bo'lim: `reports`.
 
 - [ ] Bosh sahifa ko'rsatkichlari
 - [ ] Moliyaviy hisobotlar: pul oqimi, kurs daromadi, xarajatlar, chegirmalar
 - [ ] O'quv hisobotlari: davomat, guruhdan chiqqanlar, xavf ostidagi o'quvchilar, saqlab qolish
-- [ ] Imtihonlar, ball va coin tizimi
 - [ ] Excel'ga eksport
 
 **Qabul:** har hisobot raqami tegishli ro'yxat sahifasidagi yig'indi bilan mos keladi.
 
 ### E6. Sozlamalar va yakun
 
-Bo'limlar: `sms`, `telegram_bot`.
-
-- [ ] Menejerlar va ularning ruxsatlari, markaz sozlamalari
-- [ ] SMS shablonlari va yuborish (provayder `packages/integrations` orqali)
+- [ ] Xodimlar hisoblari va rollari, markaz sozlamalari
 - [ ] Bildirishnomalar, faoliyat jurnali, arxiv va tiklash
 - [ ] Rang kontrasti va mobil ko'rinish tekshiruvi
 
@@ -143,7 +147,7 @@ Bo'limlar: `sms`, `telegram_bot`.
 
 | Ventura bosqichi | edu-crm'dan nima kerak |
 | --- | --- |
-| 2. Uydagi serverga deploy | E0 skelet |
+| 2. Uydagi serverga deploy | Hech narsa: 2-bosqich avval boshlanadi va vaqtincha bo'sh ilovani deploy qiladi; E0 tayyor bo'lgach, o'rniga skelet qo'yiladi |
 | 3. VPS va domenlar | Qo'shimcha talab yo'q |
 | 5. Moslash (brend, bo'limlar) | E0'dagi `hasFeature` va brend o'qish; mazmunli sinov uchun kamida E1 |
 | 7. Zahira | Mijoz bazasi sxemasi barqaror bo'lishi (E3 dan keyin) |
@@ -155,9 +159,9 @@ E1–E6 Ventura bosqichlari bilan yonma-yon boradi va ularni to'xtatib turmaydi.
 Tegishli bosqich boshlanishidan oldin hal qilinadi.
 
 - **Ko'rinishlar ro'yxati.** 78 ta ko'rinishning qaysilari olinadi, qaysilari tashlanadi? Har bosqich boshida shu bosqich sahifalari Saidakbar bilan ko'rib chiqiladi.
-- **SMS provayderi** va uning to'lov tartibi (E6).
-- **Menejer ruxsatlari.** Eski tizimda batafsil sozlanadi (filial, guruh, amal turi bo'yicha). Shu darajada kerakmi yoki soddaroq rollar yetadimi (E0)?
-- **Coin va ball tizimi** har markazga kerakmi yoki alohida bo'lim bo'lib o'chiq turadimi (E5)?
+- **Auth chegarasi.** "Bitta auth" bir xil mexanizmni anglatadi deb olindi: har mijozning foydalanuvchilari o'z bazasida, panel adminlari alohida. Umumiy foydalanuvchilar bazasi (bitta hisob bilan ham panelga, ham CRM'ga kirish) kerak bo'lsa, bu mijozlar ajratilishini o'zgartiradi va alohida qaror talab qiladi (E0).
+- **Telegram bot.** Kod yuboradigan bot hamma mijozga bitta (Ventura boti) bo'ladimi yoki har mijozning o'z boti? Har xodim botga ulanishi shart bo'ladi (E0).
+- **Rollar ro'yxati.** Direktor va menejerdan tashqari qaysi tayyor rollar kerak: kassir, administrator, faqat ko'ruvchi (E0)?
 - **Manifest.** `apps/edu-crm/features.ts` hozir 17 bo'lim. Ko'chirish davomida haqiqiy sahifalarga qarab aniqlashtiriladi.
 
 ## 8. Bu rejaga kirmaydi
@@ -166,6 +170,7 @@ Tegishli bosqich boshlanishidan oldin hal qilinadi.
 - Landing sahifa.
 - Eski bazadan ma'lumot ko'chirish.
 - Ovozli (ElevenLabs) va boshqa AI imkoniyatlari.
+- Coin va ball tizimi, SMS yuborish, imtihonlar va sertifikatlar. Manifestda bo'lim sifatida qoladi, lekin birinchi versiyada yozilmaydi.
 
 ## 9. Xavflar
 
