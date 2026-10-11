@@ -2,7 +2,7 @@ import { z } from "zod";
 import { DB_STRATEGIES, DEPLOY_MODES, TARGET_KINDS } from "@ventura/db/schema/panel";
 import { uz } from "./uz";
 
-/* Loyiha qoidalari — ustoz (client) va server action bir xil tekshiradi. */
+/* Loyiha qoidalari — Yangi loyiha formasi (client) va server action bir xil tekshiradi. */
 
 export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
 export const HOST_RE = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/;

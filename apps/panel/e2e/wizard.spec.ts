@@ -2,7 +2,7 @@ import { type Page, expect, test } from "@playwright/test";
 import { uz } from "../lib/uz";
 import { login } from "./helpers";
 
-/* "Yangi loyiha" ustozi: 8 qadam, loyiha qoralama sifatida saqlanadi (deploysiz). */
+/* Yangi loyiha formasi: 8 qadam, loyiha qoralama sifatida saqlanadi (deploysiz). */
 
 const steps = uz.wizard.steps;
 
@@ -36,7 +36,7 @@ test("noto'g'ri subdomen bilan keyingi qadamga o'tilmaydi", async ({ page }) => 
   await expectStep(page, 1);
 });
 
-test("ustoz loyihani yaratadi, u ro'yxatda va audit jurnalida ko'rinadi", async ({ page }) => {
+test("forma loyihani yaratadi, u ro'yxatda va audit jurnalida ko'rinadi", async ({ page }) => {
   const id = Date.now().toString(36);
   const name = `E2E loyiha ${id}`;
   const slug = `e2e-${id}`;

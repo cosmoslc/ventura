@@ -1,6 +1,6 @@
 # E2E testlar (Playwright)
 
-Asosiy oqimlar: kirish + 2FA (`auth.spec.ts`) va "Yangi loyiha" ustozi (`wizard.spec.ts`).
+Asosiy oqimlar: kirish + 2FA (`auth.spec.ts`) va Yangi loyiha formasi (`wizard.spec.ts`).
 
 - Panel production build'da `http://localhost:3100` da ishga tushadi.
 - Telegram o'rnida soxta server (`telegram-mock.mjs`, port 3199): testlar kirish kodini shundan o'qiydi.
