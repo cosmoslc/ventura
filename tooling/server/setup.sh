@@ -38,7 +38,8 @@ die() { printf '\n\033[1;31mXato:\033[0m %s\n' "$*" >&2; exit 1; }
 [[ -n "$PANEL_KEY" ]] || die "--key berilmagan (panel ko'rsatgan ochiq kalit)"
 [[ "$PANEL_KEY" =~ ^ssh-ed25519\ [A-Za-z0-9+/=]+(\ [A-Za-z0-9._:@-]+)?$ ]] || die "--key ssh-ed25519 ochiq kaliti bo'lishi kerak"
 . /etc/os-release
-[[ "${ID:-}" == "ubuntu" ]] || die "Bu skript Ubuntu uchun yozilgan (topildi: ${PRETTY_NAME:-noma'lum})"
+OS_NAME="${PRETTY_NAME:-}"
+[[ "${ID:-}" == "ubuntu" ]] || die "Bu skript Ubuntu uchun yozilgan (topildi: ${OS_NAME})"
 
 IS_WSL=0
 grep -qi microsoft /proc/version 2>/dev/null && IS_WSL=1
@@ -205,7 +206,7 @@ env PATH="$PATH" pm2 startup systemd -u "$DEPLOY_USER" --hp "$DEPLOY_HOME" >/dev
 systemctl enable "pm2-${DEPLOY_USER}" >/dev/null 2>&1 || true
 
 say "Tayyor"
-echo "  Tizim:       ${PRETTY_NAME}$([[ $IS_WSL -eq 1 ]] && echo ' (WSL)')"
+echo "  Tizim:       ${OS_NAME}$([[ $IS_WSL -eq 1 ]] && echo ' (WSL)')"
 echo "  Node:        $(node --version)   pnpm: $(pnpm --version)   PM2: $(pm2 --version)"
 echo "  PostgreSQL:  $(psql --version | awk '{print $3}')"
 echo "  SSH:         ${DEPLOY_USER}@<server>:${SSH_PORT:-22} (faqat panel kaliti bilan)"
