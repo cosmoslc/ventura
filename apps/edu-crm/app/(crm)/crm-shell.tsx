@@ -6,6 +6,7 @@ import {
   Building2,
   CalendarCheck,
   CalendarOff,
+  DoorOpen,
   ChartColumn,
   Coins,
   GraduationCap,
@@ -40,6 +41,7 @@ import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { ProfileButton, Topbar } from "@ventura/ui/topbar";
 import { uz } from "@/lib/uz";
 import { signOutAction } from "../(auth)/actions";
+import { BranchPicker, type PickerBranch } from "./branch-picker";
 
 /** Bo'lim kaliti → menyu ikonkasi va rangi (light rejim; dark'da --nav-icon-color). Manifestda yo'q bo'lsa — umumiy. */
 const ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
@@ -61,20 +63,38 @@ const ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   reports: { icon: ChartColumn, hue: "blue" },
 };
 const FALLBACK = { icon: Blocks, hue: "slate" };
+/** Menyu manzili → ikonka (bitta bo'limning bir nechta bandi bo'lsa, masalan Xonalar — guruhlar bo'limida) */
+const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
+  "/rooms": { icon: DoorOpen, hue: "teal" },
+};
+
+/** Menyu bo'limlari tartibi (eski tizimdagidek); "Asos" bandlari bosh sahifa bilan birga eng tepada. */
+const SECTION_ORDER = ["Asos", "Moliya", "Sotuv va aloqa", "Hisobotlar", "Ofis", "O'quv"];
+const MAIN = "Asos";
 
 function sections(groups: NavGroup[]): NavSection[] {
+  const toItems = (g: NavGroup) =>
+    g.links.map((l) => {
+      const { icon, hue } = HREF_ICONS[l.href] ?? ICONS[l.feature] ?? FALLBACK;
+      return { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
+    });
+  const rank = (title: string) => {
+    const i = SECTION_ORDER.indexOf(title);
+    return i === -1 ? SECTION_ORDER.length : i;
+  };
+  const main = groups.find((g) => g.title === MAIN);
   return [
     {
       title: uz.nav.main,
-      items: [{ id: "/", label: uz.nav.home, icon: LayoutDashboard, color: "var(--nav-hue-blue)" }],
+      items: [
+        { id: "/", label: uz.nav.home, icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
+        ...(main ? toItems(main) : []),
+      ],
     },
-    ...groups.map((g) => ({
-      title: g.title,
-      items: g.links.map((l) => {
-        const { icon, hue } = ICONS[l.feature] ?? FALLBACK;
-        return { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
-      }),
-    })),
+    ...groups
+      .filter((g) => g.title !== MAIN)
+      .sort((a, b) => rank(a.title) - rank(b.title))
+      .map((g) => ({ title: g.title, items: toItems(g) })),
   ];
 }
 
@@ -92,11 +112,14 @@ export function CrmShell({
   staff,
   brand,
   nav,
+  branches,
   children,
 }: {
   staff: { name: string; roleLabel: string };
   brand: { name: string; mark?: React.ReactNode };
   nav: NavGroup[];
+  /** Filial tanlovi: ko'p filialli rejimda va xodimga bittadan ortiq filial ochiq bo'lsa */
+  branches: { options: PickerBranch[]; selected: string } | null;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -135,6 +158,7 @@ export function CrmShell({
         brandName={brand.name}
         brandMark={brand.mark}
         brandSubtitle={uz.app.subtitle}
+        leading={branches ? <BranchPicker options={branches.options} selected={branches.selected} /> : null}
       >
         <ThemeToggle />
         <DropdownMenu>
@@ -185,7 +209,7 @@ export function CrmShell({
 }
 
 /** Bosh sahifadagi bo'lim kartochkalari uchun ham shu ikonkalar. */
-export function FeatureIcon({ feature, className }: { feature: string; className?: string }) {
-  const { icon: Icon, hue } = ICONS[feature] ?? FALLBACK;
+export function FeatureIcon({ feature, href, className }: { feature: string; href?: string; className?: string }) {
+  const { icon: Icon, hue } = (href && HREF_ICONS[href]) || ICONS[feature] || FALLBACK;
   return <Icon className={className} style={{ color: `var(--nav-hue-${hue})` }} />;
 }

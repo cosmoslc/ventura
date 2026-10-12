@@ -6,3 +6,4 @@
 export * from "./auth";
 export * from "./columns";
 export * from "./core";
+export * from "./academic";

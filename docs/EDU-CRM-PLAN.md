@@ -1,6 +1,6 @@
 # edu-crm: eski CRM'ni Ventura qolipiga ko'chirish rejasi
 
-2026-10-11 · holat: E0 tayyor, E1 navbatda · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
+2026-10-12 · holat: E0 tayyor, E1 jarayonda (ma'lumotnomalar tayyor) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
 
 ## 1. Maqsad
 
@@ -98,7 +98,7 @@ Har bosqich alohida branch va PR. Qabul mezoni bajarilmaguncha keyingisiga o'til
 
 Bo'limlar: `students`, `courses`, `teachers`, `groups`, `branches`.
 
-- [ ] Kurslar, xonalar, filiallar (ma'lumotnomalar)
+- [x] Kurslar, xonalar, filiallar (ma'lumotnomalar) — ADR 0008
 - [ ] O'qituvchilar va xodimlar: ro'yxat, kartochka, lavozimlar
 - [ ] O'quvchilar: ro'yxat, qo'shish, profil, holatlar, arxiv
 - [ ] Guruhlar: ro'yxat, profil, o'quvchini qo'shish va chiqarish, a'zolik davrlari

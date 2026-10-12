@@ -6,17 +6,21 @@ rollar va filial bo'yicha cheklov, bo'limlarga qarab menyu. Qarorlar: `docs/deci
 
 ## Tuzilishi
 
-| Joy                     | Nima                                                                                                     |
-| ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| `features.ts`           | Bo'limlar manifesti (menyu manzillari bilan); panel uni `pnpm templates:sync` orqali o'qiydi             |
-| `proxy.ts`              | O'chirilgan bo'lim manzili va API'si — 404; sessiyasiz — `/login`                                        |
-| `lib/server/tenant.ts`  | Mijoz `Host` bo'yicha (`VENTURA_TENANTS_FILE`) va uning maxfiy sozlamasi (`VENTURA_TENANT_SECRETS_FILE`) |
-| `lib/server/deps.ts`    | `getTenantDb()`, mijoz boti va Better Auth — mijoz bo'yicha keshlangan                                   |
-| `lib/server/session.ts` | `requireStaff(permission)`, `requireFeature(key)` — har sahifa va server amali boshida                   |
-| `app/(auth)`            | Kirish, kod, Telegram'ni ulash, parolni almashtirish                                                     |
-| `app/(crm)`             | Qobiq (sidebar, topbar), bosh sahifa, hali yozilmagan bo'limlar uchun vaqtinchalik sahifa                |
-| `lib/uz.ts`             | Interfeys matnlari                                                                                       |
-| `/health`               | Deploy tekshiruvi: `{ ok, tenant, commit, configured }`                                                  |
+| Joy                     | Nima                                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- |
+| `features.ts`           | Bo'limlar manifesti (menyu manzillari bilan); panel uni `pnpm templates:sync` orqali o'qiydi              |
+| `proxy.ts`              | O'chirilgan bo'lim manzili va API'si — 404; sessiyasiz — `/login`                                         |
+| `lib/server/tenant.ts`  | Mijoz `Host` bo'yicha (`VENTURA_TENANTS_FILE`) va uning maxfiy sozlamasi (`VENTURA_TENANT_SECRETS_FILE`)  |
+| `lib/server/deps.ts`    | `getTenantDb()`, mijoz boti va Better Auth — mijoz bo'yicha keshlangan                                    |
+| `lib/server/session.ts` | `requireStaff(permission)`, `requireFeature(key)` — har sahifa va server amali boshida                    |
+| `lib/server/branch.ts`  | Tepadagi filial tanlovi (`getBranchContext`): xodim cheklovi bilan tekshiriladi, so'rov filtri            |
+| `lib/server/action.ts`  | `crmAction(bo'lim, ...)` — har server amali: bo'lim, sessiya, `<bo'lim>.write` ruxsati, faoliyat jurnali  |
+| `lib/rules.ts`          | Formalar qoidalari (Zod) — client formada ham, server amalida ham                                         |
+| `app/(auth)`            | Kirish, kod, Telegram'ni ulash, parolni almashtirish                                                      |
+| `app/(crm)`             | Qobiq (sidebar, topbar, filial tanlovi), bosh sahifa, hali yozilmagan bo'limlar uchun vaqtinchalik sahifa |
+| `app/(crm)/<bo'lim>`    | Bo'lim sahifalari: `page.tsx` (server), `data.ts` (so'rovlar), `actions.ts`, client ko'rinish va forma    |
+| `lib/uz.ts`             | Interfeys matnlari                                                                                        |
+| `/health`               | Deploy tekshiruvi: `{ ok, tenant, commit, configured }`                                                   |
 
 Mijoz bazasi sxemasi — `packages/db/src/schema/tenant`, xodimlar kirishi va rollar — `packages/auth/src/staff`.
 

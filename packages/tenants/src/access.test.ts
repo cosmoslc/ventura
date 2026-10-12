@@ -19,7 +19,10 @@ const { features } = parseManifest({
       group: "Asos",
       type: "core",
       requires: ["students"],
-      nav: [{ label: "Guruhlar", href: "/groups" }],
+      nav: [
+        { label: "Guruhlar", href: "/groups" },
+        { label: "Xonalar", href: "/rooms", section: "Ofis" },
+      ],
     },
     {
       key: "attendance",
@@ -71,6 +74,7 @@ describe("bo'limlar ilova ichida", () => {
           { feature: "groups", label: "Guruhlar", href: "/groups" },
         ],
       },
+      { title: "Ofis", links: [{ feature: "groups", label: "Xonalar", href: "/rooms" }] },
     ]);
   });
 });

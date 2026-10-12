@@ -31,14 +31,16 @@ export type StaffPermission = `${string}.${Action}` | "staff.manage" | "settings
 
 /** Moliya ichidagi nozik bo'limlar: menejer va kuzatuvchiga yopiq. */
 const SENSITIVE = new Set(["salaries", "expenses"]);
+/** Markaz tuzilmasi: boshqalar ko'radi, faqat direktor o'zgartiradi (filial qo'shish, menejer biriktirish). */
+const DIRECTOR_WRITE = new Set(["branches"]);
 /** Kassir ishlaydigan bo'limlar va u faqat ko'radiganlari. */
 const CASHIER_WRITE = new Set(["payments", "debtors", "expenses"]);
 const CASHIER_VIEW = new Set(["students", "groups", "courses"]);
 
 function allowsFeature(role: StaffRole, feature: string, action: Action): boolean {
+  if (role === "director") return true;
+  if (action === "write" && DIRECTOR_WRITE.has(feature)) return false;
   switch (role) {
-    case "director":
-      return true;
     case "manager":
       return !SENSITIVE.has(feature);
     case "cashier":

@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigserial,
   boolean,
+  check,
   index,
   jsonb,
   pgTable,
@@ -28,10 +29,18 @@ export const branches = pgTable(
     name: text("name").notNull(),
     address: text("address"),
     phone: text("phone"),
+    /** Filial belgisi rangi (#rrggbb) — menyu, kartochka va filial tanlovida */
+    color: text("color").notNull().default("#6366f1"),
     isActive: boolean("is_active").notNull().default(true),
     ...timestamps,
   },
-  (t) => [unique("branches_tenant_name_uq").on(t.tenantId, t.name), tenantPolicy("branches")],
+  (t) => [
+    unique("branches_tenant_name_uq").on(t.tenantId, t.name),
+    /** Boshqa jadvallar filialga (tenant_id, id) juftligi bilan bog'lanadi — boshqa mijoz filialiga havola bo'lmaydi */
+    unique("branches_tenant_id_uq").on(t.tenantId, t.id),
+    check("branches_color_hex", sql`${t.color} ~ '^#[0-9a-f]{6}$'`),
+    tenantPolicy("branches"),
+  ],
 );
 
 /** Xodim ishlaydigan filiallar. Direktor hammasini ko'radi; qolgan rollar faqat shu ro'yxatdagilarni. */

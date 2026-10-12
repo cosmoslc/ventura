@@ -1,7 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { auditEvents, branches } from "./schema/tenant";
+import { auditEvents, branches, courses, rooms } from "./schema/tenant";
 import { type TenantDb, createTenantDb } from "./tenant";
 import { migrateTenantDb } from "./tenant-migrate";
 
@@ -101,6 +101,23 @@ describe.skipIf(!ADMIN_URL)("mijozlarni ajratish (haqiqiy PostgreSQL)", () => {
       await expect(b.insert(branches).values({ name: "Soxta", tenantId: "alfa" })).rejects.toThrow();
       const [rowB] = await b.select().from(branches);
       await expect(b.update(branches).set({ tenantId: "alfa" }).where(eq(branches.id, rowB!.id))).rejects.toThrow();
+    });
+
+    it("boshqa mijoz filialiga bog'lab bo'lmaydi (kompozit kalit), o'zinikiga — mumkin", async () => {
+      const a = open(urlFor(DBS.shared, app), "alfa");
+      const b = open(urlFor(DBS.shared, app), "beta");
+      const [branchA] = await a.select().from(branches);
+      // B mijoz A filialining id sini bilsa ham kurs yoki xonani unga bog'lay olmaydi
+      await expect(b.insert(courses).values({ name: "Soxta kurs", branchId: branchA!.id })).rejects.toThrow();
+      await expect(b.insert(rooms).values({ name: "Soxta xona", branchId: branchA!.id })).rejects.toThrow();
+      const [course] = await a.insert(courses).values({ name: "Matematika", branchId: branchA!.id }).returning();
+      expect(course!.branchId).toBe(branchA!.id);
+      // Umumiy (filialsiz) kurs ham mumkin
+      await a.insert(courses).values({ name: "IELTS" });
+      // Kursi bor filialni o'chirib bo'lmaydi
+      await expect(a.delete(branches).where(eq(branches.id, branchA!.id))).rejects.toThrow();
+      await a.delete(courses);
+      expect(await b.select().from(courses)).toEqual([]);
     });
 
     it("mijozi berilmagan ulanish hech narsa ko'rmaydi va yoza olmaydi", async () => {

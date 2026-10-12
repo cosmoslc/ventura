@@ -441,8 +441,8 @@ Qoidalar:
 
 - 68px (≤900px: 56px), yopishqoq, fon `--topbar-bg` + `blur(14px)`, pastda chegara.
 - Chapda brend bloki — sidebar kengligida (250 / 74px), o'ngida chegara: `Logo`.
-- So'ng menyu tugmasi (`icon`), qidiruv (38px, kenglik 224px, ≥1024px: 288px, o'ngda `Ctrl K`), o'ng guruh (oraliq 8px): bildirishnoma, `ThemeToggle`, profil.
-- Parametrlar: `brandName`, `brandMark`, `brandSubtitle`, `searchPlaceholder`, `collapsed`, `onToggleSidebar`.
+- So'ng menyu tugmasi (`icon`), ixtiyoriy `leading` bloki (masalan edu-crm filial tanlovi), qidiruv (38px, kenglik 224px, ≥1024px: 288px, o'ngda `Ctrl K`), o'ng guruh (oraliq 8px): bildirishnoma, `ThemeToggle`, profil.
+- Parametrlar: `brandName`, `brandMark`, `brandSubtitle`, `searchPlaceholder`, `leading`, `collapsed`, `onToggleSidebar`.
 - `ProfileButton`: 36px avatar (`--avatar-bg`), ism 13px / 700, rol 11px, strelka; hover'da `--profile-hover-bg`.
 
 ### 11.20 Sidebar — `sidebar.tsx`
@@ -497,6 +497,17 @@ Qoidalar:
 - `EmptyState`: kartochka ichida markazda 48px ikonka qutisi (`--r-card`, `bg-muted`), sarlavha, izoh va ixtiyoriy tugma.
 - Panel va shablonlar uchun umumiy (avval panel ichida edi).
 
+### 11.27 MoneyInput — `money-input.tsx`
+
+- `controlClass` asosida, mono shrift; faqat raqam qabul qiladi va minglikni bo'shliq bilan ko'rsatadi ("1 500 000").
+- Qiymat butun son yoki `null` (bo'sh); `suffix` — o'ngdagi birlik ("so'm"). `formatMoney()` jadval va kartochkalarda ham ishlatiladi.
+
+### 11.28 ColorSwatches — `color-swatches.tsx`
+
+- Foydalanuvchi tanlaydigan rang (kurs, filial): kvadrat namunalar to'ri (`--r-control`), tanlanganida `--focus-outline` kontur va belgi.
+- Ranglar chaqiruvchidan keladi (`options`: `#rrggbb` + nom) — bu ma'lumot, interfeys tokeni emas; komponentning o'z ko'rinishi faqat tokenlardan.
+- `custom` — ro'yxatdan tashqari rang (brauzerning rang tanlagichi). `role="radiogroup"`, har namuna `role="radio"` va nomi bilan.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
@@ -547,4 +558,4 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 - Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
 - Select'da harf bilan qidirish (typeahead).
-- Keyingi bosqichlar komponentlari: skeleton, tooltip, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, rang tanlash, logo yuklash.
+- Keyingi bosqichlar komponentlari: skeleton, tooltip, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, logo yuklash.

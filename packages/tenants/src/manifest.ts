@@ -23,7 +23,8 @@ export const featureSchema = z.object({
   description: z.string().optional(),
   requires: z.array(z.string()).default([]),
   routes: z.array(z.string()).default([]),
-  nav: z.array(z.object({ label: z.string(), href: z.string() })).default([]),
+  /** Menyu bandlari. `section` — menyudagi bo'lim sarlavhasi (berilmasa `group`): bitta bo'lim bandlari turli joyda bo'lishi mumkin. */
+  nav: z.array(z.object({ label: z.string(), href: z.string(), section: z.string().min(1).optional() })).default([]),
 });
 
 export type Feature = z.infer<typeof featureSchema>;
