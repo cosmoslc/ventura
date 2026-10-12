@@ -9,14 +9,14 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { StatCard } from "@ventura/ui/stat-card";
-import { displayPhone, money } from "@/lib/format";
+import { displayPhone, formatDate, money } from "@/lib/format";
 import { type StaffField, formCompletion } from "@/lib/staff-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import type { PositionOption, StaffRow } from "./data";
 import { StaffForm } from "./staff-form";
 import { StaffMenu, type StaffPerms } from "./staff-menu";
-import { FormBadge, PositionChips, StateBadges, formatDate } from "./staff-view";
+import { FormBadge, PositionChips, StateBadges } from "./staff-view";
 
 export function StaffDetail({
   row,

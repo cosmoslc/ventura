@@ -76,3 +76,39 @@ export const staffInput = z.object({
   customData: z.record(z.string(), z.string().max(300)).default({}),
 });
 export type StaffInput = z.input<typeof staffInput>;
+
+const hhmm = z
+  .string()
+  .regex(/^(([01]\d|2[0-3]):[0-5]\d)?$/, uz.teachers.timeInvalid)
+  .default("");
+
+export const teacherInput = z.object({
+  id: id.optional(),
+  kind: z.enum(["teacher", "support"]),
+  branchId: id.nullable(),
+  name: z.string().trim().min(1, uz.teachers.nameRequired).max(120),
+  phone: z.string().regex(/^\d{9}$/, uz.teachers.phoneInvalid),
+  gender: z.enum(["male", "female"]).nullable().default(null),
+  birthDate: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2})?$/)
+    .default(""),
+  assignedTeacherId: id.nullable().default(null),
+  salaryType: z.enum(["percent", "per_student", "fixed"]),
+  revenueSharePercent: z
+    .number()
+    .int()
+    .min(0, uz.teachers.percentInvalid)
+    .max(100, uz.teachers.percentInvalid)
+    .default(0),
+  perStudentSalary: money,
+  fixedSalary: money,
+  workingDays: z
+    .array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]))
+    .max(7)
+    .default([]),
+  startTime: hhmm,
+  endTime: hhmm,
+  note: z.string().trim().max(1000).default(""),
+});
+export type TeacherInput = z.input<typeof teacherInput>;

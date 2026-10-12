@@ -2,7 +2,16 @@ import "server-only";
 import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { inScope } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
-import { branches, courses, positions, rooms, userBranches, userPositions, users } from "@ventura/db/schema/tenant";
+import {
+  branches,
+  courses,
+  positions,
+  rooms,
+  teachers,
+  userBranches,
+  userPositions,
+  users,
+} from "@ventura/db/schema/tenant";
 import type { Staff } from "@/lib/server/session";
 
 export interface BranchStaff {
@@ -112,9 +121,11 @@ export async function assignableStaff(db: TenantDb): Promise<BranchStaff[]> {
 
 /** O'chirishdan oldin: filialga bog'langan yozuvlar soni */
 export async function branchUsage(db: TenantDb, branchId: string) {
-  const [[c], [r]] = await Promise.all([
+  const [[c], [r], [t]] = await Promise.all([
     db.select({ n: count() }).from(courses).where(eq(courses.branchId, branchId)),
     db.select({ n: count() }).from(rooms).where(eq(rooms.branchId, branchId)),
+    // Bo'shatilganlari ham: ularning tarixi filialga bog'liq
+    db.select({ n: count() }).from(teachers).where(eq(teachers.branchId, branchId)),
   ]);
-  return { courses: c?.n ?? 0, rooms: r?.n ?? 0 };
+  return { courses: c?.n ?? 0, rooms: r?.n ?? 0, teachers: t?.n ?? 0 };
 }

@@ -25,7 +25,7 @@ import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
-import { displayPhone, money } from "@/lib/format";
+import { displayPhone, formatDate, money } from "@/lib/format";
 import { type StaffField, formCompletion } from "@/lib/staff-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
@@ -343,12 +343,6 @@ export function StaffView({
       <TempPasswordModal password={password} onClose={() => setPassword(null)} />
     </div>
   );
-}
-
-/** "1998-05-12" → "12.05.1998" */
-export function formatDate(iso: string) {
-  const [y, m, d] = iso.split("-");
-  return y && m && d ? `${d}.${m}.${y}` : iso;
 }
 
 export function PositionChips({ positions }: { positions: StaffRow["positions"] }) {

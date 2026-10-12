@@ -50,6 +50,20 @@ Saidakbar 14-qarorni qabul qildi: ruxsatlar lavozimlar orqali, eski tizimdagidek
 - Bloklash, Telegramni qayta ulash va bo'shatish — xodim menyusida; har biri jurnalga yoziladi, xavfli amallar
   haqida direktorlarga Telegram xabari boradi.
 
+### O'qituvchilar (ustozlar)
+
+- Alohida `teachers` jadvali: o'qituvchi tizimga kirmaydi (o'qituvchi portali rejaga kirmaydi, 1-qaror), shuning
+  uchun parol va rasm yo'q. Filialga kompozit FK bilan bog'lanadi, `kind`: `teacher` yoki `support`.
+- Maosh turi eski tizimdagidek: tushumdan foiz, har o'quvchi uchun summa yoki oylik; faqat tanlangan turning summasi
+  saqlanadi. Support o'qituvchi — oylik, ish kunlari va vaqti, biriktirilgan ustoz (o'z jadvaliga kompozit FK).
+- Ruxsatlar "Xodimlar va O'qituvchilar (HR)" toifasidan: qo'shish `staff.create`, tahrirlash `staff.edit`,
+  o'chirish `staff.delete`. O'chirish — arxiv (`archived_at`); support biriktirilgan ustoz o'chmaydi.
+- Eski tizimdagi soxta qiymatlar ko'chirilmadi: "O'rtacha retention" formulasi (reytingdan o'ylab topilgan), reyting
+  5.0 standarti, ish vaqti bo'lmasa "09:00 - 18:00", ismida "assistent" bo'lsa support deb sanash, ishlamaydigan
+  "SMS yuborish". Ma'lumot bo'lmagan ustunlar "—" ko'rsatadi.
+- Guruhlar, o'quvchilar, "Jami ulush" va maosh to'lovlari (Ish haqi va to'lovlar tabi, Maosh berish) guruhlar (E1d)
+  va moliya (E3) bilan; Excel import va eksport — E1e.
+
 ## Oqibatlari
 
 - Keyingi bo'limlar o'z sahifa ruxsatini `lib/access.ts` ga qo'shadi va amallarini katalogdagi ruxsat bilan yopadi.

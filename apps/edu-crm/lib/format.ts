@@ -12,3 +12,9 @@ export function displayPhone(phone: string | null | undefined): string | null {
 
 /** Ism bosh harfi (avatar uchun) */
 export const initial = (name: string) => name.trim().charAt(0).toUpperCase() || "?";
+
+/** "1998-05-12" → "12.05.1998" */
+export function formatDate(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return y && m && d ? `${d}.${m}.${y}` : iso;
+}
