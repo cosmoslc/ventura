@@ -21,10 +21,15 @@ export function BranchesView({
   rows,
   staffOptions,
   canWrite,
+  canCreate,
+  canAssign,
 }: {
   rows: BranchRow[];
   staffOptions: BranchStaff[];
   canWrite: boolean;
+  /** Yangi filial va o'chirish — barcha filiallarni ko'radigan xodimga */
+  canCreate: boolean;
+  canAssign: boolean;
 }) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
@@ -63,7 +68,7 @@ export function BranchesView({
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-            {canWrite ? (
+            {canCreate ? (
               <Button onClick={() => openForm(null)}>
                 <Plus /> {uz.branches.add}
               </Button>
@@ -79,6 +84,7 @@ export function BranchesView({
               key={b.id}
               branch={b}
               canWrite={canWrite}
+              canDelete={canCreate}
               onEdit={() => openForm(b)}
               onDelete={() => {
                 setToDelete(b);
@@ -99,6 +105,7 @@ export function BranchesView({
           onOpenChange={setFormOpen}
           editing={editing}
           staffOptions={staffOptions}
+          canAssign={canAssign}
           onSaved={() => router.refresh()}
         />
       ) : null}
@@ -119,11 +126,13 @@ export function BranchesView({
 function BranchCard({
   branch,
   canWrite,
+  canDelete,
   onEdit,
   onDelete,
 }: {
   branch: BranchRow;
   canWrite: boolean;
+  canDelete: boolean;
   onEdit: () => void;
   onDelete: () => void;
 }) {
@@ -152,16 +161,18 @@ function BranchCard({
             >
               <Pencil />
             </Button>
-            <Button
-              variant="icon"
-              size="icon-sm"
-              title={uz.branches.deleteHint}
-              aria-label={uz.branches.deleteHint}
-              onClick={onDelete}
-              className="text-destructive-text"
-            >
-              <Trash2 />
-            </Button>
+            {canDelete ? (
+              <Button
+                variant="icon"
+                size="icon-sm"
+                title={uz.branches.deleteHint}
+                aria-label={uz.branches.deleteHint}
+                onClick={onDelete}
+                className="text-destructive-text"
+              >
+                <Trash2 />
+              </Button>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -176,7 +187,7 @@ function BranchCard({
                 {rest.length ? <Badge tone="info">+{rest.length}</Badge> : null}
               </div>
               <div className="truncate font-mono text-caption text-muted-foreground">
-                {displayPhone(first.phone) ?? uz.branches.managerRole}
+                {first.positions.join(", ") || displayPhone(first.phone) || uz.branches.managerRole}
               </div>
             </div>
           </>

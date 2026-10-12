@@ -1,5 +1,5 @@
 import "server-only";
-import { can } from "@ventura/auth/staff/policy";
+import { type Permission, canAny } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
 import { tenantAudit } from "@ventura/security";
 import { type Tenant, hasFeature } from "@ventura/tenants";
@@ -12,8 +12,8 @@ import { currentTenant } from "./tenant";
 
 /*
  * Server amallari uchun yagona o'ram (EDU-CRM-PLAN 9-bo'lim: ruxsatsiz amal yozib bo'lmaydi). Har amal boshida:
- * bo'lim yoqilgan, xodim to'liq kirgan va unga `<bo'lim>.write` ruxsati bor. Xato bo'lsa `redirect` emas,
- * natija qaytadi — forma o'zi ko'rsatadi (ADR 0006: server amalida redirect yo'q).
+ * bo'lim yoqilgan, xodim to'liq kirgan va unda shu amalning ruxsati (lavozimidan, permissions.ts katalogi) bor.
+ * Xato bo'lsa `redirect` emas, natija qaytadi — forma o'zi ko'rsatadi (ADR 0006: server amalida redirect yo'q).
  */
 
 export type ActionResult<T extends object = object> = ({ ok: true } & T) | { ok: false; error: string };
@@ -30,13 +30,15 @@ export interface ActionCtx {
 /** Natija turi aniq beriladi (`crmAction<{ id: string }>`), berilmasa — qo'shimcha maydonsiz. */
 export async function crmAction<T extends object = object>(
   feature: string,
+  permission: Permission | readonly Permission[],
   run: (ctx: ActionCtx) => Promise<ActionResult<NoInfer<T>>>,
 ): Promise<ActionResult<T>> {
   const tenant = await currentTenant();
   if (!tenant || !(await hasFeature(tenant, feature))) return { ok: false, error: uz.common.notFound };
   const staff = await getStaff();
   if (!staff || staff.state !== "ok") return { ok: false, error: uz.common.sessionGone };
-  if (!can(staff.role, `${feature}.write`)) return { ok: false, error: uz.common.forbidden };
+  const needed: readonly Permission[] = typeof permission === "string" ? [permission] : permission;
+  if (!canAny(staff.access, needed)) return { ok: false, error: uz.common.forbidden };
   const db = getTenantDb(tenant);
   const meta = await requestMeta();
   const branch = await getBranchContext();

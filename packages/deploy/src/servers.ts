@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { PanelDb } from "@ventura/db";
-import { type ServerInfo, servers } from "@ventura/db/schema/panel";
+import { type ServerInfo, apps, servers } from "@ventura/db/schema/panel";
 import { type AuditActor, audit, putSecret, readSecret } from "@ventura/security";
 import { SshError, type SshSession, connect, generateKeyPair, sh } from "./ssh";
 
@@ -63,6 +63,8 @@ const PROBES = {
   // Dastur yo'q bo'lsa "command not found" matni versiya bo'lib qolmasin
   nginx: "command -v nginx >/dev/null && nginx -v 2>&1 | sed 's/.*nginx\\///'",
   postgres: "command -v psql >/dev/null && psql --version | awk '{print $3}'",
+  certbot: "command -v certbot >/dev/null && certbot --version 2>&1 | awk '{print $2}'",
+  git: "command -v git >/dev/null && git --version | awk '{print $3}'",
   memoryMb: "awk '/MemTotal/ {printf \"%d\", $2/1024}' /proc/meminfo",
   diskFreeGb: 'df -BG --output=avail "$HOME" | tail -1 | tr -dc 0-9',
   cpus: "nproc",
@@ -101,6 +103,8 @@ export async function checkServer(db: PanelDb, server: ServerRow, actor: AuditAc
       pm2: values.pm2 || undefined,
       nginx: values.nginx || undefined,
       postgres: values.postgres || undefined,
+      certbot: values.certbot || undefined,
+      git: values.git || undefined,
       memoryMb: Number(values.memoryMb) || undefined,
       diskFreeGb: Number(values.diskFreeGb) || undefined,
       cpus: Number(values.cpus) || undefined,
@@ -133,4 +137,67 @@ export async function checkServer(db: PanelDb, server: ServerRow, actor: AuditAc
 export async function findServer(db: PanelDb, name: string): Promise<ServerRow | null> {
   const [row] = await db.select().from(servers).where(eq(servers.name, name)).limit(1);
   return row ?? null;
+}
+
+/* ---------- Tahrirlash ---------- */
+
+export interface ServerPatch {
+  name: string;
+  kind: "home" | "online";
+  host: string;
+  sshPort: number;
+  sshUser: string;
+  deployRoot: string;
+  capacity: number | null;
+  note: string | null;
+}
+
+export type UpdateServerResult =
+  { ok: true; reconnect: boolean } | { ok: false; reason: "not_found" | "name_taken" | "root_user" | "root_in_use" };
+
+/**
+ * Server ma'lumotini o'zgartiradi. Manzil (host yoki port) o'zgarsa — bu boshqa mashina bo'lishi mumkin:
+ * eslab qolingan server kaliti va holat tiklanadi, keyingi "Tekshirish" yangisini qabul qiladi.
+ * Deploy papkasi serverda ilova bo'lsa o'zgartirilmaydi (relizlar eski joyda qoladi). Root bilan ulanish taqiqlangan.
+ */
+export async function updateServer(
+  db: PanelDb,
+  serverId: string,
+  patch: ServerPatch,
+  actor: AuditActor,
+): Promise<UpdateServerResult> {
+  const [server] = await db.select().from(servers).where(eq(servers.id, serverId));
+  if (!server) return { ok: false, reason: "not_found" };
+  if (patch.sshUser === "root") return { ok: false, reason: "root_user" };
+  if (patch.name !== server.name) {
+    const [dup] = await db.select({ id: servers.id }).from(servers).where(eq(servers.name, patch.name));
+    if (dup) return { ok: false, reason: "name_taken" };
+  }
+  if (patch.deployRoot !== server.deployRoot) {
+    const [app] = await db.select({ id: apps.id }).from(apps).where(eq(apps.serverId, serverId)).limit(1);
+    if (app) return { ok: false, reason: "root_in_use" };
+  }
+  const reconnect = patch.host !== server.host || patch.sshPort !== server.sshPort || patch.sshUser !== server.sshUser;
+  await db
+    .update(servers)
+    .set({
+      ...patch,
+      ...(reconnect
+        ? { hostKey: null, status: "new", probeError: null, metricsAt: null, alerts: {}, lastError: null }
+        : {}),
+    })
+    .where(eq(servers.id, serverId));
+  const changed = (Object.keys(patch) as (keyof ServerPatch)[]).filter((k) => patch[k] !== server[k]);
+  await audit.record(db, {
+    actor,
+    action: "server.update",
+    target: { type: "server", id: serverId },
+    metadata: {
+      changed,
+      before: Object.fromEntries(changed.map((k) => [k, server[k]])),
+      after: Object.fromEntries(changed.map((k) => [k, patch[k]])),
+      ...(reconnect ? { reconnect: true } : {}),
+    },
+  });
+  return { ok: true, reconnect };
 }

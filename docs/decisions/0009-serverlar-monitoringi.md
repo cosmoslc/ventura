@@ -54,6 +54,22 @@ Xabar faqat holat o'zgarganda yuboriladi (`alerts` ustuni), bir xil muammo har d
 - **O'rnatish — bitta nusxalanadigan buyruq.** U `setup.sh` mazmunini va panel kalitini o'z ichiga oladi; foydalanuvchi uni serverda bir marta root sifatida qo'yadi. Panel serverga root paroli bilan kirmaydi: kalit qo'yilmaguncha uning serverga kirish yo'li yo'q va bo'lmasligi kerak.
 - **O'chirish:** faqat loyiha va ilova bo'lmasa, nomini yozib tasdiqlash bilan. SSH kalit (sir) ham o'chadi; serverning o'zidagi fayllarga tegilmaydi.
 
+### Tahrirlash (2026-10-12)
+
+- **Tahrirlanadigan maydonlar:**
+  - nom, turi;
+  - IP yoki domen, port, foydalanuvchi;
+  - deploy papkasi;
+  - sig'im — nechta loyiha sig'adi; hozircha faqat ko'rsatiladi ("3 / 10 loyiha");
+  - izoh — provayder, tarif, joylashuv.
+- **Manzil o'zgarsa** (host, port yoki foydalanuvchi), bu boshqa mashina bo'lishi mumkin: eslab qolingan server kaliti va holat tiklanadi, keyingi "Tekshirish" yangi kalitni qabul qiladi.
+- **Deploy papkasi serverda ilova bo'lsa o'zgarmaydi:** relizlar eski joyda qoladi va keyingi deploy ularni topa olmay qolardi.
+- **`root` foydalanuvchisi qo'shishda ham, tahrirlashda ham rad etiladi.** Panel faqat `setup.sh` yaratgan `deploy` nomidan kiradi.
+- **Parol bilan kirish va boshqa baza serverining manzili (Postgres URL) qo'shilmadi.**
+  - Parol SPEC 11 bo'yicha taqiqlangan, chunki kalit xavfsizroq.
+  - Alohida baza serveri — 3-bosqichdagi `dedicated_server` strategiyasining qismi.
+- **"O'rnatilgan dasturlar"** ro'yxatiga certbot (SSL uchun kerak bo'ladi) va git qo'shildi.
+
 ### Deploy serverni tanlashi
 
 Loyiha manzili (`target`) bo'yicha: "uydagi server" → `home`, "online VPS" → `online` turidagi birinchi tayyor server. Avval birinchi tayyor server olinardi; ikkala turdagi server qo'shilganda loyiha noto'g'ri joyga ketishi mumkin edi. Avval deploy qilingan loyiha (`server_id` bor) o'z serverida qoladi.

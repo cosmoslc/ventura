@@ -6,7 +6,7 @@ import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { features } from "@/lib/manifest";
-import { requireFeature } from "@/lib/server/session";
+import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 
 /*
@@ -21,7 +21,7 @@ export default async function SectionPage({ params }: { params: Promise<{ sectio
   const feature = features.find((f) => f.key === key);
   const link = feature?.nav.find((n) => n.href === href);
   if (!feature || !link) notFound();
-  await requireFeature(feature.key);
+  await requirePage(feature.key, href);
 
   return (
     <div>

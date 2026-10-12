@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { addServer, deleteServer, enqueueServerJob, findServer } from "@ventura/deploy";
+import { addServer, deleteServer, enqueueServerJob, findServer, updateServer } from "@ventura/deploy";
 import { SERVER_ACTIONS, servers } from "@ventura/db/schema/panel";
 import { deps, queue } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";
@@ -25,7 +25,10 @@ const newServerSchema = z.object({
     .trim()
     .regex(/^[a-z0-9.-]{1,253}$/i, uz.servers.invalid.host),
   sshPort: z.number().int().min(1, uz.servers.invalid.port).max(65535, uz.servers.invalid.port),
-  sshUser: z.string().regex(/^[a-z_][a-z0-9_-]{0,31}$/, uz.servers.invalid.user),
+  sshUser: z
+    .string()
+    .regex(/^[a-z_][a-z0-9_-]{0,31}$/, uz.servers.invalid.user)
+    .refine((u) => u !== "root", uz.servers.rootUser),
   kind: z.enum(["home", "online"]),
 });
 
@@ -38,6 +41,41 @@ export async function addServerAction(input: unknown): Promise<ServerResult<{ id
   const server = await addServer(db, parsed.data, { type: "user", id: viewer.id, name: viewer.name });
   revalidatePath("/servers");
   return { ok: true, id: server.id };
+}
+
+const editSchema = newServerSchema.extend({
+  deployRoot: z
+    .string()
+    .trim()
+    .regex(/^\/[A-Za-z0-9._/-]+$/, uz.servers.invalid.deployRoot),
+  capacity: z.number().int().min(1, uz.servers.invalid.capacity).max(1000, uz.servers.invalid.capacity).nullable(),
+  note: z
+    .string()
+    .trim()
+    .max(500)
+    .transform((v) => v || null),
+});
+
+const UPDATE_ERRORS = {
+  not_found: uz.common.loadError,
+  name_taken: uz.servers.nameTaken,
+  root_user: uz.servers.rootUser,
+  root_in_use: uz.servers.rootInUse,
+} as const;
+
+export async function updateServerAction(
+  serverId: string,
+  input: unknown,
+): Promise<ServerResult<{ reconnect: boolean }>> {
+  const viewer = await requireViewer("servers.manage");
+  if (!z.uuid().safeParse(serverId).success) return { ok: false, error: uz.common.loadError };
+  const parsed = editSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.loadError };
+  const res = await updateServer(deps().db, serverId, parsed.data, { type: "user", id: viewer.id, name: viewer.name });
+  if (!res.ok) return { ok: false, error: UPDATE_ERRORS[res.reason] };
+  revalidatePath("/servers");
+  revalidatePath(`/servers/${serverId}`);
+  return { ok: true, reconnect: res.reconnect };
 }
 
 const jobSchema = z.discriminatedUnion("kind", [

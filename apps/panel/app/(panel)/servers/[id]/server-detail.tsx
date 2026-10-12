@@ -7,6 +7,7 @@ import {
   Cpu,
   HardDrive,
   MemoryStick,
+  Pencil,
   Play,
   RefreshCw,
   RotateCw,
@@ -33,6 +34,7 @@ import { formatDateTime, formatDuration, formatMb, timeAgo } from "@/lib/format"
 import type { ServerDetail } from "@/lib/server/servers-query";
 import { uz } from "@/lib/uz";
 import { deleteServerAction, serverJobAction, setupCommandAction } from "../actions";
+import { EditServerForm } from "../edit-server-form";
 import { ServerStateBadge } from "../status";
 import { useAutoRefresh } from "../use-auto-refresh";
 
@@ -60,6 +62,7 @@ export function ServerDetailView({
   useAutoRefresh(busy ? 2_000 : 15_000);
   const [pending, startTransition] = React.useTransition();
   const [deleteOpen, setDeleteOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
   const [toStop, setToStop] = React.useState<string | null>(null);
   const m = s.metrics;
   const neverOnline = !s.metricsAt;
@@ -116,6 +119,11 @@ export function ServerDetailView({
               </Button>
             ) : null}
             {canManage ? (
+              <Button variant="ghost" onClick={() => setEditOpen(true)}>
+                <Pencil /> {uz.servers.edit}
+              </Button>
+            ) : null}
+            {canManage ? (
               <Button variant="danger" onClick={() => setDeleteOpen(true)}>
                 <Trash2 /> {uz.servers.delete}
               </Button>
@@ -123,6 +131,8 @@ export function ServerDetailView({
           </>
         }
       />
+
+      {s.note ? <p className="-mt-3 text-body whitespace-pre-line text-muted-foreground">{s.note}</p> : null}
 
       {s.lastAction ? (
         <Notice tone={ACTION_TONE[s.lastAction.status]}>
@@ -282,6 +292,8 @@ export function ServerDetailView({
                   </React.Fragment>
                 );
               })}
+              <dt className="text-muted-foreground">{uz.servers.deployRoot}</dt>
+              <dd className="truncate font-mono text-foreground">{s.deployRoot}</dd>
               <dt className="text-muted-foreground">{uz.servers.hostKey}</dt>
               <dd className="truncate font-mono text-caption text-foreground">{s.hostKey ?? "—"}</dd>
             </dl>
@@ -289,6 +301,7 @@ export function ServerDetailView({
         </Card>
       </div>
 
+      {canManage ? <EditServerForm server={s} open={editOpen} onOpenChange={setEditOpen} /> : null}
       <ConfirmModal
         open={deleteOpen}
         onOpenChange={setDeleteOpen}

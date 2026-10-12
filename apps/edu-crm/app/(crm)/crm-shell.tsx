@@ -7,6 +7,8 @@ import {
   CalendarCheck,
   CalendarOff,
   DoorOpen,
+  IdCard,
+  ShieldCheck,
   ChartColumn,
   Coins,
   GraduationCap,
@@ -66,6 +68,15 @@ const FALLBACK = { icon: Blocks, hue: "slate" };
 /** Menyu manzili → ikonka (bitta bo'limning bir nechta bandi bo'lsa, masalan Xonalar — guruhlar bo'limida) */
 const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/rooms": { icon: DoorOpen, hue: "teal" },
+  "/positions": { icon: ShieldCheck, hue: "violet" },
+  "/staff": { icon: IdCard, hue: "sky" },
+};
+
+/** Bo'lim ichidagi tartib (eski tizimdagi "Ofis" menyusi): ro'yxatda yo'qlari oxirida, manifest tartibida */
+const ITEM_ORDER = ["/branches", "/positions", "/staff", "/rooms", "/holidays"];
+const itemRank = (href: string) => {
+  const i = ITEM_ORDER.indexOf(href);
+  return i === -1 ? ITEM_ORDER.length : i;
 };
 
 /** Menyu bo'limlari tartibi (eski tizimdagidek); "Asos" bandlari bosh sahifa bilan birga eng tepada. */
@@ -74,10 +85,12 @@ const MAIN = "Asos";
 
 function sections(groups: NavGroup[]): NavSection[] {
   const toItems = (g: NavGroup) =>
-    g.links.map((l) => {
-      const { icon, hue } = HREF_ICONS[l.href] ?? ICONS[l.feature] ?? FALLBACK;
-      return { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
-    });
+    [...g.links]
+      .sort((a, b) => itemRank(a.href) - itemRank(b.href))
+      .map((l) => {
+        const { icon, hue } = HREF_ICONS[l.href] ?? ICONS[l.feature] ?? FALLBACK;
+        return { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
+      });
   const rank = (title: string) => {
     const i = SECTION_ORDER.indexOf(title);
     return i === -1 ? SECTION_ORDER.length : i;

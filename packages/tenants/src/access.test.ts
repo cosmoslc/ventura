@@ -76,6 +76,9 @@ describe("bo'limlar ilova ichida", () => {
       },
       { title: "Ofis", links: [{ feature: "groups", label: "Xonalar", href: "/rooms" }] },
     ]);
+    // Band manzil bo'yicha ham yashiriladi (masalan Xonalar ruxsati yo'q)
+    const noRooms = navFor(features, ["students", "groups"], (_k, href) => href !== "/rooms");
+    expect(noRooms.map((g) => g.title)).toEqual(["Asos"]);
   });
 });
 

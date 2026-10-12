@@ -52,11 +52,12 @@ export function createStaffAuth({ db, telegram, appName, secret, baseURL }: Staf
     },
     user: {
       additionalFields: {
-        role: { type: "string", input: false, defaultValue: "viewer" },
+        role: { type: "string", input: false, defaultValue: "staff" },
         telegramChatId: { type: "string", required: false, input: false },
         mustChangePassword: { type: "boolean", input: false, defaultValue: false },
         failedAttempts: { type: "number", input: false, defaultValue: 0 },
         lockedAt: { type: "date", required: false, input: false },
+        archivedAt: { type: "date", required: false, input: false },
       },
     },
     plugins: [

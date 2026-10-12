@@ -26,6 +26,7 @@ Eski kod **o'qish uchun namuna**: nima qilishi va qanday ko'rinishi undan olinad
 | 11 | Interfeys faqat o'zbekcha; matnlar bitta faylda. |
 | 12 | Tartib: avval Ventura 2-bosqichi (deploy), keyin E0. |
 | 13 | edu-crm cosmoslc CRM bilan bir xil bo'lishi kerak: har bo'lim ko'rinishi, maydonlari, hisob-kitobi va oqimi eski tizimdagidek (2026-10-11). Farq faqat texnologiyada (TypeScript, server, tokenlar) va 10-qarordagi birinchi versiyaga kirmaydiganlarda. |
+| 14 | 9-qarorga o'zgartirish (2026-10-12): ruxsatlar eski tizimdagidek **lavozimlar** orqali. Direktor lavozim yaratadi va har ruxsatni (69 ta, 11 toifa) "Ruxsat/Taqiq" qiladi; 7 ta tayyor shablon bor. Xodimga bir nechta lavozim berilishi mumkin (ruxsatlar qo'shiladi). Filial cheklovi saqlanadi. "Tasdiq" oqimi — E3 da. ADR 0010. |
 
 ## 3. Eski tizim: nima bor
 
@@ -99,7 +100,8 @@ Har bosqich alohida branch va PR. Qabul mezoni bajarilmaguncha keyingisiga o'til
 Bo'limlar: `students`, `courses`, `teachers`, `groups`, `branches`.
 
 - [x] Kurslar, xonalar, filiallar (ma'lumotnomalar) — ADR 0008
-- [ ] O'qituvchilar va xodimlar: ro'yxat, kartochka, lavozimlar
+- [x] Lavozimlar va xodimlar: ruxsatlar katalogi, xodim kartochkasi, Xodim formasi — ADR 0010
+- [x] O'qituvchilar: ro'yxat, support o'qituvchilar, profil — ADR 0010
 - [ ] O'quvchilar: ro'yxat, qo'shish, profil, holatlar, arxiv
 - [ ] Guruhlar: ro'yxat, profil, o'quvchini qo'shish va chiqarish, a'zolik davrlari
 - [ ] Excel'dan import (o'quvchi, guruh, o'qituvchi)

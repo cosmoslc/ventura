@@ -22,6 +22,20 @@
       "when": 1791800897184,
       "tag": "0002_e1_courses_rooms",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791807590863,
+      "tag": "0003_e1b_positions_staff",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791809084534,
+      "tag": "0004_e1b_teachers",
+      "breakpoints": true
     }
   ]
 }

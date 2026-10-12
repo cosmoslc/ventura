@@ -33,3 +33,13 @@ export const BRANCH_COLORS: readonly ColorOption[] = [
 ];
 
 export const DEFAULT_COLOR = "#6366f1";
+
+/** Lavozim ranglari (eski tizimdagi 6 ta) */
+export const POSITION_COLORS: readonly ColorOption[] = [
+  { value: "#6366f1", label: "Indigo" },
+  { value: "#0ea5e9", label: "Moviy" },
+  { value: "#10b981", label: "Yashil" },
+  { value: "#f59e0b", label: "Sariq" },
+  { value: "#ec4899", label: "Pushti" },
+  { value: "#8b5cf6", label: "Binafsha" },
+];

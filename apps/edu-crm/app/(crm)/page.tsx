@@ -1,6 +1,7 @@
 import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { STAFF_ROLE_HINTS, STAFF_ROLE_LABELS, can } from "@ventura/auth/staff/policy";
+import { canAny } from "@ventura/auth/staff/policy";
+import { pagePermissions } from "@/lib/access";
 import { navFor } from "@ventura/tenants";
 import { Card, CardContent } from "@ventura/ui/card";
 import { Notice } from "@ventura/ui/notice";
@@ -17,7 +18,9 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   const tenant = await requireTenant();
   const staff = await requireStaff();
   const { ruxsat } = await searchParams;
-  const links = navFor(features, tenant.features, (key) => can(staff.role, `${key}.view`)).flatMap((g) => g.links);
+  const links = navFor(features, tenant.features, (_key, href) => canAny(staff.access, pagePermissions(href))).flatMap(
+    (g) => g.links,
+  );
   const branches = staff.scope === "all" ? uz.home.allBranches : uz.home.branchCount(staff.scope.length);
 
   return (
@@ -31,8 +34,14 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             <ShieldCheck className="mt-0.5 size-5 text-primary-text" />
             <div>
               <div className="text-caption text-muted-foreground">{uz.home.role}</div>
-              <div className="text-body font-bold text-foreground">{STAFF_ROLE_LABELS[staff.role]}</div>
-              <div className="text-caption text-muted-foreground">{STAFF_ROLE_HINTS[staff.role]}</div>
+              <div className="text-body font-bold text-foreground">
+                {staff.director
+                  ? uz.staff.director
+                  : staff.positions.map((p) => p.name).join(", ") || uz.staff.noPosition}
+              </div>
+              <div className="text-caption text-muted-foreground">
+                {staff.director ? uz.staff.directorHint : uz.staff.permissionCount(staff.access.permissions.size)}
+              </div>
             </div>
           </CardContent>
         </Card>

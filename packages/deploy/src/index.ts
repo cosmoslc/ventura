@@ -28,7 +28,17 @@ export {
 export { createSimDriver } from "./drivers/sim";
 export { createSshDriver } from "./drivers/ssh";
 export { SshError, connect, fingerprint, generateKeyPair, sh, type SshSession, type SshTarget } from "./ssh";
-export { addServer, checkServer, findServer, openSession, type CheckResult, type ServerRow } from "./servers";
+export {
+  addServer,
+  checkServer,
+  findServer,
+  openSession,
+  updateServer,
+  type CheckResult,
+  type ServerPatch,
+  type ServerRow,
+  type UpdateServerResult,
+} from "./servers";
 export {
   DISK_ALERT,
   MEMORY_ALERT,

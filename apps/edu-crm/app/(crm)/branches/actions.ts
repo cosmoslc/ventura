@@ -1,24 +1,30 @@
 "use server";
 
-import { and, count, eq, inArray, ne } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { branches, userBranches, users } from "@ventura/db/schema/tenant";
+import { can, inScope } from "@ventura/auth/staff/policy";
 import { branchInput, firstError } from "@/lib/rules";
 import { type ActionResult, crmAction } from "@/lib/server/action";
 import { uz } from "@/lib/uz";
 import { branchUsage } from "./data";
 
 /*
- * Filiallar: faqat direktor o'zgartiradi (`branches.write`, policy.ts). Menejer biriktirish — user_branches:
- * xodimning filial cheklovi har so'rovda shu jadvaldan olinadi, sessiyani yopish shart emas.
+ * Filiallar — "Filiallarni boshqarish" ruxsati (eski tizimdagidek). Yangi filial qo'shish va o'chirish — faqat
+ * barcha filiallarni ko'radigan (direktor) xodimga: aks holda cheklangan xodim o'zi ko'rmaydigan filial yaratardi.
+ * Xodim biriktirish (user_branches) qo'shimcha "Lavozim va ruxsatlarni biriktirish" ruxsatini talab qiladi —
+ * filial cheklovi har so'rovda shu jadvaldan olinadi, sessiyani yopish shart emas.
  */
 
 export async function saveBranchAction(input: unknown): Promise<ActionResult<{ id: string }>> {
-  return crmAction<{ id: string }>("branches", async ({ db, audit }) => {
+  return crmAction<{ id: string }>("branches", "settings.branches", async ({ db, staff, audit }) => {
     const parsed = branchInput.safeParse(input);
     if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
     const { id, name, phone, address, color, managerIds } = parsed.data;
+    if (!id && staff.scope !== "all") return { ok: false, error: uz.common.forbidden };
+    if (id && !inScope(staff.scope, id)) return { ok: false, error: uz.common.branchForbidden };
+    const canAssign = can(staff.access, "staff.roles_assign");
 
     const [dup] = await db
       .select({ id: branches.id })
@@ -27,14 +33,16 @@ export async function saveBranchAction(input: unknown): Promise<ActionResult<{ i
     if (dup) return { ok: false, error: uz.branches.nameTaken };
 
     // Faqat direktor bo'lmagan, mavjud xodimlar biriktiriladi
-    const staffIds = managerIds.length
-      ? (
-          await db
-            .select({ id: users.id })
-            .from(users)
-            .where(and(inArray(users.id, managerIds), ne(users.role, "director")))
-        ).map((u) => u.id)
-      : [];
+    const staffIds = !canAssign
+      ? null
+      : managerIds.length
+        ? (
+            await db
+              .select({ id: users.id })
+              .from(users)
+              .where(and(inArray(users.id, managerIds), ne(users.role, "director"), isNull(users.archivedAt)))
+          ).map((u) => u.id)
+        : [];
 
     const values = { name, phone: phone ? `+998${phone}` : null, address: address || null, color };
     let before: { name: string; color: string; staff: number } | null = null;
@@ -49,9 +57,12 @@ export async function saveBranchAction(input: unknown): Promise<ActionResult<{ i
     const branchId = await db.transaction(async (tx) => {
       if (id) await tx.update(branches).set(values).where(eq(branches.id, id));
       const target = id ?? (await tx.insert(branches).values(values).returning({ id: branches.id }))[0]!.id;
-      await tx.delete(userBranches).where(eq(userBranches.branchId, target));
-      if (staffIds.length)
-        await tx.insert(userBranches).values(staffIds.map((userId) => ({ userId, branchId: target })));
+      // Biriktirish ruxsati bo'lmasa — xodimlar ro'yxatiga tegilmaydi
+      if (staffIds) {
+        await tx.delete(userBranches).where(eq(userBranches.branchId, target));
+        if (staffIds.length)
+          await tx.insert(userBranches).values(staffIds.map((userId) => ({ userId, branchId: target })));
+      }
       return target;
     });
 
@@ -61,7 +72,7 @@ export async function saveBranchAction(input: unknown): Promise<ActionResult<{ i
       {
         name,
         ...(before ? { before } : {}),
-        staff: staffIds.length,
+        ...(staffIds ? { staff: staffIds.length } : {}),
       },
     );
     revalidatePath("/", "layout");
@@ -70,7 +81,8 @@ export async function saveBranchAction(input: unknown): Promise<ActionResult<{ i
 }
 
 export async function deleteBranchAction(id: unknown): Promise<ActionResult> {
-  return crmAction("branches", async ({ db, audit }) => {
+  return crmAction("branches", "settings.branches", async ({ db, staff, audit }) => {
+    if (staff.scope !== "all") return { ok: false, error: uz.common.forbidden };
     const parsed = z.uuid().safeParse(id);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const [branch] = await db.select().from(branches).where(eq(branches.id, parsed.data));
@@ -82,6 +94,7 @@ export async function deleteBranchAction(id: unknown): Promise<ActionResult> {
     const parts = [
       usage.courses ? uz.branches.dataCourses(usage.courses) : null,
       usage.rooms ? uz.branches.dataRooms(usage.rooms) : null,
+      usage.teachers ? uz.branches.dataTeachers(usage.teachers) : null,
     ].filter((p): p is string => !!p);
     if (parts.length) return { ok: false, error: uz.branches.hasData(parts.join(", ")) };
 
