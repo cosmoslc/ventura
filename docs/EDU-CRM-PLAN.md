@@ -102,7 +102,7 @@ Bo'limlar: `students`, `courses`, `teachers`, `groups`, `branches`.
 - [x] Kurslar, xonalar, filiallar (ma'lumotnomalar) — ADR 0008
 - [x] Lavozimlar va xodimlar: ruxsatlar katalogi, xodim kartochkasi, Xodim formasi — ADR 0010
 - [x] O'qituvchilar: ro'yxat, support o'qituvchilar, profil — ADR 0010
-- [ ] O'quvchilar: ro'yxat, qo'shish, profil, holatlar, arxiv
+- [x] O'quvchilar: ro'yxat, qo'shish, profil, holatlar, eslatmalar, arxiv — ADR 0011
 - [ ] Guruhlar: ro'yxat, profil, o'quvchini qo'shish va chiqarish, a'zolik davrlari
 - [ ] Excel'dan import (o'quvchi, guruh, o'qituvchi)
 

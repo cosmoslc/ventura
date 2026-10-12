@@ -36,6 +36,13 @@
       "when": 1791809084534,
       "tag": "0004_e1b_teachers",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791811923988,
+      "tag": "0005_e1c_students",
+      "breakpoints": true
     }
   ]
 }
