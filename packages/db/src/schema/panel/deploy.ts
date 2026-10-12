@@ -113,6 +113,8 @@ export interface ServerInfo {
   pm2?: string;
   nginx?: string;
   postgres?: string;
+  certbot?: string;
+  git?: string;
   memoryMb?: number;
   diskFreeGb?: number;
   cpus?: number;
@@ -180,6 +182,10 @@ export const servers = pgTable(
     /** Serverning o'z kaliti izi (SHA256). Birinchi ulanishda eslab qolinadi, keyin o'zgarsa ulanish rad etiladi. */
     hostKey: text("host_key"),
     deployRoot: text("deploy_root").notNull().default("/home/deploy/apps"),
+    /** Serverga sig'adigan loyihalar soni (bo'sh — cheklanmagan); hozircha faqat ko'rsatiladi */
+    capacity: integer("capacity"),
+    /** Adminlar uchun izoh (provayder, tarif, joylashuv) */
+    note: text("note"),
     status: text("status", { enum: SERVER_STATUSES }).notNull().default("new"),
     info: jsonb("info").$type<ServerInfo>().notNull().default({}),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),

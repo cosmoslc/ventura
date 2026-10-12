@@ -30,6 +30,9 @@ export interface ServerCard {
   lastError: string | null;
   projects: number;
   apps: string[];
+  capacity: number | null;
+  note: string | null;
+  deployRoot: string;
 }
 
 function toCard(s: typeof servers.$inferSelect, projectCount: number, appNames: string[]): ServerCard {
@@ -48,6 +51,9 @@ function toCard(s: typeof servers.$inferSelect, projectCount: number, appNames: 
     lastError: s.lastError,
     projects: projectCount,
     apps: appNames,
+    capacity: s.capacity,
+    note: s.note,
+    deployRoot: s.deployRoot,
   };
 }
 

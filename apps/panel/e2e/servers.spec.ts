@@ -24,11 +24,24 @@ test("server qo'shiladi, o'rnatish ko'rsatmasi chiqadi va nomini yozib o'chirila
   await expect(page.getByText(new RegExp(`^ssh-ed25519 \\S+ ventura-panel:${name}$`))).toBeVisible();
   await expect(page.getByRole("button", { name: uz.servers.copyCommand })).toBeVisible();
 
+  // Tahrirlash: root taqiqlangan; sig'im va izoh saqlanadi
+  await page.getByRole("button", { name: uz.servers.edit }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.locator("#se-user").fill("root");
+  await dialog.getByRole("button", { name: uz.common.save }).click();
+  await expect(dialog.getByText(uz.servers.rootUser)).toBeVisible();
+  await dialog.locator("#se-user").fill("deploy");
+  await dialog.locator("#se-capacity").fill("5");
+  await dialog.locator("#se-note").fill("E2E izoh: sinov serveri");
+  await dialog.getByRole("button", { name: uz.common.save }).click();
+  await expect(page.getByRole("main").getByText("E2E izoh: sinov serveri")).toBeVisible();
+
   // Ro'yxatda ko'rinadi (xabarnoma va sahifa e'lonida ham nom bor — faqat asosiy qism)
   await page.getByRole("link", { name: uz.servers.back }).click();
   const main = page.getByRole("main");
   const card = main.locator("div.rounded-card", { has: page.getByText(name, { exact: true }) });
   await expect(card).toBeVisible();
+  await expect(card.getByText(uz.servers.capacityOf(0, 5))).toBeVisible();
 
   // O'chirish: nomini yozmaguncha tasdiqlash tugmasi o'chiq
   await card.getByRole("link", { name: uz.servers.details }).click();

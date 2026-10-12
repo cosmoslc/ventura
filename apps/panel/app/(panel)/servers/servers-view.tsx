@@ -117,7 +117,7 @@ function ServerTile({ server: s }: { server: ServerCard }) {
       )}
 
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-muted-foreground">
-        <span>{uz.servers.projectCount(s.projects)}</span>
+        <span>{s.capacity ? uz.servers.capacityOf(s.projects, s.capacity) : uz.servers.projectCount(s.projects)}</span>
         {m ? <span>{uz.servers.appsRunning(running, m.processes.length)}</span> : null}
         {m ? (
           <span>
