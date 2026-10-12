@@ -46,8 +46,8 @@ export interface NavGroup {
 }
 
 /**
- * Menyu: faqat yoqilgan va foydalanuvchiga ko'rish ruxsati bor bo'limlar. Guruhlar manifestdagi tartibda,
- * bo'sh guruh ko'rsatilmaydi.
+ * Menyu: faqat yoqilgan va foydalanuvchiga ko'rish ruxsati bor bo'limlar. Band `section` (yoki bo'lim `group`i)
+ * bo'yicha guruhlanadi; guruhlar va bandlar manifestdagi birinchi uchrashish tartibida, bo'sh guruh ko'rsatilmaydi.
  */
 export function navFor(
   features: Feature[],
@@ -58,9 +58,12 @@ export function navFor(
   const groups: NavGroup[] = [];
   for (const f of features) {
     if (!on.has(f.key) || !f.nav.length || !allowed(f.key)) continue;
-    let group = groups.find((g) => g.title === f.group);
-    if (!group) groups.push((group = { title: f.group, links: [] }));
-    for (const n of f.nav) group.links.push({ feature: f.key, label: n.label, href: n.href });
+    for (const n of f.nav) {
+      const title = n.section ?? f.group;
+      let group = groups.find((g) => g.title === title);
+      if (!group) groups.push((group = { title, links: [] }));
+      group.links.push({ feature: f.key, label: n.label, href: n.href });
+    }
   }
   return groups;
 }

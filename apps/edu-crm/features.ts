@@ -1,12 +1,15 @@
 import type { FeatureManifest, TemplateInfo } from "@ventura/tenants";
 
-/** O'quv markaz CRM — bo'limlar manifesti (SPEC 8-bo'lim). */
+/**
+ * O'quv markaz CRM — bo'limlar manifesti (SPEC 8-bo'lim). `group` — paneldagi bo'limlar tanlovi uchun,
+ * `nav.section` — CRM menyusidagi joy (eski tizim menyusi: asosiy bandlar, Moliya, Hisobotlar, Ofis, O'quv).
+ */
 export const template = {
   key: "edu-crm",
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.2.0",
+  version: "0.3.0",
 } satisfies TemplateInfo;
 
 export const features = [
@@ -25,7 +28,7 @@ export const features = [
     group: "Asos",
     type: "core",
     routes: ["/api/courses"],
-    nav: [{ label: "Kurslar", href: "/courses" }],
+    nav: [{ label: "Kurslar", href: "/courses", section: "O'quv" }],
   },
   {
     key: "teachers",
@@ -42,7 +45,10 @@ export const features = [
     type: "core",
     requires: ["students", "courses", "teachers"],
     routes: ["/api/groups"],
-    nav: [{ label: "Guruhlar", href: "/groups" }],
+    nav: [
+      { label: "Guruhlar", href: "/groups" },
+      { label: "Xonalar", href: "/rooms", section: "Ofis" },
+    ],
   },
   {
     key: "branches",
@@ -50,7 +56,7 @@ export const features = [
     group: "Asos",
     type: "mode",
     description: "Loyiha sozlamasi boshqaradi",
-    nav: [{ label: "Filiallar", href: "/branches" }],
+    nav: [{ label: "Filiallar", href: "/branches", section: "Ofis" }],
   },
 
   // Davomat
@@ -60,7 +66,7 @@ export const features = [
     group: "Davomat",
     type: "regular",
     routes: ["/api/holidays"],
-    nav: [{ label: "Dam olish kunlari", href: "/holidays" }],
+    nav: [{ label: "Dam olish kunlari", href: "/holidays", section: "Ofis" }],
   },
   {
     key: "attendance",
@@ -69,7 +75,7 @@ export const features = [
     type: "regular",
     requires: ["groups", "holidays"],
     routes: ["/api/attendance", "/api/attendance-settings"],
-    nav: [{ label: "Davomat", href: "/attendance" }],
+    nav: [{ label: "Davomat", href: "/attendance", section: "Asos" }],
   },
 
   // Moliya
@@ -117,7 +123,7 @@ export const features = [
     type: "regular",
     requires: ["groups"],
     routes: ["/api/exams"],
-    nav: [{ label: "Imtihonlar", href: "/exams" }],
+    nav: [{ label: "Imtihonlar", href: "/exams", section: "O'quv" }],
   },
   {
     key: "coins",
@@ -127,7 +133,7 @@ export const features = [
     requires: ["students"],
     description: "O'quvchilarni rag'batlantirish",
     routes: ["/api/coins"],
-    nav: [{ label: "Coinlar", href: "/coins" }],
+    nav: [{ label: "Coinlar", href: "/coins", section: "O'quv" }],
   },
 
   // Sotuv va aloqa
@@ -137,7 +143,7 @@ export const features = [
     group: "Sotuv va aloqa",
     type: "regular",
     routes: ["/api/leads"],
-    nav: [{ label: "Lidlar", href: "/leads" }],
+    nav: [{ label: "Lidlar", href: "/leads", section: "Asos" }],
   },
   {
     key: "sms",

@@ -15,6 +15,8 @@ export interface TopbarProps {
   brandMark?: React.ReactNode;
   brandSubtitle?: string;
   searchPlaceholder?: string;
+  /** Menyu tugmasidan keyin, qidiruvdan oldin (masalan filial tanlovi) */
+  leading?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
 }
@@ -26,6 +28,7 @@ export function Topbar({
   brandMark,
   brandSubtitle,
   searchPlaceholder = "Qidirish…",
+  leading,
   children,
   className,
 }: TopbarProps) {
@@ -56,6 +59,7 @@ export function Topbar({
         <Button variant="icon" size="icon" onClick={onToggleSidebar} aria-label="Menyuni ochish/yopish">
           <Menu />
         </Button>
+        {leading}
         <label className="group relative hidden sm:block">
           <span className="sr-only">Qidirish</span>
           <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-placeholder transition-colors group-focus-within:text-primary-text" />

@@ -22,6 +22,7 @@ import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@ventura/ui/card";
+import { ColorSwatches } from "@ventura/ui/color-swatches";
 import { Checkbox, ChoiceField, Radio, RadioCard, RadioGroup } from "@ventura/ui/checkbox";
 import {
   DropdownMenu,
@@ -35,6 +36,8 @@ import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { LogView } from "@ventura/ui/log-view";
 import { Logo } from "@ventura/ui/logo";
+import { MoneyInput } from "@ventura/ui/money-input";
+import { demoColors } from "@/lib/mock-data";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { Pagination } from "@ventura/ui/pagination";
@@ -241,6 +244,8 @@ function Buttons() {
 
 function Inputs() {
   const [phone, setPhone] = React.useState("90123");
+  const [price, setPrice] = React.useState<number | null>(1500000);
+  const [color, setColor] = React.useState(demoColors[0]!.value);
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div>
@@ -275,6 +280,14 @@ function Inputs() {
       <div>
         <Label>Telefon (noto&apos;liq)</Label>
         <PhoneInput value={phone} onValueChange={setPhone} invalid={phone.length !== 9} />
+      </div>
+      <div>
+        <Label>Pul (MoneyInput)</Label>
+        <MoneyInput value={price} onValueChange={setPrice} suffix="so'm" placeholder="1 500 000" />
+      </div>
+      <div>
+        <Label>Rang tanlash (ColorSwatches)</Label>
+        <ColorSwatches value={color} onChange={setColor} options={demoColors} custom={{ label: "Boshqa rang" }} />
       </div>
       <div className="sm:col-span-2">
         <Label>Textarea</Label>

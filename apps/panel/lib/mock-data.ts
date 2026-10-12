@@ -151,3 +151,13 @@ export const stats = [
   { label: "Yiqilgan buildlar", value: "2", tone: 3, trend: { value: "1", up: false } },
   { label: "Ulangan serverlar", value: "5", tone: 4 },
 ] as const;
+
+/** Rang tanlash namunasi (kurs/filial ranglari — ma'lumot, token emas) */
+export const demoColors = [
+  { value: "#6366f1", label: "Indigo" },
+  { value: "#10b981", label: "Yashil" },
+  { value: "#f59e0b", label: "Sariq" },
+  { value: "#f43f5e", label: "Qizil" },
+  { value: "#06b6d4", label: "Moviy" },
+  { value: "#475569", label: "Kulrang" },
+];

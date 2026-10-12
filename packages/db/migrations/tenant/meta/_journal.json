@@ -15,6 +15,13 @@
       "when": 1791734768983,
       "tag": "0001_tenant_rls_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791800897184,
+      "tag": "0002_e1_courses_rooms",
+      "breakpoints": true
     }
   ]
 }

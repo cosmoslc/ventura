@@ -17,6 +17,15 @@ describe("xodim ruxsatlari", () => {
     expect(can("manager", "settings.manage")).toBe(false);
   });
 
+  it("filiallarni hamma ko'radi, faqat direktor o'zgartiradi", () => {
+    expect(can("director", "branches.write")).toBe(true);
+    expect(can("manager", "branches.view")).toBe(true);
+    expect(can("manager", "branches.write")).toBe(false);
+    expect(can("manager", "courses.write")).toBe(true);
+    expect(can("cashier", "courses.view")).toBe(true);
+    expect(can("cashier", "courses.write")).toBe(false);
+  });
+
   it("kassir faqat pul bo'limlarida yozadi, o'quvchi va guruhlarni ko'radi", () => {
     expect(can("cashier", "payments.write")).toBe(true);
     expect(can("cashier", "expenses.write")).toBe(true);

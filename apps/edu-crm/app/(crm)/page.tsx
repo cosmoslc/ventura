@@ -56,7 +56,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <Link key={l.href} href={l.href} className="group">
                 <Card className="transition-shadow group-hover:shadow-card-hover">
                   <CardContent className="flex items-center gap-3 pt-6">
-                    <FeatureIcon feature={l.feature} className="size-5" />
+                    <FeatureIcon feature={l.feature} href={l.href} className="size-5" />
                     <span className="flex-1 text-body font-semibold text-foreground">{l.label}</span>
                     <ArrowRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                   </CardContent>
