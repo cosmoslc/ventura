@@ -9,6 +9,7 @@ export { createDeployStore, failInterrupted } from "./store";
 export {
   DEPLOY_QUEUE,
   QUEUE_SCHEMA,
+  SERVER_QUEUE,
   WORKER_HEARTBEAT_KEY,
   WORKER_STALE_MS,
   enqueueDeploy,
@@ -28,6 +29,29 @@ export { createSimDriver } from "./drivers/sim";
 export { createSshDriver } from "./drivers/ssh";
 export { SshError, connect, fingerprint, generateKeyPair, sh, type SshSession, type SshTarget } from "./ssh";
 export { addServer, checkServer, findServer, openSession, type CheckResult, type ServerRow } from "./servers";
+export {
+  DISK_ALERT,
+  MEMORY_ALERT,
+  ONLINE_WINDOW_MS,
+  type AlertEvent,
+  type ServerState,
+  nextAlerts,
+  parseMetrics,
+  serverState,
+} from "./metrics";
+export {
+  METRICS_RETENTION_DAYS,
+  type DeleteServerResult,
+  type Notify,
+  type ServerJobData,
+  createServerNotifier,
+  deleteServer,
+  enqueueServerJob,
+  monitorServers,
+  probeServer,
+  recordProbe,
+  runServerJob,
+} from "./monitor";
 
 /** Har deploy uchun yangi drayver beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
 export function createDrivers(deps: SshDriverDeps): DriverFactory {

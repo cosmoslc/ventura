@@ -106,6 +106,7 @@ type Permission =
   | "projects.deploy"
   | "clients.write"
   | "templates.sync"
+  | "servers.manage"
   | "admins.manage"
   | "settings.manage";
 
@@ -116,6 +117,7 @@ const PERMISSIONS: Record<Role, readonly Permission[]> = {
     "projects.deploy",
     "clients.write",
     "templates.sync",
+    "servers.manage",
     "admins.manage",
     "settings.manage",
   ],

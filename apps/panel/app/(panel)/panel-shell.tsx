@@ -1,6 +1,16 @@
 "use client";
 
-import { Activity, Blocks, FolderKanban, KeyRound, LayoutDashboard, LogOut, Settings, Users } from "lucide-react";
+import {
+  Activity,
+  Blocks,
+  FolderKanban,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  Server,
+  Settings,
+  Users,
+} from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import type { Role } from "@ventura/db/schema/panel";
@@ -27,6 +37,7 @@ const HREF: Record<string, string> = {
   "projects-trash": "/projects/trash",
   clients: "/clients",
   templates: "/templates",
+  servers: "/servers",
   audit: "/audit",
   "settings-security": "/settings/security",
   "settings-admins": "/settings/admins",
@@ -50,7 +61,10 @@ function sections(role: Role): NavSection[] {
     },
     {
       title: uz.nav.control,
-      items: [{ id: "audit", label: uz.nav.audit, icon: Activity, color: "#ec4899" }],
+      items: [
+        { id: "servers", label: uz.nav.servers, icon: Server, color: "var(--nav-hue-sky)" },
+        { id: "audit", label: uz.nav.audit, icon: Activity, color: "#ec4899" },
+      ],
     },
     {
       title: uz.nav.system,

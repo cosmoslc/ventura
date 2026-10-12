@@ -60,8 +60,9 @@ const PROBES = {
   pnpm: "pnpm --version",
   // Birinchi chaqiruvda PM2 tanishtiruv matnini ham chiqaradi; versiya oxirgi qatorda
   pm2: "pm2 --version 2>/dev/null | tail -n 1",
-  nginx: "nginx -v 2>&1 | sed 's/.*nginx\\///'",
-  postgres: "psql --version | awk '{print $3}'",
+  // Dastur yo'q bo'lsa "command not found" matni versiya bo'lib qolmasin
+  nginx: "command -v nginx >/dev/null && nginx -v 2>&1 | sed 's/.*nginx\\///'",
+  postgres: "command -v psql >/dev/null && psql --version | awk '{print $3}'",
   memoryMb: "awk '/MemTotal/ {printf \"%d\", $2/1024}' /proc/meminfo",
   diskFreeGb: 'df -BG --output=avail "$HOME" | tail -1 | tr -dc 0-9',
   cpus: "nproc",

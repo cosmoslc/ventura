@@ -19,7 +19,7 @@
 - `pnpm db:generate:tenant` · `pnpm db:migrate:tenant` — mijoz (shablon) bazasi migratsiyasi (`TENANT_MIGRATE_URL`)
 - `pnpm edu:tenant` · `pnpm edu:staff` — faqat mahalliy ishlab chiqish uchun; serverda mijoz bazasi va direktorni deploy yaratadi (ADR 0007)
 - `pnpm admin:create` · `pnpm admin:unlock` · `pnpm admin:reset-2fa` — adminlar bilan ishlash, faqat server terminalida
-- `pnpm server:add` · `pnpm server:check` — serverni ro'yxatga olish (SSH kalit yaratadi) va tekshirish; serverning o'zida bir marta `sudo bash tooling/server/setup.sh --key "..."`
+- Serverlar — panelning Serverlar bo'limida (qo'shish, o'rnatish buyrug'i, holat, metrika, ilovani qayta yuklash; ADR 0009). Zaxira yo'l: `pnpm server:add` · `pnpm server:check`, serverning o'zida bir marta `sudo bash tooling/server/setup.sh --key "..."`
 - `pnpm deploy:run -- --project <slug>` — loyihani terminaldan deploy qilish (paneldagi tugma bilan bir xil yo'l)
 
 ## Kod

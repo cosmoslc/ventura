@@ -71,6 +71,10 @@
   --info-fg: #4338ca;
   --info-bg: #eef2ff;
   --info-border: #c7d2fe99;
+
+  /* Grafik qatorlari (kategoriya tartibi qat'iy; dataviz validatori bilan tekshirilgan: oq va dark kartochkada) */
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
   --neutral-fg: #475569;
   --neutral-bg: #f1f5f9;
   --neutral-border: #e2e8f0;
@@ -300,6 +304,9 @@
   --info-fg: #818cf8;
   --info-bg: rgb(49 46 129 / 0.5);
   --info-border: rgb(79 70 229 / 0.4);
+
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
   --neutral-fg: #cbd5e1;
   --neutral-bg: #1e293b;
   --neutral-border: #334155;

@@ -6,6 +6,11 @@ import { settings } from "@ventura/db/schema/panel";
 import {
   DEPLOY_QUEUE,
   type DeployJobData,
+  SERVER_QUEUE,
+  type ServerJobData,
+  createServerNotifier,
+  monitorServers,
+  runServerJob,
   WORKER_ACTOR,
   WORKER_HEARTBEAT_KEY,
   createDeployStore,
@@ -19,8 +24,8 @@ import { createTelegram } from "@ventura/integrations";
 import { audit } from "@ventura/security";
 
 /*
- * Ishchi jarayon: navbatdagi fon vazifalarini bajaradi (hozircha — deploy). Panel'dan alohida ishlaydi,
- * shuning uchun panel qayta ishga tushsa ham boshlangan deploy uzilmaydi.
+ * Ishchi jarayon: navbatdagi fon vazifalarini bajaradi — deploy, serverlar bo'yicha buyruqlar va har daqiqalik
+ * server metrikalari. Panel'dan alohida ishlaydi, shuning uchun panel qayta ishga tushsa ham boshlangan ish uzilmaydi.
  *
  *   pnpm worker        — ishga tushirish
  *   pnpm dev           — panel bilan birga, fayl o'zgarsa qayta yuklanadi
@@ -32,6 +37,7 @@ if (existsSync(envFile)) process.loadEnvFile(envFile);
 process.chdir(ROOT);
 
 const HEARTBEAT_MS = 15_000;
+const MONITOR_MS = 60_000;
 
 const db = createPanelDb();
 const telegram = createTelegram();
@@ -60,6 +66,31 @@ await queue.work<DeployJobData>(DEPLOY_QUEUE, { batchSize: 1, pollingIntervalSec
   }
 });
 
+const notifyServers = createServerNotifier({ db, telegram });
+
+await queue.work<ServerJobData>(SERVER_QUEUE, { batchSize: 1, pollingIntervalSeconds: 1 }, async (jobs) => {
+  for (const job of jobs) {
+    const result = await runServerJob(db, job.data, notifyServers);
+    console.log(`[server] ${job.data.kind}${job.data.app ? ` ${job.data.app}` : ""} → ${result.status}`);
+  }
+});
+
+// Serverlar metrikasi: har daqiqa, oldingisi tugamaguncha yangisi boshlanmaydi
+let monitoring = false;
+const monitor = async () => {
+  if (monitoring) return;
+  monitoring = true;
+  try {
+    await monitorServers(db, notifyServers);
+  } catch (e) {
+    console.error("[monitor]", (e as Error).message);
+  } finally {
+    monitoring = false;
+  }
+};
+void monitor();
+const monitorTimer = setInterval(() => void monitor(), MONITOR_MS);
+
 const beat = () =>
   db
     .insert(settings)
@@ -73,7 +104,7 @@ await beat();
 const heartbeat = setInterval(beat, HEARTBEAT_MS);
 
 console.log(
-  `[worker] tayyor: "${DEPLOY_QUEUE}" navbati kuzatilmoqda${interrupted.length ? `, ${interrupted.length} ta uzilgan deploy yopildi` : ""}`,
+  `[worker] tayyor: "${DEPLOY_QUEUE}" va "${SERVER_QUEUE}" navbatlari kuzatilmoqda, serverlar har daqiqa tekshiriladi${interrupted.length ? `, ${interrupted.length} ta uzilgan deploy yopildi` : ""}`,
 );
 
 let stopping = false;
@@ -82,6 +113,7 @@ async function shutdown(signal: string) {
   stopping = true;
   console.log(`[worker] ${signal}: joriy vazifa tugashi kutilmoqda…`);
   clearInterval(heartbeat);
+  clearInterval(monitorTimer);
   // Boshlangan deploy oxirigacha bajariladi (eng ko'pi 15 daqiqa), yangi vazifa olinmaydi
   await queue.stop({ graceful: true, timeout: 15 * 60_000 }).catch(() => {});
   process.exit(0);

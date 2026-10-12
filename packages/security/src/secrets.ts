@@ -42,3 +42,8 @@ export async function hasSecret(db: PanelDb, owner: SecretOwner, name: string): 
     .limit(1);
   return !!row;
 }
+
+/** Egasining barcha sirlarini o'chiradi (masalan, server ro'yxatdan o'chirilganda uning SSH kaliti). */
+export async function deleteSecrets(db: PanelDb, owner: SecretOwner): Promise<void> {
+  await db.delete(secrets).where(and(eq(secrets.ownerType, owner.type), eq(secrets.ownerId, owner.id)));
+}

@@ -161,3 +161,11 @@ export const demoColors = [
   { value: "#06b6d4", label: "Moviy" },
   { value: "#475569", label: "Kulrang" },
 ];
+
+/** Grafik namunasi: 24 soat, har 30 daqiqa (barqaror — har chizishda bir xil) */
+const T0 = Date.UTC(2026, 9, 12, 0, 0);
+export const demoMetrics = {
+  times: Array.from({ length: 48 }, (_, i) => T0 + i * 30 * 60_000),
+  cpu: Array.from({ length: 48 }, (_, i) => Math.round(30 + 22 * Math.sin(i / 5) + (i % 7))),
+  mem: Array.from({ length: 48 }, (_, i) => Math.round(55 + 8 * Math.sin(i / 11))),
+};

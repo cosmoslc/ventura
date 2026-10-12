@@ -50,6 +50,13 @@
       "when": 1791738295505,
       "tag": "0006_project_owner_phone",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791803241542,
+      "tag": "0007_servers_metrics",
+      "breakpoints": true
     }
   ]
 }

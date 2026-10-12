@@ -475,7 +475,7 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 ### 3-bosqich. Online VPS va domenlar
 
-- [ ] Serverlar sahifasi: VPS qo'shish (IP, port, foydalanuvchi, SSH kalit), server tayyorlash skripti, metrikalar
+- [x] Serverlar sahifasi: VPS qo'shish (IP, port, foydalanuvchi, SSH kalit), server tayyorlash skripti, metrikalar (ADR 0009)
 - [ ] O'zbekistondagi provayder VPS'ini ulash
 - [ ] `dedicated` rejim va `dedicated_server` baza strategiyasi
 - [ ] Mijozning o'z domenini ulash: DNS ko'rsatmasi, tekshiruv, certbot SSL, holatlar

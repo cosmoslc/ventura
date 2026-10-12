@@ -117,6 +117,17 @@ Pul: `--money-in` (`#059669` / `#34d399`), `--money-out` (`#e11d48` / `#fb7185`)
 
 Xavfli amal tugmasi: `--destructive` `#f43f5e`, hover `#e11d48`, matn uchun `--destructive-text` (`#e11d48` / `#fb7185`).
 
+### 3.3a Grafik ranglari
+
+Kategoriya tartibi qat'iy: birinchi qator har doim `--chart-1`, ikkinchisi `--chart-2` (qator soni o'zgarsa ham ranglar ko'chmaydi). Dark qiymatlar alohida tanlangan. Ikkalasi dataviz validatoridan oq (`#ffffff`) va dark (`#0f172a`) kartochkada o'tgan: yorug'lik, to'yinganlik, rangni ajrata olmaslik (CVD) bo'yicha farq, kontrast. Holat ranglari (success/warning/danger) qator rangi sifatida ishlatilmaydi.
+
+| Token | Light | Dark | Vazifasi |
+| --- | --- | --- | --- |
+| `--chart-1` | `#2a78d6` | `#3987e5` | Birinchi qator (masalan CPU) |
+| `--chart-2` | `#eb6834` | `#d95926` | Ikkinchi qator (masalan xotira) |
+
+Uchinchi qator kerak bo'lsa, avval validatordan o'tkazib, token qo'shiladi; rang avtomatik yasalmaydi.
+
 ### 3.4 Shell ranglari
 
 | Token | Light | Dark |
@@ -507,6 +518,20 @@ Qoidalar:
 - Foydalanuvchi tanlaydigan rang (kurs, filial): kvadrat namunalar to'ri (`--r-control`), tanlanganida `--focus-outline` kontur va belgi.
 - Ranglar chaqiruvchidan keladi (`options`: `#rrggbb` + nom) — bu ma'lumot, interfeys tokeni emas; komponentning o'z ko'rinishi faqat tokenlardan.
 - `custom` — ro'yxatdan tashqari rang (brauzerning rang tanlagichi). `role="radiogroup"`, har namuna `role="radio"` va nomi bilan.
+
+### 11.29 Meter — `meter.tsx`
+
+- Bitta ulush chegaraga nisbatan (CPU, xotira, disk): ustida nom va `NN% · tafsilot` (mono), ostida 6px yo'l.
+- To'ldirilgan qism holatni bildiradi: `--primary` → `warnAt` dan `--warning-fg` → `dangerAt` dan `--danger-fg`; bo'sh yo'l — shu rangning 16% li och qatlami. Qiymat har doim matnda ham bor (rang yolg'iz ma'no tashimaydi).
+- `role="meter"`, `aria-valuenow`, `aria-valuetext`.
+
+### 11.30 LineChart — `line-chart.tsx`
+
+- Vaqt bo'yicha chiziqli grafik, bitta Y o'qi (0…`max`). Ikki o'qli grafik qilinmaydi.
+- 2px chiziqlar, yengil to'r (`--border-soft`, 3 chiziq), mono belgilar. Tepada legenda: qisqa chiziq, nom va oxirgi qiymat.
+- Kursor eng yaqin nuqtaga yopishadi: vertikal chiziq, nuqtalar va bitta oynada hamma qatorlar qiymati. Klaviaturada ←/→ bilan yuriladi, Esc yopadi.
+- Ekran o'quvchilari uchun yashirin jadval (`caption` majburiy).
+- Qator ranglari 3.3a tokenlaridan.
 
 ## 12. Fokus va qulaylik
 
