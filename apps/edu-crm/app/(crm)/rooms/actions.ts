@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { inScope } from "@ventura/auth/staff/policy";
-import { rooms } from "@ventura/db/schema/tenant";
+import { groups, rooms } from "@ventura/db/schema/tenant";
 import { firstError, roomInput } from "@/lib/rules";
 import { type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
@@ -61,7 +61,11 @@ export async function deleteRoomAction(id: unknown): Promise<ActionResult> {
     const [room] = await db.select().from(rooms).where(eq(rooms.id, parsed.data));
     if (!room) return { ok: false, error: uz.common.gone };
     if (room.branchId && !inScope(staff.scope, room.branchId)) return { ok: false, error: uz.common.branchForbidden };
-    await db.delete(rooms).where(eq(rooms.id, room.id));
+    // Guruhlar xonasiz qoladi (eski tizimdagidek), keyin xona o'chadi
+    await db.transaction(async (tx) => {
+      await tx.update(groups).set({ roomId: null }).where(eq(groups.roomId, room.id));
+      await tx.delete(rooms).where(eq(rooms.id, room.id));
+    });
     await audit("room.delete", { type: "room", id: room.id }, { name: room.name, capacity: room.capacity });
     revalidatePath("/rooms");
     return { ok: true };

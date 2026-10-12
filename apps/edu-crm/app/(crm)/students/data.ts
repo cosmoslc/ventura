@@ -23,8 +23,8 @@ export interface StudentRow {
   statusNote: string | null;
   joinedAt: string;
   createdAt: string;
-  /** Guruhlar (E1d) bilan to'ladi */
-  groups: { id: string; name: string; teacher: string | null }[];
+  /** Ochiq a'zolikdagi guruhlar (ro'yxat sahifasida to'ldiriladi) */
+  groups: { id: string; name: string; teacher: string | null; status: string }[];
 }
 
 const localPhone = (phone: string | null) => (phone ?? "").replace(/\D/g, "").slice(-9);

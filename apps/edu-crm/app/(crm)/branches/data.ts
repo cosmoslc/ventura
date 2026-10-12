@@ -5,8 +5,10 @@ import type { TenantDb } from "@ventura/db";
 import {
   branches,
   courses,
+  groups,
   positions,
   rooms,
+  students,
   teachers,
   userBranches,
   userPositions,
@@ -121,11 +123,13 @@ export async function assignableStaff(db: TenantDb): Promise<BranchStaff[]> {
 
 /** O'chirishdan oldin: filialga bog'langan yozuvlar soni */
 export async function branchUsage(db: TenantDb, branchId: string) {
-  const [[c], [r], [t]] = await Promise.all([
+  const [[c], [r], [t], [gr], [st]] = await Promise.all([
     db.select({ n: count() }).from(courses).where(eq(courses.branchId, branchId)),
     db.select({ n: count() }).from(rooms).where(eq(rooms.branchId, branchId)),
     // Bo'shatilganlari ham: ularning tarixi filialga bog'liq
     db.select({ n: count() }).from(teachers).where(eq(teachers.branchId, branchId)),
+    db.select({ n: count() }).from(groups).where(eq(groups.branchId, branchId)),
+    db.select({ n: count() }).from(students).where(eq(students.branchId, branchId)),
   ]);
-  return { courses: c?.n ?? 0, rooms: r?.n ?? 0, teachers: t?.n ?? 0 };
+  return { courses: c?.n ?? 0, rooms: r?.n ?? 0, teachers: t?.n ?? 0, groups: gr?.n ?? 0, students: st?.n ?? 0 };
 }

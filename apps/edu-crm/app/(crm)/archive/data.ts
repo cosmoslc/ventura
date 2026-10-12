@@ -2,6 +2,7 @@ import "server-only";
 import { and, desc, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { courses, teachers, users } from "@ventura/db/schema/tenant";
+import { archivedGroups } from "../groups/data";
 import { type ArchivedStudentRow, archivedStudents } from "../students/data";
 
 export interface ArchivedItem {
@@ -16,13 +17,14 @@ export interface ArchiveData {
   students: (ArchivedStudentRow & { archivedByName: string | null })[];
   courses: ArchivedItem[];
   teachers: ArchivedItem[];
+  groups: ArchivedItem[];
 }
 
 const localPhone = (p: string) => p.replace(/\D/g, "").slice(-9);
 
 /** Arxivdagi yozuvlar; `filter` — getBranchContext().filter (umumiy kurslar hammaga ko'rinadi) */
 export async function archiveData(db: TenantDb, filter: readonly string[] | null): Promise<ArchiveData> {
-  const [st, cs, ts] = await Promise.all([
+  const [st, cs, ts, gs] = await Promise.all([
     archivedStudents(db, filter),
     db
       .select()
@@ -39,6 +41,7 @@ export async function archiveData(db: TenantDb, filter: readonly string[] | null
       .from(teachers)
       .where(and(isNotNull(teachers.archivedAt), filter ? inArray(teachers.branchId, [...filter]) : undefined))
       .orderBy(desc(teachers.archivedAt)),
+    archivedGroups(db, filter),
   ]);
   const actorIds = [...new Set(st.flatMap((s) => (s.archivedBy ? [s.archivedBy] : [])))];
   const actors = actorIds.length
@@ -52,6 +55,13 @@ export async function archiveData(db: TenantDb, filter: readonly string[] | null
       phone: null,
       branchId: c.branchId,
       archivedAt: c.archivedAt!.toISOString(),
+    })),
+    groups: gs.map((g) => ({
+      id: g.id,
+      name: g.name,
+      phone: null,
+      branchId: g.branchId,
+      archivedAt: g.archivedAt!.toISOString(),
     })),
     teachers: ts.map((t) => ({
       id: t.id,

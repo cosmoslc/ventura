@@ -1,10 +1,10 @@
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { inScope } from "@ventura/auth/staff/policy";
-import { courses } from "@ventura/db/schema/tenant";
+import { courses, groups } from "@ventura/db/schema/tenant";
 import { courseInput, firstError } from "@/lib/rules";
 import { type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
@@ -72,6 +72,11 @@ export async function archiveCourseAction(id: unknown): Promise<ActionResult> {
     if (!course) return { ok: false, error: uz.common.gone };
     if (course.branchId && !inScope(staff.scope, course.branchId))
       return { ok: false, error: uz.common.branchForbidden };
+    const [open] = await db
+      .select({ n: count() })
+      .from(groups)
+      .where(and(eq(groups.courseId, course.id), isNull(groups.archivedAt)));
+    if ((open?.n ?? 0) > 0) return { ok: false, error: uz.courses.hasGroups(open!.n) };
     await db.update(courses).set({ archivedAt: new Date() }).where(eq(courses.id, course.id));
     await audit("course.archive", { type: "course", id: course.id }, { name: course.name });
     revalidatePath("/courses");

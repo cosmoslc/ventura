@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, Layers, MessageSquareText, Pencil, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, ChevronDown, MessageSquareText, Pencil, Trash2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -19,6 +19,10 @@ import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatDate } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
+import type { StudentMembershipRow } from "../groups/data";
+import type { GroupPerms } from "../groups/groups-view";
+import type { PickOption } from "../groups/membership-dialogs";
+import { StudentGroupsTab } from "../groups/student-groups-tab";
 import { addStudentNoteAction, deleteStudentNoteAction } from "./actions";
 import type { HistoryRow, StudentNoteRow, StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
@@ -43,6 +47,9 @@ export function StudentProfile({
   selectedBranch,
   courses,
   perms,
+  memberships,
+  groupOptions,
+  groupPerms,
 }: {
   student: StudentRow;
   notes: StudentNoteRow[];
@@ -51,6 +58,9 @@ export function StudentProfile({
   selectedBranch: string;
   courses: { id: string; name: string }[];
   perms: StudentPerms;
+  memberships: StudentMembershipRow[];
+  groupOptions: PickOption[];
+  groupPerms: GroupPerms;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("groups");
@@ -155,13 +165,13 @@ export function StudentProfile({
         </Tabs>
 
         {tab === "groups" ? (
-          <div className="space-y-4">
-            <div>
-              <div className="text-body font-bold text-foreground">{uz.students.groupsTitle(s.groups.length)}</div>
-              <div className="text-caption text-muted-foreground">{uz.students.groupsSubtitle}</div>
-            </div>
-            <EmptyState icon={<Layers />} title={uz.students.groupsEmpty} description={uz.students.groupsLater} />
-          </div>
+          <StudentGroupsTab
+            studentId={s.id}
+            studentName={s.name}
+            memberships={memberships}
+            groupOptions={groupOptions}
+            perms={groupPerms}
+          />
         ) : null}
 
         {tab === "payments" ? (

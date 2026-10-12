@@ -9,3 +9,4 @@ export * from "./core";
 export * from "./academic";
 export * from "./staff";
 export * from "./students";
+export * from "./groups";
