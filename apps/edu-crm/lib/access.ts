@@ -29,6 +29,7 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/teachers": ["staff.view", "staff.create", "staff.edit"],
   "/staff": ["staff.view", "staff.create", "staff.edit", "staff.delete", "staff.roles_assign"],
   "/positions": ["settings.roles_permissions"],
+  "/archive": ["archive.view", "archive.restore", "archive.permanent_delete"],
   "/courses": ["settings.courses"],
   "/rooms": ["settings.rooms"],
   "/branches": ["settings.branches"],

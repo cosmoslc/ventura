@@ -9,7 +9,7 @@ export const template = {
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.4.0",
+  version: "0.5.0",
 } satisfies TemplateInfo;
 
 export const features = [
@@ -20,7 +20,10 @@ export const features = [
     group: "Asos",
     type: "permanent",
     routes: ["/api/students"],
-    nav: [{ label: "O'quvchilar", href: "/students" }],
+    nav: [
+      { label: "O'quvchilar", href: "/students" },
+      { label: "Arxiv", href: "/archive", section: "Ofis" },
+    ],
   },
   {
     key: "courses",

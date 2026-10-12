@@ -38,6 +38,7 @@ export const courses = pgTable(
     ...timestamps,
   },
   (t) => [
+    unique("courses_tenant_id_uq").on(t.tenantId, t.id),
     index("courses_branch_idx").on(t.branchId),
     foreignKey({
       name: "courses_branch_fk",
