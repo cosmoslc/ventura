@@ -3,7 +3,7 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { courses, students, teachers } from "@ventura/db/schema/tenant";
+import { courses, groups, students, teachers } from "@ventura/db/schema/tenant";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { uz } from "@/lib/uz";
 
@@ -13,7 +13,7 @@ import { uz } from "@/lib/uz";
  */
 
 const FEATURE = "students";
-const input = z.object({ kind: z.enum(["student", "course", "teacher"]), id: z.uuid() });
+const input = z.object({ kind: z.enum(["student", "course", "teacher", "group"]), id: z.uuid() });
 
 /** Umumiy (filialsiz) kurs hammaga ochiq, qolganlari — xodimning filiallarida */
 const inScope = (ctx: ActionCtx, branchId: string | null) =>
@@ -24,6 +24,7 @@ function done() {
   revalidatePath("/students");
   revalidatePath("/courses");
   revalidatePath("/teachers");
+  revalidatePath("/groups");
 }
 
 export async function restoreArchivedAction(raw: unknown): Promise<ActionResult> {
@@ -57,6 +58,24 @@ export async function restoreArchivedAction(raw: unknown): Promise<ActionResult>
       if (!c || !inScope(ctx, c.branchId)) return { ok: false, error: uz.common.gone };
       await db.update(courses).set({ archivedAt: null }).where(eq(courses.id, id));
       await audit("course.restore", { type: "course", id }, { name: c.name });
+    } else if (kind === "group") {
+      const [g] = await db
+        .select()
+        .from(groups)
+        .where(and(eq(groups.id, id), isNotNull(groups.archivedAt)));
+      if (!g || !inScope(ctx, g.branchId)) return { ok: false, error: uz.common.gone };
+      // Kurs va o'qituvchi faol bo'lishi kerak; a'zolar qayta qo'shiladi (yopilgan davrlar tarixda qoladi)
+      const [c] = await db
+        .select({ id: courses.id })
+        .from(courses)
+        .where(and(eq(courses.id, g.courseId), isNull(courses.archivedAt)));
+      const [t] = await db
+        .select({ id: teachers.id })
+        .from(teachers)
+        .where(and(eq(teachers.id, g.teacherId), isNull(teachers.archivedAt)));
+      if (!c || !t) return { ok: false, error: uz.archive.groupDepsArchived };
+      await db.update(groups).set({ archivedAt: null }).where(eq(groups.id, id));
+      await audit("group.restore", { type: "group", id }, { name: g.name });
     } else {
       const [t] = await db
         .select()

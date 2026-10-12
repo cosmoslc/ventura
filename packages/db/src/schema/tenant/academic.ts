@@ -64,6 +64,7 @@ export const rooms = pgTable(
     ...timestamps,
   },
   (t) => [
+    unique("rooms_tenant_id_uq").on(t.tenantId, t.id),
     index("rooms_branch_idx").on(t.branchId),
     foreignKey({
       name: "rooms_branch_fk",

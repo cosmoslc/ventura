@@ -57,7 +57,9 @@ export interface TeacherPerms {
 }
 
 /** "40% ulush", "3 000 000 so'm (Fix)", "100 000 so'm / o'quvchi" */
-export function salaryLabel(t: TeacherRow) {
+export function salaryLabel(
+  t: Pick<TeacherRow, "salaryType" | "revenueSharePercent" | "perStudentSalary" | "fixedSalary">,
+) {
   if (t.salaryType === "percent") return uz.teachers.salaryLabel.percent(t.revenueSharePercent);
   if (t.salaryType === "per_student") return uz.teachers.salaryLabel.per_student(money(t.perStudentSalary));
   return uz.teachers.salaryLabel.fixed(money(t.fixedSalary));

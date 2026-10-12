@@ -3,6 +3,7 @@ import { asc, inArray, isNull, or } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { rooms } from "@ventura/db/schema/tenant";
 import type { BranchContext } from "@/lib/server/branch";
+import { listGroups } from "../groups/data";
 
 export interface RoomGroup {
   id: string;
@@ -16,7 +17,7 @@ export interface RoomRow {
   branchId: string | null;
   name: string;
   capacity: number;
-  /** Xonani band qilgan guruhlar — guruhlar jadvali bilan (E1d); hozircha yo'q */
+  /** Xonani band qilgan faol guruhlar */
   groups: RoomGroup[];
 }
 
@@ -28,5 +29,14 @@ export async function listRooms(db: TenantDb, branch: BranchContext): Promise<Ro
         ? or(isNull(rooms.branchId), inArray(rooms.branchId, branch.filter))
         : isNull(rooms.branchId);
   const rows = await db.select().from(rooms).where(scope).orderBy(asc(rooms.createdAt));
-  return rows.map((r) => ({ id: r.id, branchId: r.branchId, name: r.name, capacity: r.capacity, groups: [] }));
+  const all = await listGroups(db, branch.filter);
+  return rows.map((r) => ({
+    id: r.id,
+    branchId: r.branchId,
+    name: r.name,
+    capacity: r.capacity,
+    groups: all
+      .filter((g) => g.roomId === r.id)
+      .map((g) => ({ id: g.id, name: g.name, days: g.days, time: `${g.startTime} - ${g.endTime}` })),
+  }));
 }

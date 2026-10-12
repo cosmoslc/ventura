@@ -166,7 +166,10 @@ export function RoomsView({
                               className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground"
                             >
                               <span className="flex items-center gap-1">
-                                <Calendar className="size-3" /> {g.days.join(", ")}
+                                <Calendar className="size-3" />{" "}
+                                {g.days
+                                  .map((d) => uz.weekdays.short[d as keyof typeof uz.weekdays.short] ?? d)
+                                  .join(", ")}
                               </span>
                               {g.time ? (
                                 <span className="flex items-center gap-1">

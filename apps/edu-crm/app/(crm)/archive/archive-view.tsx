@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, BookOpen, GraduationCap, RotateCcw, Search, Trash2, Users } from "lucide-react";
+import { Archive, BookOpen, GraduationCap, Layers, RotateCcw, Search, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Avatar } from "@ventura/ui/avatar";
@@ -19,9 +19,9 @@ import type { PickerBranch } from "../branch-picker";
 import { purgeStudentAction, restoreArchivedAction } from "./actions";
 import type { ArchiveData } from "./data";
 
-type Tab = "students" | "courses" | "teachers";
-type Kind = "student" | "course" | "teacher";
-const KIND: Record<Tab, Kind> = { students: "student", courses: "course", teachers: "teacher" };
+type Tab = "students" | "groups" | "courses" | "teachers";
+type Kind = "student" | "group" | "course" | "teacher";
+const KIND: Record<Tab, Kind> = { students: "student", groups: "group", courses: "course", teachers: "teacher" };
 
 function dateTime(iso: string) {
   const d = new Date(iso);
@@ -56,7 +56,14 @@ export function ArchiveView({
   const studentsList = data.students.filter((s) => hit(s.name, [s.phone, s.parentPhone]));
   const coursesList = data.courses.filter((c) => hit(c.name, []));
   const teachersList = data.teachers.filter((t) => hit(t.name, [t.phone]));
-  const count = { students: studentsList.length, courses: coursesList.length, teachers: teachersList.length }[tab];
+  const groupsList = data.groups.filter((g) => hit(g.name, []));
+  const count = {
+    students: studentsList.length,
+    groups: groupsList.length,
+    courses: coursesList.length,
+    teachers: teachersList.length,
+  }[tab];
+  const items = tab === "courses" ? coursesList : tab === "groups" ? groupsList : teachersList;
 
   async function run() {
     if (!confirm) return;
@@ -103,6 +110,9 @@ export function ArchiveView({
         <TabsList>
           <TabsTrigger value="students">
             <GraduationCap /> {uz.archive.tabStudents} <Badge tone="neutral">{data.students.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="groups">
+            <Layers /> {uz.archive.tabGroups} <Badge tone="neutral">{data.groups.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="courses">
             <BookOpen /> {uz.archive.tabCourses} <Badge tone="neutral">{data.courses.length}</Badge>
@@ -192,7 +202,7 @@ export function ArchiveView({
                   </tr>
                 </THead>
                 <TBody>
-                  {(tab === "courses" ? coursesList : teachersList).map((it) => (
+                  {items.map((it) => (
                     <Tr key={it.id}>
                       <Td className="font-bold text-foreground">{it.name}</Td>
                       {tab === "teachers" ? (

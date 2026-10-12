@@ -67,6 +67,8 @@ export function StudentsView({
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("all");
+  const [groupFilter, setGroupFilter] = React.useState("all");
+  const [teacherFilter, setTeacherFilter] = React.useState("all");
   const [page, setPage] = React.useState(1);
   const pageSize = React.useSyncExternalStore(subscribePageSize, storedPageSize, () => 50);
   const [editing, setEditing] = React.useState<StudentRow | null>(null);
@@ -82,8 +84,16 @@ export function StudentsView({
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
+  const groupOptions = [...new Map(rows.flatMap((r) => r.groups.map((g) => [g.id, g] as const))).values()]
+    .filter((g) => teacherFilter === "all" || g.teacher === teacherFilter)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const teacherOptions = [...new Set(rows.flatMap((r) => r.groups.map((g) => g.teacher ?? "")))]
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
   const filtered = rows.filter((r) => {
     if (status !== "all" && r.status !== status) return false;
+    if (groupFilter !== "all" && !r.groups.some((g) => g.id === groupFilter)) return false;
+    if (teacherFilter !== "all" && !r.groups.some((g) => g.teacher === teacherFilter)) return false;
     if (!q) return true;
     return (
       r.name.toLowerCase().includes(q) ||
@@ -91,7 +101,7 @@ export function StudentsView({
       r.groups.some((g) => g.name.toLowerCase().includes(q))
     );
   });
-  const active = !!q || status !== "all";
+  const active = !!q || status !== "all" || groupFilter !== "all" || teacherFilter !== "all";
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const current = Math.min(page, pageCount);
   const visible = filtered.slice((current - 1) * pageSize, current * pageSize);
@@ -156,6 +166,47 @@ export function StudentsView({
             />
           </div>
           <Select
+            value={groupFilter}
+            onValueChange={(v) => {
+              setGroupFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-48" aria-label={uz.students.colGroups}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{uz.students.allGroups}</SelectItem>
+              {groupOptions.map((g) => (
+                <SelectItem key={g.id} value={g.id}>
+                  {g.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
+            value={teacherFilter}
+            onValueChange={(v) => {
+              setTeacherFilter(v);
+              // Tanlangan guruh bu ustozniki bo'lmasa — tozalanadi
+              if (v !== "all" && !rows.some((r) => r.groups.some((g) => g.id === groupFilter && g.teacher === v)))
+                setGroupFilter("all");
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-48" aria-label={uz.teachers.teacherFilter}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{uz.students.allTeachers}</SelectItem>
+              {teacherOptions.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select
             value={status}
             onValueChange={(v) => {
               setStatus(v);
@@ -181,6 +232,8 @@ export function StudentsView({
               onClick={() => {
                 setQuery("");
                 setStatus("all");
+                setGroupFilter("all");
+                setTeacherFilter("all");
                 setPage(1);
               }}
             >
@@ -233,7 +286,24 @@ export function StudentsView({
                         </Link>
                       </Td>
                       <Td className="font-mono">{displayPhone(r.phone) ?? uz.students.phoneMissing}</Td>
-                      <Td className="text-muted-foreground">{uz.students.noGroup}</Td>
+                      <Td>
+                        {r.groups.length ? (
+                          <div className="flex max-w-72 flex-wrap gap-1">
+                            {r.groups.map((g) => (
+                              <Link
+                                key={g.id}
+                                href={`/groups/${g.id}`}
+                                className="rounded-badge border border-border-soft bg-muted px-2 py-0.5 text-caption hover:border-(--ring-border)"
+                              >
+                                <span className="font-semibold text-foreground">{g.name}</span>
+                                <span className="text-muted-foreground"> · {g.teacher ?? uz.students.noTeacher}</span>
+                              </Link>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">{uz.students.noGroup}</span>
+                        )}
+                      </Td>
                       <Td className="text-muted-foreground">{uz.students.noData}</Td>
                       <Td>
                         <StatusBadge status={r.status} />

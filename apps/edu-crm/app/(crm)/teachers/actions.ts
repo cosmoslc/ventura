@@ -4,7 +4,7 @@ import { and, count, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { formatPhone } from "@ventura/auth/policy";
-import { teachers } from "@ventura/db/schema/tenant";
+import { groups, teachers } from "@ventura/db/schema/tenant";
 import { resolveBranch } from "@/lib/server/branch";
 import { type ActionResult, crmAction } from "@/lib/server/action";
 import { firstError, teacherInput } from "@/lib/rules";
@@ -126,6 +126,11 @@ export async function archiveTeacherAction(id: unknown): Promise<ActionResult> {
       .from(teachers)
       .where(and(eq(teachers.assignedTeacherId, t.id), isNull(teachers.archivedAt)));
     if ((supports?.n ?? 0) > 0) return { ok: false, error: uz.teachers.hasSupports(supports!.n) };
+    const [own] = await db
+      .select({ n: count() })
+      .from(groups)
+      .where(and(eq(groups.teacherId, t.id), isNull(groups.archivedAt)));
+    if ((own?.n ?? 0) > 0) return { ok: false, error: uz.teachers.hasGroups(own!.n) };
     await db.update(teachers).set({ archivedAt: new Date() }).where(eq(teachers.id, t.id));
     await audit("teacher.archive", { type: "teacher", id: t.id }, { name: t.name, kind: t.kind });
     revalidatePath(PATH);

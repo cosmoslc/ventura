@@ -5,9 +5,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { formatPhone } from "@ventura/auth/policy";
 import { can } from "@ventura/auth/staff/policy";
-import { STUDENT_NOTE_KINDS, courses, studentNotes, students } from "@ventura/db/schema/tenant";
+import { STUDENT_NOTE_KINDS, courses, groupMemberships, studentNotes, students } from "@ventura/db/schema/tenant";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
+import { syncMembershipsWithStatus, todayTashkent } from "@/lib/server/memberships";
 import { firstError, studentInput, studentStatusInput } from "@/lib/rules";
 import { uz } from "@/lib/uz";
 
@@ -113,10 +114,14 @@ export async function setStudentStatusAction(input: unknown): Promise<ActionResu
       return { ok: false, error: uz.common.forbidden };
     }
     if (s.status === status && (s.statusNote ?? "") === reason) return { ok: true };
-    await ctx.db
-      .update(students)
-      .set({ status, statusNote: reason || null, statusChangedAt: new Date() })
-      .where(eq(students.id, s.id));
+    // Holat va guruhdagi a'zoliklar birga o'zgaradi (muzlatish to'lov hisobini ham to'xtatadi — ADR 0012)
+    const memberships = await ctx.db.transaction(async (tx) => {
+      await tx
+        .update(students)
+        .set({ status, statusNote: reason || null, statusChangedAt: new Date() })
+        .where(eq(students.id, s.id));
+      return s.status === status ? 0 : syncMembershipsWithStatus(tx, s.id, s.status, status, reason || null);
+    });
     await ctx.audit(
       "student.status",
       { type: "student", id: s.id },
@@ -125,6 +130,7 @@ export async function setStudentStatusAction(input: unknown): Promise<ActionResu
         from: s.status,
         to: status,
         ...(reason ? { reason } : {}),
+        ...(memberships ? { memberships } : {}),
       },
     );
     revalidatePath(PATH);
@@ -138,10 +144,21 @@ export async function archiveStudentAction(input: unknown): Promise<ActionResult
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const s = await loadStudent(ctx, parsed.data.id);
     if (!s) return { ok: false, error: uz.common.gone };
-    await ctx.db
-      .update(students)
-      .set({ archivedAt: new Date(), archiveReason: parsed.data.reason || null, archivedBy: ctx.staff.id })
-      .where(eq(students.id, s.id));
+    // Arxivga o'tgan o'quvchining ochiq a'zoliklari shu kun bilan yopiladi
+    await ctx.db.transaction(async (tx) => {
+      await tx
+        .update(students)
+        .set({ archivedAt: new Date(), archiveReason: parsed.data.reason || null, archivedBy: ctx.staff.id })
+        .where(eq(students.id, s.id));
+      await tx
+        .update(groupMemberships)
+        .set({
+          status: "left",
+          leftAt: todayTashkent(),
+          leftReason: parsed.data.reason || uz.groups.archivedStudentReason,
+        })
+        .where(and(eq(groupMemberships.studentId, s.id), isNull(groupMemberships.leftAt)));
+    });
     await ctx.audit(
       "student.archive",
       { type: "student", id: s.id },

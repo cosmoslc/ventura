@@ -143,3 +143,38 @@ export const studentStatusInput = z.object({
   status: z.enum(["trial", "active", "paused", "left", "returned", "graduated"]),
   reason: z.string().trim().max(500).default(""),
 });
+
+const weekday = z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]);
+const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, uz.groups.dateInvalid);
+
+export const groupInput = z
+  .object({
+    id: id.optional(),
+    branchId: id.nullable(),
+    name: z.string().trim().min(1, uz.groups.nameRequired).max(120),
+    courseId: z.uuid({ error: uz.groups.courseRequired }),
+    teacherId: z.uuid({ error: uz.groups.teacherRequired }),
+    roomId: id.nullable(),
+    price: z.number().int().min(0).max(1_000_000_000).default(0),
+    durationMonths: z.number().int().min(0).max(120).default(0),
+    days: z.array(weekday).min(1, uz.groups.daysRequired).max(7),
+    startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, uz.groups.timeInvalid),
+    endTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, uz.groups.timeInvalid),
+    startDate: day,
+    color: hex,
+    teacherSalaryType: z.enum(["percent", "per_student", "fixed"]).nullable().default(null),
+    teacherSalaryPercent: z
+      .number()
+      .int()
+      .min(0, uz.teachers.percentInvalid)
+      .max(100, uz.teachers.percentInvalid)
+      .nullable()
+      .default(null),
+    teacherSalaryAmount: z.number().int().min(0).max(1_000_000_000).nullable().default(null),
+    note: z.string().trim().max(1000).default(""),
+  })
+  .refine((v) => v.endTime > v.startTime, { message: uz.groups.timeOrder, path: ["endTime"] });
+export type GroupInput = z.input<typeof groupInput>;
+
+export const membershipDateInput = z.object({ id, date: day });
+export const membershipLeaveInput = z.object({ id, date: day, reason: z.string().trim().max(500).default("") });

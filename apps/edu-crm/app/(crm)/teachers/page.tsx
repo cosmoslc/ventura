@@ -3,6 +3,7 @@ import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
+import { listGroups } from "../groups/data";
 import { listTeachers, teacherRefs } from "./data";
 import { TeachersView } from "./teachers-view";
 
@@ -12,7 +13,12 @@ export default async function TeachersPage({ searchParams }: { searchParams: Pro
   const { tenant, staff } = await requirePage("teachers", "/teachers");
   const db = getTenantDb(tenant);
   const branch = await getBranchContext();
-  const rows = await listTeachers(db, branch.filter);
+  const [base, allGroups] = await Promise.all([listTeachers(db, branch.filter), listGroups(db, null)]);
+  // Guruh va o'quvchi soni — faol guruhlardan (o'quvchi takrorsiz)
+  const rows = base.map((t) => {
+    const mine = allGroups.filter((g) => g.teacherId === t.id);
+    return { ...t, groups: mine.length, students: new Set(mine.flatMap((g) => g.studentIds)).size };
+  });
   const assigned = [...new Set(rows.flatMap((t) => (t.assignedTeacherId ? [t.assignedTeacherId] : [])))];
   const refs = await teacherRefs(db, assigned);
   const { tab } = await searchParams;

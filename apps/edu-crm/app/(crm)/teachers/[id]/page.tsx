@@ -7,6 +7,7 @@ import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
+import { listGroups } from "../../groups/data";
 import { listTeachers, teacherRefs } from "../data";
 import { TeacherProfile } from "../teacher-profile";
 
@@ -20,8 +21,10 @@ export default async function TeacherPage({ params }: { params: Promise<{ id: st
   const branch = await getBranchContext();
   // Ko'rinish xodimning filial cheklovi bo'yicha (tepadagi tanlovdan qat'i nazar)
   const scope = branch.options.map((b) => b.id);
-  const [teacher] = await listTeachers(db, staff.scope === "all" ? null : scope, id.data);
-  if (!teacher) notFound();
+  const [base] = await listTeachers(db, staff.scope === "all" ? null : scope, id.data);
+  if (!base) notFound();
+  const own = (await listGroups(db, null)).filter((g) => g.teacherId === base.id);
+  const teacher = { ...base, groups: own.length, students: new Set(own.flatMap((g) => g.studentIds)).size };
   const [supports, mentors, refs] = await Promise.all([
     db
       .select({ id: teachers.id, name: teachers.name })
