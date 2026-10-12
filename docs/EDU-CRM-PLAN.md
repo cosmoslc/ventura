@@ -112,9 +112,9 @@ Bo'limlar: `students`, `courses`, `teachers`, `groups`, `branches`.
 
 Bo'limlar: `attendance`, `holidays`.
 
-- [ ] Dam olish kunlari, dars jadvali
-- [ ] Davomat kiritish va tahrirlash, sababli qoldirish
-- [ ] Xodimlar davomati
+- [x] Dam olish kunlari, dars jadvali — ADR 0014
+- [x] Davomat kiritish va tahrirlash, sababli qoldirish, hisobot — ADR 0014
+- [x] Xodimlar davomati — ADR 0014
 
 **Qabul:** bir oylik davomat kiritiladi va hisobotda to'g'ri chiqadi.
 

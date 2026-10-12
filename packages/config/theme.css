@@ -74,6 +74,7 @@
 
 /* Qatlamlar (z-index) shkalasi — docs/design/STYLE.md, 8-bo'lim */
 :root {
+  --z-raised: 1; /* jadvaldagi yopishqoq (sticky) ustun — qo'shni kataklar ustida */
   --z-sidebar: 30;
   --z-topbar: 40;
   --z-overlay: 50; /* modal va mobil menyu orqa foni; DOM tartibida kontentdan oldin turadi */

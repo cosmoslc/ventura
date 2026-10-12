@@ -23,7 +23,6 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
-import { Notice } from "@ventura/ui/notice";
 import { EmptyState } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
@@ -31,9 +30,11 @@ import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import { formatDate } from "@/lib/format";
 import { uz } from "@/lib/uz";
+import type { GroupAttendance } from "@/lib/server/attendance";
 import type { PickerBranch } from "../branch-picker";
 import { StudentForm } from "../students/student-form";
 import { enrollStudentAction, pauseMembershipAction } from "./actions";
+import { AttendanceTab } from "./attendance-tab";
 import type { GroupRow, MemberRow } from "./data";
 import { type CourseOption, GroupForm, type RoomOption, type TeacherOption } from "./group-form";
 import { daysLabel, type GroupPerms } from "./groups-view";
@@ -69,6 +70,11 @@ export function GroupProfile({
   branches,
   perms,
   canCreateStudent,
+  attendance,
+  today,
+  canMarkToday,
+  canEditPast,
+  initialTab,
 }: {
   group: GroupRow;
   members: { open: MemberRow[]; left: MemberRow[] };
@@ -80,9 +86,15 @@ export function GroupProfile({
   branches: PickerBranch[];
   perms: GroupPerms;
   canCreateStudent: boolean;
+  /** null — Davomat bo'limi o'chirilgan */
+  attendance: GroupAttendance | null;
+  today: string;
+  canMarkToday: boolean;
+  canEditPast: boolean;
+  initialTab: Tab;
 }) {
   const router = useRouter();
-  const [tab, setTab] = React.useState<Tab>("students");
+  const [tab, setTab] = React.useState<Tab>(initialTab);
   const [query, setQuery] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
@@ -185,7 +197,9 @@ export function GroupProfile({
             <TabsTrigger value="left">
               {uz.groups.tabHistory} {members.left.length ? <Badge tone="neutral">{members.left.length}</Badge> : null}
             </TabsTrigger>
-            <TabsTrigger value="attendance">{uz.groups.tabAttendance}</TabsTrigger>
+            {attendance ? (
+              <TabsTrigger value="attendance">{uz.attendance.tab(attendance.dates.length)}</TabsTrigger>
+            ) : null}
           </TabsList>
         </Tabs>
 
@@ -330,7 +344,15 @@ export function GroupProfile({
           )
         ) : null}
 
-        {tab === "attendance" ? <Notice tone="info">{uz.groups.attendanceLater}</Notice> : null}
+        {tab === "attendance" && attendance ? (
+          <AttendanceTab
+            groupId={g.id}
+            data={attendance}
+            today={today}
+            canMarkToday={canMarkToday}
+            canEditPast={canEditPast}
+          />
+        ) : null}
       </Card>
 
       {perms.edit || perms.changeTeacher ? (

@@ -254,6 +254,7 @@ Topbar va orqa fonlar shaffof + blur: topbar `blur(14px)`, modal orqasi `--overl
 
 | Token | Qiymat | Nima |
 | --- | --- | --- |
+| `--z-raised` | 1 | Jadvaldagi yopishqoq ustun (masalan, davomat jurnalidagi o'quvchi ismi) |
 | `--z-sidebar` | 30 | Sidebar |
 | `--z-topbar` | 40 | Topbar |
 | `--z-overlay` | 50 | Modal va mobil menyu orqa foni |

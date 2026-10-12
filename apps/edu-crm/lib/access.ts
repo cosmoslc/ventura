@@ -35,6 +35,7 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/branches": ["settings.branches"],
   "/holidays": ["settings.branches"],
   "/attendance": ["attendance.student_mark", "attendance.student_edit_past", "attendance.export"],
+  "/staff-attendance": ["attendance.employee_view", "attendance.employee_mark"],
   "/payments": [
     "finance.payment_view",
     "finance.payment_create",
