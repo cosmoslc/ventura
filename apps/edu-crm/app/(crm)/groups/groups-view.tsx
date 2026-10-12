@@ -29,6 +29,7 @@ import { toast } from "@ventura/ui/toast";
 import { money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
+import { ExcelMenu } from "../excel/excel-menu";
 import { archiveGroupAction } from "./actions";
 import type { GroupRow } from "./data";
 import { type CourseOption, GroupForm, type RoomOption, type TeacherOption } from "./group-form";
@@ -116,11 +117,14 @@ export function GroupsView({
       <PageHeader
         title={uz.groups.title}
         actions={
-          perms.create && !missing ? (
-            <Button onClick={() => openForm(null)}>
-              <Plus /> {uz.groups.add}
-            </Button>
-          ) : null
+          <>
+            <ExcelMenu table="groups" branches={branches} selectedBranch={selectedBranch} canImport={perms.create} />
+            {perms.create && !missing ? (
+              <Button onClick={() => openForm(null)}>
+                <Plus /> {uz.groups.add}
+              </Button>
+            ) : null}
+          </>
         }
       />
 
