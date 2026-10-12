@@ -9,7 +9,8 @@
     "start": "next start --port 3001",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "provision": "tsx scripts/provision.ts"
+    "provision": "tsx scripts/provision.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@ventura/auth": "workspace:*",
@@ -21,6 +22,7 @@
     "@ventura/ui": "workspace:*",
     "better-auth": "^1.7.7",
     "drizzle-orm": "^0.45.4",
+    "exceljs": "4.4.0",
     "lucide-react": "^1.55.0",
     "next": "^16.4.0",
     "react": "^19.3.0",
@@ -36,6 +38,7 @@
     "eslint": "^9.39.0",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.3"
   }
 }

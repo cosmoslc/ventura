@@ -43,6 +43,7 @@ import { toast } from "@ventura/ui/toast";
 import { displayPhone, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
+import { ExcelMenu } from "../excel/excel-menu";
 import { archiveTeacherAction } from "./actions";
 import type { TeacherRef, TeacherRow } from "./data";
 import { TeacherForm } from "./teacher-form";
@@ -216,11 +217,14 @@ export function TeachersView({
       <PageHeader
         title={uz.teachers.title}
         actions={
-          perms.create ? (
-            <Button onClick={() => openForm(tab, null)}>
-              <Plus /> {tab === "teachers" ? uz.teachers.add : uz.teachers.addSupport}
-            </Button>
-          ) : null
+          <>
+            <ExcelMenu table="teachers" branches={branches} selectedBranch={selectedBranch} canImport={perms.create} />
+            {perms.create ? (
+              <Button onClick={() => openForm(tab, null)}>
+                <Plus /> {tab === "teachers" ? uz.teachers.add : uz.teachers.addSupport}
+              </Button>
+            ) : null}
+          </>
         }
       />
 

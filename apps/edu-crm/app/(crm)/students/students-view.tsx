@@ -16,6 +16,7 @@ import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { displayPhone } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
+import { ExcelMenu } from "../excel/excel-menu";
 import type { StudentRow } from "./data";
 import { STATUSES, StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
 import { StudentForm } from "./student-form";
@@ -116,11 +117,14 @@ export function StudentsView({
       <PageHeader
         title={uz.students.title}
         actions={
-          perms.create ? (
-            <Button onClick={() => openForm(null)}>
-              <Plus /> {uz.students.add}
-            </Button>
-          ) : null
+          <>
+            <ExcelMenu table="students" branches={branches} selectedBranch={selectedBranch} canImport={perms.create} />
+            {perms.create ? (
+              <Button onClick={() => openForm(null)}>
+                <Plus /> {uz.students.add}
+              </Button>
+            ) : null}
+          </>
         }
       />
 
