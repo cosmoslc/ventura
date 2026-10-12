@@ -1,7 +1,10 @@
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { can } from "@ventura/auth/staff/policy";
+import { hasFeature } from "@ventura/tenants";
+import { groupAttendance } from "@/lib/server/attendance";
 import { getBranchContext } from "@/lib/server/branch";
+import { todayTashkent } from "@/lib/server/memberships";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -12,7 +15,13 @@ import { groupPerms } from "../perms";
 
 export const metadata = { title: uz.groups.title };
 
-export default async function GroupPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function GroupPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string; month?: string }>;
+}) {
   const { tenant, staff } = await requirePage("groups", "/groups");
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
@@ -22,11 +31,16 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
   const scope = staff.scope === "all" ? null : branch.options.map((b) => b.id);
   const [group] = await listGroups(db, scope, id.data);
   if (!group) notFound();
-  const [members, candidates, options, studentCourses] = await Promise.all([
+  const sp = await searchParams;
+  const today = todayTashkent();
+  const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.month ?? "") ? sp.month! : today.slice(0, 7);
+  const attendanceOn = await hasFeature(tenant, "attendance");
+  const [members, candidates, options, studentCourses, attendance] = await Promise.all([
     groupMembers(db, group.id),
     studentCandidates(db, scope),
     groupFormOptions(db, scope),
     courseOptions(db),
+    attendanceOn ? groupAttendance(db, group, month) : Promise.resolve(null),
   ]);
   return (
     <GroupProfile
@@ -40,6 +54,11 @@ export default async function GroupPage({ params }: { params: Promise<{ id: stri
       branches={branch.options}
       perms={groupPerms(staff.access)}
       canCreateStudent={can(staff.access, "students.create")}
+      attendance={attendance}
+      today={today}
+      canMarkToday={can(staff.access, "attendance.student_mark")}
+      canEditPast={can(staff.access, "attendance.student_edit_past")}
+      initialTab={sp.tab === "attendance" ? "attendance" : "students"}
     />
   );
 }

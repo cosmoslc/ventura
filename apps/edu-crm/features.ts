@@ -82,7 +82,10 @@ export const features = [
     type: "regular",
     requires: ["groups", "holidays"],
     routes: ["/api/attendance", "/api/attendance-settings"],
-    nav: [{ label: "Davomat", href: "/attendance", section: "Asos" }],
+    nav: [
+      { label: "Davomat", href: "/attendance", section: "Asos" },
+      { label: "Xodimlar davomati", href: "/staff-attendance", section: "Ofis" },
+    ],
   },
 
   // Moliya

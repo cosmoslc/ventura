@@ -16,7 +16,12 @@ type Db = TenantDb | Tx;
 
 /** Mahalliy (Toshkent) sana YYYY-MM-DD */
 export function todayTashkent(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tashkent" }).format(new Date());
+  return tashkentDate(new Date());
+}
+
+/** Vaqt belgisining Toshkentdagi sanasi YYYY-MM-DD */
+export function tashkentDate(at: Date): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tashkent" }).format(at);
 }
 
 /** Sana oy boshi: "2026-10-12" → "2026-10-01" */

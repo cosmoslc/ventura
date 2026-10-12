@@ -20,6 +20,7 @@ import {
   MessageSquareText,
   Receipt,
   Target,
+  UserCheck,
   UserRoundX,
   Users,
   UsersRound,
@@ -71,11 +72,12 @@ const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/rooms": { icon: DoorOpen, hue: "teal" },
   "/positions": { icon: ShieldCheck, hue: "violet" },
   "/staff": { icon: IdCard, hue: "sky" },
+  "/staff-attendance": { icon: UserCheck, hue: "teal" },
   "/archive": { icon: Archive, hue: "slate" },
 };
 
 /** Bo'lim ichidagi tartib (eski tizimdagi "Ofis" menyusi): ro'yxatda yo'qlari oxirida, manifest tartibida */
-const ITEM_ORDER = ["/branches", "/positions", "/staff", "/rooms", "/holidays", "/archive"];
+const ITEM_ORDER = ["/branches", "/positions", "/staff", "/staff-attendance", "/rooms", "/holidays", "/archive"];
 const itemRank = (href: string) => {
   const i = ITEM_ORDER.indexOf(href);
   return i === -1 ? ITEM_ORDER.length : i;

@@ -50,6 +50,13 @@
       "when": 1791812878021,
       "tag": "0006_e1d_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1791815462355,
+      "tag": "0007_e2_attendance",
+      "breakpoints": true
     }
   ]
 }
