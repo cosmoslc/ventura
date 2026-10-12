@@ -9,7 +9,7 @@ export const template = {
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.3.0",
+  version: "0.4.0",
 } satisfies TemplateInfo;
 
 export const features = [
@@ -36,7 +36,11 @@ export const features = [
     group: "Asos",
     type: "core",
     routes: ["/api/teachers"],
-    nav: [{ label: "O'qituvchilar", href: "/teachers" }],
+    nav: [
+      { label: "O'qituvchilar", href: "/teachers" },
+      { label: "Lavozimlar", href: "/positions", section: "Ofis" },
+      { label: "Xodimlar", href: "/staff", section: "Ofis" },
+    ],
   },
   {
     key: "groups",

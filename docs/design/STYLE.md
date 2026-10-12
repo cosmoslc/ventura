@@ -386,6 +386,7 @@ Qoidalar:
 - Padding 16px; chapda 42px ikonka qutisi (`--stat-N-bg`, radius `--r-stat-icon`, ikonka 19px).
 - Qiymat `type-stat` (19px / 700), yorliq 12px / 500.
 - Trend: badge o'lchamidagi "pill" (8px padding, 11px mono) — `success` yoki `danger`.
+- `hint`: yorliq ostida 11px yordamchi qatorlar (taqsimot, o'rtacha qiymat) — eski tizim kartalaridagi ikkinchi qator.
 - Hover: 3px ko'tariladi, `--card-shadow-hover`.
 
 ### 11.11 Badge — `badge.tsx`

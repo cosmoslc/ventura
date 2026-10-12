@@ -16,7 +16,7 @@ import { uz } from "@/lib/uz";
  */
 
 export async function saveCourseAction(input: unknown): Promise<ActionResult<{ id: string }>> {
-  return crmAction<{ id: string }>("courses", async ({ db, staff, branch, audit }) => {
+  return crmAction<{ id: string }>("courses", "settings.courses", async ({ db, staff, branch, audit }) => {
     const parsed = courseInput.safeParse(input);
     if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
     const { id, name, price, durationMonths, color } = parsed.data;
@@ -62,7 +62,7 @@ export async function saveCourseAction(input: unknown): Promise<ActionResult<{ i
 }
 
 export async function archiveCourseAction(id: unknown): Promise<ActionResult> {
-  return crmAction("courses", async ({ db, staff, audit }) => {
+  return crmAction("courses", "settings.courses", async ({ db, staff, audit }) => {
     const parsed = z.uuid().safeParse(id);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const [course] = await db

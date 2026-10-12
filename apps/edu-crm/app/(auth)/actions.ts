@@ -72,7 +72,7 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
   const { deps, auth } = r;
 
   const user = await findStaffByPhone(deps.db, phone);
-  if (user?.lockedAt) return { error: uz.auth.locked };
+  if (user?.lockedAt || user?.archivedAt) return { error: uz.auth.locked };
 
   const meta = await requestMeta();
   await ensureDeviceId();
@@ -131,7 +131,7 @@ export async function verifyCodeAction(_prev: FormState, form: FormData): Promis
   const userId = readPending(store.get(PENDING_COOKIE)?.value, deps.secret);
   if (!userId) return { error: uz.auth.sessionGone };
   const user = await findStaffById(deps.db, userId);
-  if (!user || user.lockedAt) return { error: uz.auth.locked };
+  if (!user || user.lockedAt || user.archivedAt) return { error: uz.auth.locked };
   const meta = await requestMeta();
 
   try {

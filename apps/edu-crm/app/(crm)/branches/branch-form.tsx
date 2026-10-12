@@ -2,7 +2,6 @@
 
 import { Check, Plus } from "lucide-react";
 import * as React from "react";
-import { STAFF_ROLE_LABELS, type StaffRole } from "@ventura/auth/staff/policy";
 import { Avatar } from "@ventura/ui/avatar";
 import { Button } from "@ventura/ui/button";
 import { Checkbox } from "@ventura/ui/checkbox";
@@ -45,12 +44,15 @@ export function BranchForm({
   onOpenChange,
   editing,
   staffOptions,
+  canAssign,
   onSaved,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editing: BranchRow | null;
   staffOptions: BranchStaff[];
+  /** Xodim biriktirish ruxsati ("Lavozim va ruxsatlarni biriktirish") */
+  canAssign: boolean;
   onSaved: () => void;
 }) {
   const [form, setForm] = React.useState<FormState>(() => initial(editing, staffOptions));
@@ -137,44 +139,50 @@ export function BranchForm({
           <Label>{uz.branches.color}</Label>
           <ColorSwatches value={form.color} onChange={(v) => set("color", v)} options={BRANCH_COLORS} />
         </div>
-        <div>
-          <Label>{uz.branches.managers}</Label>
-          <FieldHint className="mt-0 mb-2">{uz.branches.managersHint}</FieldHint>
-          {staffOptions.length ? (
-            <div className="grid gap-2 sm:grid-cols-2">
-              {staffOptions.map((s) => {
-                const checked = form.managerIds.includes(s.id);
-                return (
-                  <label
-                    key={s.id}
-                    className={cn(
-                      "flex cursor-pointer items-center gap-3 rounded-control border px-3 py-2.5 transition-colors hover:bg-muted",
-                      checked ? "border-(--ring-border)" : "border-border-soft",
-                    )}
-                  >
-                    <Avatar name={s.name} size={32} />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-body font-semibold text-foreground">{s.name}</div>
-                      <div className="truncate text-caption text-muted-foreground">
-                        {STAFF_ROLE_LABELS[s.role as StaffRole]} · {displayPhone(s.phone) ?? uz.branches.noPhone}
+        {canAssign ? (
+          <div>
+            <Label>{uz.branches.managers}</Label>
+            <FieldHint className="mt-0 mb-2">{uz.branches.managersHint}</FieldHint>
+            {staffOptions.length ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {staffOptions.map((s) => {
+                  const checked = form.managerIds.includes(s.id);
+                  return (
+                    <label
+                      key={s.id}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-3 rounded-control border px-3 py-2.5 transition-colors hover:bg-muted",
+                        checked ? "border-(--ring-border)" : "border-border-soft",
+                      )}
+                    >
+                      <Avatar name={s.name} size={32} />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-body font-semibold text-foreground">{s.name}</div>
+                        <div className="truncate text-caption text-muted-foreground">
+                          {s.positions.join(", ") || uz.staff.noPosition} ·{" "}
+                          {displayPhone(s.phone) ?? uz.branches.noPhone}
+                        </div>
                       </div>
-                    </div>
-                    <Checkbox
-                      checked={checked}
-                      onCheckedChange={(v) =>
-                        set("managerIds", v ? [...form.managerIds, s.id] : form.managerIds.filter((id) => id !== s.id))
-                      }
-                    />
-                  </label>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="rounded-control border border-dashed border-border px-4 py-3 text-body text-muted-foreground">
-              {uz.branches.noStaff}
-            </p>
-          )}
-        </div>
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) =>
+                          set(
+                            "managerIds",
+                            v ? [...form.managerIds, s.id] : form.managerIds.filter((id) => id !== s.id),
+                          )
+                        }
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="rounded-control border border-dashed border-border px-4 py-3 text-body text-muted-foreground">
+                {uz.branches.noStaff}
+              </p>
+            )}
+          </div>
+        ) : null}
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </form>
     </Modal>

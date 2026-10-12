@@ -1,4 +1,18 @@
-import { boolean, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  bigint,
+  boolean,
+  check,
+  date,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { tenantId, tenantPolicy, timestamps } from "./columns";
 
 /*
@@ -8,8 +22,16 @@ import { tenantId, tenantPolicy, timestamps } from "./columns";
  */
 
 /** Tayyor rollar (9-qaror). Ruxsatlar: packages/auth/src/staff/policy.ts */
-export const STAFF_ROLES = ["director", "manager", "cashier", "viewer"] as const;
+/**
+ * `director` — hamma narsa; `staff` — ruxsatlar lavozimdan (positions). `manager`, `cashier`, `viewer` — lavozimlardan
+ * oldingi rollar: birinchi kirishda mos tayyor lavozimga o'tkaziladi (ensurePositions).
+ */
+export const STAFF_ROLES = ["director", "staff", "manager", "cashier", "viewer"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
+
+export const GENDERS = ["male", "female"] as const;
+export const SALARY_TYPES = ["fixed", "kpi"] as const;
+export type SalaryType = (typeof SALARY_TYPES)[number];
 
 export const users = pgTable(
   "users",
@@ -31,11 +53,30 @@ export const users = pgTable(
     mustChangePassword: boolean("must_change_password").notNull().default(false),
     failedAttempts: integer("failed_attempts").notNull().default(0),
     lockedAt: timestamp("locked_at", { withTimezone: true }),
+    /* Xodim kartochkasi (eski tizimdagi "Xodimlar" formasi) */
+    gender: text("gender", { enum: GENDERS }),
+    birthDate: date("birth_date", { mode: "string" }),
+    address: text("address"),
+    /** `fixed` — oylik oklad; `kpi` — asosiy oklad + o'quvchi va 1 oylik bonus (hisob E3 da) */
+    salaryType: text("salary_type", { enum: SALARY_TYPES }).notNull().default("fixed"),
+    monthlySalary: bigint("monthly_salary", { mode: "number" }).notNull().default(0),
+    kpiStudentAmount: bigint("kpi_student_amount", { mode: "number" }).notNull().default(0),
+    kpiContractBonus: bigint("kpi_contract_bonus", { mode: "number" }).notNull().default(0),
+    note: text("note"),
+    /** Markaz o'zi qo'shgan qo'shimcha maydonlar (Xodim formasi sozlamasi): maydon id → qiymat */
+    customData: jsonb("custom_data").$type<Record<string, string>>().notNull().default({}),
+    /** Bo'shatilgan (arxiv): kira olmaydi, ro'yxatda ko'rinmaydi; tarix (to'lovlar, jurnal) saqlanadi */
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
     unique("users_tenant_email_uq").on(t.tenantId, t.email),
     unique("users_tenant_phone_uq").on(t.tenantId, t.phoneNumber),
+    unique("users_tenant_id_uq").on(t.tenantId, t.id),
+    check(
+      "users_salary_nonneg",
+      sql`${t.monthlySalary} >= 0 and ${t.kpiStudentAmount} >= 0 and ${t.kpiContractBonus} >= 0`,
+    ),
     tenantPolicy("users"),
   ],
 );

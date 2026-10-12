@@ -8,9 +8,11 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   /** Tokenlardagi --stat-N-bg / --stat-N-fg juftligi. */
   tone: 1 | 2 | 3 | 4;
   trend?: { value: string; up: boolean };
+  /** Yorliq ostidagi qo'shimcha izoh (masalan, taqsimot: "3 ta erkak • 2 ta ayol") */
+  hint?: React.ReactNode;
 }
 
-export function StatCard({ icon, label, value, tone, trend, className, ...props }: StatCardProps) {
+export function StatCard({ icon, label, value, tone, trend, hint, className, ...props }: StatCardProps) {
   return (
     <div
       className={cn(
@@ -34,6 +36,7 @@ export function StatCard({ icon, label, value, tone, trend, className, ...props 
       <div className="min-w-0 flex-1">
         <div className="type-stat leading-tight text-foreground">{value}</div>
         <div className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{label}</div>
+        {hint ? <div className="mt-1 space-y-0.5 text-caption text-muted-foreground">{hint}</div> : null}
       </div>
       {trend ? (
         <span

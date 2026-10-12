@@ -16,7 +16,7 @@ import { uz } from "@/lib/uz";
  */
 
 export async function saveRoomAction(input: unknown): Promise<ActionResult<{ id: string }>> {
-  return crmAction<{ id: string }>("groups", async ({ db, staff, branch, audit }) => {
+  return crmAction<{ id: string }>("groups", "settings.rooms", async ({ db, staff, branch, audit }) => {
     const parsed = roomInput.safeParse(input);
     if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
     const { id, name, capacity } = parsed.data;
@@ -55,7 +55,7 @@ export async function saveRoomAction(input: unknown): Promise<ActionResult<{ id:
 }
 
 export async function deleteRoomAction(id: unknown): Promise<ActionResult> {
-  return crmAction("groups", async ({ db, staff, audit }) => {
+  return crmAction("groups", "settings.rooms", async ({ db, staff, audit }) => {
     const parsed = z.uuid().safeParse(id);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const [room] = await db.select().from(rooms).where(eq(rooms.id, parsed.data));

@@ -1,7 +1,15 @@
 import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { type StaffRole, knownDevices, sessions, settings, userBranches, users } from "@ventura/db/schema/tenant";
+import {
+  type StaffRole,
+  knownDevices,
+  sessions,
+  settings,
+  userBranches,
+  userPositions,
+  users,
+} from "@ventura/db/schema/tenant";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
 import { type AuditActor, tenantAudit } from "@ventura/security";
 import {
@@ -187,6 +195,8 @@ export interface NewStaff {
   password: string;
   role: StaffRole;
   branchIds?: string[];
+  /** Lavozimlar (role = "staff" bo'lsa) */
+  positionIds?: string[];
   /** Vaqtinchalik parol bilan yaratilsa — birinchi kirishda almashtiriladi */
   mustChangePassword?: boolean;
 }
@@ -217,6 +227,9 @@ export async function createStaffUser(auth: StaffAuth, db: TenantDb, input: NewS
   if (input.branchIds?.length) {
     await db.insert(userBranches).values(input.branchIds.map((branchId) => ({ userId: user.id, branchId })));
   }
+  if (input.positionIds?.length) {
+    await db.insert(userPositions).values(input.positionIds.map((positionId) => ({ userId: user.id, positionId })));
+  }
   return user;
 }
 
@@ -234,4 +247,17 @@ export async function setStaffPassword(auth: StaffAuth, userId: string, password
 
 export async function revokeStaffSessions(db: TenantDb, userId: string) {
   await db.delete(sessions).where(eq(sessions.userId, userId));
+}
+
+export { temporaryPassword } from "../admins";
+
+/** Bloklashni ochish: xato urinishlar hisobi ham nolga tushadi */
+export async function unlockStaff(db: TenantDb, userId: string) {
+  await db.update(users).set({ lockedAt: null, failedAttempts: 0 }).where(eq(users.id, userId));
+}
+
+/** Telegramni uzish: xodim keyingi kirishda botni qayta ulaydi; ochiq sessiyalar yopiladi */
+export async function resetStaffTelegram(db: TenantDb, userId: string) {
+  await db.update(users).set({ telegramChatId: null, twoFactorEnabled: false }).where(eq(users.id, userId));
+  await revokeStaffSessions(db, userId);
 }

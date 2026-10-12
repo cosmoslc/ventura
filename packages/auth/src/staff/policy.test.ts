@@ -1,64 +1,84 @@
 import { describe, expect, it } from "vitest";
-import { branchScope, can, inScope } from "./policy";
+import {
+  ALL_PERMISSIONS,
+  PERMISSION_CATEGORIES,
+  POSITION_TEMPLATES,
+  accessFor,
+  branchScope,
+  can,
+  canAny,
+  inScope,
+  normalizePermissions,
+} from "./policy";
+
+describe("ruxsatlar katalogi", () => {
+  it("eski tizimdagidek 11 toifa, 69 ruxsat, takrorsiz", () => {
+    expect(PERMISSION_CATEGORIES).toHaveLength(11);
+    expect(ALL_PERMISSIONS).toHaveLength(69);
+    expect(new Set(ALL_PERMISSIONS).size).toBe(69);
+  });
+
+  it("7 ta shablon; faqat Bosh Direktor tizim lavozimi va unda hamma ruxsat", () => {
+    expect(POSITION_TEMPLATES.map((t) => t.code)).toEqual([
+      "super_admin",
+      "branch_manager",
+      "senior_admin",
+      "teacher",
+      "accountant",
+      "sales_lead_manager",
+      "hr_manager",
+    ]);
+    expect(POSITION_TEMPLATES.filter((t) => t.system).map((t) => t.code)).toEqual(["super_admin"]);
+    expect(POSITION_TEMPLATES[0]!.permissions).toHaveLength(69);
+    expect(POSITION_TEMPLATES[1]!.permissions).toHaveLength(66);
+    for (const t of POSITION_TEMPLATES) for (const p of t.permissions) expect(ALL_PERMISSIONS).toContain(p);
+  });
+
+  it("noma'lum ruxsatlar tashlanadi, tartib katalogdagidek", () => {
+    expect(normalizePermissions(["staff.view", "yoq.narsa", "dashboard.view", "staff.view"])).toEqual([
+      "dashboard.view",
+      "staff.view",
+    ]);
+  });
+});
 
 describe("xodim ruxsatlari", () => {
   it("direktor hamma narsani qila oladi", () => {
-    expect(can("director", "salaries.write")).toBe(true);
-    expect(can("director", "staff.manage")).toBe(true);
-    expect(can("director", "settings.manage")).toBe(true);
+    const d = accessFor("director", null);
+    expect(can(d, "settings.roles_permissions")).toBe(true);
+    expect(can(d, "archive.permanent_delete")).toBe(true);
   });
 
-  it("menejer o'quv jarayoni va to'lovlar bilan ishlaydi, ish haqi va xodimlarga yopiq", () => {
-    expect(can("manager", "students.write")).toBe(true);
-    expect(can("manager", "payments.write")).toBe(true);
-    expect(can("manager", "salaries.view")).toBe(false);
-    expect(can("manager", "expenses.view")).toBe(false);
-    expect(can("manager", "staff.manage")).toBe(false);
-    expect(can("manager", "settings.manage")).toBe(false);
+  it("xodim faqat lavozimidagi ruxsatlarni oladi", () => {
+    const a = accessFor("staff", ["students.view", "students.create"]);
+    expect(can(a, "students.create")).toBe(true);
+    expect(can(a, "students.delete")).toBe(false);
+    expect(canAny(a, ["groups.view", "students.view"])).toBe(true);
+    expect(canAny(a, ["groups.view"])).toBe(false);
   });
 
-  it("filiallarni hamma ko'radi, faqat direktor o'zgartiradi", () => {
-    expect(can("director", "branches.write")).toBe(true);
-    expect(can("manager", "branches.view")).toBe(true);
-    expect(can("manager", "branches.write")).toBe(false);
-    expect(can("manager", "courses.write")).toBe(true);
-    expect(can("cashier", "courses.view")).toBe(true);
-    expect(can("cashier", "courses.write")).toBe(false);
-  });
-
-  it("kassir faqat pul bo'limlarida yozadi, o'quvchi va guruhlarni ko'radi", () => {
-    expect(can("cashier", "payments.write")).toBe(true);
-    expect(can("cashier", "expenses.write")).toBe(true);
-    expect(can("cashier", "students.view")).toBe(true);
-    expect(can("cashier", "students.write")).toBe(false);
-    expect(can("cashier", "leads.view")).toBe(false);
-    expect(can("cashier", "salaries.view")).toBe(false);
-  });
-
-  it("kuzatuvchi faqat ko'radi", () => {
-    expect(can("viewer", "students.view")).toBe(true);
-    expect(can("viewer", "students.write")).toBe(false);
-    expect(can("viewer", "salaries.view")).toBe(false);
-  });
-
-  it("bo'lim kalitida nuqta bo'lsa ham amal oxirgi qismdan olinadi", () => {
-    expect(can("viewer", "reports.finance.view")).toBe(true);
-    expect(can("viewer", "reports.finance.write")).toBe(false);
+  it("lavozimsiz eski xodim: menejer — Filial menejeri, kassir — Buxgalter, kuzatuvchi — faqat ko'rish", () => {
+    expect(can(accessFor("manager", null), "students.create")).toBe(true);
+    expect(can(accessFor("manager", null), "settings.roles_permissions")).toBe(false);
+    expect(can(accessFor("cashier", null), "finance.payment_create")).toBe(true);
+    expect(can(accessFor("cashier", null), "students.create")).toBe(false);
+    expect(can(accessFor("viewer", null), "students.view")).toBe(true);
+    expect(can(accessFor("viewer", null), "students.create")).toBe(false);
+    expect(can(accessFor("staff", null), "students.view")).toBe(false);
   });
 });
 
 describe("filial bo'yicha cheklov", () => {
   it("direktor barcha filiallarni ko'radi", () => {
-    expect(branchScope("director", [])).toBe("all");
+    expect(branchScope(true, [])).toBe("all");
     expect(inScope("all", "b1")).toBe(true);
   });
 
   it("qolganlar faqat biriktirilgan filiallarni", () => {
-    const scope = branchScope("manager", ["b1", "b2", "b1"]);
+    const scope = branchScope(false, ["b1", "b2", "b1"]);
     expect(scope).toEqual(["b1", "b2"]);
     expect(inScope(scope, "b2")).toBe(true);
     expect(inScope(scope, "b3")).toBe(false);
     expect(inScope(scope, null)).toBe(false);
-    expect(inScope(branchScope("cashier", []), "b1")).toBe(false);
   });
 });

@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { normalizeUzPhone } from "@ventura/auth";
-import { createStaffAuth, createStaffUser } from "@ventura/auth/staff";
+import { createStaffAuth, createStaffUser, ensurePositions } from "@ventura/auth/staff";
 import { createTenantDb } from "@ventura/db";
 import { migrateTenantDb } from "@ventura/db/migrate";
 import { branches, users } from "@ventura/db/schema/tenant";
@@ -14,7 +14,8 @@ import { tenantAudit } from "@ventura/security";
  *
  * 1. Migratsiyalar (baza egasi nomidan — rol bazaning egasi, ventura-db yaratgan).
  * 2. Birinchi filial ("Asosiy filial"), filial bo'lmasa.
- * 3. Birinchi direktor — Yangi loyiha formasidagi ega (telefon, ism, vaqtinchalik parol), direktor bo'lmasa.
+ * 3. Lavozimlar: 7 ta tayyor shablon (lavozim bo'lmasa) — eski tizimdagidek.
+ * 4. Birinchi direktor — Yangi loyiha formasidagi ega (telefon, ism, vaqtinchalik parol), direktor bo'lmasa.
  * Qayta ishga tushirish xavfsiz: bor narsa o'zgartirilmaydi.
  */
 
@@ -60,6 +61,8 @@ try {
     await db.insert(branches).values({ name: "Asosiy filial" });
     console.log("Birinchi filial yaratildi: Asosiy filial");
   }
+
+  await ensurePositions(db);
 
   const [director] = await db.select({ id: users.id }).from(users).where(eq(users.role, "director")).limit(1);
   if (director) {

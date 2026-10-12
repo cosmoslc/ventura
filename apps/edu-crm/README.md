@@ -51,5 +51,5 @@ pnpm --filter @ventura/edu-crm dev
 
 - Umumiy baza (`shared_db`): bir nechta mijozga bir xil `--database-url`. Alohida baza (`db_per_tenant`): har biriga o'z bazasi; `--migrate-url` kerak emas, agar ilova foydalanuvchisi bazaning egasi bo'lsa.
 - Bo'limlarni cheklash: `--features students,groups,payments` (kerakli bog'liqlar o'zi qo'shiladi).
-- Xodim rollari: `--role director|manager|cashier|viewer`, filial: `--branch "Asosiy filial"`.
+- Lavozim: `--position branch_manager|senior_admin|teacher|accountant|sales_lead_manager|hr_manager` (berilmasa — direktor), filial: `--branch "Asosiy filial"`. Odatda xodimlar CRM ichidagi Xodimlar sahifasidan qo'shiladi.
 - Bot tokenisiz loyihada xodimlar kira olmaydi (kod yuborilmaydi) — kirish sahifasi shuni aytadi.

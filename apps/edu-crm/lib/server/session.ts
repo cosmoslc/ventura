@@ -5,14 +5,20 @@ import { cache } from "react";
 import { type AccessState, accessState, isSessionExpired } from "@ventura/auth";
 import {
   type BranchScope,
-  type StaffPermission,
+  type Permission,
+  type StaffAccess,
   type StaffRole,
+  accessFor,
   branchScope,
-  can,
+  canAny,
+  ensurePositions,
   getStaffSessionPolicy,
   staffBranchIds,
+  staffPermissions,
+  staffPositions,
 } from "@ventura/auth/staff";
 import { type Tenant, hasFeature } from "@ventura/tenants";
+import { pagePermissions } from "@/lib/access";
 import { type TenantDeps, tenantDeps } from "./deps";
 import { requestOrigin } from "./request";
 import { currentTenant } from "./tenant";
@@ -35,6 +41,10 @@ export interface Staff {
   name: string;
   phone: string;
   role: StaffRole;
+  director: boolean;
+  /** Ruxsatlar: direktor — hammasi, qolganlar — lavozimlaridan */
+  access: StaffAccess;
+  positions: { id: string; name: string; color: string }[];
   telegramLinked: boolean;
   state: AccessState;
   sessionId: string;
@@ -48,7 +58,7 @@ export interface Staff {
  */
 export const getStaff = cache(async (): Promise<Staff | null> => {
   const h = await headers();
-  const { deps } = await currentDeps();
+  const { tenant, deps } = await currentDeps();
   if (!deps) return null;
   const auth = deps.auth(await requestOrigin());
   const data = await auth.api.getSession({ headers: h });
@@ -58,19 +68,32 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     telegramChatId: string | null;
     mustChangePassword: boolean;
     lockedAt: Date | null;
+    archivedAt: Date | null;
     twoFactorEnabled: boolean;
     phoneNumber: string | null;
   };
+  await ensurePositionsOnce(deps.db, tenant.slug);
   const policy = await getStaffSessionPolicy(deps.db);
   if (u.lockedAt || isSessionExpired(new Date(data.session.createdAt), policy)) {
     await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
     return null;
   }
+  if (u.archivedAt) {
+    await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
+    return null;
+  }
+  const director = u.role === "director";
+  const [permissions, positions] = director
+    ? [null, []]
+    : await Promise.all([staffPermissions(deps.db, u.id), staffPositions(deps.db, u.id)]);
   return {
     id: u.id,
     name: u.name,
     phone: u.phoneNumber ?? "",
     role: u.role,
+    director,
+    access: accessFor(u.role, permissions),
+    positions,
     telegramLinked: !!u.telegramChatId && u.twoFactorEnabled,
     state: accessState({
       lockedAt: u.lockedAt ?? null,
@@ -79,28 +102,37 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
       telegramChatId: u.telegramChatId ?? null,
     }),
     sessionId: data.session.id,
-    scope: branchScope(u.role, u.role === "director" ? [] : await staffBranchIds(deps.db, u.id)),
+    scope: branchScope(director, director ? [] : await staffBranchIds(deps.db, u.id)),
   };
 });
 
+/** Lavozimlar jadvali bir marta tayyorlanadi (har mijoz uchun, jarayon davomida) */
+const g = globalThis as unknown as { __eduPositionsReady?: Set<string> };
+const positionsReady = (g.__eduPositionsReady ??= new Set());
+async function ensurePositionsOnce(db: TenantDeps["db"], slug: string) {
+  if (positionsReady.has(slug)) return;
+  await ensurePositions(db);
+  positionsReady.add(slug);
+}
+
 /** To'liq kirgan (parol + Telegram kodi) xodim; aks holda tegishli sahifaga yo'naltiradi. */
-export async function requireStaff(permission?: StaffPermission): Promise<Staff> {
+export async function requireStaff(permissions?: readonly Permission[]): Promise<Staff> {
   const staff = await getStaff();
   if (!staff) redirect("/login");
   if (staff.state === "must_change_password") redirect("/account/password");
   if (staff.state === "needs_telegram") redirect("/connect-telegram");
   if (staff.state !== "ok") redirect("/login");
-  if (permission && !can(staff.role, permission)) redirect("/?ruxsat=yoq");
+  if (permissions && !canAny(staff.access, permissions)) redirect("/?ruxsat=yoq");
   return staff;
 }
 
 /**
- * Bo'lim sahifasi va server amallari boshida: bo'lim o'chirilgan bo'lsa — 404 (SPEC 8: manzil ham yopiq,
- * ma'lumot o'chmaydi), ruxsat bo'lmasa — bosh sahifaga.
+ * Bo'lim sahifasi boshida: bo'lim o'chirilgan bo'lsa — 404 (SPEC 8: manzil ham yopiq, ma'lumot o'chmaydi),
+ * sahifani ochadigan ruxsat (lib/access.ts) bo'lmasa — bosh sahifaga.
  */
-export async function requireFeature(feature: string, action: "view" | "write" = "view") {
+export async function requirePage(feature: string, href: string) {
   const tenant = await requireTenant();
   if (!(await hasFeature(tenant, feature))) notFound();
-  const staff = await requireStaff(`${feature}.${action}`);
+  const staff = await requireStaff(pagePermissions(href));
   return { tenant, staff };
 }

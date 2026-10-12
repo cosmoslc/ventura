@@ -52,13 +52,15 @@ export interface NavGroup {
 export function navFor(
   features: Feature[],
   enabled: Iterable<string>,
-  allowed: (featureKey: string) => boolean = () => true,
+  /** Band ko'rinadimi (bo'lim kaliti va manzili bo'yicha — masalan xodim ruxsati) */
+  allowed: (featureKey: string, href: string) => boolean = () => true,
 ): NavGroup[] {
   const on = new Set(enabled);
   const groups: NavGroup[] = [];
   for (const f of features) {
-    if (!on.has(f.key) || !f.nav.length || !allowed(f.key)) continue;
+    if (!on.has(f.key) || !f.nav.length) continue;
     for (const n of f.nav) {
+      if (!allowed(f.key, n.href)) continue;
       const title = n.section ?? f.group;
       let group = groups.find((g) => g.title === title);
       if (!group) groups.push((group = { title, links: [] }));

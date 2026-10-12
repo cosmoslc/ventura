@@ -1,59 +1,54 @@
 import type { StaffRole } from "@ventura/db/schema/tenant";
+import { ALL_PERMISSIONS, type Permission, POSITION_TEMPLATES } from "./permissions";
 
 /*
- * Mijoz tizimi xodimlarining rollari va ruxsatlari (EDU-CRM-PLAN 9-qaror): tayyor rollar va filial bo'yicha
- * cheklov. Har server amali boshida `can()` tekshiriladi; menyuda yashirish faqat qulaylik uchun.
- *
- * Ruxsat bo'lim kalitiga bog'langan (`students.view`, `payments.write`): yangi bo'lim qo'shilganda
- * rollar jadvalini o'zgartirish shart emas, faqat rolning qaysi bo'limlarga tegishi aniqlanadi.
- * Bu fayl client komponentda ham ishlatiladi (menyu) — server importi yo'q.
+ * Mijoz tizimi xodimlarining ruxsatlari (EDU-CRM-PLAN 14-qaror): eski tizimdagidek lavozimlar. Direktor hamma
+ * narsani qiladi; qolgan xodimning ruxsatlari — unga biriktirilgan lavozimdagi ro'yxat (permissions.ts katalogi).
+ * Har server amali boshida aniq ruxsat tekshiriladi (`can`), menyuda yashirish — faqat qulaylik uchun.
+ * Bu fayl client komponentda ham ishlatiladi — server importi yo'q.
  */
 
 export type { StaffRole };
+export * from "./permissions";
 
-export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
-  director: "Direktor",
-  manager: "Menejer",
-  cashier: "Kassir",
-  viewer: "Kuzatuvchi",
-};
-
-export const STAFF_ROLE_HINTS: Record<StaffRole, string> = {
-  director: "Hamma bo'lim, barcha filiallar, xodimlar va sozlamalar",
-  manager: "O'quv jarayoni, sotuv va to'lovlar — o'z filiallarida",
-  cashier: "To'lovlar, qarzdorlar va xarajatlar — o'z filiallarida",
-  viewer: "Faqat ko'rish — o'z filiallarida",
-};
-
-export type Action = "view" | "write";
-/** `<bo'lim>.<amal>` yoki tizim ruxsatlari */
-export type StaffPermission = `${string}.${Action}` | "staff.manage" | "settings.manage";
-
-/** Moliya ichidagi nozik bo'limlar: menejer va kuzatuvchiga yopiq. */
-const SENSITIVE = new Set(["salaries", "expenses"]);
-/** Markaz tuzilmasi: boshqalar ko'radi, faqat direktor o'zgartiradi (filial qo'shish, menejer biriktirish). */
-const DIRECTOR_WRITE = new Set(["branches"]);
-/** Kassir ishlaydigan bo'limlar va u faqat ko'radiganlari. */
-const CASHIER_WRITE = new Set(["payments", "debtors", "expenses"]);
-const CASHIER_VIEW = new Set(["students", "groups", "courses"]);
-
-function allowsFeature(role: StaffRole, feature: string, action: Action): boolean {
-  if (role === "director") return true;
-  if (action === "write" && DIRECTOR_WRITE.has(feature)) return false;
-  switch (role) {
-    case "manager":
-      return !SENSITIVE.has(feature);
-    case "cashier":
-      return CASHIER_WRITE.has(feature) || (action === "view" && CASHIER_VIEW.has(feature));
-    case "viewer":
-      return action === "view" && !SENSITIVE.has(feature);
-  }
+/** Xodimning ruxsatlari: sessiyada bir marta yig'iladi */
+export interface StaffAccess {
+  director: boolean;
+  permissions: ReadonlySet<string>;
 }
 
-export function can(role: StaffRole, permission: StaffPermission): boolean {
-  if (permission === "staff.manage" || permission === "settings.manage") return role === "director";
-  const dot = permission.lastIndexOf(".");
-  return allowsFeature(role, permission.slice(0, dot), permission.slice(dot + 1) as Action);
+export const DIRECTOR_ACCESS: StaffAccess = { director: true, permissions: new Set(ALL_PERMISSIONS) };
+
+export function accessFor(role: StaffRole, positionPermissions: readonly string[] | null): StaffAccess {
+  if (role === "director") return DIRECTOR_ACCESS;
+  return { director: false, permissions: new Set(positionPermissions ?? legacyPermissions(role)) };
+}
+
+export function can(access: StaffAccess, permission: Permission): boolean {
+  return access.director || access.permissions.has(permission);
+}
+
+/** Ro'yxatdagi birortasi bo'lsa yetadi (masalan sahifani ko'rish uchun) */
+export function canAny(access: StaffAccess, permissions: readonly Permission[]): boolean {
+  return access.director || permissions.some((p) => access.permissions.has(p));
+}
+
+/* ---------- Eski rollar (lavozimlardan oldingi) ---------- */
+
+/** Faqat ko'rish ruxsatlari */
+export const VIEW_PERMISSIONS: readonly Permission[] = ALL_PERMISSIONS.filter((p) => /(^|[._])view$/.test(p));
+
+/** Lavozimlardan oldin yaratilgan xodim qaysi tayyor lavozimga o'tadi */
+export const LEGACY_ROLE_TEMPLATE: Partial<Record<StaffRole, string>> = {
+  manager: "branch_manager",
+  cashier: "accountant",
+};
+
+/** Lavozimi hali biriktirilmagan eski xodim uchun vaqtinchalik ruxsatlar (lavozim ko'chirilguncha) */
+export function legacyPermissions(role: StaffRole): readonly Permission[] {
+  const code = LEGACY_ROLE_TEMPLATE[role];
+  if (code) return POSITION_TEMPLATES.find((t) => t.code === code)?.permissions ?? [];
+  return role === "viewer" ? VIEW_PERMISSIONS : [];
 }
 
 /* ---------- Filial bo'yicha cheklov ---------- */
@@ -61,8 +56,8 @@ export function can(role: StaffRole, permission: StaffPermission): boolean {
 /** "all" — barcha filiallar; aks holda ruxsat etilgan filiallar ro'yxati (bo'sh bo'lishi mumkin). */
 export type BranchScope = "all" | readonly string[];
 
-export function branchScope(role: StaffRole, assignedBranchIds: readonly string[]): BranchScope {
-  return role === "director" ? "all" : [...new Set(assignedBranchIds)];
+export function branchScope(director: boolean, assignedBranchIds: readonly string[]): BranchScope {
+  return director ? "all" : [...new Set(assignedBranchIds)];
 }
 
 export function inScope(scope: BranchScope, branchId: string | null | undefined): boolean {
