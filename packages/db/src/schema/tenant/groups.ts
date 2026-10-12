@@ -117,6 +117,7 @@ export const groupMemberships = pgTable(
     ...timestamps,
   },
   (t) => [
+    unique("group_memberships_tenant_id_uq").on(t.tenantId, t.id),
     index("group_memberships_group_idx").on(t.groupId),
     index("group_memberships_student_idx").on(t.studentId),
     // Bir o'quvchi bir guruhda bir vaqtda faqat bitta ochiq davrga ega

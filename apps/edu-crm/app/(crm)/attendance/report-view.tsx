@@ -124,7 +124,7 @@ export function AttendanceReportView({
     <div className="space-y-6">
       <PageHeader title={uz.attendance.title} description={t.description} />
 
-      {rangeInvalid ? <Notice tone="warning" title={t.rangeInvalid} /> : null}
+      {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
       <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <div>
@@ -436,7 +436,7 @@ function ReasonModal({ row, onClose, onSaved }: { row: ReportRow; onClose: () =>
             }}
           />
         </div>
-        {error ? <Notice tone="danger" title={error} /> : null}
+        {error ? <Notice tone="danger">{error}</Notice> : null}
       </form>
     </Modal>
   );
@@ -503,7 +503,7 @@ function CallModal({ row, onClose, onSaved }: { row: ReportRow; onClose: () => v
             }}
           />
         </div>
-        {error ? <Notice tone="danger" title={error} /> : null}
+        {error ? <Notice tone="danger">{error}</Notice> : null}
       </form>
     </Modal>
   );

@@ -15,6 +15,9 @@ import {
   UserPlus,
   UserRound,
   Users,
+  Banknote,
+  CircleDollarSign,
+  Scale,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,8 +31,9 @@ import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
-import { formatDate } from "@/lib/format";
+import { formatDate, formatMonth, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
+import type { GroupFinance } from "../payments/data";
 import type { GroupAttendance } from "@/lib/server/attendance";
 import type { PickerBranch } from "../branch-picker";
 import { StudentForm } from "../students/student-form";
@@ -75,6 +79,7 @@ export function GroupProfile({
   canMarkToday,
   canEditPast,
   initialTab,
+  finance,
 }: {
   group: GroupRow;
   members: { open: MemberRow[]; left: MemberRow[] };
@@ -87,6 +92,8 @@ export function GroupProfile({
   perms: GroupPerms;
   canCreateStudent: boolean;
   /** null — Davomat bo'limi o'chirilgan */
+  /** Shu oy moliyasi; null — moliya bo'limi o'chiq yoki ruxsat yo'q */
+  finance: GroupFinance | null;
   attendance: GroupAttendance | null;
   today: string;
   canMarkToday: boolean;
@@ -188,6 +195,28 @@ export function GroupProfile({
           hint={<div>{uz.groups.membersHint(g.members.active, g.members.paused)}</div>}
         />
         <StatCard tone={2} icon={<CalendarCheck />} label={uz.groups.startedCard} value={formatDate(g.startDate)} />
+        {finance ? (
+          <>
+            <StatCard
+              tone={3}
+              icon={<Scale />}
+              label={uz.groups.financeCharged(formatMonth(finance.month))}
+              value={`${money(finance.charged)} ${uz.common.som}`}
+            />
+            <StatCard
+              tone={2}
+              icon={<Banknote />}
+              label={uz.groups.financeCollected(formatMonth(finance.month))}
+              value={`${money(finance.collected)} ${uz.common.som}`}
+            />
+            <StatCard
+              tone={4}
+              icon={<CircleDollarSign />}
+              label={uz.groups.financeDue}
+              value={`${money(finance.due)} ${uz.common.som}`}
+            />
+          </>
+        ) : null}
       </div>
 
       <Card className="space-y-4 p-5">

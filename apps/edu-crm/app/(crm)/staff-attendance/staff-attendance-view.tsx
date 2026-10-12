@@ -147,7 +147,7 @@ export function StaffAttendanceView({
             />
           </div>
 
-          {!canMark ? <Notice tone="info" title={t.readOnly} /> : null}
+          {!canMark ? <Notice tone="info">{t.readOnly}</Notice> : null}
 
           <Card className="p-0">
             <div className="border-b border-border p-4">

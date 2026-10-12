@@ -25,6 +25,8 @@ export interface StudentRow {
   createdAt: string;
   /** Ochiq a'zolikdagi guruhlar (ro'yxat sahifasida to'ldiriladi) */
   groups: { id: string; name: string; teacher: string | null; status: string }[];
+  /** Balans (to'lovlar − oylik hisoblar); null — moliya bo'limi o'chiq yoki ko'rish ruxsati yo'q */
+  balance: number | null;
 }
 
 const localPhone = (phone: string | null) => (phone ?? "").replace(/\D/g, "").slice(-9);
@@ -50,6 +52,7 @@ export function toStudentRow(s: typeof students.$inferSelect): StudentRow {
     joinedAt: s.joinedAt,
     createdAt: s.createdAt.toISOString(),
     groups: [],
+    balance: null,
   };
 }
 

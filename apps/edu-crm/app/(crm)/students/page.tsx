@@ -1,4 +1,8 @@
+import { hasFeature } from "@ventura/tenants";
 import { getBranchContext } from "@/lib/server/branch";
+import { loadAccounts } from "@/lib/server/finance";
+import { todayTashkent } from "@/lib/server/memberships";
+import { financePerms } from "../payments/perms";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -14,11 +18,17 @@ export default async function StudentsPage() {
   const db = getTenantDb(tenant);
   const branch = await getBranchContext();
   const [base, courses] = await Promise.all([listStudents(db, branch.filter), courseOptions(db)]);
-  const byStudent = await openGroupsByStudent(
-    db,
-    base.map((s) => s.id),
-  );
-  const rows = base.map((s) => ({ ...s, groups: byStudent.get(s.id) ?? [] }));
+  const ids = base.map((s) => s.id);
+  const withFinance = financePerms(staff.access).view && (await hasFeature(tenant, "payments"));
+  const [byStudent, accounts] = await Promise.all([
+    openGroupsByStudent(db, ids),
+    withFinance ? loadAccounts(db, ids, todayTashkent()) : Promise.resolve(null),
+  ]);
+  const rows = base.map((s) => ({
+    ...s,
+    groups: byStudent.get(s.id) ?? [],
+    balance: accounts?.get(s.id)?.summary.balance ?? null,
+  }));
   return (
     <StudentsView
       rows={rows}

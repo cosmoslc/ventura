@@ -92,8 +92,8 @@ jobs:
           git diff --exit-code -- packages/db/migrations
           test -z "$(git status --porcelain -- packages/db/migrations)"
 
-      - name: Ajratish testi va faoliyat jurnali
-        run: pnpm --filter @ventura/db --filter @ventura/security test
+      - name: Ajratish testi, faoliyat jurnali va moliya hisobi
+        run: pnpm --filter @ventura/db --filter @ventura/security --filter @ventura/edu-crm test
 
   e2e:
     name: e2e · kirish + 2FA, yangi loyiha formasi

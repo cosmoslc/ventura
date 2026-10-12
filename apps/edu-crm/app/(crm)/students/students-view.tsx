@@ -13,6 +13,7 @@ import { Pagination } from "@ventura/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
+import { BalanceText } from "../payments/payment-dialog";
 import { displayPhone } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
@@ -308,7 +309,13 @@ export function StudentsView({
                           <span className="text-muted-foreground">{uz.students.noGroup}</span>
                         )}
                       </Td>
-                      <Td className="text-muted-foreground">{uz.students.noData}</Td>
+                      <Td className="whitespace-nowrap">
+                        {r.balance === null ? (
+                          <span className="text-muted-foreground">{uz.students.noData}</span>
+                        ) : (
+                          <BalanceText value={r.balance} />
+                        )}
+                      </Td>
                       <Td>
                         <StatusBadge status={r.status} />
                       </Td>

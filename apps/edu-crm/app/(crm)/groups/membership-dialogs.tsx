@@ -12,8 +12,9 @@ import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
-import { displayPhone } from "@/lib/format";
+import { displayPhone, money, signedMoney } from "@/lib/format";
 import { uz } from "@/lib/uz";
+import { type LeavePreview, leavePreviewAction } from "../payments/account-actions";
 import { activateMembershipAction, enrollStudentAction, leaveMembershipAction } from "./actions";
 
 function todayLocal() {
@@ -119,13 +120,28 @@ export function LeaveDialog({
   const [reason, setReason] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
+  const [preview, setPreview] = React.useState<LeavePreview | null>(null);
   const [openedFor, setOpenedFor] = React.useState<string | null>(null);
   if ((target?.id ?? null) !== openedFor) {
     setOpenedFor(target?.id ?? null);
     setDate(todayLocal());
     setReason("");
     setError(null);
+    setPreview(null);
   }
+
+  // Moliya: shu sana bilan chiqarilsa balans qanday bo'ladi (oy hisobi chiqqan kungacha qayta hisoblanadi)
+  const targetId = target?.id ?? null;
+  React.useEffect(() => {
+    if (!targetId || !date) return;
+    let alive = true;
+    void leavePreviewAction({ id: targetId, date }).then((res) => {
+      if (alive) setPreview(res.ok ? res.preview : null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [targetId, date]);
 
   function save() {
     if (!target) return;
@@ -181,6 +197,15 @@ export function LeaveDialog({
             onChange={(e) => setReason(e.target.value)}
           />
         </div>
+        {preview ? (
+          <Notice tone={preview.after < 0 ? "warning" : "info"}>
+            <div className="font-semibold">
+              {uz.groups.leaveBalance(signedMoney(preview.before), `${signedMoney(preview.after)} ${uz.common.som}`)}
+            </div>
+            {preview.after > 0 ? <div>{uz.groups.leaveCredit(`${money(preview.after)} ${uz.common.som}`)}</div> : null}
+            {preview.after < 0 ? <div>{uz.groups.leaveDebt(`${money(-preview.after)} ${uz.common.som}`)}</div> : null}
+          </Notice>
+        ) : null}
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </div>
     </Modal>

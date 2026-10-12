@@ -1,15 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { formatMoney } from "../lib/money";
 import { cn } from "../lib/utils";
 import { controlClass } from "./input";
 
-/** 1500000 → "1 500 000" (bo'shliq bilan, so'm uchun) */
-export function formatMoney(n: number): string {
-  return Math.round(n)
-    .toString()
-    .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-}
+export { formatMoney };
 
 export interface MoneyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange"> {
   /** null — bo'sh maydon */

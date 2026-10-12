@@ -11,3 +11,4 @@ export * from "./staff";
 export * from "./students";
 export * from "./groups";
 export * from "./attendance";
+export * from "./finance";
