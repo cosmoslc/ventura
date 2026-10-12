@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, MessageSquareText, Pencil, Trash2, Wallet } from "lucide-react";
+import { ArrowLeft, ChevronDown, MessageSquareText, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -11,7 +11,6 @@ import { Card } from "@ventura/ui/card";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
 import { ConfirmModal } from "@ventura/ui/modal";
-import { Notice } from "@ventura/ui/notice";
 import { EmptyState } from "@ventura/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { Textarea } from "@ventura/ui/textarea";
@@ -23,6 +22,7 @@ import type { StudentMembershipRow } from "../groups/data";
 import type { GroupPerms } from "../groups/groups-view";
 import type { PickOption } from "../groups/membership-dialogs";
 import { StudentGroupsTab } from "../groups/student-groups-tab";
+import { StudentFinanceTab } from "../payments/student-finance-tab";
 import { addStudentNoteAction, deleteStudentNoteAction } from "./actions";
 import type { HistoryRow, StudentNoteRow, StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
@@ -50,6 +50,7 @@ export function StudentProfile({
   memberships,
   groupOptions,
   groupPerms,
+  finance,
 }: {
   student: StudentRow;
   notes: StudentNoteRow[];
@@ -61,6 +62,8 @@ export function StudentProfile({
   memberships: StudentMembershipRow[];
   groupOptions: PickOption[];
   groupPerms: GroupPerms;
+  /** null — moliya bo'limi o'chiq yoki ko'rish ruxsati yo'q */
+  finance: Omit<React.ComponentProps<typeof StudentFinanceTab>, "studentId"> | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("groups");
@@ -156,7 +159,7 @@ export function StudentProfile({
         <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
           <TabsList>
             <TabsTrigger value="groups">{uz.students.tabGroups}</TabsTrigger>
-            <TabsTrigger value="payments">{uz.students.tabPayments}</TabsTrigger>
+            {finance ? <TabsTrigger value="payments">{uz.students.tabPayments}</TabsTrigger> : null}
             <TabsTrigger value="notes">
               {uz.students.tabNotes} {notes.length ? <Badge tone="neutral">{notes.length}</Badge> : null}
             </TabsTrigger>
@@ -174,12 +177,7 @@ export function StudentProfile({
           />
         ) : null}
 
-        {tab === "payments" ? (
-          <div className="space-y-4">
-            <EmptyState icon={<Wallet />} title={uz.students.tabPayments} />
-            <Notice tone="info">{uz.students.paymentsLater}</Notice>
-          </div>
-        ) : null}
+        {tab === "payments" && finance ? <StudentFinanceTab studentId={s.id} {...finance} /> : null}
 
         {tab === "notes" ? <NotesTab studentId={s.id} notes={notes} canWrite={perms.edit} /> : null}
 

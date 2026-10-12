@@ -67,6 +67,8 @@ interface Form {
   salaryPercent: string;
   salaryAmount: number | null;
   note: string;
+  /** Narx o'zgarsa — yangi narx qaysi oydan ("YYYY-MM") */
+  priceFrom: string;
 }
 
 /** "15:00" + 90 → "16:30" (yarim tundan oshmaydi) */
@@ -124,9 +126,11 @@ export function GroupForm({
       salaryPercent: editing?.teacherSalaryPercent != null ? String(editing.teacherSalaryPercent) : "",
       salaryAmount: editing?.teacherSalaryAmount ?? null,
       note: editing?.note ?? "",
+      priceFrom: todayLocal().slice(0, 7),
     };
   }, [editing, selectedBranch, branches]);
   const [form, setForm] = React.useState(defaults);
+  const priceChanged = !!editing && (form.price ?? 0) !== editing.price;
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const [openedFor, setOpenedFor] = React.useState<string | null>(null);
@@ -177,6 +181,7 @@ export function GroupForm({
       teacherId: form.teacherId,
       roomId: form.roomId || null,
       price: form.price ?? 0,
+      priceFrom: priceChanged ? form.priceFrom : null,
       durationMonths: form.durationMonths ? Number(form.durationMonths) : 0,
       days: WEEKDAYS.filter((d) => form.days.includes(d)),
       startTime: form.startTime,
@@ -292,6 +297,20 @@ export function GroupForm({
             placeholder="150 000"
           />
         </div>
+        {priceChanged ? (
+          <div>
+            <Label htmlFor="group-price-from">{uz.groups.priceFrom}</Label>
+            <Input
+              id="group-price-from"
+              type="month"
+              value={form.priceFrom}
+              min={(editing!.startDate < form.startDate ? editing!.startDate : form.startDate).slice(0, 7)}
+              max={todayLocal().slice(0, 7)}
+              onChange={(e) => set("priceFrom", e.target.value)}
+            />
+            <FieldHint>{uz.groups.priceFromHint}</FieldHint>
+          </div>
+        ) : null}
         <div>
           <Label htmlFor="group-duration">{uz.groups.duration}</Label>
           <Input

@@ -1,4 +1,5 @@
-import { formatMoney } from "@ventura/ui/money-input";
+import { formatMoney } from "@ventura/ui/lib/money";
+import { uz } from "./uz";
 
 /** 1500000 → "1 500 000" */
 export const money = (n: number) => formatMoney(n);
@@ -17,4 +18,16 @@ export const initial = (name: string) => name.trim().charAt(0).toUpperCase() || 
 export function formatDate(iso: string) {
   const [y, m, d] = iso.split("-");
   return y && m && d ? `${d}.${m}.${y}` : iso;
+}
+
+/** "2026-10" → "Oktabr 2026" */
+export function formatMonth(month: string) {
+  const [y, m] = month.split("-").map(Number);
+  const name = m ? uz.months[m - 1] : undefined;
+  return name && y ? `${name} ${y}` : month;
+}
+
+/** Ishorali summa: 150000 → "+150 000", −150000 → "−150 000" */
+export function signedMoney(n: number) {
+  return `${n > 0 ? "+" : n < 0 ? "−" : ""}${money(Math.abs(n))}`;
 }

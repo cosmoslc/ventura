@@ -122,8 +122,8 @@ Bo'limlar: `attendance`, `holidays`.
 
 Bo'limlar: `payments`, `debtors`, `expenses`, `salaries`.
 
-- [ ] To'lov qabul qilish, to'lov turlari, chek
-- [ ] Qaytarish, chegirmalar, qarzdorlar
+- [x] To'lov qabul qilish, to'lov turlari, chek — ADR 0015
+- [x] Qaytarish, chegirmalar, qarzdorlar — ADR 0015
 - [ ] Xarajatlar va toifalari, qo'shimcha daromad
 - [ ] Ish haqi: o'qituvchi va xodimlar
 - [ ] Pul amallari auditi, tasdiqlash so'rovlari

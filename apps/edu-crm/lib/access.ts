@@ -43,6 +43,8 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
     "finance.payment_delete",
     "finance.payment_receipt_print",
   ],
+  "/payments/receipt": ["finance.payment_receipt_print", "finance.payment_create", "finance.payment_view"],
+  "/payment-settings": ["settings.receipt", "settings.courses"],
   "/debtors": ["finance.debtors_view", "finance.debtors_remind"],
   "/expenses": ["expenses.view", "expenses.create", "expenses.edit_delete", "expenses.categories"],
   "/salaries": ["salaries.view", "salaries.calculate", "salaries.pay", "salaries.advance_manage", "salaries.kpi_edit"],

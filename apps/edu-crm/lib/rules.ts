@@ -156,6 +156,12 @@ export const groupInput = z
     teacherId: z.uuid({ error: uz.groups.teacherRequired }),
     roomId: id.nullable(),
     price: z.number().int().min(0).max(1_000_000_000).default(0),
+    /** Narx o'zgarsa — yangi narx qaysi oydan amal qiladi (ADR 0015); null — joriy oydan */
+    priceFrom: z
+      .string()
+      .regex(/^\d{4}-(0[1-9]|1[0-2])$/)
+      .nullable()
+      .default(null),
     durationMonths: z.number().int().min(0).max(120).default(0),
     days: z.array(weekday).min(1, uz.groups.daysRequired).max(7),
     startTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, uz.groups.timeInvalid),

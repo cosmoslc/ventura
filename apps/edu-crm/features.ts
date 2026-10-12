@@ -96,7 +96,10 @@ export const features = [
     type: "core",
     requires: ["students"],
     routes: ["/api/payments"],
-    nav: [{ label: "To'lovlar", href: "/payments" }],
+    nav: [
+      { label: "To'lovlar", href: "/payments" },
+      { label: "To'lov sozlamalari", href: "/payment-settings", section: "Ofis" },
+    ],
   },
   {
     key: "debtors",

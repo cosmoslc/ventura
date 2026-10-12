@@ -4,10 +4,11 @@ import { and, arrayOverlaps, eq, gt, isNull, lt, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { can } from "@ventura/auth/staff/policy";
-import { courses, groupMemberships, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
+import { courses, groupMemberships, groupPrices, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
+import { OPENING_MONTH } from "@/lib/billing";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
-import { monthStart, promoteTrialStudent, todayTashkent } from "@/lib/server/memberships";
+import { closePauses, monthStart, openPauses, promoteTrialStudent, todayTashkent } from "@/lib/server/memberships";
 import { firstError, groupInput, membershipDateInput, membershipLeaveInput } from "@/lib/rules";
 import { uz } from "@/lib/uz";
 
@@ -141,11 +142,46 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
       };
 
       if (existing) {
-        await db.update(groups).set(values).where(eq(groups.id, existing.id));
+        // Narx o'zgarsa tarixga yoziladi: yangi narx tanlangan oydan, o'tgan oylar eski narxda (ADR 0015)
+        const priceChanged = existing.price !== v.price;
+        const currentMonth = todayTashkent().slice(0, 7);
+        const priceFrom = v.priceFrom ?? currentMonth;
+        const firstMonth = (existing.startDate < v.startDate ? existing.startDate : v.startDate).slice(0, 7);
+        if (priceChanged && (priceFrom > currentMonth || priceFrom < firstMonth))
+          return { ok: false, error: uz.groups.priceFromInvalid };
+        await db.transaction(async (tx) => {
+          await tx.update(groups).set(values).where(eq(groups.id, existing.id));
+          if (!priceChanged) return;
+          const steps = await tx.select().from(groupPrices).where(eq(groupPrices.groupId, existing.id));
+          // Tarix hali bo'lmasa — eski narx "boshidan" (hisob shu paytgacha guruhning narxini ishlatgan)
+          if (!steps.length)
+            await tx
+              .insert(groupPrices)
+              .values({ groupId: existing.id, fromMonth: OPENING_MONTH, price: existing.price, createdBy: staff.id });
+          // Yangi narx tanlangan oydan hozirgacha amal qiladi — keyingi qadamlar olib tashlanadi
+          await tx
+            .delete(groupPrices)
+            .where(and(eq(groupPrices.groupId, existing.id), gt(groupPrices.fromMonth, priceFrom)));
+          await tx
+            .insert(groupPrices)
+            .values({ groupId: existing.id, fromMonth: priceFrom, price: v.price, createdBy: staff.id })
+            .onConflictDoUpdate({
+              target: [groupPrices.tenantId, groupPrices.groupId, groupPrices.fromMonth],
+              set: { price: v.price, createdBy: staff.id, createdAt: new Date() },
+            });
+        });
         const changed = (Object.keys(values) as (keyof typeof values)[]).filter(
           (k) => JSON.stringify(existing[k]) !== JSON.stringify(values[k]),
         );
-        await audit("group.update", { type: "group", id: existing.id }, { name: v.name, fields: changed });
+        await audit(
+          "group.update",
+          { type: "group", id: existing.id },
+          {
+            name: v.name,
+            fields: changed,
+            ...(priceChanged ? { price: { from: existing.price, to: v.price, fromMonth: priceFrom } } : {}),
+          },
+        );
         refresh(existing.id);
         return { ok: true, id: existing.id };
       }
@@ -276,19 +312,26 @@ export async function pauseMembershipAction(input: unknown): Promise<ActionResul
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const row = await loadMembership(ctx, parsed.data.id);
     if (!row) return { ok: false, error: uz.common.gone };
+    const today = todayTashkent();
     if (parsed.data.pause) {
       if (row.m.status === "paused") return { ok: true };
-      await ctx.db
-        .update(groupMemberships)
-        .set({ status: "paused", pausedAt: todayTashkent() })
-        .where(eq(groupMemberships.id, row.m.id));
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(groupMemberships)
+          .set({ status: "paused", pausedAt: today })
+          .where(eq(groupMemberships.id, row.m.id));
+        await openPauses(tx, [row.m.id], today);
+      });
     } else {
       if (row.m.status !== "paused") return { ok: true };
       // Faollashtirilgan bo'lsa faolga, sinovdan muzlatilgan bo'lsa sinovga qaytadi (asl sana saqlanadi)
-      await ctx.db
-        .update(groupMemberships)
-        .set({ status: row.m.activatedAt ? "active" : "trial", pausedAt: null })
-        .where(eq(groupMemberships.id, row.m.id));
+      await ctx.db.transaction(async (tx) => {
+        await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], today);
+        await tx
+          .update(groupMemberships)
+          .set({ status: row.m.activatedAt ? "active" : "trial", pausedAt: null })
+          .where(eq(groupMemberships.id, row.m.id));
+      });
     }
     await membershipAudit(ctx, row, parsed.data.pause ? "pause" : "unpause", {});
     refresh(row.g.id, row.s.id);
@@ -305,10 +348,13 @@ export async function leaveMembershipAction(input: unknown): Promise<ActionResul
     const { date, reason } = parsed.data;
     if (date < row.m.enrolledAt) return { ok: false, error: uz.groups.dateBeforeEnroll };
     // To'lov qaytarish va qarz tekshiruvi (eski "Tark etish" oynasi) — Moliya bilan (E3)
-    await ctx.db
-      .update(groupMemberships)
-      .set({ status: "left", leftAt: date, leftReason: reason || null })
-      .where(eq(groupMemberships.id, row.m.id));
+    await ctx.db.transaction(async (tx) => {
+      if (row.m.status === "paused") await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], date);
+      await tx
+        .update(groupMemberships)
+        .set({ status: "left", leftAt: date, leftReason: reason || null })
+        .where(eq(groupMemberships.id, row.m.id));
+    });
     await membershipAudit(ctx, row, "leave", { date, ...(reason ? { reason } : {}), from: row.m.status });
     refresh(row.g.id, row.s.id);
     return { ok: true };
