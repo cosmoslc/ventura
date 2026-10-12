@@ -6,6 +6,8 @@ import { PgBoss } from "pg-boss";
  */
 
 export const DEPLOY_QUEUE = "deploy";
+/** Serverlar bo'yicha buyruqlar (tekshirish, ilovani qayta yuklash) — monitor.ts */
+export const SERVER_QUEUE = "server";
 export const QUEUE_SCHEMA = "pgboss";
 /** Ishchi jarayon `settings` jadvaliga yozib turadigan "tirikman" belgisi */
 export const WORKER_HEARTBEAT_KEY = "worker.heartbeat";
@@ -53,6 +55,10 @@ export async function startQueue({
   if (!(await boss.getQueue(DEPLOY_QUEUE))) {
     // Deploy avtomatik qayta urinilmaydi: yarim bajarilgan deploy'ni takrorlash xavfli
     await boss.createQueue(DEPLOY_QUEUE, { retryLimit: 0, expireInSeconds: 60 * 60 });
+  }
+  if (!(await boss.getQueue(SERVER_QUEUE))) {
+    // Buyruq qisqa; yiqilsa foydalanuvchi qayta bosadi
+    await boss.createQueue(SERVER_QUEUE, { retryLimit: 0, expireInSeconds: 5 * 60 });
   }
   return boss;
 }

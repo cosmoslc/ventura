@@ -105,10 +105,18 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const [template] = await db.select().from(templates).where(eq(templates.key, project.templateKey)).limit(1);
     if (!template) throw new StepError("Shablon topilmadi");
 
-    // Server: loyihaga biriktirilgani, bo'lmasa birinchi tayyor server
+    // Server: loyihaga biriktirilgani, bo'lmasa loyiha manziliga mos (uydagi / online VPS) birinchi tayyor server
+    const kind = project.target === "home" ? "home" : project.target === "vps" ? "online" : null;
+    if (!kind) throw new StepError(`"${project.target}" manzili SSH orqali deploy qilinmaydi`);
     const ready = await db.select().from(servers).where(eq(servers.status, "ready")).orderBy(asc(servers.createdAt));
-    const server = ready.find((s) => s.id === project.serverId) ?? (project.serverId ? undefined : ready[0]);
-    if (!server) throw new StepError("Tayyor server yo'q. Avval serverni qo'shing va tekshiring (pnpm server:check).");
+    const server =
+      ready.find((s) => s.id === project.serverId) ??
+      (project.serverId ? undefined : ready.find((s) => s.kind === kind));
+    if (!server) {
+      throw new StepError(
+        `Tayyor ${kind === "home" ? "uydagi server" : "online VPS"} yo'q. Serverlar bo'limida server qo'shing va "Tekshirish"ni bosing.`,
+      );
+    }
 
     const slug = must(project.slug, SLUG_RE, "Loyiha nomi (slug)");
     const appName = must(template.key, SLUG_RE, "Shablon kaliti");

@@ -79,6 +79,13 @@ describe("rollar", () => {
     expect(can("admin", "admins.manage")).toBe(false);
     expect(can("super_admin", "settings.manage")).toBe(true);
   });
+
+  it("serverni faqat super admin qo'shadi va o'chiradi, admin ilovani qayta yuklay oladi", () => {
+    expect(can("super_admin", "servers.manage")).toBe(true);
+    expect(can("admin", "servers.manage")).toBe(false);
+    expect(can("admin", "projects.deploy")).toBe(true);
+    expect(can("viewer", "servers.manage")).toBe(false);
+  });
 });
 
 describe("2FA bosqichidagi imzolangan token", () => {

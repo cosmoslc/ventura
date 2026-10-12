@@ -35,9 +35,11 @@ import {
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { LogView } from "@ventura/ui/log-view";
+import { LineChart } from "@ventura/ui/line-chart";
 import { Logo } from "@ventura/ui/logo";
+import { Meter } from "@ventura/ui/meter";
 import { MoneyInput } from "@ventura/ui/money-input";
-import { demoColors } from "@/lib/mock-data";
+import { demoColors, demoMetrics } from "@/lib/mock-data";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { Pagination } from "@ventura/ui/pagination";
@@ -378,6 +380,28 @@ function Cards() {
           </Badge>
         </CardHeader>
         <CardContent className="text-body text-muted-foreground">Kartochka tanasi — 20px padding.</CardContent>
+      </Card>
+      <Card>
+        <CardContent className="space-y-3 pt-5">
+          <Meter label="CPU" value={0.32} detail="4 yadro" />
+          <Meter label="Xotira (RAM)" value={0.81} detail="6.5 / 8 GB" />
+          <Meter label="Disk" value={0.93} detail="93 / 100 GB" dangerAt={0.85} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent className="pt-5">
+          <LineChart
+            caption="Namuna: CPU va xotira, 24 soat"
+            times={demoMetrics.times}
+            max={100}
+            series={[
+              { key: "cpu", label: "CPU", color: "var(--chart-1)", values: demoMetrics.cpu },
+              { key: "mem", label: "Xotira", color: "var(--chart-2)", values: demoMetrics.mem },
+            ]}
+            formatValue={(v) => `${Math.round(v)}%`}
+            formatTime={(t) => new Date(t).toISOString().slice(11, 16)}
+          />
+        </CardContent>
       </Card>
     </div>
   );
@@ -739,7 +763,7 @@ export function UiCatalog() {
             <Badges />
           </Both>
         </Section>
-        <Section id="kartochkalar" title="Kartochkalar" description="Card va StatCard">
+        <Section id="kartochkalar" title="Kartochkalar" description="Card, StatCard, Meter va LineChart">
           <Both>
             <Cards />
           </Both>

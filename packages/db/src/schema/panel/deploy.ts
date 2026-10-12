@@ -1,4 +1,15 @@
-import { bigserial, index, integer, jsonb, pgTable, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import {
+  bigserial,
+  index,
+  integer,
+  jsonb,
+  pgTable,
+  real,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 import { users } from "./auth";
 import { projects } from "./core";
@@ -107,6 +118,54 @@ export interface ServerInfo {
   cpus?: number;
 }
 
+/** Ishlab turgan PM2 jarayoni (metrika so'rovidan; muhit o'zgaruvchilari olinmaydi) */
+export interface ServerProcess {
+  name: string;
+  status: string;
+  /** % (bitta yadroga nisbatan, PM2 bo'yicha) */
+  cpu: number;
+  memoryMb: number;
+  restarts: number;
+  /** Ishga tushgan vaqt (ms, epoch) */
+  startedAt: number | null;
+}
+
+/** Oxirgi metrika: serverning joriy holati */
+export interface ServerMetrics {
+  cpuPercent: number;
+  cpus: number;
+  load: [number, number, number];
+  memTotalMb: number;
+  memUsedMb: number;
+  diskTotalGb: number;
+  diskUsedGb: number;
+  uptimeSec: number;
+  processes: ServerProcess[];
+}
+
+/** Ogohlantirish holati: Telegram faqat o'zgarganda yuboriladi (SPEC 10: disk 85%, RAM 90%) */
+export interface ServerAlerts {
+  /** Ketma-ket yiqilgan so'rovlar */
+  failures?: number;
+  offline?: boolean;
+  disk?: boolean;
+  memory?: boolean;
+}
+
+export const SERVER_ACTIONS = ["check", "reload", "stop", "start"] as const;
+export type ServerActionKind = (typeof SERVER_ACTIONS)[number];
+
+/** Paneldan berilgan oxirgi buyruq (fon vazifasi) va uning natijasi — sahifada ko'rsatiladi */
+export interface ServerLastAction {
+  kind: ServerActionKind;
+  /** reload/stop/start uchun ilova nomi */
+  app?: string;
+  status: "queued" | "running" | "ok" | "error";
+  message?: string;
+  by?: string;
+  at: string;
+}
+
 export const servers = pgTable(
   "servers",
   {
@@ -125,6 +184,13 @@ export const servers = pgTable(
     info: jsonb("info").$type<ServerInfo>().notNull().default({}),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),
     lastError: text("last_error"),
+    /** Har daqiqalik so'rov: oxirgi muvaffaqiyatli metrika va oxirgi urinish natijasi */
+    metrics: jsonb("metrics").$type<ServerMetrics>(),
+    metricsAt: timestamp("metrics_at", { withTimezone: true }),
+    probeAt: timestamp("probe_at", { withTimezone: true }),
+    probeError: text("probe_error"),
+    alerts: jsonb("alerts").$type<ServerAlerts>().notNull().default({}),
+    lastAction: jsonb("last_action").$type<ServerLastAction>(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
@@ -132,6 +198,25 @@ export const servers = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [uniqueIndex("servers_name_uq").on(t.name)],
+);
+
+/** Metrikalar tarixi (grafiklar uchun): har daqiqa bitta qator, 7 kundan eskisi o'chiriladi */
+export const serverMetrics = pgTable(
+  "server_metrics",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    serverId: uuid("server_id")
+      .notNull()
+      .references(() => servers.id, { onDelete: "cascade" }),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+    cpuPercent: real("cpu_percent").notNull(),
+    memUsedMb: integer("mem_used_mb").notNull(),
+    memTotalMb: integer("mem_total_mb").notNull(),
+    diskUsedGb: real("disk_used_gb").notNull(),
+    diskTotalGb: real("disk_total_gb").notNull(),
+    load1: real("load1").notNull(),
+  },
+  (t) => [index("server_metrics_server_at_idx").on(t.serverId, t.at)],
 );
 
 /* ---------- Ishlab turgan ilovalar ---------- */
