@@ -86,7 +86,10 @@ export async function saveStudentAction(input: unknown): Promise<ActionResult<{ 
       return { ok: true, id: existing.id };
     }
 
-    const [row] = await db.insert(students).values(values).returning({ id: students.id });
+    const [row] = await db
+      .insert(students)
+      .values({ ...values, createdBy: ctx.staff.id })
+      .returning({ id: students.id });
     await audit(
       "student.create",
       { type: "student", id: row!.id },

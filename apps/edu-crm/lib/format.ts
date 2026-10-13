@@ -31,3 +31,9 @@ export function formatMonth(month: string) {
 export function signedMoney(n: number) {
   return `${n > 0 ? "+" : n < 0 ? "−" : ""}${money(Math.abs(n))}`;
 }
+
+/** Joriy oydan `count − 1` oy orqaga, eng yangisi birinchi ("YYYY-MM"); yozuvlar bir yildan eski kiritilmaydi */
+export function recentMonths(today: string, count = 13): string[] {
+  const [y, m] = today.split("-").map(Number);
+  return Array.from({ length: count }, (_, i) => new Date(Date.UTC(y!, m! - 1 - i, 1)).toISOString().slice(0, 7));
+}

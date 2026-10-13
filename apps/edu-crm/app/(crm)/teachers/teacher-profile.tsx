@@ -28,6 +28,7 @@ export function TeacherProfile({
   branches,
   selectedBranch,
   perms,
+  salary,
 }: {
   teacher: TeacherRow;
   supports: { id: string; name: string }[];
@@ -36,6 +37,8 @@ export function TeacherProfile({
   branches: PickerBranch[];
   selectedBranch: string;
   perms: TeacherPerms;
+  /** "Maosh" bo'limi (Ish haqi bo'limi yoqilgan va ruxsat bo'lsa) */
+  salary?: React.ReactNode;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = React.useState(false);
@@ -125,6 +128,8 @@ export function TeacherProfile({
         )}
         <StatCard tone={3} icon={<Users />} label={uz.teachers.colStudents} value={uz.common.count(t.students)} />
       </div>
+
+      {salary}
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="p-5 lg:col-span-5">

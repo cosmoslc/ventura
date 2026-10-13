@@ -237,3 +237,22 @@ export const financeCategoryInput = z.object({
   active: z.boolean().default(true),
 });
 export type FinanceCategoryInput = z.input<typeof financeCategoryInput>;
+
+/* ---------- Ish haqi (ADR 0018) ---------- */
+
+export const salaryEntryInput = z.object({
+  id: id.optional(),
+  person: z.string().regex(/^(user|teacher):[0-9a-f-]{36}$/, uz.salaries.personRequired),
+  kind: z.enum(["salary", "advance", "bonus", "penalty"]),
+  amount: z
+    .number({ error: uz.salaries.amountRequired })
+    .int(uz.salaries.amountRequired)
+    .positive(uz.salaries.amountRequired)
+    .max(10_000_000_000, uz.salaries.amountRequired),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, uz.salaries.monthRequired),
+  date: day,
+  /** Faqat maosh va avansda (server tekshiradi) */
+  methodId: id.nullable().default(null),
+  note: z.string().trim().max(500).default(""),
+});
+export type SalaryEntryInput = z.input<typeof salaryEntryInput>;

@@ -50,12 +50,15 @@ export const students = pgTable(
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     archiveReason: text("archive_reason"),
     archivedBy: uuid("archived_by"),
+    /** O'quvchini qo'shgan xodim — menejer KPI shunga yoziladi (EDU-CRM-E3-DAVOMI, 4-qaror); eski yozuvlarda bo'sh */
+    createdBy: uuid("created_by"),
     ...timestamps,
   },
   (t) => [
     unique("students_tenant_id_uq").on(t.tenantId, t.id),
     index("students_branch_idx").on(t.branchId),
     index("students_phone_idx").on(t.phone),
+    index("students_created_by_idx").on(t.createdBy),
     foreignKey({
       name: "students_branch_fk",
       columns: [t.tenantId, t.branchId],
@@ -65,6 +68,11 @@ export const students = pgTable(
       name: "students_course_fk",
       columns: [t.tenantId, t.interestedCourseId],
       foreignColumns: [courses.tenantId, courses.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "students_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [users.tenantId, users.id],
     }).onDelete("restrict"),
     foreignKey({
       name: "students_archived_by_fk",

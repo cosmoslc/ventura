@@ -291,7 +291,10 @@ export async function writeImport(db: TenantDb, prepared: Prepared[], by: string
     const created: { type: string; id: string; name: string }[] = [];
     for (const p of prepared) {
       if (p.table === "students") {
-        const [s] = await tx.insert(students).values(p.values).returning({ id: students.id });
+        const [s] = await tx
+          .insert(students)
+          .values({ ...p.values, createdBy: by })
+          .returning({ id: students.id });
         for (const groupId of p.groupIds) {
           await tx.insert(groupMemberships).values({
             groupId,

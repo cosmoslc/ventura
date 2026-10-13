@@ -50,7 +50,10 @@ const EV_PAGE = 4;
 
 /** Sahifalar: havola faqat ochiq bo'lsa (bo'lim yoqilgan va ruxsat bor) */
 export type DashboardLinks = Partial<
-  Record<"payments" | "expenses" | "debtors" | "attendance" | "students" | "groups" | "teachers" | "rooms", string>
+  Record<
+    "payments" | "salaries" | "expenses" | "debtors" | "attendance" | "students" | "groups" | "teachers" | "rooms",
+    string
+  >
 >;
 
 const monthShort = (month: string) => uz.months[Number(month.slice(5, 7)) - 1]!.slice(0, 3);
@@ -218,12 +221,14 @@ export function DashboardView({
       ? [
           {
             title: t.kpiAdvance,
-            value: "—",
-            note: t.notYetSalaries,
+            money: cur.advance,
+            delta: kpiDelta(cur.advance, prev?.advance, "down"),
+            note: t.kpiAdvanceNote(cur.advanceCount),
             icon: <Banknote />,
             color: "var(--chart-2)",
             kind: "area" as const,
-            spark: [],
+            spark: data.months.map((m) => m.advance),
+            href: links.salaries,
           },
         ]
       : []),
@@ -273,6 +278,7 @@ export function DashboardView({
   const SPEND_COLORS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)"];
   const spendSegs: DonutSegment[] = topWithOther(
     [
+      [t.spendSalaries, cur.salary],
       [t.spendRefunds, cur.refund],
       ...Object.entries(cur.categories).map(([k, v]) => [k || t.spendNoCategory, v] as [string, number]),
     ],
