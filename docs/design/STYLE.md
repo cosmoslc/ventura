@@ -406,6 +406,7 @@ Qoidalar:
 
 - Pastki qism: kartochka sarlavhasi bilan bir xil padding (`20 × 16px`), `--table-foot` fon.
 - Chapda "1–10 / 37 ta yozuv", o'ngda `ghost sm` "Oldingi" / "Keyingi" va 32px sahifa raqamlari (aktivi primary gradientda); ko'p sahifada "…".
+- `start` — chapda, yozuvlar sonidan oldin qo'shimcha boshqaruv (masalan, "Sahifada ko'rsatish" tanlovi).
 
 ### 11.14 Tabs — `tabs.tsx`
 

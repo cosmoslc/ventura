@@ -1,10 +1,11 @@
 "use client";
 
-import { GraduationCap, Plus, RotateCcw, Search, Snowflake, UserCheck, Users } from "lucide-react";
+import { ArchiveRestore, GraduationCap, Plus, RotateCcw, Search, Snowflake, UserCheck, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Avatar } from "@ventura/ui/avatar";
+import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
@@ -13,16 +14,20 @@ import { Pagination } from "@ventura/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
+import { toast } from "@ventura/ui/toast";
 import { BalanceText } from "../payments/payment-dialog";
-import { displayPhone } from "@/lib/format";
+import { displayPhone, formatDate } from "@/lib/format";
 import { uz } from "@/lib/uz";
+import { restoreArchivedAction } from "../archive/actions";
 import type { PickerBranch } from "../branch-picker";
 import { ExcelMenu } from "../excel/excel-menu";
 import type { StudentRow } from "./data";
-import { STATUSES, StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
+import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
 import { StudentForm } from "./student-form";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
+/** Holat filtri (eski tizimdagidek qisqa ro'yxat); "archived" — o'chirilgan (arxivdagi) o'quvchilar */
+const STATUS_FILTERS = ["active", "paused", "archived", "trial"] as const;
 const PAGE_SIZE_KEY = "edu.students.pageSize";
 
 function storedPageSize(): number {
@@ -55,12 +60,17 @@ function storePageSize(n: number) {
 
 export function StudentsView({
   rows,
+  archived,
+  canRestore,
   branches,
   selectedBranch,
   courses,
   perms,
 }: {
   rows: StudentRow[];
+  /** null — xodim arxivni ko'ra olmaydi ("O'chirilganlar" filtri yo'q) */
+  archived: StudentRow[] | null;
+  canRestore: boolean;
   branches: PickerBranch[];
   selectedBranch: string;
   courses: { id: string; name: string }[];
@@ -75,6 +85,7 @@ export function StudentsView({
   const pageSize = React.useSyncExternalStore(subscribePageSize, storedPageSize, () => 50);
   const [editing, setEditing] = React.useState<StudentRow | null>(null);
   const [formOpen, setFormOpen] = React.useState(false);
+  const [, startTransition] = React.useTransition();
 
   function changePageSize(n: number) {
     storePageSize(n);
@@ -86,14 +97,15 @@ export function StudentsView({
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
-  const groupOptions = [...new Map(rows.flatMap((r) => r.groups.map((g) => [g.id, g] as const))).values()]
+  const source = status === "archived" ? (archived ?? []) : rows;
+  const groupOptions = [...new Map(source.flatMap((r) => r.groups.map((g) => [g.id, g] as const))).values()]
     .filter((g) => teacherFilter === "all" || g.teacher === teacherFilter)
     .sort((a, b) => a.name.localeCompare(b.name));
   const teacherOptions = [...new Set(rows.flatMap((r) => r.groups.map((g) => g.teacher ?? "")))]
     .filter(Boolean)
     .sort((a, b) => a.localeCompare(b));
-  const filtered = rows.filter((r) => {
-    if (status !== "all" && r.status !== status) return false;
+  const filtered = source.filter((r) => {
+    if (status !== "all" && status !== "archived" && r.status !== status) return false;
     if (groupFilter !== "all" && !r.groups.some((g) => g.id === groupFilter)) return false;
     if (teacherFilter !== "all" && !r.groups.some((g) => g.teacher === teacherFilter)) return false;
     if (!q) return true;
@@ -107,6 +119,15 @@ export function StudentsView({
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const current = Math.min(page, pageCount);
   const visible = filtered.slice((current - 1) * pageSize, current * pageSize);
+
+  function restore(r: StudentRow) {
+    startTransition(async () => {
+      const res = await restoreArchivedAction({ kind: "student", id: r.id });
+      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      toast({ tone: "success", title: uz.students.restored, description: r.name });
+      router.refresh();
+    });
+  }
 
   function openForm(row: StudentRow | null) {
     setEditing(row);
@@ -223,9 +244,9 @@ export function StudentsView({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{uz.students.statusFilter}</SelectItem>
-              {STATUSES.map((s) => (
+              {STATUS_FILTERS.filter((s) => s !== "archived" || archived).map((s) => (
                 <SelectItem key={s} value={s}>
-                  {uz.students.status[s]}
+                  {s === "archived" ? uz.students.archivedFilter : uz.students.status[s]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -245,21 +266,6 @@ export function StudentsView({
               <RotateCcw /> {uz.teachers.clear}
             </Button>
           ) : null}
-          <div className="ml-auto flex items-center gap-2 text-caption text-muted-foreground">
-            {uz.students.perPage}
-            <Select value={String(pageSize)} onValueChange={(v) => changePageSize(Number(v))}>
-              <SelectTrigger className="w-24" aria-label={uz.students.perPage}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PAGE_SIZES.map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {uz.students.perPageOption(n)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
         {visible.length ? (
@@ -280,15 +286,29 @@ export function StudentsView({
                   {visible.map((r) => (
                     <Tr key={r.id}>
                       <Td>
-                        <Link href={`/students/${r.id}`} className="group flex items-center gap-2.5">
-                          <Avatar name={r.name} size={34} />
-                          <span className="min-w-0">
-                            <span className="block truncate text-body font-bold text-foreground group-hover:text-primary">
-                              {r.name}
+                        {r.archivedAt ? (
+                          <div className="flex items-center gap-2.5">
+                            <Avatar name={r.name} size={34} />
+                            <span className="min-w-0">
+                              <span className="block truncate text-body font-bold text-foreground">{r.name}</span>
+                              <span className="block text-caption text-muted-foreground">
+                                {uz.students.archivedAt(formatDate(r.archivedAt.slice(0, 10)))}
+                              </span>
                             </span>
-                            <span className="block text-caption text-muted-foreground">{uz.students.viewProfile}</span>
-                          </span>
-                        </Link>
+                          </div>
+                        ) : (
+                          <Link href={`/students/${r.id}`} className="group flex items-center gap-2.5">
+                            <Avatar name={r.name} size={34} />
+                            <span className="min-w-0">
+                              <span className="block truncate text-body font-bold text-foreground group-hover:text-primary">
+                                {r.name}
+                              </span>
+                              <span className="block text-caption text-muted-foreground">
+                                {uz.students.viewProfile}
+                              </span>
+                            </span>
+                          </Link>
+                        )}
                       </Td>
                       <Td className="font-mono">{displayPhone(r.phone) ?? uz.students.phoneMissing}</Td>
                       <Td>
@@ -317,10 +337,20 @@ export function StudentsView({
                         )}
                       </Td>
                       <Td>
-                        <StatusBadge status={r.status} />
+                        {r.archivedAt ? (
+                          <Badge tone="danger">{uz.students.archivedFilter}</Badge>
+                        ) : (
+                          <StatusBadge status={r.status} />
+                        )}
                       </Td>
                       <Td className="text-right">
-                        <StudentMenu student={r} perms={perms} onEdit={() => openForm(r)} />
+                        {!r.archivedAt ? (
+                          <StudentMenu student={r} perms={perms} onEdit={() => openForm(r)} />
+                        ) : canRestore ? (
+                          <Button variant="ghost" size="sm" onClick={() => restore(r)}>
+                            <ArchiveRestore /> {uz.students.restore}
+                          </Button>
+                        ) : null}
                       </Td>
                     </Tr>
                   ))}
@@ -333,6 +363,23 @@ export function StudentsView({
               total={filtered.length}
               pageSize={pageSize}
               onPageChange={setPage}
+              start={
+                <div className="flex items-center gap-2 text-caption text-muted-foreground">
+                  {uz.students.perPage}
+                  <Select value={String(pageSize)} onValueChange={(v) => changePageSize(Number(v))}>
+                    <SelectTrigger className="w-24" aria-label={uz.students.perPage}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAGE_SIZES.map((n) => (
+                        <SelectItem key={n} value={String(n)}>
+                          {uz.students.perPageOption(n)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              }
             />
           </>
         ) : (

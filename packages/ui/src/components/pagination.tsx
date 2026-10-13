@@ -11,6 +11,8 @@ export interface PaginationProps {
   total: number;
   pageSize: number;
   onPageChange: (page: number) => void;
+  /** Chapda, yozuvlar sonidan oldin (masalan, "Sahifada ko'rsatish" tanlovi) */
+  start?: React.ReactNode;
   className?: string;
 }
 
@@ -26,7 +28,7 @@ function pageList(page: number, count: number): (number | "…")[] {
   return out;
 }
 
-export function Pagination({ page, pageCount, total, pageSize, onPageChange, className }: PaginationProps) {
+export function Pagination({ page, pageCount, total, pageSize, onPageChange, start, className }: PaginationProps) {
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
   return (
@@ -36,12 +38,15 @@ export function Pagination({ page, pageCount, total, pageSize, onPageChange, cla
         className,
       )}
     >
-      <p className="text-xs text-muted-foreground">
-        <span className="font-mono font-semibold text-foreground">
-          {from}–{to}
-        </span>{" "}
-        / <span className="font-mono">{total}</span> ta yozuv
-      </p>
+      <div className="flex flex-wrap items-center gap-4">
+        {start}
+        <p className="text-xs text-muted-foreground">
+          <span className="font-mono font-semibold text-foreground">
+            {from}–{to}
+          </span>{" "}
+          / <span className="font-mono">{total}</span> ta yozuv
+        </p>
+      </div>
       <nav className="flex items-center gap-1" aria-label="Sahifalar">
         <Button variant="ghost" size="sm" disabled={page <= 1} onClick={() => onPageChange(page - 1)}>
           <ChevronLeft /> Oldingi
