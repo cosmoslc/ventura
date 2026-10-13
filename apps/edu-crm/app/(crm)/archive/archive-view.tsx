@@ -7,6 +7,7 @@ import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { FilterBar } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
@@ -123,18 +124,18 @@ export function ArchiveView({
         </TabsList>
       </Tabs>
 
-      <Card className="overflow-hidden">
-        <div className="border-b border-border-soft p-3">
-          <div className="sm:max-w-sm">
-            <Input
-              icon={<Search />}
-              placeholder={uz.archive.search}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
+      <FilterBar standalone>
+        <div className="sm:max-w-sm">
+          <Input
+            icon={<Search />}
+            placeholder={uz.archive.search}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
+      </FilterBar>
 
+      <Card className="overflow-hidden">
         {count === 0 ? (
           <EmptyState
             icon={<Archive />}

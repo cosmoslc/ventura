@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarRange, Check, Gauge, Pencil, Plus, Target, Trash2, Wallet } from "lucide-react";
+import { Check, Gauge, Pencil, Plus, Target, Trash2, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
@@ -12,6 +12,7 @@ import { Meter } from "@ventura/ui/meter";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { MoneyInput } from "@ventura/ui/money-input";
 import { EmptyState } from "@ventura/ui/page-header";
+import { FilterBar, FilterEnd, FilterSelect } from "@ventura/ui/filter-bar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
@@ -42,6 +43,7 @@ export function PlansTab({
   branches,
   selectedBranch,
   canEdit,
+  addRequest,
   onMonth,
 }: {
   month: string;
@@ -52,6 +54,8 @@ export function PlansTab({
   branches: PickerBranch[];
   selectedBranch: string;
   canEdit: boolean;
+  /** Sarlavhadagi "Reja qo'shish" bosilganda oshadi */
+  addRequest: number;
   onMonth: (month: string) => void;
 }) {
   const router = useRouter();
@@ -61,6 +65,11 @@ export function PlansTab({
   const [form, setForm] = React.useState<{ editing: PlanRow | null } | null>(null);
   const [toDelete, setToDelete] = React.useState<PlanRow | null>(null);
   const [, startTransition] = React.useTransition();
+  const [seenAdd, setSeenAdd] = React.useState(addRequest);
+  if (addRequest !== seenAdd) {
+    setSeenAdd(addRequest);
+    setForm({ editing: null });
+  }
 
   const visible = plans.filter(
     (p) =>
@@ -113,78 +122,45 @@ export function PlansTab({
         </Card>
       </div>
 
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <Label htmlFor="plan-month">{t.planMonth}</Label>
-          <Input
-            id="plan-month"
-            type="month"
-            icon={<CalendarRange />}
-            value={month}
-            onChange={(e) => e.target.value && onMonth(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label>{t.category}</Label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger className="w-full" aria-label={t.category}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allCategories}</SelectItem>
-              {categories
-                .filter((c) => c.kind === "expense")
-                .map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.person}</Label>
-          <Select value={person} onValueChange={setPerson}>
-            <SelectTrigger className="w-full" aria-label={t.person}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allPeople}</SelectItem>
-              {personOptions.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.method}</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger className="w-full" aria-label={t.method}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allMethods}</SelectItem>
-              {methods.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
+      <FilterBar standalone>
+        <Input
+          type="month"
+          aria-label={t.planMonth}
+          title={t.planMonth}
+          className="w-full sm:w-44"
+          value={month}
+          onChange={(e) => e.target.value && onMonth(e.target.value)}
+        />
+        <FilterSelect
+          label={t.category}
+          value={category}
+          onValueChange={setCategory}
+          options={[
+            { value: ALL, label: t.allCategories },
+            ...categories.filter((c) => c.kind === "expense").map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.person}
+          value={person}
+          onValueChange={setPerson}
+          options={[
+            { value: ALL, label: t.allPeople },
+            ...personOptions.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.method}
+          value={method}
+          onValueChange={setMethod}
+          options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+        <FilterEnd>
+          <span className="text-caption font-semibold text-foreground">{formatMonth(month)}</span>
+        </FilterEnd>
+      </FilterBar>
 
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-          <h2 className="type-heading text-base">{formatMonth(month)}</h2>
-          {canEdit ? (
-            <Button onClick={() => setForm({ editing: null })}>
-              <Plus /> {t.addPlan}
-            </Button>
-          ) : null}
-        </div>
+      <Card className="overflow-hidden">
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

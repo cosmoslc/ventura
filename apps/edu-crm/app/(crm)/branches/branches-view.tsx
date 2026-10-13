@@ -1,13 +1,13 @@
 "use client";
 
-import { Building2, Pencil, Plus, Search, Trash2, UsersRound, GraduationCap } from "lucide-react";
+import { Building2, Pencil, Plus, Trash2, UsersRound, GraduationCap } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Input } from "@ventura/ui/input";
+import { FilterBar, FilterSearch } from "@ventura/ui/filter-bar";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { toast } from "@ventura/ui/toast";
@@ -60,14 +60,6 @@ export function BranchesView({
         title={uz.branches.title}
         actions={
           <>
-            <div className="w-full sm:w-64">
-              <Input
-                icon={<Search />}
-                placeholder={uz.branches.search}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
             {canCreate ? (
               <Button onClick={() => openForm(null)}>
                 <Plus /> {uz.branches.add}
@@ -76,6 +68,10 @@ export function BranchesView({
           </>
         }
       />
+
+      <FilterBar standalone className="mb-6">
+        <FilterSearch placeholder={uz.branches.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+      </FilterBar>
 
       {visible.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

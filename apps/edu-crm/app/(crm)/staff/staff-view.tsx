@@ -20,6 +20,7 @@ import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { FilterBar } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
@@ -186,56 +187,56 @@ export function StaffView({
         />
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-border-soft p-3">
-          <div className="min-w-0 flex-1 sm:max-w-sm sm:min-w-64">
-            <Input
-              icon={<Search />}
-              placeholder={uz.staff.search}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-          <Select value={positionFilter} onValueChange={setPositionFilter}>
-            <SelectTrigger className="w-full sm:w-52" aria-label={uz.staff.colPosition}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{uz.staff.allPositions}</SelectItem>
-              {positions.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={formFilter} onValueChange={(v) => setFormFilter(v as FormFilter)}>
-            <SelectTrigger className="w-full sm:w-52" aria-label={uz.staff.colForm}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{uz.staff.allForms}</SelectItem>
-              <SelectItem value="completed">{uz.staff.formsCompleted}</SelectItem>
-              <SelectItem value="incomplete">{uz.staff.formsIncomplete}</SelectItem>
-            </SelectContent>
-          </Select>
-          {filtered ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              title={uz.staff.clearHint}
-              onClick={() => {
-                setQuery("");
-                setPositionFilter("all");
-                setFormFilter("all");
-              }}
-            >
-              <RotateCcw /> {uz.staff.clear}
-            </Button>
-          ) : null}
-          <span className="ml-auto text-caption text-muted-foreground">{uz.staff.shown(visible.length)}</span>
+      <FilterBar standalone>
+        <div className="min-w-0 flex-1 sm:max-w-sm sm:min-w-64">
+          <Input
+            icon={<Search />}
+            placeholder={uz.staff.search}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
         </div>
+        <Select value={positionFilter} onValueChange={setPositionFilter}>
+          <SelectTrigger className="w-full sm:w-52" aria-label={uz.staff.colPosition}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{uz.staff.allPositions}</SelectItem>
+            {positions.map((p) => (
+              <SelectItem key={p.id} value={p.id}>
+                {p.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={formFilter} onValueChange={(v) => setFormFilter(v as FormFilter)}>
+          <SelectTrigger className="w-full sm:w-52" aria-label={uz.staff.colForm}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{uz.staff.allForms}</SelectItem>
+            <SelectItem value="completed">{uz.staff.formsCompleted}</SelectItem>
+            <SelectItem value="incomplete">{uz.staff.formsIncomplete}</SelectItem>
+          </SelectContent>
+        </Select>
+        {filtered ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            title={uz.staff.clearHint}
+            onClick={() => {
+              setQuery("");
+              setPositionFilter("all");
+              setFormFilter("all");
+            }}
+          >
+            <RotateCcw /> {uz.staff.clear}
+          </Button>
+        ) : null}
+        <span className="ml-auto text-caption text-muted-foreground">{uz.staff.shown(visible.length)}</span>
+      </FilterBar>
 
+      <Card className="overflow-hidden">
         {visible.length ? (
           <TableWrap>
             <Table className="min-w-[960px]">

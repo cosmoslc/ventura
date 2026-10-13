@@ -1,12 +1,12 @@
 "use client";
 
-import { Calendar, Clock, DoorOpen, LayoutGrid, List, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { Calendar, Clock, DoorOpen, LayoutGrid, List, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Input } from "@ventura/ui/input";
+import { FilterBar, FilterSearch } from "@ventura/ui/filter-bar";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
@@ -93,14 +93,9 @@ export function RoomsView({
         <StatCard tone={3} icon={<LayoutGrid />} label={uz.rooms.capacity} value={uz.rooms.seatsUnit(totalCapacity)} />
       </div>
 
-      <div className="max-w-md">
-        <Input
-          icon={<Search />}
-          placeholder={uz.rooms.search}
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-      </div>
+      <FilterBar standalone>
+        <FilterSearch placeholder={uz.rooms.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+      </FilterBar>
 
       {!visible.length ? (
         <Card>
