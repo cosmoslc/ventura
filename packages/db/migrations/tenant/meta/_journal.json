@@ -99,6 +99,13 @@
       "when": 1791909406744,
       "tag": "0013_e4a_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791910697283,
+      "tag": "0014_e4b_first_lessons",
+      "breakpoints": true
     }
   ]
 }

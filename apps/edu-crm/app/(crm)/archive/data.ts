@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, inArray, isNotNull, isNull, or } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { courses, teachers, users } from "@ventura/db/schema/tenant";
+import { courses, leads, teachers, users } from "@ventura/db/schema/tenant";
 import { archivedGroups } from "../groups/data";
 import { type ArchivedStudentRow, archivedStudents } from "../students/data";
 
@@ -18,13 +18,19 @@ export interface ArchiveData {
   courses: ArchivedItem[];
   teachers: ArchivedItem[];
   groups: ArchivedItem[];
+  /** O'chirilgan lidlar (E4b); bo'lim o'chiq bo'lsa — bo'sh */
+  leads: ArchivedItem[];
 }
 
 const localPhone = (p: string) => p.replace(/\D/g, "").slice(-9);
 
 /** Arxivdagi yozuvlar; `filter` — getBranchContext().filter (umumiy kurslar hammaga ko'rinadi) */
-export async function archiveData(db: TenantDb, filter: readonly string[] | null): Promise<ArchiveData> {
-  const [st, cs, ts, gs] = await Promise.all([
+export async function archiveData(
+  db: TenantDb,
+  filter: readonly string[] | null,
+  withLeads = false,
+): Promise<ArchiveData> {
+  const [st, cs, ts, gs, ls] = await Promise.all([
     archivedStudents(db, filter),
     db
       .select()
@@ -42,6 +48,13 @@ export async function archiveData(db: TenantDb, filter: readonly string[] | null
       .where(and(isNotNull(teachers.archivedAt), filter ? inArray(teachers.branchId, [...filter]) : undefined))
       .orderBy(desc(teachers.archivedAt)),
     archivedGroups(db, filter),
+    withLeads
+      ? db
+          .select()
+          .from(leads)
+          .where(and(isNotNull(leads.archivedAt), filter ? inArray(leads.branchId, [...filter]) : undefined))
+          .orderBy(desc(leads.archivedAt))
+      : Promise.resolve([]),
   ]);
   const actorIds = [...new Set(st.flatMap((s) => (s.archivedBy ? [s.archivedBy] : [])))];
   const actors = actorIds.length
@@ -62,6 +75,13 @@ export async function archiveData(db: TenantDb, filter: readonly string[] | null
       phone: null,
       branchId: g.branchId,
       archivedAt: g.archivedAt!.toISOString(),
+    })),
+    leads: ls.map((l) => ({
+      id: l.id,
+      name: l.name,
+      phone: localPhone(l.phone),
+      branchId: l.branchId,
+      archivedAt: l.archivedAt!.toISOString(),
     })),
     teachers: ts.map((t) => ({
       id: t.id,

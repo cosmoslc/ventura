@@ -1,6 +1,17 @@
 "use client";
 
-import { CalendarClock, ClipboardList, Columns3, Phone, Plus, UserCheck, UserPlus } from "lucide-react";
+import {
+  CalendarCheck,
+  CalendarClock,
+  ClipboardList,
+  Columns3,
+  ListX,
+  Phone,
+  Plus,
+  UserCheck,
+  UserPlus,
+  UserX,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -21,20 +32,32 @@ import { LEAD_SOURCES, daysIn } from "@/lib/leads";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import { FieldsModal } from "../fields-modal";
-import { moveLeadAction, saveLeadFieldsAction } from "./actions";
-import type { LeadRow, StageRow, StaffOption } from "./data";
-import { ArchiveDialog, AssignDialog, LeadMenu, MoveDialog, StageBadge, StagesModal } from "./lead-dialogs";
+import { moveLeadAction, restoreLeadAction, saveLeadFieldsAction } from "./actions";
+import type { LeadGroupOption, LeadRow, StageRow, StaffOption } from "./data";
+import {
+  ArchiveDialog,
+  AssignDialog,
+  ConvertDialog,
+  FirstLessonDialog,
+  LeadMenu,
+  LoseDialog,
+  LostReasonsModal,
+  MoveDialog,
+  StageBadge,
+  StagesModal,
+} from "./lead-dialogs";
 import { LeadForm } from "./lead-form";
 import type { LeadPerms } from "./perms";
 
 const t = uz.leads;
 const ALL = "all";
 const NONE = "none";
-type View = "board" | "list";
+type View = "board" | "list" | "lost" | "won";
 
 /**
  * Lidlar (E4a, ADR 0022): doska — ish bosqichlari ustunlarda, kartani sudrab yoki menyudan boshqa ustunga o'tkazish;
- * ro'yxat — jadval, tanlab mas'ul belgilash. Filtrlar ikkala ko'rinishga umumiy.
+ * ro'yxat — jadval, tanlab mas'ul belgilash; "Ketgan lidlar" (sabab, qaysi bosqichdan, tiklash) va "O'quvchi bo'lganlar"
+ * (E4b). Filtrlar hamma ko'rinishga umumiy.
  */
 export function LeadsView({
   stages,
@@ -47,6 +70,8 @@ export function LeadsView({
   today,
   me,
   perms,
+  groups,
+  lostReasons,
 }: {
   stages: StageRow[];
   rows: LeadRow[];
@@ -58,6 +83,9 @@ export function LeadsView({
   today: string;
   me: string;
   perms: LeadPerms;
+  /** Birinchi dars va o'quvchiga aylantirish uchun guruhlar */
+  groups: LeadGroupOption[];
+  lostReasons: string[];
 }) {
   const router = useRouter();
   const [view, setView] = React.useState<View>("board");
@@ -72,6 +100,10 @@ export function LeadsView({
   const [archiving, setArchiving] = React.useState<LeadRow | null>(null);
   const [stagesOpen, setStagesOpen] = React.useState(false);
   const [fieldsOpen, setFieldsOpen] = React.useState(false);
+  const [reasonsOpen, setReasonsOpen] = React.useState(false);
+  const [converting, setConverting] = React.useState<LeadRow | null>(null);
+  const [lesson, setLesson] = React.useState<LeadRow | null>(null);
+  const [losing, setLosing] = React.useState<LeadRow | null>(null);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   // Sudrab ko'chirishda server javobini kutmasdan ko'rsatish
   const [optimistic, setOptimistic] = React.useState<Record<string, string>>({});
@@ -79,11 +111,11 @@ export function LeadsView({
   const stageOf = (l: LeadRow) => optimistic[l.id] ?? l.stageId;
   const openStages = stages.filter((s) => s.kind === "open");
   const openIds = new Set(openStages.map((s) => s.id));
-  const active = rows.filter((l) => openIds.has(stageOf(l)));
+  const kindOf = (l: LeadRow) => stages.find((s) => s.id === stageOf(l))?.kind ?? "open";
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
-  const filtered = active.filter((l) => {
+  const matches = (l: LeadRow) => {
     if (source !== ALL && l.source !== source) return false;
     if (course !== ALL && l.courseId !== course) return false;
     if (assignee === NONE ? !!l.assignedTo : assignee !== ALL && l.assignedTo !== assignee) return false;
@@ -91,7 +123,13 @@ export function LeadsView({
     return (
       l.name.toLowerCase().includes(q) || (!!digits && (l.phone.includes(digits) || (l.phone2 ?? "").includes(digits)))
     );
-  });
+  };
+  const filtered = rows.filter((l) => openIds.has(stageOf(l)) && matches(l));
+  const lostRows = rows.filter((l) => kindOf(l) === "lost" && matches(l));
+  const wonRows = rows.filter((l) => kindOf(l) === "won" && matches(l));
+  const lostTotal = rows.filter((l) => kindOf(l) === "lost").length;
+  const wonTotal = rows.filter((l) => kindOf(l) === "won").length;
+  const shown = view === "lost" ? lostRows : view === "won" ? wonRows : filtered;
   const filtering = !!q || source !== ALL || course !== ALL || assignee !== ALL;
   const counts = Object.fromEntries(stages.map((s) => [s.id, rows.filter((l) => stageOf(l) === s.id).length]));
   const sources = [...new Set([...LEAD_SOURCES, ...rows.flatMap((l) => (l.source ? [l.source] : []))])];
@@ -127,11 +165,15 @@ export function LeadsView({
   const menu = (l: LeadRow) => (
     <LeadMenu
       lead={l}
+      stageKind={kindOf(l)}
       perms={perms}
       onEdit={() => openForm(l)}
       onMove={() => setMoving(l)}
       onAssign={() => setAssigning({ ids: [l.id], current: l.assignedTo })}
       onArchive={() => setArchiving(l)}
+      onConvert={() => setConverting(l)}
+      onFirstLesson={() => setLesson(l)}
+      onLose={() => setLosing(l)}
     />
   );
 
@@ -149,6 +191,9 @@ export function LeadsView({
                 </Button>
                 <Button variant="ghost" onClick={() => setFieldsOpen(true)}>
                   <ClipboardList /> {t.fieldsButton}
+                </Button>
+                <Button variant="ghost" onClick={() => setReasonsOpen(true)}>
+                  <ListX /> {t.lostReasonsButton}
                 </Button>
               </>
             ) : null}
@@ -186,7 +231,7 @@ export function LeadsView({
           ]}
         />
         <FilterEnd>
-          <span className="text-caption text-muted-foreground">{t.count(filtered.length)}</span>
+          <span className="text-caption text-muted-foreground">{t.count(shown.length)}</span>
         </FilterEnd>
       </FilterBar>
 
@@ -194,6 +239,12 @@ export function LeadsView({
         <TabsList>
           <TabsTrigger value="board">{t.viewBoard}</TabsTrigger>
           <TabsTrigger value="list">{t.viewList}</TabsTrigger>
+          <TabsTrigger value="lost">
+            {t.tabLost} {lostTotal ? <Badge tone="neutral">{lostTotal}</Badge> : null}
+          </TabsTrigger>
+          <TabsTrigger value="won">
+            {t.tabWon} {wonTotal ? <Badge tone="neutral">{wonTotal}</Badge> : null}
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -201,6 +252,10 @@ export function LeadsView({
         <Card>
           <EmptyState icon={<UserPlus />} title={t.empty} description={t.emptyHint} />
         </Card>
+      ) : view === "lost" ? (
+        <ClosedTable kind="lost" leads={lostRows} stages={stages} canRestore={perms.move} menu={menu} />
+      ) : view === "won" ? (
+        <ClosedTable kind="won" leads={wonRows} stages={stages} canRestore={false} menu={menu} />
       ) : view === "board" ? (
         <Board
           stages={openStages}
@@ -249,9 +304,13 @@ export function LeadsView({
         onDone={() => setSelected(new Set())}
       />
       <ArchiveDialog lead={archiving} onClose={() => setArchiving(null)} />
+      <ConvertDialog lead={converting} groups={groups} onClose={() => setConverting(null)} />
+      <FirstLessonDialog lead={lesson} groups={groups} today={today} onClose={() => setLesson(null)} />
+      <LoseDialog lead={losing} reasons={lostReasons} onClose={() => setLosing(null)} />
       {perms.edit ? (
         <>
           <StagesModal open={stagesOpen} onOpenChange={setStagesOpen} stages={stages} counts={counts} />
+          <LostReasonsModal open={reasonsOpen} onOpenChange={setReasonsOpen} reasons={lostReasons} />
           <FieldsModal
             open={fieldsOpen}
             onOpenChange={setFieldsOpen}
@@ -362,6 +421,20 @@ function Board({
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       {l.courseName ? <Badge tone="info">{l.courseName}</Badge> : null}
                       {l.source ? <Badge tone="neutral">{l.source}</Badge> : null}
+                      {l.firstLesson ? (
+                        <Badge
+                          tone={
+                            l.firstLesson.status === "came"
+                              ? "success"
+                              : l.firstLesson.status === "absent"
+                                ? "danger"
+                                : "warning"
+                          }
+                        >
+                          <CalendarCheck className="size-3" /> {formatDate(l.firstLesson.date)} ·{" "}
+                          {t.firstLessonStatus[l.firstLesson.status]}
+                        </Badge>
+                      ) : null}
                     </div>
                     <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-border-soft pt-2 text-caption text-muted-foreground">
                       <span className="flex min-w-0 items-center gap-1.5">
@@ -508,6 +581,113 @@ function LeadsTable({
                 </Td>
                 <Td>
                   <div className="flex justify-end">{menu(l)}</div>
+                </Td>
+              </Tr>
+            ))}
+          </TBody>
+        </Table>
+      </TableWrap>
+    </Card>
+  );
+}
+
+/** "Ketgan lidlar" va "O'quvchi bo'lganlar" jadvali */
+function ClosedTable({
+  kind,
+  leads,
+  stages,
+  canRestore,
+  menu,
+}: {
+  kind: "lost" | "won";
+  leads: LeadRow[];
+  stages: StageRow[];
+  canRestore: boolean;
+  menu: (l: LeadRow) => React.ReactNode;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  if (!leads.length)
+    return (
+      <Card>
+        <EmptyState
+          icon={kind === "lost" ? <UserX /> : <UserCheck />}
+          title={kind === "lost" ? t.lostEmpty : t.wonEmpty}
+        />
+      </Card>
+    );
+  function restore(l: LeadRow) {
+    startTransition(async () => {
+      const res = await restoreLeadAction(l.id);
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
+      toast({ tone: "success", title: t.restored, description: l.name });
+      router.refresh();
+    });
+  }
+  const day = (iso: string) => formatDate(new Date(iso).toLocaleDateString("en-CA", { timeZone: "Asia/Tashkent" }));
+  return (
+    <Card className="overflow-hidden">
+      <TableWrap className="rounded-none border-0">
+        <Table>
+          <THead>
+            <Tr>
+              <Th>{t.colName}</Th>
+              {kind === "lost" ? (
+                <>
+                  <Th>{t.colLostReason}</Th>
+                  <Th>{t.colLostFrom}</Th>
+                </>
+              ) : (
+                <Th>{t.colStudent}</Th>
+              )}
+              <Th>{t.colSource}</Th>
+              <Th>{t.colAssigned}</Th>
+              <Th>{t.colChanged}</Th>
+              <Th className="text-right">{uz.common.actions}</Th>
+            </Tr>
+          </THead>
+          <TBody>
+            {leads.map((l) => (
+              <Tr key={l.id}>
+                <Td>
+                  <Link href={`/leads/${l.id}`} className="font-semibold text-foreground hover:text-primary">
+                    {l.name}
+                  </Link>
+                  <div className="font-mono text-caption text-muted-foreground">{displayPhone(l.phone)}</div>
+                </Td>
+                {kind === "lost" ? (
+                  <>
+                    <Td>
+                      <div className="font-medium text-foreground">{l.lostReason ?? "—"}</div>
+                      {l.lostNote ? <div className="text-caption text-muted-foreground">{l.lostNote}</div> : null}
+                    </Td>
+                    <Td>
+                      <StageBadge stage={stages.find((s) => s.id === l.lostFromStageId)} />
+                    </Td>
+                  </>
+                ) : (
+                  <Td>
+                    {l.studentId ? (
+                      <Link href={`/students/${l.studentId}`} className="font-semibold text-primary hover:underline">
+                        {l.studentName ?? t.openStudent}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </Td>
+                )}
+                <Td className="text-muted-foreground">{l.source ?? "—"}</Td>
+                <Td className="text-muted-foreground">{l.assignedName ?? t.unassigned}</Td>
+                <Td className="whitespace-nowrap text-muted-foreground">{day(l.stageChangedAt)}</Td>
+                <Td>
+                  <div className="flex items-center justify-end gap-1">
+                    {kind === "lost" && canRestore ? (
+                      <Button size="sm" variant="ghost" disabled={pending} onClick={() => restore(l)}>
+                        {t.restore}
+                      </Button>
+                    ) : null}
+                    {menu(l)}
+                  </div>
                 </Td>
               </Tr>
             ))}

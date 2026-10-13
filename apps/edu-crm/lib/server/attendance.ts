@@ -1,7 +1,15 @@
 import "server-only";
-import { and, eq, gte, inArray, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { type AttendanceStatus, attendance, groupMemberships, students } from "@ventura/db/schema/tenant";
+import {
+  type AttendanceStatus,
+  type FirstLessonStatus,
+  attendance,
+  groupMemberships,
+  leadFirstLessons,
+  leads,
+  students,
+} from "@ventura/db/schema/tenant";
 import { holidayRanges } from "@/app/(crm)/holidays/data";
 import { type MemberPeriod, lessonDates, monthRange } from "@/lib/lessons";
 
@@ -18,6 +26,15 @@ export interface AttendanceMember {
   periods: MemberPeriod[];
 }
 
+/** Birinchi (sinov) darsga yozilgan lid (E4b): o'quvchi emas, davomat va hisobga kirmaydi */
+export interface FirstLessonGuest {
+  leadId: string;
+  name: string;
+  phone: string;
+  date: string;
+  status: FirstLessonStatus;
+}
+
 export interface AttendanceMark {
   status: AttendanceStatus;
   reason: string | null;
@@ -31,6 +48,8 @@ export interface GroupAttendance {
   members: AttendanceMember[];
   /** `${studentId}|${date}` → belgi */
   marks: Record<string, AttendanceMark>;
+  /** Shu oyda birinchi darsga yozilgan lidlar */
+  guests: FirstLessonGuest[];
 }
 
 export async function groupAttendance(
@@ -84,6 +103,25 @@ export async function groupAttendance(
       );
     for (const a of list) marks[`${a.studentId}|${a.date}`] = { status: a.status, reason: a.reason };
   }
+  const guests = await db
+    .select({
+      leadId: leads.id,
+      name: leads.name,
+      phone: leads.phone,
+      date: leadFirstLessons.lessonDate,
+      status: leadFirstLessons.status,
+    })
+    .from(leadFirstLessons)
+    .innerJoin(leads, eq(leads.id, leadFirstLessons.leadId))
+    .where(
+      and(
+        eq(leadFirstLessons.groupId, group.id),
+        gte(leadFirstLessons.lessonDate, from),
+        lte(leadFirstLessons.lessonDate, to),
+        isNull(leads.archivedAt),
+      ),
+    )
+    .orderBy(asc(leads.name));
   return {
     month,
     dates,
@@ -96,5 +134,6 @@ export async function groupAttendance(
       })),
     members,
     marks,
+    guests: guests.map((g) => ({ ...g, phone: g.phone.replace(/\D/g, "").slice(-9) })),
   };
 }

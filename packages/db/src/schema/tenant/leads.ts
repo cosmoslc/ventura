@@ -10,12 +10,14 @@ import {
   text,
   timestamp,
   unique,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 import { courses } from "./academic";
 import { users } from "./auth";
 import { tenantId, tenantPolicy, timestamps } from "./columns";
 import { branches } from "./core";
+import { groups } from "./groups";
 import { students } from "./students";
 
 /*
@@ -201,5 +203,55 @@ export const leadNotes = pgTable(
     }).onDelete("restrict"),
     check("lead_notes_text_len", sql`length(${t.text}) between 1 and 2000`),
     tenantPolicy("lead_notes"),
+  ],
+);
+
+/** Birinchi (sinov) dars holati: rejalashtirilgan, keldi, kelmadi */
+export const FIRST_LESSON_STATUSES = ["scheduled", "came", "absent"] as const;
+export type FirstLessonStatus = (typeof FIRST_LESSON_STATUSES)[number];
+
+/**
+ * Lidning birinchi (sinov) darsi (E4b). Lid o'quvchi emas: bu yozuv o'quvchi, a'zolik, davomat, to'lov va maoshga
+ * tegmaydi. Guruh davomatida alohida qatorda ko'rinadi. Bitta lidga bitta yozuv — boshqa kunga ko'chirilsa shu qator.
+ */
+export const leadFirstLessons = pgTable(
+  "lead_first_lessons",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    leadId: uuid("lead_id").notNull(),
+    groupId: uuid("group_id").notNull(),
+    lessonDate: date("lesson_date", { mode: "string" }).notNull(),
+    status: text("status", { enum: FIRST_LESSON_STATUSES }).notNull().default("scheduled"),
+    createdBy: uuid("created_by"),
+    markedBy: uuid("marked_by"),
+    markedAt: timestamp("marked_at", { withTimezone: true }),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("lead_first_lessons_lead_uq").on(t.tenantId, t.leadId),
+    index("lead_first_lessons_group_date_idx").on(t.groupId, t.lessonDate),
+    foreignKey({
+      name: "lead_first_lessons_lead_fk",
+      columns: [t.tenantId, t.leadId],
+      foreignColumns: [leads.tenantId, leads.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "lead_first_lessons_group_fk",
+      columns: [t.tenantId, t.groupId],
+      foreignColumns: [groups.tenantId, groups.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "lead_first_lessons_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "lead_first_lessons_marked_by_fk",
+      columns: [t.tenantId, t.markedBy],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
+    check("lead_first_lessons_marked", sql`${t.status} = 'scheduled' or ${t.markedAt} is not null`),
+    tenantPolicy("lead_first_lessons"),
   ],
 );

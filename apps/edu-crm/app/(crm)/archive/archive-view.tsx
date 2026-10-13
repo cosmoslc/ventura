@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, BookOpen, GraduationCap, Layers, RotateCcw, Search, Trash2, Users } from "lucide-react";
+import { Archive, BookOpen, GraduationCap, Layers, RotateCcw, Search, Trash2, UserPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Avatar } from "@ventura/ui/avatar";
@@ -20,9 +20,15 @@ import type { PickerBranch } from "../branch-picker";
 import { purgeStudentAction, restoreArchivedAction } from "./actions";
 import type { ArchiveData } from "./data";
 
-type Tab = "students" | "groups" | "courses" | "teachers";
-type Kind = "student" | "group" | "course" | "teacher";
-const KIND: Record<Tab, Kind> = { students: "student", groups: "group", courses: "course", teachers: "teacher" };
+type Tab = "students" | "groups" | "courses" | "teachers" | "leads";
+type Kind = "student" | "group" | "course" | "teacher" | "lead";
+const KIND: Record<Tab, Kind> = {
+  students: "student",
+  groups: "group",
+  courses: "course",
+  teachers: "teacher",
+  leads: "lead",
+};
 
 function dateTime(iso: string) {
   const d = new Date(iso);
@@ -58,13 +64,17 @@ export function ArchiveView({
   const coursesList = data.courses.filter((c) => hit(c.name, []));
   const teachersList = data.teachers.filter((t) => hit(t.name, [t.phone]));
   const groupsList = data.groups.filter((g) => hit(g.name, []));
+  const leadsList = data.leads.filter((l) => hit(l.name, [l.phone]));
   const count = {
     students: studentsList.length,
     groups: groupsList.length,
     courses: coursesList.length,
     teachers: teachersList.length,
+    leads: leadsList.length,
   }[tab];
-  const items = tab === "courses" ? coursesList : tab === "groups" ? groupsList : teachersList;
+  const items =
+    tab === "courses" ? coursesList : tab === "groups" ? groupsList : tab === "leads" ? leadsList : teachersList;
+  const withPhone = tab === "teachers" || tab === "leads";
 
   async function run() {
     if (!confirm) return;
@@ -121,6 +131,11 @@ export function ArchiveView({
           <TabsTrigger value="teachers">
             <Users /> {uz.archive.tabTeachers} <Badge tone="neutral">{data.teachers.length}</Badge>
           </TabsTrigger>
+          {data.leads.length ? (
+            <TabsTrigger value="leads">
+              <UserPlus /> {uz.archive.tabLeads} <Badge tone="neutral">{data.leads.length}</Badge>
+            </TabsTrigger>
+          ) : null}
         </TabsList>
       </Tabs>
 
@@ -196,7 +211,7 @@ export function ArchiveView({
                 <THead>
                   <tr>
                     <Th>{uz.archive.colName}</Th>
-                    {tab === "teachers" ? <Th>{uz.archive.colPhones}</Th> : null}
+                    {withPhone ? <Th>{uz.archive.colPhones}</Th> : null}
                     <Th>{uz.archive.colBranch}</Th>
                     <Th>{uz.archive.colDeleted}</Th>
                     <Th className="text-right">{uz.common.actions}</Th>
@@ -206,7 +221,7 @@ export function ArchiveView({
                   {items.map((it) => (
                     <Tr key={it.id}>
                       <Td className="font-bold text-foreground">{it.name}</Td>
-                      {tab === "teachers" ? (
+                      {withPhone ? (
                         <Td className="font-mono">{it.phone ? (displayPhone(it.phone) ?? "—") : "—"}</Td>
                       ) : null}
                       <Td>{it.branchId ? branchName(it.branchId) : uz.common.allBranches}</Td>

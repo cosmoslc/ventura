@@ -157,6 +157,24 @@ export const leadNoteInput = z.object({
   kind: z.enum(["call", "message", "meeting", "note"]),
   text: z.string().trim().min(1, uz.leads.noteRequired).max(2000),
 });
+export const leadConvertInput = z.object({
+  leadId: id,
+  groupId: id.nullable().default(null),
+  gender: z.enum(["male", "female"]).nullable().default(null),
+});
+export const leadFirstLessonInput = z.object({
+  leadId: id,
+  groupId: id,
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, uz.leads.firstLessonDateRequired),
+});
+export const leadFirstLessonMarkInput = z.object({ leadId: id, status: z.enum(["scheduled", "came", "absent"]) });
+export const leadLoseInput = z.object({
+  id,
+  reason: z.string().trim().min(1, uz.leads.loseReasonRequired).max(80),
+  note: z.string().trim().max(500).default(""),
+});
+export const lostReasonsInput = z.array(z.string().trim().min(1).max(80)).min(1).max(30);
+
 export const leadStagesInput = z
   .array(
     z.object({

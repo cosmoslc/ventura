@@ -3,7 +3,7 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { courses, groups, students, teachers } from "@ventura/db/schema/tenant";
+import { courses, groups, leadStages, leads, students, teachers } from "@ventura/db/schema/tenant";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { uz } from "@/lib/uz";
 
@@ -13,7 +13,7 @@ import { uz } from "@/lib/uz";
  */
 
 const FEATURE = "students";
-const input = z.object({ kind: z.enum(["student", "course", "teacher", "group"]), id: z.uuid() });
+const input = z.object({ kind: z.enum(["student", "course", "teacher", "group", "lead"]), id: z.uuid() });
 
 /** Umumiy (filialsiz) kurs hammaga ochiq, qolganlari — xodimning filiallarida */
 const inScope = (ctx: ActionCtx, branchId: string | null) =>
@@ -25,6 +25,7 @@ function done() {
   revalidatePath("/courses");
   revalidatePath("/teachers");
   revalidatePath("/groups");
+  revalidatePath("/leads");
 }
 
 export async function restoreArchivedAction(raw: unknown): Promise<ActionResult> {
@@ -58,6 +59,21 @@ export async function restoreArchivedAction(raw: unknown): Promise<ActionResult>
       if (!c || !inScope(ctx, c.branchId)) return { ok: false, error: uz.common.gone };
       await db.update(courses).set({ archivedAt: null }).where(eq(courses.id, id));
       await audit("course.restore", { type: "course", id }, { name: c.name });
+    } else if (kind === "lead") {
+      const [l] = await db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.id, id), isNotNull(leads.archivedAt)));
+      if (!l || !inScope(ctx, l.branchId)) return { ok: false, error: uz.common.gone };
+      // Shu telefonli ochiq lid bo'lsa — ikkinchisi tiklanmaydi (takror)
+      const [busy] = await db
+        .select({ id: leads.id })
+        .from(leads)
+        .innerJoin(leadStages, eq(leadStages.id, leads.stageId))
+        .where(and(eq(leads.phone, l.phone), isNull(leads.archivedAt), eq(leadStages.kind, "open")));
+      if (busy) return { ok: false, error: uz.archive.leadPhoneBusy };
+      await db.update(leads).set({ archivedAt: null, archiveReason: null, archivedBy: null }).where(eq(leads.id, id));
+      await audit("lead.unarchive", { type: "lead", id }, { name: l.name });
     } else if (kind === "group") {
       const [g] = await db
         .select()

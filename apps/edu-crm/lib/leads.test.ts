@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_LEAD_STAGES, daysIn, stagesError } from "./leads";
+import { DEFAULT_LEAD_STAGES, DEFAULT_LOST_REASONS, daysIn, parseLostReasons, stagesError } from "./leads";
 
 describe("lid bosqichlari", () => {
   it("standart ro'yxat to'g'ri", () => {
@@ -21,5 +21,13 @@ describe("lid bosqichlari", () => {
     // 2026-10-12 20:00 UTC = 13-oktabr Toshkentda
     expect(daysIn("2026-10-12T20:00:00Z", "2026-10-13")).toBe(0);
     expect(daysIn("2026-10-10T05:00:00Z", "2026-10-13")).toBe(3);
+  });
+});
+
+describe("yo'qotish sabablari", () => {
+  it("takror, bo'sh va uzun qiymatlar tashlanadi; bo'sh ro'yxat — standart", () => {
+    expect(parseLostReasons(["Qimmat", " Qimmat ", "", 5, "x".repeat(81), "Uzoq"])).toEqual(["Qimmat", "Uzoq"]);
+    expect(parseLostReasons([])).toEqual(DEFAULT_LOST_REASONS);
+    expect(parseLostReasons("buzuq")).toEqual(DEFAULT_LOST_REASONS);
   });
 });
