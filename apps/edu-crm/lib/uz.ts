@@ -188,6 +188,7 @@ export const uz = {
 
   common: {
     search: "Qidirish...",
+    nothingFound: "Hech narsa topilmadi",
     save: "Saqlash",
     add: "Qo'shish",
     cancel: "Bekor qilish",
@@ -484,10 +485,23 @@ export const uz = {
     fieldsIntro:
       "Ushbu bo'limda xodimlardan so'raladigan barcha qo'shimcha maydonlarni boshqarishingiz mumkin. Bu maydonlar xodim qo'shish va tahrirlashda chiqadi.",
     fieldRequired: "Majburiy",
-    fieldTypes: { text: "Matn", number: "Raqam", date: "Sana", tel: "Telefon", select: "Tanlov (Dropdown)" } as Record<
-      string,
-      string
-    >,
+    fieldTypes: {
+      text: "Matn",
+      number: "Raqam",
+      tel: "Telefon",
+      date: "Sana",
+      time: "Soat",
+      select: "Tanlov (Dropdown)",
+      multiselect: "Ko'p tanlov",
+      checkbox: "Belgilash (Checkbox)",
+      group: "Guruh tanlash",
+    } as Record<string, string>,
+    fieldGroupHint: "Guruhlar ro'yxatidan qidiruv bilan tanlanadi",
+    fieldCheckboxHint: "Izoh (ixtiyoriy)...",
+    chooseGroup: "Guruhni tanlang",
+    searchGroup: "Guruh qidirish...",
+    yes: "Ha",
+    no: "Yo'q",
     fieldDelete: "Maydonni o'chirish",
     fieldAddTitle: "Yangi maydon qo'shish",
     fieldLabel: "Maydon nomi (masalan: Haydovchilik guvohnomasi)",

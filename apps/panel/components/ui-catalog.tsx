@@ -49,6 +49,7 @@ import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { Pagination } from "@ventura/ui/pagination";
 import { PhoneInput } from "@ventura/ui/phone-input";
+import { SearchSelect } from "@ventura/ui/search-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { StepList } from "@ventura/ui/step-list";
@@ -251,6 +252,8 @@ function Buttons() {
 }
 
 function Inputs() {
+  const [group, setGroup] = React.useState<string[]>([]);
+  const [langs, setLangs] = React.useState<string[]>(["en"]);
   const [phone, setPhone] = React.useState("90123");
   const [price, setPrice] = React.useState<number | null>(1500000);
   const [color, setColor] = React.useState(demoColors[0]!.value);
@@ -284,6 +287,36 @@ function Inputs() {
             <SelectItem value="sawmill">Pilorama tizimi</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div>
+        <Label>Qidiruvli tanlov (SearchSelect)</Label>
+        <SearchSelect
+          options={[
+            { value: "g1", label: "IELTS 7.0", hint: "IELTS · Dilshod · 14:00" },
+            { value: "g2", label: "Matematika 9", hint: "Matematika · Aziza · 16:00" },
+            { value: "g3", label: "Ingliz tili A1", hint: "General English · Bobur · 09:00" },
+          ]}
+          value={group}
+          onChange={setGroup}
+          placeholder="Guruhni tanlang"
+          searchPlaceholder="Guruh qidirish..."
+          emptyText="Hech narsa topilmadi"
+        />
+      </div>
+      <div>
+        <Label>Ko&apos;p tanlov (SearchSelect multiple)</Label>
+        <SearchSelect
+          multiple
+          searchable={false}
+          options={[
+            { value: "en", label: "Ingliz" },
+            { value: "ru", label: "Rus" },
+            { value: "de", label: "Nemis" },
+          ]}
+          value={langs}
+          onChange={setLangs}
+          placeholder="Tanlang"
+        />
       </div>
       <div>
         <Label>Telefon (noto&apos;liq)</Label>

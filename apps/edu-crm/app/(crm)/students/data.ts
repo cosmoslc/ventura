@@ -1,7 +1,17 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { type StudentStatus, auditEvents, courses, settings, studentNotes, students } from "@ventura/db/schema/tenant";
+import type { SearchSelectOption } from "@ventura/ui/search-select";
+import {
+  type StudentStatus,
+  auditEvents,
+  courses,
+  groups,
+  settings,
+  studentNotes,
+  students,
+  teachers,
+} from "@ventura/db/schema/tenant";
 import { DEFAULT_STUDENT_FIELDS, type FormField, STUDENT_FIELDS_KEY, parseFormFields } from "@/lib/form-fields";
 
 export interface StudentRow {
@@ -93,6 +103,42 @@ export async function listArchivedStudentRows(db: TenantDb, filter: readonly str
 export async function getStudentFields(db: TenantDb): Promise<FormField[]> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, STUDENT_FIELDS_KEY));
   return parseFormFields(row?.value, DEFAULT_STUDENT_FIELDS);
+}
+
+export interface GroupChoice extends SearchSelectOption {
+  archived: boolean;
+}
+
+/**
+ * "Guruh tanlash" maydoni uchun guruhlar (xodimning filiallari). Arxivdagilar ham qaytadi — profilda saqlangan
+ * qiymat nomi ko'rinsin; formada faqat arxivda bo'lmaganlari tanlanadi. Formada guruh maydoni bo'lmasa so'rov yo'q.
+ */
+export async function groupChoices(
+  db: TenantDb,
+  filter: readonly string[] | null,
+  fields: readonly FormField[],
+): Promise<GroupChoice[]> {
+  if (!fields.some((f) => f.type === "group")) return [];
+  const rows = await db
+    .select({
+      id: groups.id,
+      name: groups.name,
+      startTime: groups.startTime,
+      archivedAt: groups.archivedAt,
+      course: courses.name,
+      teacher: teachers.name,
+    })
+    .from(groups)
+    .leftJoin(courses, eq(courses.id, groups.courseId))
+    .leftJoin(teachers, eq(teachers.id, groups.teacherId))
+    .where(filter ? inArray(groups.branchId, [...filter]) : undefined)
+    .orderBy(asc(groups.name));
+  return rows.map((g) => ({
+    value: g.id,
+    label: g.name,
+    hint: [g.course, g.teacher, g.startTime?.slice(0, 5)].filter(Boolean).join(" · "),
+    archived: !!g.archivedAt,
+  }));
 }
 
 export async function courseOptions(db: TenantDb) {

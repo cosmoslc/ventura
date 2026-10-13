@@ -50,15 +50,38 @@ Boshqa farqlar:
 
 ### O'quvchi formasi
 
+- **Asosiy maydonlar faqat to'rtta:** ism familiya, telefon, jins va izoh (filial — bir nechta filial bo'lsa, yangi
+  o'quvchida). Saidakbar qarori: qolgan hamma maydonni markaz o'zi qo'shadi.
+- Eski ustunlar (tug'ilgan sana, ota-ona, maktab, sinf, manzil, manba, qiziqqan kurs) bazada qoladi — ustun
+  o'chirilmaydi:
+  - Excel importi ularni to'ldiradi;
+  - profilda faqat to'ldirilganlari "Qo'shimcha ma'lumotlar" ichida ko'rinadi;
+  - tahrirlash ularni o'zgartirmaydi.
 - Xodim formasidagi mexanizm umumiy qilindi:
   - `lib/form-fields.ts` (avval `staff-fields.ts`);
-  - `app/(crm)/fields-modal.tsx`.
+  - `app/(crm)/fields-modal.tsx` — sozlash oynasi;
+  - `app/(crm)/custom-field-input.tsx` — formadagi maydon.
+- **Maydon turlari:**
+
+  | Tur | Formada | Saqlanadigan qiymat |
+  | --- | --- | --- |
+  | Matn, Raqam, Telefon | input | matn |
+  | Sana | sana tanlash | `YYYY-MM-DD` |
+  | Soat | soat tanlash | `HH:MM` |
+  | Tanlov (dropdown) | select | variant |
+  | Ko'p tanlov | qidiruvli ro'yxat, checkbox bilan | variantlar `, ` bilan (variantda vergul bo'lmaydi) |
+  | Belgilash (checkbox) | checkbox | `1`; profilda "Ha" / "Yo'q" |
+  | Guruh tanlash | guruhlar ro'yxatidan qidiruvli dropdown (kurs · o'qituvchi · vaqt) | guruh id |
+
+  "Guruh tanlash" faqat o'quvchi formasida. Guruh — faqat ma'lumot, o'quvchini guruhga qo'shmaydi. Variantlar —
+  xodimning filiallaridagi arxivda bo'lmagan guruhlar. Profilda arxivdagi guruh nomi ham ko'rinadi.
+- Qiymatlar serverda turi bo'yicha tozalanadi (`cleanCustomData`): ro'yxatda yo'q variant, noto'g'ri sana, soat yoki
+  id tashlanadi. Majburiy maydon (belgilashda — belgilangan bo'lishi) serverda ham tekshiriladi.
 - Ro'yxat `settings` jadvalida `students.form_fields` kalitida turadi. Qiymatlar `students.custom_data` ustunida
-  (0012 migratsiyasi).
-- Standart ro'yxat bo'sh: asosiy maydonlar formaning o'zida bor.
+  (0012 migratsiyasi). Standart ro'yxat bo'sh.
 - Sozlash — "O'quvchilar" sahifasidagi "O'quvchi formasi" tugmasi orqali (`students.edit`).
 - Maydonlar o'quvchi qo'shish va tahrirlash formalarida chiqadi, guruh profilidan yangi o'quvchi qo'shishda ham.
-  Majburiy maydon serverda ham tekshiriladi.
+- Qidiruvli ro'yxat — yangi `SearchSelect` komponenti (`packages/ui`, STYLE.md 11.33).
 
 ### Boshqa filialga o'tkazish
 

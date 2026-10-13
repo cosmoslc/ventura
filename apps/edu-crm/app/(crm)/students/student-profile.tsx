@@ -28,7 +28,7 @@ import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatDate } from "@/lib/format";
-import type { FormField } from "@/lib/form-fields";
+import { type FormField, fieldText } from "@/lib/form-fields";
 import type { LedgerSummary } from "@/lib/ledger";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
@@ -43,7 +43,7 @@ import type { FinancePerms } from "../payments/perms";
 import { StudentDiscountsTab } from "../payments/student-discounts-tab";
 import { StudentFinanceTab, StudentMoneyCards } from "../payments/student-finance-tab";
 import { addStudentNoteAction, deleteStudentNoteAction } from "./actions";
-import type { HistoryRow, StudentNoteRow, StudentRow } from "./data";
+import type { GroupChoice, HistoryRow, StudentNoteRow, StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms, TransferDialog } from "./student-dialogs";
 import { StudentForm } from "./student-form";
 
@@ -82,6 +82,7 @@ export function StudentProfile({
   selectedBranch,
   courses,
   fields,
+  groupChoices,
   perms,
   memberships,
   groupOptions,
@@ -95,6 +96,8 @@ export function StudentProfile({
   selectedBranch: string;
   courses: { id: string; name: string }[];
   fields: FormField[];
+  /** Guruh tanlash maydonlari: nomlar (arxivdagilar ham) va formadagi variantlar */
+  groupChoices: GroupChoice[];
   perms: StudentPerms;
   memberships: StudentMembershipRow[];
   groupOptions: PickOption[];
@@ -112,6 +115,21 @@ export function StudentProfile({
   const course = courses.find((c) => c.id === s.interestedCourseId);
   const school = s.school ? (/^\d+$/.test(s.school) ? `${s.school}${uz.students.schoolSuffix}` : s.school) : null;
   const fp = finance?.perms;
+  const textLabels = {
+    yes: uz.staff.yes,
+    no: uz.staff.no,
+    groupName: (id: string) => groupChoices.find((g) => g.value === id)?.label,
+  };
+  const legacyAll: [string, string | null][] = [
+    [uz.students.birth, s.birthDate ? formatDate(s.birthDate) : null],
+    [uz.students.parentName, s.parentName],
+    [uz.students.school, school],
+    [uz.students.grade, s.grade],
+    [uz.students.address, s.address],
+    [uz.students.source, s.source],
+    [uz.students.interestedCourse, course?.name ?? null],
+  ];
+  const legacy = legacyAll.filter((x): x is [string, string] => !!x[1]);
   const canTransfer = perms.edit && branches.some((b) => b.id !== s.branchId);
   const openGroups = memberships.filter((m) => !m.leftAt).length;
 
@@ -194,9 +212,8 @@ export function StudentProfile({
         {s.statusNote ? <p className="text-caption text-muted-foreground">{s.statusNote}</p> : null}
 
         <dl className="divide-y divide-border-soft border-y border-border-soft text-body">
-          <Line label={uz.students.birth}>{s.birthDate ? formatDate(s.birthDate) : uz.students.notAvailable}</Line>
-          <Line label={uz.students.joined}>{formatDate(s.joinedAt)}</Line>
           <Line label={uz.students.branch}>{branch?.name ?? uz.students.notSet}</Line>
+          <Line label={uz.students.joined}>{formatDate(s.joinedAt)}</Line>
         </dl>
 
         <button
@@ -210,18 +227,18 @@ export function StudentProfile({
         </button>
         {more ? (
           <dl className="divide-y divide-border-soft text-body">
-            <Line label={uz.students.source}>{s.source ?? uz.students.notSet}</Line>
-            <Line label={uz.students.interestedCourse}>{course?.name ?? uz.students.noData}</Line>
-            <Line label={uz.students.parentName}>{s.parentName ?? uz.students.notSet}</Line>
-            <Line label={uz.students.school}>{school ?? uz.students.notSet}</Line>
-            <Line label={uz.students.grade}>{s.grade ?? uz.students.notSet}</Line>
             <Line label={uz.students.gender}>
               {s.gender === "male" ? uz.students.male : s.gender === "female" ? uz.students.female : uz.students.notSet}
             </Line>
-            <Line label={uz.students.address}>{s.address ?? uz.students.notSet}</Line>
             {fields.map((f) => (
               <Line key={f.id} label={f.label}>
-                {s.customData[f.id] || uz.students.notSet}
+                {fieldText(f, s.customData[f.id], textLabels) ?? uz.students.notSet}
+              </Line>
+            ))}
+            {/* Eski ustunlar (Excel importi yoki avvalgi forma) — faqat to'ldirilgani */}
+            {legacy.map(([label, value]) => (
+              <Line key={label} label={label}>
+                {value}
               </Line>
             ))}
             {s.note ? (
@@ -298,8 +315,8 @@ export function StudentProfile({
           editing={s}
           branches={branches}
           selectedBranch={selectedBranch}
-          courses={courses}
           fields={fields}
+          groups={groupChoices.filter((g) => !g.archived)}
           onSaved={() => router.refresh()}
         />
       ) : null}

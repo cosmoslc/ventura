@@ -25,10 +25,11 @@ import { Pagination } from "@ventura/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
+import type { SearchSelectOption } from "@ventura/ui/search-select";
 import { toast } from "@ventura/ui/toast";
 import { BalanceText } from "../payments/payment-dialog";
 import { displayPhone, formatDate } from "@/lib/format";
-import { DEFAULT_STUDENT_FIELDS, type FormField } from "@/lib/form-fields";
+import { DEFAULT_STUDENT_FIELDS, FIELD_TYPES, type FormField } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import { restoreArchivedAction } from "../archive/actions";
 import type { PickerBranch } from "../branch-picker";
@@ -78,8 +79,8 @@ export function StudentsView({
   canRestore,
   branches,
   selectedBranch,
-  courses,
   fields,
+  groupChoices,
   perms,
 }: {
   rows: StudentRow[];
@@ -88,8 +89,8 @@ export function StudentsView({
   canRestore: boolean;
   branches: PickerBranch[];
   selectedBranch: string;
-  courses: { id: string; name: string }[];
   fields: FormField[];
+  groupChoices: SearchSelectOption[];
   perms: StudentPerms;
 }) {
   const router = useRouter();
@@ -420,8 +421,8 @@ export function StudentsView({
           editing={editing}
           branches={branches}
           selectedBranch={selectedBranch}
-          courses={courses}
           fields={fields}
+          groups={groupChoices}
           onSaved={() => router.refresh()}
         />
       ) : null}
@@ -432,6 +433,7 @@ export function StudentsView({
           fields={fields}
           canWrite
           defaults={DEFAULT_STUDENT_FIELDS}
+          types={FIELD_TYPES}
           save={saveStudentFieldsAction}
           title={uz.students.fieldsTitle}
           description={uz.students.fieldsIntro}

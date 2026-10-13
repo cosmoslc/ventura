@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { displayPhone, formatDate, money } from "@/lib/format";
-import { DEFAULT_STAFF_FIELDS, type FormField, formCompletion } from "@/lib/form-fields";
+import { DEFAULT_STAFF_FIELDS, type FormField, STAFF_FIELD_TYPES, formCompletion } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import { FieldsModal } from "../fields-modal";
@@ -347,6 +347,7 @@ export function StaffView({
         fields={fields}
         canWrite={perms.edit}
         defaults={DEFAULT_STAFF_FIELDS}
+        types={STAFF_FIELD_TYPES}
         save={saveStaffFieldsAction}
         title={uz.staff.fieldsTitle}
         description={uz.staff.fieldsIntro}

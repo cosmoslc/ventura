@@ -274,6 +274,7 @@ export async function saveStaffFieldsAction(input: unknown): Promise<ActionResul
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const ids = parsed.data.map((f) => f.id);
     if (new Set(ids).size !== ids.length) return { ok: false, error: uz.common.invalid };
+    if (parsed.data.some((f) => f.type === "group")) return { ok: false, error: uz.common.invalid };
     await db
       .insert(settings)
       .values({ key: STAFF_FIELDS_KEY, value: parsed.data, updatedBy: staff.id })

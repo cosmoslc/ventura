@@ -1,6 +1,19 @@
 "use client";
 
-import { Calendar, Hash, List, PhoneCall, Plus, RotateCcw, Trash2, Type } from "lucide-react";
+import {
+  Calendar,
+  CheckSquare,
+  Clock,
+  Hash,
+  List,
+  ListChecks,
+  PhoneCall,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Type,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -11,16 +24,20 @@ import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { toast } from "@ventura/ui/toast";
-import { FIELD_TYPES, type FieldType, type FormField } from "@/lib/form-fields";
+import { type FieldType, type FormField, hasOptions } from "@/lib/form-fields";
 import type { ActionResult } from "@/lib/server/action";
 import { uz } from "@/lib/uz";
 
 const TYPE_ICON: Record<FieldType, React.ReactNode> = {
   text: <Type />,
   number: <Hash />,
-  date: <Calendar />,
   tel: <PhoneCall />,
+  date: <Calendar />,
+  time: <Clock />,
   select: <List />,
+  multiselect: <ListChecks />,
+  checkbox: <CheckSquare />,
+  group: <Users />,
 };
 
 /** Maydon id: nomdan lotin harflari, takrorlansa raqam qo'shiladi */
@@ -44,6 +61,7 @@ export function FieldsModal({
   fields,
   canWrite,
   defaults,
+  types,
   save,
   title,
   description,
@@ -54,6 +72,8 @@ export function FieldsModal({
   canWrite: boolean;
   /** "Standart holatga qaytarish" ro'yxati; bo'sh bo'lsa tugma ko'rinmaydi */
   defaults: FormField[];
+  /** Shu formada tanlash mumkin bo'lgan maydon turlari */
+  types: readonly FieldType[];
   save: (fields: FormField[]) => Promise<ActionResult>;
   title: string;
   description: string;
@@ -90,14 +110,13 @@ export function FieldsModal({
   function add() {
     const name = label.trim();
     if (!name) return setError(uz.staff.fieldLabelRequired);
-    const options =
-      type === "select"
-        ? optionsText
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
-    if (type === "select" && !options.length) return setError(uz.staff.fieldOptionsRequired);
+    const options = hasOptions(type)
+      ? optionsText
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+    if (hasOptions(type) && !options.length) return setError(uz.staff.fieldOptionsRequired);
     const field: FormField = {
       id: fieldId(
         name,
@@ -105,7 +124,7 @@ export function FieldsModal({
       ),
       label: name,
       type,
-      placeholder: placeholder.trim(),
+      placeholder: type === "date" || type === "time" ? "" : placeholder.trim(),
       required,
       options,
     };
@@ -152,7 +171,7 @@ export function FieldsModal({
                 </div>
                 <div className="truncate text-caption text-muted-foreground">
                   {uz.staff.fieldTypes[f.type]}
-                  {f.type === "select" ? ` · ${f.options.join(", ")}` : f.placeholder ? ` · ${f.placeholder}` : ""}
+                  {hasOptions(f.type) ? ` · ${f.options.join(", ")}` : f.placeholder ? ` · ${f.placeholder}` : ""}
                 </div>
               </div>
               {canWrite ? (
@@ -192,7 +211,7 @@ export function FieldsModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {FIELD_TYPES.map((t) => (
+                  {types.map((t) => (
                     <SelectItem key={t} value={t}>
                       {uz.staff.fieldTypes[t]}
                     </SelectItem>
@@ -200,20 +219,21 @@ export function FieldsModal({
                 </SelectContent>
               </Select>
             </div>
-            {type === "select" ? (
+            {hasOptions(type) ? (
               <div>
                 <Label htmlFor="field-options">{uz.staff.fieldOptions}</Label>
                 <Input id="field-options" value={optionsText} onChange={(e) => setOptionsText(e.target.value)} />
               </div>
-            ) : (
+            ) : type === "date" || type === "time" ? null : (
               <Input
                 aria-label={uz.staff.fieldPlaceholder}
-                placeholder={uz.staff.fieldPlaceholder}
+                placeholder={type === "checkbox" ? uz.staff.fieldCheckboxHint : uz.staff.fieldPlaceholder}
                 value={placeholder}
                 maxLength={80}
                 onChange={(e) => setPlaceholder(e.target.value)}
               />
             )}
+            {type === "group" ? <p className="text-caption text-muted-foreground">{uz.staff.fieldGroupHint}</p> : null}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <ChoiceField
                 label={uz.staff.fieldRequiredCheck}

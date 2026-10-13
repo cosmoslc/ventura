@@ -15,6 +15,7 @@ import { toast } from "@ventura/ui/toast";
 import { firstError, staffInput } from "@/lib/rules";
 import { type FormField, missingRequired } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
+import { CustomFieldInput } from "../custom-field-input";
 import type { PickerBranch } from "../branch-picker";
 import { saveStaffAction } from "./actions";
 import type { PositionOption, StaffRow } from "./data";
@@ -309,36 +310,13 @@ export function StaffForm({
         {fields.length ? (
           <div className="grid gap-4 border-t border-border-soft pt-5 sm:grid-cols-2">
             {fields.map((f) => (
-              <div key={f.id}>
-                <Label htmlFor={`staff-f-${f.id}`}>
-                  {f.label}
-                  {f.required ? " *" : ""}
-                </Label>
-                {f.type === "select" ? (
-                  <Select value={form.customData[f.id] ?? ""} onValueChange={(v) => setCustom(f.id, v)}>
-                    <SelectTrigger id={`staff-f-${f.id}`} className="w-full">
-                      <SelectValue placeholder={uz.staff.choose} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {f.options.map((o) => (
-                        <SelectItem key={o} value={o}>
-                          {o}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    id={`staff-f-${f.id}`}
-                    type={f.type === "tel" ? "tel" : f.type}
-                    inputMode={f.type === "number" ? "numeric" : undefined}
-                    placeholder={f.placeholder || f.label}
-                    value={form.customData[f.id] ?? ""}
-                    maxLength={300}
-                    onChange={(e) => setCustom(f.id, e.target.value)}
-                  />
-                )}
-              </div>
+              <CustomFieldInput
+                key={f.id}
+                field={f}
+                idPrefix="staff-f"
+                value={form.customData[f.id] ?? ""}
+                onChange={(v) => setCustom(f.id, v)}
+              />
             ))}
           </div>
         ) : null}

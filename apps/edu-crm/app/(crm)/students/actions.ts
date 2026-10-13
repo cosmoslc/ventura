@@ -4,14 +4,7 @@ import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { formatPhone } from "@ventura/auth/policy";
-import {
-  STUDENT_NOTE_KINDS,
-  courses,
-  groupMemberships,
-  settings,
-  studentNotes,
-  students,
-} from "@ventura/db/schema/tenant";
+import { STUDENT_NOTE_KINDS, groupMemberships, settings, studentNotes, students } from "@ventura/db/schema/tenant";
 import { STUDENT_FIELDS_KEY, cleanCustomData, formFieldsSchema, missingRequired } from "@/lib/form-fields";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
@@ -73,25 +66,11 @@ export async function saveStudentAction(input: unknown): Promise<ActionResult<{ 
         .where(and(eq(students.phone, phone), isNull(students.archivedAt), v.id ? ne(students.id, v.id) : undefined));
       if (dup) return { ok: false, error: uz.students.phoneTaken };
 
-      if (v.interestedCourseId) {
-        const [c] = await db.select({ id: courses.id }).from(courses).where(eq(courses.id, v.interestedCourseId));
-        if (!c) return { ok: false, error: uz.common.gone };
-      }
-
+      // Tahrirlashda faqat formadagi maydonlar yangilanadi — eski ustunlar (Excel importidan) saqlanib qoladi
       const values = {
-        branchId,
         name: v.name,
         phone,
-        parentName: v.parentName || null,
-        parentPhone: v.parentPhone ? `+998${v.parentPhone}` : null,
-        birthDate: v.birthDate || null,
         gender: v.gender,
-        school: v.school || null,
-        grade: v.grade || null,
-        address: v.address || null,
-        source: v.source || null,
-        interestedCourseId: v.interestedCourseId,
-        joinedAt: v.joinedAt,
         note: v.note || null,
         customData,
       };
@@ -110,7 +89,7 @@ export async function saveStudentAction(input: unknown): Promise<ActionResult<{ 
 
       const [row] = await db
         .insert(students)
-        .values({ ...values, createdBy: ctx.staff.id })
+        .values({ ...values, branchId, createdBy: ctx.staff.id })
         .returning({ id: students.id });
       await audit(
         "student.create",

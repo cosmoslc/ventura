@@ -7,7 +7,7 @@ import { todayTashkent } from "@/lib/server/memberships";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
-import { courseOptions, getStudentFields, listStudents, studentHistory, studentNotesOf } from "../data";
+import { courseOptions, getStudentFields, groupChoices, listStudents, studentHistory, studentNotesOf } from "../data";
 import { listGroups, studentMemberships } from "../../groups/data";
 import { groupPerms } from "../../groups/perms";
 import { studentFinance } from "../../payments/data";
@@ -30,11 +30,12 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   const fperms = financePerms(staff.access);
   const withFinance = fperms.view && (await hasFeature(tenant, "payments"));
   const today = todayTashkent();
-  const [notes, history, courses, fields, memberships, groups, finance, methods, fsettings] = await Promise.all([
+  const fields = await getStudentFields(db);
+  const [notes, history, courses, choices, memberships, groups, finance, methods, fsettings] = await Promise.all([
     studentNotesOf(db, student.id),
     studentHistory(db, student.id),
     courseOptions(db),
-    getStudentFields(db),
+    groupChoices(db, scope, fields),
     studentMemberships(db, student.id),
     listGroups(db, [student.branchId]),
     withFinance ? studentFinance(db, student.id, today) : Promise.resolve(null),
@@ -50,6 +51,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
       selectedBranch={branch.selected}
       courses={courses}
       fields={fields}
+      groupChoices={choices}
       perms={studentPerms(staff.access)}
       memberships={memberships}
       groupOptions={groups.map((g) => ({
