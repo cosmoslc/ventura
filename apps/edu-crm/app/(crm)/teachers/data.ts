@@ -1,7 +1,18 @@
 import "server-only";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, isNull, lte, sql } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { type TeacherKind, type TeacherSalaryType, type Weekday, teachers } from "@ventura/db/schema/tenant";
+import {
+  type MembershipStatus,
+  type TeacherKind,
+  type TeacherSalaryType,
+  type Weekday,
+  attendance,
+  groupMemberships,
+  groups,
+  students,
+  teachers,
+} from "@ventura/db/schema/tenant";
+import { attendanceRate, monthBounds, retentionRate } from "@/lib/teacher-stats";
 
 export interface TeacherRow {
   id: string;
@@ -82,4 +93,78 @@ export async function teacherRefs(db: TenantDb, ids: string[]): Promise<TeacherR
     .from(teachers)
     .where(inArray(teachers.id, ids));
   return rows.map((r) => ({ id: r.id, name: r.name, archived: !!r.archivedAt }));
+}
+
+export interface TeacherStudentRow {
+  studentId: string;
+  name: string;
+  /** 9 ta mahalliy raqam */
+  phone: string;
+  groupId: string;
+  groupName: string;
+  status: MembershipStatus;
+  enrolledAt: string;
+}
+
+export interface TeacherOverview {
+  /** Hozirgi guruhlaridagi ochiq a'zoliklar (o'quvchi bir nechta guruhda bo'lsa — har biri alohida) */
+  students: TeacherStudentRow[];
+  /** Tanlangan oy: retention va davomat foizi; null — hisoblab bo'lmaydi */
+  retention: number | null;
+  attendance: number | null;
+}
+
+/**
+ * O'qituvchi profili ko'rsatkichlari (ADR 0021) — guruhning hozirgi o'qituvchisi bo'yicha (o'qituvchi almashish
+ * tarixi saqlanmaydi, ADR 0018). Arxivdagi guruhlar retention'ga kiradi (oy boshida bo'lgan bo'lishi mumkin).
+ */
+export async function teacherOverview(
+  db: TenantDb,
+  teacherId: string,
+  month: string,
+  today: string,
+): Promise<TeacherOverview> {
+  const { start, end } = monthBounds(month, today);
+  const [open, spans, [att]] = await Promise.all([
+    db
+      .select({
+        studentId: students.id,
+        name: students.name,
+        phone: students.phone,
+        groupId: groups.id,
+        groupName: groups.name,
+        status: groupMemberships.status,
+        enrolledAt: groupMemberships.enrolledAt,
+      })
+      .from(groupMemberships)
+      .innerJoin(groups, eq(groups.id, groupMemberships.groupId))
+      .innerJoin(students, eq(students.id, groupMemberships.studentId))
+      .where(
+        and(
+          eq(groups.teacherId, teacherId),
+          isNull(groups.archivedAt),
+          isNull(groupMemberships.leftAt),
+          isNull(students.archivedAt),
+        ),
+      )
+      .orderBy(asc(students.name)),
+    db
+      .select({ enrolledAt: groupMemberships.enrolledAt, leftAt: groupMemberships.leftAt })
+      .from(groupMemberships)
+      .innerJoin(groups, eq(groups.id, groupMemberships.groupId))
+      .where(eq(groups.teacherId, teacherId)),
+    db
+      .select({
+        ok: sql<number>`count(*) filter (where ${attendance.status} in ('present', 'late'))`.mapWith(Number),
+        total: count(),
+      })
+      .from(attendance)
+      .innerJoin(groups, eq(groups.id, attendance.groupId))
+      .where(and(eq(groups.teacherId, teacherId), gte(attendance.date, start), lte(attendance.date, end))),
+  ]);
+  return {
+    students: open.map((r) => ({ ...r, phone: localPhone(r.phone) })),
+    retention: retentionRate(spans, month, today),
+    attendance: attendanceRate(att?.ok ?? 0, att?.total ?? 0),
+  };
 }

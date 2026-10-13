@@ -563,6 +563,12 @@ Qoidalar:
 - Klaviatura: ↑ ↓ — band, Enter — tanlash, Escape — faqat ro'yxat yopiladi (modal emas). Tashqariga bosilsa yopiladi.
 - Bitta tanlovda tanlangan bandni qayta bosish — tozalash.
 
+### 11.34 MetricCard — `metric-card.tsx`
+
+- Profil tepasidagi ixcham ko'rsatkich (o'qituvchi profili, ADR 0021): yorliq va o'ngda kichik rangli ikonka yoki belgi (`badge`, masalan "Qarz"), ostida katta qiymat + birlik, chiziq ostida izoh (`foot`).
+- StatCard'dan farqi — bir qatorga 5–6 ta sig'adi; StatCard sahifa statistikasi uchun qoladi.
+- Ohang (`tone`): `neutral`, `primary`, `success`, `warning`, `danger`, `info` — faqat holat tokenlari. `colorValue` — qiymat ham ohang rangida; `highlight` — karta foni va chegarasi ohangda (balans qarzda yoki qoldiqda).
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.

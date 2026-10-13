@@ -41,6 +41,7 @@ import { Logo } from "@ventura/ui/logo";
 import { DonutChart } from "@ventura/ui/donut-chart";
 import { Gauge } from "@ventura/ui/gauge";
 import { Meter } from "@ventura/ui/meter";
+import { MetricCard } from "@ventura/ui/metric-card";
 import { Sparkline } from "@ventura/ui/sparkline";
 import { TrendChart } from "@ventura/ui/trend-chart";
 import { MoneyInput } from "@ventura/ui/money-input";
@@ -445,6 +446,20 @@ function Charts() {
 function Cards() {
   return (
     <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MetricCard
+          label="Balansi"
+          value="−538"
+          unit="so'm"
+          badge="Qarz"
+          tone="danger"
+          colorValue
+          highlight
+          foot="Kirim: 138 462 · Chiqim: 139 000"
+        />
+        <MetricCard label="Retention" value="93%" icon={<Rocket />} tone="primary" colorValue foot="Saqlash darajasi" />
+        <MetricCard label="Aktiv guruhlar" value="2" unit="ta guruh" icon={<FolderKanban />} tone="info" />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard icon={<FolderKanban />} label="Faol loyihalar" value="24" tone={1} trend={{ value: "3", up: true }} />
         <StatCard icon={<Rocket />} label="Bugungi deploylar" value="12" tone={2} />
@@ -878,7 +893,7 @@ export function UiCatalog() {
             <Badges />
           </Both>
         </Section>
-        <Section id="kartochkalar" title="Kartochkalar" description="Card, StatCard, Meter va LineChart">
+        <Section id="kartochkalar" title="Kartochkalar" description="Card, StatCard, MetricCard, Meter va LineChart">
           <Both>
             <Cards />
           </Both>

@@ -14,10 +14,9 @@ import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { listGroups } from "../../groups/data";
-import { listTeachers, teacherRefs } from "../data";
+import { listTeachers, teacherOverview, teacherRefs } from "../data";
 import { listPersonEntries } from "../../salaries/data";
-import { TeacherProfile } from "../teacher-profile";
-import { TeacherSalary } from "../teacher-salary";
+import { TeacherProfile, type TeacherSalaryData } from "../teacher-profile";
 
 export const metadata = { title: uz.teachers.profile };
 
@@ -48,40 +47,49 @@ export default async function TeacherPage({
     teacherRefs(db, teacher.assignedTeacherId ? [teacher.assignedTeacherId] : []),
   ]);
 
-  // "Maosh" bo'limi — Ish haqi sahifasi bilan bir xil manba va ruxsat (ADR 0018)
-  let salary: React.ReactNode = null;
-  if ((await hasFeature(tenant, "salaries")) && canAny(staff.access, pagePermissions("/salaries"))) {
-    const today = todayTashkent();
-    const months = recentMonths(today);
-    const sp = await searchParams;
-    const month = months.find((m) => m === sp.oy) ?? months[0]!;
-    const [pay, entries, methods] = await Promise.all([
-      loadTeacherPayroll(db, teacher.id, month, today),
-      listPersonEntries(db, { teacherId: teacher.id }, month),
-      ensurePaymentMethods(db),
-    ]);
-    if (pay)
-      salary = (
-        <TeacherSalary
-          teacherName={teacher.name}
-          month={month}
-          months={months}
-          row={pay.row}
-          groupNames={pay.groupNames}
-          entries={entries}
-          methods={methods}
-          perms={{
-            salary: can(staff.access, "salaries.pay"),
-            advance: canAny(staff.access, ["salaries.advance_manage", "finance.advance_give"]),
-            adjust: can(staff.access, "salaries.kpi_edit"),
-          }}
-        />
-      );
-  }
+  // Oy — butun profil uchun (ko'rsatkichlar va maosh); "Maosh" — Ish haqi sahifasi bilan bir manba va ruxsat (ADR 0018)
+  const today = todayTashkent();
+  const months = recentMonths(today);
+  const sp = await searchParams;
+  const month = months.find((m) => m === sp.oy) ?? months[0]!;
+  const withSalary = (await hasFeature(tenant, "salaries")) && canAny(staff.access, pagePermissions("/salaries"));
+  const [overview, pay, entries, methods] = await Promise.all([
+    teacherOverview(db, teacher.id, month, today),
+    withSalary ? loadTeacherPayroll(db, teacher.id, month, today) : Promise.resolve(null),
+    withSalary ? listPersonEntries(db, { teacherId: teacher.id }, month) : Promise.resolve([]),
+    withSalary ? ensurePaymentMethods(db) : Promise.resolve([]),
+  ]);
+  const salary: TeacherSalaryData | null = pay
+    ? {
+        row: pay.row,
+        groupNames: pay.groupNames,
+        entries,
+        methods,
+        perms: {
+          salary: can(staff.access, "salaries.pay"),
+          advance: canAny(staff.access, ["salaries.advance_manage", "finance.advance_give"]),
+          adjust: can(staff.access, "salaries.kpi_edit"),
+        },
+      }
+    : null;
 
   return (
     <TeacherProfile
       salary={salary}
+      month={month}
+      months={months}
+      overview={overview}
+      groups={own.map((g) => ({
+        id: g.id,
+        name: g.name,
+        courseName: g.courseName,
+        days: g.days,
+        startTime: g.startTime,
+        endTime: g.endTime,
+        price: g.price,
+        members: g.members,
+        color: g.color,
+      }))}
       teacher={teacher}
       supports={supports}
       mentor={refs[0] ?? null}
