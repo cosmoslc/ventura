@@ -1,6 +1,6 @@
 # edu-crm: eski CRM'ni Ventura qolipiga ko'chirish rejasi
 
-2026-10-13 · holat: E0–E3 tayyor (E3d — ADR 0019) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
+2026-10-13 · holat: E0–E3 tayyor, E4a tayyor (ADR 0022; E4 rejasi — EDU-CRM-E4.md) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
 
 ## 1. Maqsad
 
@@ -134,7 +134,7 @@ Bo'limlar: `payments`, `debtors`, `expenses`, `salaries`.
 
 Bo'lim: `leads`.
 
-- [ ] Lidlar doskasi, lid profili, bosqichlar tarixi
+- [x] Lidlar doskasi, lid profili, bosqichlar tarixi — ADR 0022 (E4a)
 - [ ] Birinchi dars, yo'qotilgan lidlar va sabablari
 - [ ] Lid formasi sozlamalari
 - [ ] Bugungi ishlar (workbench)
