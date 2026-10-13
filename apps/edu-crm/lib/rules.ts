@@ -170,6 +170,15 @@ export const leadLoseInput = z.object({
   reason: z.string().trim().min(1, uz.leads.loseReasonRequired).max(80),
   note: z.string().trim().max(500).default(""),
 });
+export const waitlistInput = z.object({
+  id: id.optional(),
+  branchId: id.nullable(),
+  name: z.string().trim().min(1, uz.leads.waitlistNameRequired).max(120),
+  courseId: id.nullable().default(null),
+  note: z.string().trim().max(500).default(""),
+});
+export const waitlistAssignInput = z.object({ leadIds: z.array(id).min(1).max(500), waitlistId: id.nullable() });
+export const waitlistActivateInput = z.object({ waitlistId: id, groupId: id });
 export const lostReasonsInput = z.array(z.string().trim().min(1).max(80)).min(1).max(30);
 
 export const leadStagesInput = z

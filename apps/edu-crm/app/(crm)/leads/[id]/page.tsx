@@ -16,6 +16,7 @@ import {
   leadNotesOf,
   listLeads,
   listStages,
+  listWaitlists,
   staffOptions,
 } from "../data";
 import { LeadProfile } from "../lead-profile";
@@ -33,22 +34,24 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const scope = staff.scope === "all" ? null : branch.options.map((b) => b.id);
   const [lead] = await listLeads(db, scope, id.data);
   if (!lead) notFound();
-  const [stages, history, notes, courses, staffList, fields, groups, lostReasons, [same]] = await Promise.all([
-    listStages(db),
-    leadHistory(db, lead.id),
-    leadNotesOf(db, lead.id),
-    courseOptions(db),
-    staffOptions(db, scope),
-    getLeadFields(db),
-    leadGroupOptions(db, scope),
-    getLostReasons(db),
-    // O'quvchiga aylantirishda shu telefonli o'quvchiga bog'lanadi
-    db
-      .select({ name: students.name })
-      .from(students)
-      .where(and(eq(students.phone, `+998${lead.phone}`), isNull(students.archivedAt)))
-      .limit(1),
-  ]);
+  const [stages, history, notes, courses, staffList, fields, groups, lostReasons, waitlists, [same]] =
+    await Promise.all([
+      listStages(db),
+      leadHistory(db, lead.id),
+      leadNotesOf(db, lead.id),
+      courseOptions(db),
+      staffOptions(db, scope),
+      getLeadFields(db),
+      leadGroupOptions(db, scope),
+      getLostReasons(db),
+      listWaitlists(db, scope),
+      // O'quvchiga aylantirishda shu telefonli o'quvchiga bog'lanadi
+      db
+        .select({ name: students.name })
+        .from(students)
+        .where(and(eq(students.phone, `+998${lead.phone}`), isNull(students.archivedAt)))
+        .limit(1),
+    ]);
   return (
     <LeadProfile
       lead={lead}
@@ -66,6 +69,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
       groups={groups}
       lostReasons={lostReasons}
       existingStudent={lead.studentId ? null : (same?.name ?? null)}
+      waitlists={waitlists}
     />
   );
 }

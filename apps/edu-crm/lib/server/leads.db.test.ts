@@ -11,12 +11,13 @@ import {
   leadFirstLessons,
   leadNotes,
   leadStages,
+  leadWaitlists,
   leads,
   teachers,
   userBranches,
   users,
 } from "@ventura/db/schema/tenant";
-import { leadHistory, leadNotesOf, listLeads, listStages, staffOptions } from "@/app/(crm)/leads/data";
+import { leadHistory, leadNotesOf, listLeads, listStages, listWaitlists, staffOptions } from "@/app/(crm)/leads/data";
 import { groupAttendance } from "./attendance";
 
 /*
@@ -166,11 +167,33 @@ describe.skipIf(!ADMIN_URL)("lidlar (haqiqiy PostgreSQL)", () => {
     expect(row!.firstLesson).toEqual({ groupId: g!.id, groupName: "IELTS A", date: "2026-10-12", status: "came" });
   });
 
+  it("zahira guruh: ochiqlari ro'yxatda, lid bog'lanadi, faollashtirilgan ro'yxat yopiq bo'lishi shart", async () => {
+    const [first] = await listStages(db);
+    const [w] = await db.insert(leadWaitlists).values({ branchId: ids.a, name: "IELTS kechki" }).returning();
+    await db.insert(leadWaitlists).values({ branchId: ids.b, name: "B filial" });
+    await db.insert(leadWaitlists).values({ branchId: ids.a, name: "Yopilgan", closedAt: new Date() });
+    expect((await listWaitlists(db, [ids.a])).map((x) => x.name)).toEqual(["IELTS kechki"]);
+    expect((await listWaitlists(db, null)).map((x) => x.name).sort()).toEqual(["B filial", "IELTS kechki"]);
+
+    const [l] = await db
+      .insert(leads)
+      .values({ branchId: ids.a, name: "Kutayotgan", phone: "+998901110010", stageId: first!.id, waitlistId: w!.id })
+      .returning();
+    const [row] = await listLeads(db, [ids.a], l!.id);
+    expect(row!.waitlistId).toBe(w!.id);
+    // Lid bog'langan ro'yxat o'chirilmaydi (FK)
+    await expect(db.delete(leadWaitlists).where(eq(leadWaitlists.id, w!.id))).rejects.toThrow();
+    // Guruhga faollashtirilgan ro'yxat yopiq bo'lishi shart (CHECK)
+    const [g] = await db.select({ id: groups.id }).from(groups).limit(1);
+    await expect(db.update(leadWaitlists).set({ groupId: g!.id }).where(eq(leadWaitlists.id, w!.id))).rejects.toThrow();
+  });
+
   it("boshqa mijoz lid va bosqichlarni ko'rmaydi", async () => {
     expect(await other.select().from(leads)).toEqual([]);
     expect(await other.select().from(leadEvents)).toEqual([]);
     expect(await other.select().from(leadNotes)).toEqual([]);
     expect(await other.select().from(leadFirstLessons)).toEqual([]);
+    expect(await other.select().from(leadWaitlists)).toEqual([]);
     // Beta o'z standart bosqichlarini oladi, alfaga tegmaydi
     expect(await listStages(other)).toHaveLength(5);
     expect(await db.select().from(leadStages)).toHaveLength(5);

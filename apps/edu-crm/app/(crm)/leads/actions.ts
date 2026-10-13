@@ -6,15 +6,14 @@ import { z } from "zod";
 import { formatPhone } from "@ventura/auth/policy";
 import {
   courses,
-  groupMemberships,
   groups,
   leadEvents,
   leadFirstLessons,
   leadNotes,
   leadStages,
+  leadWaitlists,
   leads,
   settings,
-  students,
   users,
 } from "@ventura/db/schema/tenant";
 import { LEAD_FIELDS_KEY, cleanCustomData, formFieldsSchema, missingRequired } from "@/lib/form-fields";
@@ -34,9 +33,12 @@ import {
   leadNoteInput,
   leadStagesInput,
   lostReasonsInput,
+  waitlistActivateInput,
+  waitlistAssignInput,
+  waitlistInput,
 } from "@/lib/rules";
 import { uz } from "@/lib/uz";
-import { getStudentFields } from "../students/data";
+import { convertLeads } from "./convert";
 import { getLeadFields, listStages, staffOptions } from "./data";
 
 /*
@@ -444,107 +446,11 @@ export async function convertLeadAction(
       if (!parsed.success) return { ok: false, error: uz.common.invalid };
       const l = await loadLead(ctx, parsed.data.leadId);
       if (!l) return { ok: false, error: uz.common.gone };
-      const stages = await listStages(ctx.db);
-      const from = stages.find((s) => s.id === l.stageId);
-      const won = stages.find((s) => s.kind === "won")!;
-      if (from?.kind !== "open") return { ok: false, error: uz.leads.notOpen };
-
-      const [existing] = await ctx.db
-        .select()
-        .from(students)
-        .where(and(eq(students.phone, l.phone), isNull(students.archivedAt)));
-      if (existing && !ctx.branch.options.some((b) => b.id === existing.branchId))
-        return { ok: false, error: uz.leads.studentOtherBranch };
-      const studentBranch = existing?.branchId ?? l.branchId;
-
-      const groupId = parsed.data.groupId;
-      const [g] = groupId
-        ? await ctx.db
-            .select({ id: groups.id, name: groups.name, branchId: groups.branchId })
-            .from(groups)
-            .where(and(eq(groups.id, groupId), isNull(groups.archivedAt)))
-        : [];
-      if (groupId && !g) return { ok: false, error: uz.groups.groupArchived };
-      if (g && g.branchId !== studentBranch) return { ok: false, error: uz.groups.branchMismatch };
-
-      const studentFields = await getStudentFields(ctx.db);
-      const customData = cleanCustomData(l.customData, studentFields);
-      const today = todayTashkent();
-
-      const result = await ctx.db.transaction(async (tx) => {
-        let studentId = existing?.id;
-        if (!studentId) {
-          const [row] = await tx
-            .insert(students)
-            .values({
-              branchId: l.branchId,
-              name: l.name,
-              phone: l.phone,
-              parentPhone: l.phone2,
-              gender: l.gender,
-              source: l.source,
-              interestedCourseId: l.courseId,
-              customData,
-              createdBy: ctx.staff.id,
-            })
-            .returning({ id: students.id });
-          studentId = row!.id;
-        }
-        let membershipId: string | null = null;
-        if (g) {
-          const [open] = await tx
-            .select({ id: groupMemberships.id })
-            .from(groupMemberships)
-            .where(
-              and(
-                eq(groupMemberships.groupId, g.id),
-                eq(groupMemberships.studentId, studentId),
-                isNull(groupMemberships.leftAt),
-              ),
-            );
-          if (!open) {
-            const [m] = await tx
-              .insert(groupMemberships)
-              .values({ groupId: g.id, studentId, status: "trial", enrolledAt: today, createdBy: ctx.staff.id })
-              .returning({ id: groupMemberships.id });
-            membershipId = m!.id;
-          }
-        }
-        await tx
-          .update(leads)
-          .set({ stageId: won.id, stageChangedAt: new Date(), studentId })
-          .where(eq(leads.id, l.id));
-        await tx.insert(leadEvents).values({
-          leadId: l.id,
-          fromStageId: l.stageId,
-          toStageId: won.id,
-          actorId: ctx.staff.id,
-          actorName: ctx.staff.name,
-        });
-        return { studentId, membershipId };
-      });
-
-      await ctx.audit(
-        "lead.convert",
-        { type: "lead", id: l.id },
-        { name: l.name, studentId: result.studentId, existing: !!existing, ...(g ? { group: g.name } : {}) },
-      );
-      if (!existing)
-        await ctx.audit(
-          "student.create",
-          { type: "student", id: result.studentId },
-          { name: l.name, phone: formatPhone(l.phone), branchId: l.branchId, fromLead: l.id },
-        );
-      if (g && result.membershipId) {
-        await ctx.audit(
-          "group.enroll",
-          { type: "group", id: g.id },
-          { student: l.name, studentId: result.studentId, membershipId: result.membershipId },
-        );
-        await ctx.audit("student.enroll", { type: "student", id: result.studentId }, { group: g.name, groupId: g.id });
-      }
-      refreshAll(l.id, ["/students", ...(g ? [`/groups/${g.id}`] : [])]);
-      return { ok: true, studentId: result.studentId, existing: !!existing };
+      const res = await convertLeads(ctx, [l], parsed.data.groupId);
+      if (!res.ok) return res;
+      const c = res.converted[0]!;
+      refreshAll(l.id, ["/students", ...(res.group ? [`/groups/${res.group.id}`] : [])]);
+      return { ok: true, studentId: c.studentId, existing: c.existing };
     },
     { approval: { action: "leads.convert", input } },
   );
@@ -754,4 +660,147 @@ export async function saveLostReasonsAction(input: unknown): Promise<ActionResul
     refresh();
     return { ok: true };
   });
+}
+
+/* ---------- Zahira guruhlar (ADR 0024) ---------- */
+
+/** Ochiq zahira guruh, xodimning filiallaridan birida */
+async function loadWaitlist(ctx: ActionCtx, id: unknown) {
+  const parsed = uuid.safeParse(id);
+  if (!parsed.success) return null;
+  const [w] = await ctx.db
+    .select()
+    .from(leadWaitlists)
+    .where(and(eq(leadWaitlists.id, parsed.data), isNull(leadWaitlists.closedAt)));
+  if (!w || !ctx.branch.options.some((b) => b.id === w.branchId)) return null;
+  return w;
+}
+
+export async function saveWaitlistAction(input: unknown): Promise<ActionResult<{ id: string }>> {
+  return crmAction<{ id: string }>(FEATURE, "leads.edit", async (ctx) => {
+    const parsed = waitlistInput.safeParse(input);
+    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+    const v = parsed.data;
+    const existing = v.id ? await loadWaitlist(ctx, v.id) : null;
+    if (v.id && !existing) return { ok: false, error: uz.common.gone };
+    const branchId = existing ? existing.branchId : resolveBranch(ctx.branch, v.branchId);
+    if (!branchId) return { ok: false, error: uz.common.branchRequired };
+    if (!existing && v.branchId && v.branchId !== branchId) return { ok: false, error: uz.common.branchForbidden };
+    if (v.courseId) {
+      const [c] = await ctx.db.select({ id: courses.id }).from(courses).where(eq(courses.id, v.courseId));
+      if (!c) return { ok: false, error: uz.common.gone };
+    }
+    const values = { name: v.name, courseId: v.courseId, note: v.note || null };
+    if (existing) {
+      await ctx.db.update(leadWaitlists).set(values).where(eq(leadWaitlists.id, existing.id));
+      await ctx.audit("lead.waitlist.update", { type: "lead_waitlist", id: existing.id }, { name: v.name });
+      refresh();
+      return { ok: true, id: existing.id };
+    }
+    const [row] = await ctx.db
+      .insert(leadWaitlists)
+      .values({ ...values, branchId, createdBy: ctx.staff.id })
+      .returning({ id: leadWaitlists.id });
+    await ctx.audit("lead.waitlist.create", { type: "lead_waitlist", id: row!.id }, { name: v.name, branchId });
+    refresh();
+    return { ok: true, id: row!.id };
+  });
+}
+
+/** Zahira guruhni yopish (faollashtirmasdan): lidlar ro'yxatdan chiqadi, o'z bosqichida qoladi */
+export async function closeWaitlistAction(id: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "leads.edit", async (ctx) => {
+    const w = await loadWaitlist(ctx, id);
+    if (!w) return { ok: false, error: uz.common.gone };
+    const released = await ctx.db.transaction(async (tx) => {
+      const rows = await tx
+        .update(leads)
+        .set({ waitlistId: null })
+        .where(eq(leads.waitlistId, w.id))
+        .returning({ id: leads.id });
+      await tx
+        .update(leadWaitlists)
+        .set({ closedAt: new Date(), closedBy: ctx.staff.id })
+        .where(eq(leadWaitlists.id, w.id));
+      return rows.length;
+    });
+    await ctx.audit("lead.waitlist.close", { type: "lead_waitlist", id: w.id }, { name: w.name, released });
+    refresh();
+    return { ok: true };
+  });
+}
+
+/** Lidlarni zahira guruhga yozish yoki chiqarish (`waitlistId: null`) — faqat ish bosqichidagi lidlar */
+export async function assignWaitlistAction(input: unknown): Promise<ActionResult<{ count: number }>> {
+  return crmAction<{ count: number }>(
+    FEATURE,
+    "leads.edit",
+    async (ctx) => {
+      const parsed = waitlistAssignInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const { leadIds, waitlistId } = parsed.data;
+      const w = waitlistId ? await loadWaitlist(ctx, waitlistId) : null;
+      if (waitlistId && !w) return { ok: false, error: uz.common.gone };
+      const stages = await listStages(ctx.db);
+      const openIds = stages.filter((s) => s.kind === "open").map((s) => s.id);
+      const branchIds = w ? [w.branchId] : ctx.branch.options.map((b) => b.id);
+      const rows = await ctx.db
+        .update(leads)
+        .set({ waitlistId: w?.id ?? null })
+        .where(
+          and(
+            inArray(leads.id, leadIds),
+            isNull(leads.archivedAt),
+            inArray(leads.stageId, openIds),
+            inArray(leads.branchId, branchIds),
+          ),
+        )
+        .returning({ id: leads.id, name: leads.name });
+      if (!rows.length) return { ok: false, error: w ? uz.leads.waitlistBranch : uz.common.gone };
+      for (const r of rows)
+        await ctx.audit("lead.waitlist", { type: "lead", id: r.id }, { name: r.name, waitlist: w?.name ?? null });
+      refresh();
+      return { ok: true, count: rows.length };
+    },
+    { approval: { action: "leads.waitlist", input } },
+  );
+}
+
+/**
+ * Faollashtirish: zahira guruhdagi hamma lid tanlangan guruhga (yangi ochilgan yoki mavjud) o'quvchi bo'lib sinovda
+ * qo'shiladi va ro'yxat yopiladi — bitta tranzaksiyada; biror lid mos kelmasa hech narsa yozilmaydi.
+ */
+export async function activateWaitlistAction(input: unknown): Promise<ActionResult<{ count: number }>> {
+  return crmAction<{ count: number }>(
+    FEATURE,
+    "leads.convert_to_student",
+    async (ctx) => {
+      const parsed = waitlistActivateInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const w = await loadWaitlist(ctx, parsed.data.waitlistId);
+      if (!w) return { ok: false, error: uz.common.gone };
+      const waiting = await ctx.db
+        .select()
+        .from(leads)
+        .where(and(eq(leads.waitlistId, w.id), isNull(leads.archivedAt)));
+      if (!waiting.length) return { ok: false, error: uz.leads.waitlistEmpty };
+      const res = await convertLeads(ctx, waiting, parsed.data.groupId, async (tx) => {
+        await tx
+          .update(leadWaitlists)
+          .set({ closedAt: new Date(), closedBy: ctx.staff.id, groupId: parsed.data.groupId })
+          .where(eq(leadWaitlists.id, w.id));
+      });
+      if (!res.ok) return res;
+      await ctx.audit(
+        "lead.waitlist.activate",
+        { type: "lead_waitlist", id: w.id },
+        { name: w.name, group: res.group?.name ?? null, count: res.converted.length },
+      );
+      refresh();
+      revalidatePath("/students");
+      revalidatePath(`/groups/${parsed.data.groupId}`);
+      return { ok: true, count: res.converted.length };
+    },
+    { approval: { action: "leads.waitlistActivate", input } },
+  );
 }
