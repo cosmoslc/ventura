@@ -27,8 +27,11 @@ Faqat ish bosqichidagi lid aylantiriladi. Bitta tranzaksiyada:
 - **O'quvchi:**
   - shu telefonli (arxivda bo'lmagan) o'quvchi bo'lsa — o'shanga bog'lanadi; u boshqa filialda va xodimga u filial
     ruxsat etilmagan bo'lsa — rad etiladi;
-  - bo'lmasa — yangisi yaratiladi: ism, telefon, ikkinchi telefon, jins (oynada tanlanadi), manba, qiziqqan kurs va
-    o'quvchi formasida id si bir xil qo'shimcha maydonlar.
+  - bo'lmasa — yangisi yaratiladi: ism, telefon, ikkinchi telefon, jins, manba, qiziqqan kurs va o'quvchi formasida
+    id si bir xil qo'shimcha maydonlar.
+
+    Jins lid formasida kiritiladi (`leads.gender`, 0015 migratsiyasi). Shuning uchun aylantirish oynasida faqat guruh
+    so'raladi.
 
     `created_by` — aylantirgan xodim. Bu menejer KPI uchun kerak (EDU-CRM-E3-DAVOMI, 4-qaror).
 - **Guruh** (ixtiyoriy):
