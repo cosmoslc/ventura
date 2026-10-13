@@ -5,12 +5,16 @@ import {
   ArrowDown,
   ArrowRightLeft,
   ArrowUp,
+  CalendarPlus,
   Eye,
+  GraduationCap,
   MoreHorizontal,
   Pencil,
   Plus,
+  RotateCcw,
   Trash2,
   UserCheck,
+  UserX,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -27,6 +31,8 @@ import {
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { Notice } from "@ventura/ui/notice";
+import { SearchSelect } from "@ventura/ui/search-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
@@ -35,11 +41,17 @@ import { uz } from "@/lib/uz";
 import {
   archiveLeadAction,
   assignLeadsAction,
+  cancelFirstLessonAction,
+  convertLeadAction,
   deleteLeadStageAction,
+  loseLeadAction,
   moveLeadAction,
+  restoreLeadAction,
   saveLeadStagesAction,
+  saveLostReasonsAction,
+  scheduleFirstLessonAction,
 } from "./actions";
-import type { LeadRow, StageRow, StaffOption } from "./data";
+import type { LeadGroupOption, LeadRow, StageRow, StaffOption } from "./data";
 import type { LeadPerms } from "./perms";
 
 const t = uz.leads;
@@ -262,26 +274,47 @@ export function ArchiveDialog({
   );
 }
 
-/** Kartadagi, qatordagi va profildagi uch nuqta menyusi */
+/**
+ * Kartadagi, qatordagi va profildagi uch nuqta menyusi. Ish bosqichidagi lid uchun — bosqich, birinchi dars,
+ * o'quvchiga aylantirish, yo'qotish; yo'qotilgan lid uchun — tiklash; qolganlari hammasi uchun.
+ */
 export function LeadMenu({
   lead,
+  stageKind,
   perms,
   showOpen = true,
   onEdit,
   onMove,
   onAssign,
   onArchive,
+  onConvert,
+  onFirstLesson,
+  onLose,
 }: {
   lead: LeadRow;
+  stageKind: StageRow["kind"];
   perms: LeadPerms;
   showOpen?: boolean;
   onEdit: () => void;
-  onMove: () => void;
+  onMove?: () => void;
   onAssign: () => void;
   onArchive: () => void;
+  onConvert?: () => void;
+  onFirstLesson?: () => void;
+  onLose?: () => void;
 }) {
   const router = useRouter();
-  if (!showOpen && !perms.edit && !perms.move && !perms.reassign && !perms.delete) return null;
+  const { run } = useRun();
+  const open = stageKind === "open";
+  const items = {
+    move: open && perms.move && !!onMove,
+    firstLesson: open && perms.edit && !!onFirstLesson,
+    convert: open && perms.convert && !!onConvert,
+    lose: open && perms.move && !!onLose,
+    restore: stageKind === "lost" && perms.move,
+  };
+  const any = showOpen || Object.values(items).some(Boolean) || perms.edit || perms.reassign || perms.delete;
+  if (!any) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -295,15 +328,30 @@ export function LeadMenu({
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-60">
         {showOpen ? (
           <DropdownMenuItem onSelect={() => router.push(`/leads/${lead.id}`)}>
             <Eye /> {t.open}
           </DropdownMenuItem>
         ) : null}
-        {perms.move ? (
+        {items.convert ? (
+          <DropdownMenuItem onSelect={onConvert}>
+            <GraduationCap /> {t.convert}
+          </DropdownMenuItem>
+        ) : null}
+        {items.firstLesson ? (
+          <DropdownMenuItem onSelect={onFirstLesson}>
+            <CalendarPlus /> {t.firstLesson}
+          </DropdownMenuItem>
+        ) : null}
+        {items.move ? (
           <DropdownMenuItem onSelect={onMove}>
             <ArrowRightLeft /> {t.move}
+          </DropdownMenuItem>
+        ) : null}
+        {items.restore ? (
+          <DropdownMenuItem onSelect={() => run(() => restoreLeadAction(lead.id), t.restored)}>
+            <RotateCcw /> {t.restore}
           </DropdownMenuItem>
         ) : null}
         {perms.reassign ? (
@@ -316,13 +364,16 @@ export function LeadMenu({
             <Pencil /> {t.edit}
           </DropdownMenuItem>
         ) : null}
+        {items.lose || perms.delete ? <DropdownMenuSeparator /> : null}
+        {items.lose ? (
+          <DropdownMenuItem danger onSelect={onLose}>
+            <UserX /> {t.lose}
+          </DropdownMenuItem>
+        ) : null}
         {perms.delete ? (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem danger onSelect={onArchive}>
-              <Archive /> {t.archive}
-            </DropdownMenuItem>
-          </>
+          <DropdownMenuItem danger onSelect={onArchive}>
+            <Archive /> {t.archive}
+          </DropdownMenuItem>
         ) : null}
       </DropdownMenuContent>
     </DropdownMenu>
@@ -543,5 +594,357 @@ export function StagesModal({
         </Select>
       </Modal>
     </>
+  );
+}
+
+/* ---------- E4b ---------- */
+
+/** O'quvchiga aylantirish: faqat guruh (ixtiyoriy, lid filialidagi); shu telefonli o'quvchi bo'lsa — bog'lanadi */
+export function ConvertDialog({
+  lead,
+  groups,
+  existingStudent,
+  onClose,
+}: {
+  lead: LeadRow | null;
+  groups: LeadGroupOption[];
+  /** Shu telefonli o'quvchi (sahifa bilmasa — null) */
+  existingStudent?: string | null;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [groupId, setGroupId] = React.useState<string[]>([]);
+  const [pending, startTransition] = React.useTransition();
+  const [shownFor, setShownFor] = React.useState<string | null>(null);
+  if ((lead?.id ?? null) !== shownFor) {
+    setShownFor(lead?.id ?? null);
+    if (lead) {
+      setGroupId(lead.firstLesson ? [lead.firstLesson.groupId] : []);
+    }
+  }
+  const options = lead ? groups.filter((g) => g.branchId === lead.branchId) : [];
+
+  function submit() {
+    if (!lead) return;
+    startTransition(async () => {
+      const res = await convertLeadAction({ leadId: lead.id, groupId: groupId[0] ?? null });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
+      toast({ tone: "success", title: res.existing ? t.convertedLinked : t.converted, description: lead.name });
+      onClose();
+      router.push(`/students/${res.studentId}`);
+    });
+  }
+
+  return (
+    <Modal
+      open={lead !== null}
+      onOpenChange={(o) => !o && onClose()}
+      position="center"
+      title={lead ? t.convertTitle(lead.name) : t.convert}
+      description={t.convertIntro}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {uz.common.cancel}
+          </Button>
+          <Button onClick={submit} disabled={pending}>
+            <GraduationCap /> {t.convert}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        {existingStudent ? <Notice tone="info">{t.convertExisting(existingStudent)}</Notice> : null}
+        <div>
+          <Label>{t.convertGroup}</Label>
+          <SearchSelect
+            options={options}
+            value={groupId}
+            onChange={setGroupId}
+            placeholder={uz.staff.chooseGroup}
+            searchPlaceholder={uz.staff.searchGroup}
+            emptyText={uz.common.nothingFound}
+          />
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/** Birinchi (sinov) darsga yozish, ko'chirish yoki bekor qilish */
+export function FirstLessonDialog({
+  lead,
+  groups,
+  today,
+  onClose,
+}: {
+  lead: LeadRow | null;
+  groups: LeadGroupOption[];
+  today: string;
+  onClose: () => void;
+}) {
+  const { run, pending } = useRun();
+  const [groupId, setGroupId] = React.useState<string[]>([]);
+  const [date, setDate] = React.useState(today);
+  const [error, setError] = React.useState<string | null>(null);
+  const [shownFor, setShownFor] = React.useState<string | null>(null);
+  if ((lead?.id ?? null) !== shownFor) {
+    setShownFor(lead?.id ?? null);
+    if (lead) {
+      setGroupId(lead.firstLesson ? [lead.firstLesson.groupId] : []);
+      setDate(lead.firstLesson?.date ?? today);
+      setError(null);
+    }
+  }
+  const options = lead ? groups.filter((g) => g.branchId === lead.branchId) : [];
+
+  function save() {
+    if (!lead) return;
+    if (!groupId[0]) return setError(t.firstLessonGroupRequired);
+    if (!date) return setError(t.firstLessonDateRequired);
+    run(() => scheduleFirstLessonAction({ leadId: lead.id, groupId: groupId[0], date }), t.firstLessonSaved, onClose);
+  }
+
+  return (
+    <Modal
+      open={lead !== null}
+      onOpenChange={(o) => !o && onClose()}
+      position="center"
+      title={lead ? t.firstLessonTitle(lead.name) : t.firstLesson}
+      description={t.firstLessonIntro}
+      footer={
+        <>
+          {lead?.firstLesson ? (
+            <Button
+              variant="ghost"
+              className="mr-auto text-destructive-text"
+              disabled={pending}
+              onClick={() => lead && run(() => cancelFirstLessonAction(lead.id), t.firstLessonCanceled, onClose)}
+            >
+              <Trash2 /> {t.firstLessonCancel}
+            </Button>
+          ) : null}
+          <Button variant="ghost" onClick={onClose}>
+            {uz.common.cancel}
+          </Button>
+          <Button onClick={save} disabled={pending}>
+            <CalendarPlus /> {t.firstLessonSave}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Label>{t.firstLessonGroup} *</Label>
+          <SearchSelect
+            options={options}
+            value={groupId}
+            onChange={(v) => {
+              setGroupId(v);
+              setError(null);
+            }}
+            placeholder={uz.staff.chooseGroup}
+            searchPlaceholder={uz.staff.searchGroup}
+            emptyText={uz.common.nothingFound}
+          />
+        </div>
+        <div>
+          <Label htmlFor="first-lesson-date">{t.firstLessonDate} *</Label>
+          <Input
+            id="first-lesson-date"
+            type="date"
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value);
+              setError(null);
+            }}
+          />
+        </div>
+        {error ? <FieldHint error>{error}</FieldHint> : null}
+      </div>
+    </Modal>
+  );
+}
+
+/** Yo'qotildi — sababi (sozlamadagi ro'yxatdan) va izoh */
+export function LoseDialog({
+  lead,
+  reasons,
+  onClose,
+}: {
+  lead: LeadRow | null;
+  reasons: string[];
+  onClose: () => void;
+}) {
+  const { run, pending } = useRun();
+  const [reason, setReason] = React.useState("");
+  const [note, setNote] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  const [shownFor, setShownFor] = React.useState<string | null>(null);
+  if ((lead?.id ?? null) !== shownFor) {
+    setShownFor(lead?.id ?? null);
+    setReason("");
+    setNote("");
+    setError(null);
+  }
+  return (
+    <Modal
+      open={lead !== null}
+      onOpenChange={(o) => !o && onClose()}
+      position="center"
+      title={lead ? t.loseTitle(lead.name) : t.lose}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {uz.common.cancel}
+          </Button>
+          <Button
+            variant="danger"
+            disabled={pending}
+            onClick={() => {
+              if (!lead) return;
+              if (!reason) return setError(t.loseReasonRequired);
+              run(() => loseLeadAction({ id: lead.id, reason, note }), t.lost_ok, onClose);
+            }}
+          >
+            <UserX /> {t.lose}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Label>{t.loseReason} *</Label>
+          <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={t.loseReason}>
+            {reasons.map((r) => (
+              <Button
+                key={r}
+                size="sm"
+                role="radio"
+                aria-checked={reason === r}
+                variant={reason === r ? "primary" : "ghost"}
+                onClick={() => {
+                  setReason(r);
+                  setError(null);
+                }}
+              >
+                {r}
+              </Button>
+            ))}
+          </div>
+        </div>
+        <div>
+          <Label htmlFor="lose-note">{t.loseNote}</Label>
+          <Textarea
+            id="lose-note"
+            rows={2}
+            maxLength={500}
+            placeholder={t.loseNotePlaceholder}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </div>
+        {error ? <FieldHint error>{error}</FieldHint> : null}
+      </div>
+    </Modal>
+  );
+}
+
+/** Yo'qotish sabablari ro'yxati: qo'shish va o'chirish */
+export function LostReasonsModal({
+  open,
+  onOpenChange,
+  reasons,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  reasons: string[];
+}) {
+  const router = useRouter();
+  const [list, setList] = React.useState(reasons);
+  const [draft, setDraft] = React.useState("");
+  const [pending, startTransition] = React.useTransition();
+  const [wasOpen, setWasOpen] = React.useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setList(reasons);
+      setDraft("");
+    }
+  }
+  function add() {
+    const v = draft.trim();
+    if (!v || list.includes(v)) return;
+    setList([...list, v]);
+    setDraft("");
+  }
+  function save() {
+    startTransition(async () => {
+      const res = await saveLostReasonsAction(list);
+      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      toast({ tone: "success", title: t.lostReasonsSaved });
+      onOpenChange(false);
+      router.refresh();
+    });
+  }
+  return (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      position="center"
+      title={t.lostReasonsTitle}
+      description={t.lostReasonsIntro}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {uz.common.cancel}
+          </Button>
+          <Button onClick={save} disabled={pending || !list.length}>
+            {uz.common.save}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-3">
+        <ul className="space-y-2">
+          {list.map((r) => (
+            <li
+              key={r}
+              className="flex items-center justify-between gap-2 rounded-control border border-border-soft px-3 py-2"
+            >
+              <span className="text-body text-foreground">{r}</span>
+              <Button
+                variant="icon"
+                size="icon-sm"
+                className="text-destructive-text"
+                aria-label={`${r} — ${uz.common.delete}`}
+                disabled={list.length < 2}
+                onClick={() => setList(list.filter((x) => x !== r))}
+              >
+                <Trash2 />
+              </Button>
+            </li>
+          ))}
+        </ul>
+        <div className="flex gap-2">
+          <Input
+            aria-label={t.lostReasonAdd}
+            placeholder={t.lostReasonPlaceholder}
+            value={draft}
+            maxLength={80}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                add();
+              }
+            }}
+          />
+          <Button variant="ghost" onClick={add} disabled={!draft.trim()}>
+            <Plus /> {t.lostReasonAdd}
+          </Button>
+        </div>
+      </div>
+    </Modal>
   );
 }

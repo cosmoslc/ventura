@@ -35,6 +35,28 @@ export const LEAD_SOURCES = [
   "Boshqa",
 ] as const;
 
+export const LOST_REASONS_KEY = "leads.lost_reasons";
+
+/** Lid yo'qotilganda tanlanadigan sabablar (eski tizimdagi "Liddan o'chirilganda" sabablari) */
+export const DEFAULT_LOST_REASONS = [
+  "Narxi qimmat",
+  "Vaqti to'g'ri kelmadi",
+  "Boshqa markazni tanladi",
+  "Javob bermadi",
+  "Qiziqishi yo'qoldi",
+  "Manzil uzoq",
+  "Boshqa",
+];
+
+/** Bazadagi qiymat: 1–30 ta, takrorsiz, bo'sh emas; buzilgan bo'lsa standart ro'yxat */
+export function parseLostReasons(value: unknown): string[] {
+  if (!Array.isArray(value)) return DEFAULT_LOST_REASONS;
+  const list = [...new Set(value.filter((v): v is string => typeof v === "string").map((v) => v.trim()))].filter(
+    (v) => v.length > 0 && v.length <= 80,
+  );
+  return list.length ? list.slice(0, 30) : DEFAULT_LOST_REASONS;
+}
+
 export interface StageDraft {
   id?: string;
   name: string;

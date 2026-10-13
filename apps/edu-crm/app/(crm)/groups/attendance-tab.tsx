@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarX, CheckCheck, ChevronLeft, ChevronRight, Users, X } from "lucide-react";
+import { CalendarX, CheckCheck, ChevronLeft, ChevronRight, UserPlus, Users, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -16,6 +16,7 @@ import { displayPhone, formatDate } from "@/lib/format";
 import { memberOn, weekdayOf } from "@/lib/lessons";
 import { uz } from "@/lib/uz";
 import type { AttendanceMember, GroupAttendance } from "@/lib/server/attendance";
+import { markFirstLessonAction } from "../leads/actions";
 import { markAttendanceAction, markRestPresentAction } from "./attendance-actions";
 
 type Status = "present" | "late" | "excused" | "absent";
@@ -85,6 +86,16 @@ export function AttendanceTab({
       router.refresh();
     });
   }
+
+  // Birinchi darsga kelgan lidlar (E4b) — o'quvchi emas, alohida qatorlarda; bosilgan holatni qayta bosish — bekor
+  function markGuest(leadId: string, status: "came" | "absent", current: string) {
+    startTransition(async () => {
+      const res = await markFirstLessonAction({ leadId, status: current === status ? "scheduled" : status });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
+      router.refresh();
+    });
+  }
+  const guests = date ? data.guests.filter((g) => g.date === date) : [];
 
   function markRest() {
     if (!date) return;
@@ -281,6 +292,46 @@ export function AttendanceTab({
           ) : (
             <EmptyState icon={<Users />} title={uz.attendance.noStudents} />
           )}
+
+          {guests.length ? (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-body font-bold text-foreground">
+                <UserPlus className="size-4 text-primary" /> {uz.attendance.guestsTitle(guests.length)}
+              </div>
+              <ul className="divide-y divide-border-soft rounded-card border border-border-soft">
+                {guests.map((g) => (
+                  <li key={g.leadId} className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5">
+                    <div className="min-w-0">
+                      <Link href={`/leads/${g.leadId}`} className="font-bold text-foreground hover:text-primary">
+                        {g.name}
+                      </Link>
+                      <div className="font-mono text-caption text-muted-foreground">{displayPhone(g.phone)}</div>
+                    </div>
+                    <div className="flex items-center gap-1" role="radiogroup" aria-label={g.name}>
+                      {(["came", "absent"] as const).map((st) => (
+                        <button
+                          key={st}
+                          type="button"
+                          role="radio"
+                          aria-checked={g.status === st}
+                          disabled={!editable || pending}
+                          onClick={() => markGuest(g.leadId, st, g.status)}
+                          className={cn(
+                            "h-8 rounded-control border px-3 text-caption font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                            g.status === st
+                              ? TONE[st === "came" ? "present" : "absent"]
+                              : "border-border-soft text-muted-foreground hover:bg-muted",
+                          )}
+                        >
+                          {uz.leads.firstLessonStatus[st]}
+                        </button>
+                      ))}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </>
       ) : null}
 

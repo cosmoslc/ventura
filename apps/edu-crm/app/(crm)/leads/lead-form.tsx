@@ -9,6 +9,7 @@ import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { PhoneInput } from "@ventura/ui/phone-input";
+import { SearchSelect } from "@ventura/ui/search-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
@@ -29,6 +30,7 @@ interface Form {
   name: string;
   phone: string;
   phone2: string;
+  gender: string;
   source: string;
   courseId: string;
   assignedTo: string;
@@ -74,6 +76,7 @@ export function LeadForm({
       name: editing?.name ?? "",
       phone: editing?.phone ?? "",
       phone2: editing?.phone2 ?? "",
+      gender: editing?.gender ?? "",
       source: editing?.source ?? "",
       courseId: editing?.courseId ?? "",
       assignedTo: editing ? (editing.assignedTo ?? "") : staff.some((s) => s.id === me) ? me : "",
@@ -126,6 +129,7 @@ export function LeadForm({
       name: form.name,
       phone: form.phone,
       phone2: form.phone2,
+      gender: form.gender === "male" || form.gender === "female" ? form.gender : null,
       source: form.source,
       courseId: form.courseId || null,
       assignedTo: form.assignedTo || null,
@@ -195,6 +199,19 @@ export function LeadForm({
             </Link>
           </Notice>
         ) : null}
+        <div>
+          <Label>{t.gender}</Label>
+          <Select value={form.gender || NONE} onValueChange={(v) => set("gender", v === NONE ? "" : v)}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NONE}>{t.choose}</SelectItem>
+              <SelectItem value="male">{uz.students.male}</SelectItem>
+              <SelectItem value="female">{uz.students.female}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         {showBranch ? (
           <div>
             <Label>{uz.common.branch}</Label>
@@ -233,19 +250,14 @@ export function LeadForm({
         </div>
         <div>
           <Label>{t.course}</Label>
-          <Select value={form.courseId || NONE} onValueChange={(v) => set("courseId", v === NONE ? "" : v)}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NONE}>{t.noCourse}</SelectItem>
-              {courses.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SearchSelect
+            options={courses.map((c) => ({ value: c.id, label: c.name }))}
+            value={form.courseId ? [form.courseId] : []}
+            onChange={(v) => set("courseId", v[0] ?? "")}
+            placeholder={t.noCourse}
+            searchPlaceholder={t.courseSearch}
+            emptyText={uz.common.nothingFound}
+          />
         </div>
         <div>
           <Label>{t.assigned}</Label>

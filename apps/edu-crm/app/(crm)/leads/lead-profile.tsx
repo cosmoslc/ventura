@@ -1,6 +1,17 @@
 "use client";
 
-import { ArrowLeft, Check, MessageSquareText, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarPlus,
+  Check,
+  GraduationCap,
+  MessageSquareText,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Trash2,
+  UserX,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -11,6 +22,7 @@ import { Card } from "@ventura/ui/card";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
+import { Notice } from "@ventura/ui/notice";
 import { EmptyState } from "@ventura/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { Textarea } from "@ventura/ui/textarea";
@@ -20,9 +32,23 @@ import { type FormField, fieldText } from "@/lib/form-fields";
 import { daysIn } from "@/lib/leads";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
-import { addLeadNoteAction, deleteLeadNoteAction, moveLeadAction } from "./actions";
-import type { LeadEventRow, LeadNoteRow, LeadRow, StageRow, StaffOption } from "./data";
-import { ArchiveDialog, AssignDialog, LeadMenu, StageBadge } from "./lead-dialogs";
+import {
+  addLeadNoteAction,
+  deleteLeadNoteAction,
+  markFirstLessonAction,
+  moveLeadAction,
+  restoreLeadAction,
+} from "./actions";
+import type { LeadEventRow, LeadGroupOption, LeadNoteRow, LeadRow, StageRow, StaffOption } from "./data";
+import {
+  ArchiveDialog,
+  AssignDialog,
+  ConvertDialog,
+  FirstLessonDialog,
+  LeadMenu,
+  LoseDialog,
+  StageBadge,
+} from "./lead-dialogs";
 import { LeadForm } from "./lead-form";
 import type { LeadPerms } from "./perms";
 
@@ -39,7 +65,8 @@ function dateTime(iso: string) {
 
 /**
  * Lid profili (ADR 0022): chapda ma'lumotlar (qo'shimcha maydonlar bilan), o'ngda ish bosqichlari qatori — bosib
- * o'tkaziladi, tablar: izohlar (oynada yoziladi) va bosqichlar tarixi. Amallar — uch nuqta menyusida.
+ * o'tkaziladi, tablar: izohlar (oynada yoziladi) va bosqichlar tarixi. E4b: o'quvchiga aylantirish, birinchi dars
+ * (keldi / kelmadi), yo'qotish va tiklash; o'quvchi bo'lgan yoki yo'qotilgan lidda — holat banneri.
  */
 export function LeadProfile({
   lead: l,
@@ -54,6 +81,9 @@ export function LeadProfile({
   today,
   me,
   perms,
+  groups,
+  lostReasons,
+  existingStudent,
 }: {
   lead: LeadRow;
   stages: StageRow[];
@@ -67,17 +97,34 @@ export function LeadProfile({
   today: string;
   me: string;
   perms: LeadPerms;
+  groups: LeadGroupOption[];
+  lostReasons: string[];
+  /** Shu telefonli o'quvchi nomi (o'quvchiga aylantirishda bog'lanadi) */
+  existingStudent: string | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("notes");
   const [formOpen, setFormOpen] = React.useState(false);
   const [assigning, setAssigning] = React.useState(false);
   const [archiving, setArchiving] = React.useState(false);
+  const [dialog, setDialog] = React.useState<"convert" | "lesson" | "lose" | null>(null);
   const [pending, startTransition] = React.useTransition();
   const stage = stages.find((s) => s.id === l.stageId);
   const openStages = stages.filter((s) => s.kind === "open");
   const branch = branches.find((b) => b.id === l.branchId);
   const stageName = (id: string | null) => stages.find((s) => s.id === id)?.name ?? "—";
+
+  const kind = stage?.kind ?? "open";
+  const fl = l.firstLesson;
+
+  function act(fn: () => Promise<{ ok: boolean; error?: string; pending?: true }>, ok: string) {
+    startTransition(async () => {
+      const res = await fn();
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error ?? uz.common.error });
+      toast({ tone: "success", title: ok });
+      router.refresh();
+    });
+  }
 
   function move(stageId: string) {
     if (stageId === l.stageId || !perms.move || stage?.kind !== "open") return;
@@ -112,12 +159,14 @@ export function LeadProfile({
             ) : null}
             <LeadMenu
               lead={l}
-              perms={{ ...perms, move: false }}
+              stageKind={kind}
+              perms={perms}
               showOpen={false}
               onEdit={() => setFormOpen(true)}
-              onMove={() => {}}
               onAssign={() => setAssigning(true)}
               onArchive={() => setArchiving(true)}
+              onFirstLesson={() => setDialog("lesson")}
+              onLose={() => setDialog("lose")}
             />
           </div>
         </div>
@@ -140,6 +189,9 @@ export function LeadProfile({
         </div>
 
         <dl className="divide-y divide-border-soft border-y border-border-soft text-body">
+          <Line label={t.gender}>
+            {l.gender === "male" ? uz.students.male : l.gender === "female" ? uz.students.female : "—"}
+          </Line>
           <Line label={t.source}>{l.source ?? "—"}</Line>
           <Line label={t.course}>{l.courseName ?? "—"}</Line>
           <Line label={t.assigned}>{l.assignedName ?? t.unassigned}</Line>
@@ -166,42 +218,134 @@ export function LeadProfile({
       </Card>
 
       <div className="min-w-0 space-y-4">
-        {/* Ish bosqichlari: joriy bosqich ajratilgan, boshqasiga bosib o'tkaziladi */}
-        <Card className="p-3">
-          <ol className="flex flex-wrap gap-2" aria-label={t.stage}>
-            {openStages.map((s) => {
-              const current = s.id === l.stageId;
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    disabled={pending || current || !perms.move || stage?.kind !== "open"}
-                    aria-current={current ? "step" : undefined}
-                    onClick={() => move(s.id)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-control border px-3 py-2 text-body font-semibold transition-colors",
-                      current
-                        ? "text-foreground"
-                        : "border-border-soft text-foreground enabled:hover:bg-accent disabled:opacity-70",
-                    )}
-                    style={
-                      current
-                        ? { borderColor: s.color, background: `color-mix(in oklab, ${s.color} 16%, transparent)` }
-                        : undefined
-                    }
-                  >
-                    {current ? (
-                      <Check className="size-4" style={{ color: s.color }} />
-                    ) : (
-                      <span className="size-2 rounded-full" style={{ background: s.color }} />
-                    )}
-                    {s.name}
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </Card>
+        {kind === "won" ? (
+          <Notice tone="success">
+            {t.becameStudent(l.studentName ?? l.name)}{" "}
+            {l.studentId ? (
+              <Link href={`/students/${l.studentId}`} className="font-semibold underline">
+                {t.openStudent}
+              </Link>
+            ) : null}
+          </Notice>
+        ) : null}
+        {kind === "lost" ? (
+          <Notice tone="warning">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                <b>{stage?.name}</b>: {l.lostReason ?? "—"}
+                {l.lostNote ? ` — ${l.lostNote}` : ""}
+              </span>
+              {perms.move ? (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={pending}
+                  onClick={() => act(() => restoreLeadAction(l.id), t.restored)}
+                >
+                  <RotateCcw /> {t.restore}
+                </Button>
+              ) : null}
+            </div>
+          </Notice>
+        ) : null}
+
+        {kind === "open" ? (
+          <>
+            {/* Ish bosqichlari: joriy bosqich ajratilgan, boshqasiga bosib o'tkaziladi */}
+            <Card className="p-3">
+              <ol className="flex flex-wrap gap-2" aria-label={t.stage}>
+                {openStages.map((s) => {
+                  const current = s.id === l.stageId;
+                  return (
+                    <li key={s.id}>
+                      <button
+                        type="button"
+                        disabled={pending || current || !perms.move || stage?.kind !== "open"}
+                        aria-current={current ? "step" : undefined}
+                        onClick={() => move(s.id)}
+                        className={cn(
+                          "flex items-center gap-2 rounded-control border px-3 py-2 text-body font-semibold transition-colors",
+                          current
+                            ? "text-foreground"
+                            : "border-border-soft text-foreground enabled:hover:bg-accent disabled:opacity-70",
+                        )}
+                        style={
+                          current
+                            ? { borderColor: s.color, background: `color-mix(in oklab, ${s.color} 16%, transparent)` }
+                            : undefined
+                        }
+                      >
+                        {current ? (
+                          <Check className="size-4" style={{ color: s.color }} />
+                        ) : (
+                          <span className="size-2 rounded-full" style={{ background: s.color }} />
+                        )}
+                        {s.name}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ol>
+            </Card>
+
+            {perms.convert || perms.edit || perms.move ? (
+              <div className="flex flex-wrap gap-2">
+                {perms.convert ? (
+                  <Button onClick={() => setDialog("convert")}>
+                    <GraduationCap /> {t.convert}
+                  </Button>
+                ) : null}
+                {perms.edit ? (
+                  <Button variant="ghost" onClick={() => setDialog("lesson")}>
+                    <CalendarPlus /> {t.firstLesson}
+                  </Button>
+                ) : null}
+                {perms.move ? (
+                  <Button variant="ghost" className="text-destructive-text" onClick={() => setDialog("lose")}>
+                    <UserX /> {t.lose}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
+          </>
+        ) : null}
+
+        {fl ? (
+          <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <div className="text-caption font-semibold text-muted-foreground">{t.firstLesson}</div>
+              <div className="text-body font-bold text-foreground">
+                {t.firstLessonOn(fl.groupName, formatDate(fl.date))}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5" role="radiogroup" aria-label={t.firstLesson}>
+              {(["came", "absent"] as const).map((st) => (
+                <Button
+                  key={st}
+                  size="sm"
+                  role="radio"
+                  aria-checked={fl.status === st}
+                  variant={fl.status === st ? (st === "came" ? "primary" : "danger") : "ghost"}
+                  disabled={pending || fl.date > today}
+                  title={fl.date > today ? t.firstLessonFuture : undefined}
+                  onClick={() =>
+                    act(
+                      () => markFirstLessonAction({ leadId: l.id, status: fl.status === st ? "scheduled" : st }),
+                      t.firstLessonMarked,
+                    )
+                  }
+                >
+                  {t.firstLessonStatus[st]}
+                </Button>
+              ))}
+              {kind === "open" && perms.edit ? (
+                <Button size="sm" variant="ghost" onClick={() => setDialog("lesson")}>
+                  <Pencil /> {uz.common.edit}
+                </Button>
+              ) : null}
+            </div>
+          </Card>
+        ) : null}
 
         <Card className="min-w-0 space-y-5 p-5">
           <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
@@ -265,6 +409,19 @@ export function LeadProfile({
         staff={staff}
         onClose={() => setAssigning(false)}
       />
+      <ConvertDialog
+        lead={dialog === "convert" ? l : null}
+        groups={groups}
+        existingStudent={existingStudent}
+        onClose={() => setDialog(null)}
+      />
+      <FirstLessonDialog
+        lead={dialog === "lesson" ? l : null}
+        groups={groups}
+        today={today}
+        onClose={() => setDialog(null)}
+      />
+      <LoseDialog lead={dialog === "lose" ? l : null} reasons={lostReasons} onClose={() => setDialog(null)} />
       <ArchiveDialog
         lead={archiving ? l : null}
         onClose={() => setArchiving(false)}

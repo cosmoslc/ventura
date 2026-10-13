@@ -2,20 +2,26 @@ import "server-only";
 import { and, asc, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { TenantDb } from "@ventura/db";
+import type { SearchSelectOption } from "@ventura/ui/search-select";
 import {
+  type FirstLessonStatus,
   type LeadNoteKind,
   type LeadStageKind,
   courses,
+  groups,
   leadEvents,
+  leadFirstLessons,
   leadNotes,
   leadStages,
   leads,
   settings,
+  students,
   userBranches,
   users,
 } from "@ventura/db/schema/tenant";
 import { DEFAULT_LEAD_FIELDS, type FormField, LEAD_FIELDS_KEY, parseFormFields } from "@/lib/form-fields";
-import { DEFAULT_LEAD_STAGES } from "@/lib/leads";
+import { DEFAULT_LEAD_STAGES, DEFAULT_LOST_REASONS, LOST_REASONS_KEY, parseLostReasons } from "@/lib/leads";
+import { listGroups } from "../groups/data";
 
 export interface StageRow {
   id: string;
@@ -59,6 +65,7 @@ export interface LeadRow {
   /** 9 ta mahalliy raqam */
   phone: string;
   phone2: string | null;
+  gender: "male" | "female" | null;
   source: string | null;
   courseId: string | null;
   courseName: string | null;
@@ -72,20 +79,42 @@ export interface LeadRow {
   createdAt: string;
   createdByName: string | null;
   studentId: string | null;
+  studentName: string | null;
+  lostReason: string | null;
+  lostNote: string | null;
+  lostFromStageId: string | null;
+  firstLesson: {
+    groupId: string;
+    groupName: string;
+    date: string;
+    status: FirstLessonStatus;
+  } | null;
 }
 
 const localPhone = (p: string | null) => (p ?? "").replace(/\D/g, "").slice(-9);
 const assignee = alias(users, "assignee");
 const creator = alias(users, "creator");
+const lessonGroup = alias(groups, "lesson_group");
 
 /** Arxivda bo'lmagan lidlar; `filter` — getBranchContext().filter */
 export async function listLeads(db: TenantDb, filter: readonly string[] | null, id?: string): Promise<LeadRow[]> {
   const rows = await db
-    .select({ l: leads, courseName: courses.name, assignedName: assignee.name, createdByName: creator.name })
+    .select({
+      l: leads,
+      courseName: courses.name,
+      assignedName: assignee.name,
+      createdByName: creator.name,
+      studentName: students.name,
+      fl: leadFirstLessons,
+      flGroup: lessonGroup.name,
+    })
     .from(leads)
     .leftJoin(courses, eq(courses.id, leads.courseId))
     .leftJoin(assignee, eq(assignee.id, leads.assignedTo))
     .leftJoin(creator, eq(creator.id, leads.createdBy))
+    .leftJoin(students, eq(students.id, leads.studentId))
+    .leftJoin(leadFirstLessons, eq(leadFirstLessons.leadId, leads.id))
+    .leftJoin(lessonGroup, eq(lessonGroup.id, leadFirstLessons.groupId))
     .where(
       and(
         isNull(leads.archivedAt),
@@ -94,12 +123,13 @@ export async function listLeads(db: TenantDb, filter: readonly string[] | null, 
       ),
     )
     .orderBy(desc(leads.createdAt));
-  return rows.map(({ l, courseName, assignedName, createdByName }) => ({
+  return rows.map(({ l, courseName, assignedName, createdByName, studentName, fl, flGroup }) => ({
     id: l.id,
     branchId: l.branchId,
     name: l.name,
     phone: localPhone(l.phone),
     phone2: l.phone2 ? localPhone(l.phone2) : null,
+    gender: l.gender,
     source: l.source,
     courseId: l.courseId,
     courseName,
@@ -113,6 +143,11 @@ export async function listLeads(db: TenantDb, filter: readonly string[] | null, 
     createdAt: l.createdAt.toISOString(),
     createdByName,
     studentId: l.studentId,
+    studentName,
+    lostReason: l.lostReason,
+    lostNote: l.lostNote,
+    lostFromStageId: l.lostFromStageId,
+    firstLesson: fl ? { groupId: fl.groupId, groupName: flGroup ?? "—", date: fl.lessonDate, status: fl.status } : null,
   }));
 }
 
@@ -187,4 +222,25 @@ export async function staffOptions(db: TenantDb, filter: readonly string[] | nul
 export async function getLeadFields(db: TenantDb): Promise<FormField[]> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, LEAD_FIELDS_KEY));
   return parseFormFields(row?.value, DEFAULT_LEAD_FIELDS);
+}
+
+export interface LeadGroupOption extends SearchSelectOption {
+  branchId: string;
+}
+
+/** Birinchi dars va o'quvchiga aylantirish uchun guruhlar (arxivda bo'lmagan, xodimning filiallarida) */
+export async function leadGroupOptions(db: TenantDb, filter: readonly string[] | null): Promise<LeadGroupOption[]> {
+  const rows = await listGroups(db, filter);
+  return rows.map((g) => ({
+    value: g.id,
+    label: g.name,
+    hint: `${g.courseName} · ${g.teacherName} · ${g.startTime}`,
+    branchId: g.branchId,
+  }));
+}
+
+/** Yo'qotish sabablari (sozlamada; bo'lmasa standart ro'yxat) */
+export async function getLostReasons(db: TenantDb): Promise<string[]> {
+  const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, LOST_REASONS_KEY));
+  return row ? parseLostReasons(row.value) : DEFAULT_LOST_REASONS;
 }

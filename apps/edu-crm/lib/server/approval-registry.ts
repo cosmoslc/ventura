@@ -18,7 +18,16 @@ import {
   saveGroupAction,
 } from "@/app/(crm)/groups/actions";
 import { markAttendanceAction, markRestPresentAction } from "@/app/(crm)/groups/attendance-actions";
-import { archiveLeadAction, assignLeadsAction, moveLeadAction, saveLeadAction } from "@/app/(crm)/leads/actions";
+import {
+  archiveLeadAction,
+  assignLeadsAction,
+  convertLeadAction,
+  loseLeadAction,
+  moveLeadAction,
+  restoreLeadAction,
+  saveLeadAction,
+  scheduleFirstLessonAction,
+} from "@/app/(crm)/leads/actions";
 import {
   correctionAction,
   deleteDiscountAction,
@@ -80,6 +89,10 @@ export const APPROVAL_ACTIONS = {
   "leads.move": moveLeadAction,
   "leads.assign": assignLeadsAction,
   "leads.archive": archiveLeadAction,
+  "leads.convert": convertLeadAction,
+  "leads.firstLesson": scheduleFirstLessonAction,
+  "leads.lose": loseLeadAction,
+  "leads.restore": restoreLeadAction,
   "attendance.mark": markAttendanceAction,
   "attendance.markRest": markRestPresentAction,
   "staffAttendance.mark": markEmployeeAction,

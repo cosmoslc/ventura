@@ -54,8 +54,8 @@ ichida, bitta tranzaksiyada yoziladi — trigger yo'q.
   - chapda — ma'lumotlar va qo'shimcha maydonlar;
   - o'ngda — ish bosqichlari qatori, bosib o'tkaziladi;
   - tablar: "Izohlar" (oynada yoziladi) va "Bosqichlar tarixi".
-- **Lid formasi:** asosiy maydonlar — ism, telefon, qo'shimcha telefon, manba, kurs, mas'ul, keyingi aloqa sanasi va
-  izoh. Qolganlari "Lid formasi" sozlamasidagi qo'shimcha maydonlar (`leads.form_fields`, guruh turisiz).
+- **Lid formasi:** asosiy maydonlar — ism, telefon, qo'shimcha telefon, jins (E4b da qo'shildi), manba, kurs
+  (qidiruvli tanlov), mas'ul, keyingi aloqa sanasi va izoh. Qolganlari "Lid formasi" sozlamasidagi qo'shimcha maydonlar (`leads.form_fields`, guruh turisiz).
 
 ### Qoidalar
 

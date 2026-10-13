@@ -4,20 +4,47 @@ import { and, eq, inArray, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { formatPhone } from "@ventura/auth/policy";
-import { courses, leadEvents, leadNotes, leadStages, leads, settings, users } from "@ventura/db/schema/tenant";
+import {
+  courses,
+  groupMemberships,
+  groups,
+  leadEvents,
+  leadFirstLessons,
+  leadNotes,
+  leadStages,
+  leads,
+  settings,
+  students,
+  users,
+} from "@ventura/db/schema/tenant";
 import { LEAD_FIELDS_KEY, cleanCustomData, formFieldsSchema, missingRequired } from "@/lib/form-fields";
-import { stagesError } from "@/lib/leads";
+import { LOST_REASONS_KEY, stagesError } from "@/lib/leads";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
-import { firstError, leadAssignInput, leadInput, leadMoveInput, leadNoteInput, leadStagesInput } from "@/lib/rules";
+import { todayTashkent } from "@/lib/server/memberships";
+import {
+  firstError,
+  leadAssignInput,
+  leadConvertInput,
+  leadFirstLessonInput,
+  leadFirstLessonMarkInput,
+  leadInput,
+  leadLoseInput,
+  leadMoveInput,
+  leadNoteInput,
+  leadStagesInput,
+  lostReasonsInput,
+} from "@/lib/rules";
 import { uz } from "@/lib/uz";
+import { getStudentFields } from "../students/data";
 import { getLeadFields, listStages, staffOptions } from "./data";
 
 /*
  * Lidlar (E4a, ADR 0022). Ruxsatlar eski tizimdagi "Lidlar" toifasidan: qo'shish leads.create, tahrirlash leads.edit,
  * bosqich leads.status_change, mas'ul leads.reassign, izoh leads.call_log, o'chirish (arxiv) leads.delete.
  * Filial cheklovi: xodim faqat o'z filiallaridagi lidlarni ko'radi va o'zgartiradi. Bosqich almashuvi `lead_events`
- * ga amal ichida yoziladi. "O'quvchi bo'ldi" va "Yo'qotildi" bosqichlariga o'tish — E4b amallari bilan.
+ * ga amal ichida yoziladi. "O'quvchi bo'ldi" va "Yo'qotildi" bosqichlariga faqat o'z amallari bilan o'tiladi (E4b):
+ * o'quvchiga aylantirish (leads.convert_to_student) va sabab bilan yo'qotish / tiklash (leads.status_change).
  */
 
 const FEATURE = "leads";
@@ -108,6 +135,7 @@ export async function saveLeadAction(input: unknown): Promise<ActionResult<{ id:
         name: v.name,
         phone,
         phone2: v.phone2 ? `+998${v.phone2}` : null,
+        gender: v.gender,
         source: v.source || null,
         courseId: v.courseId,
         assignedTo: v.assignedTo,
@@ -388,6 +416,342 @@ export async function saveLeadFieldsAction(input: unknown): Promise<ActionResult
       });
     await audit("settings.update", { type: "setting", id: LEAD_FIELDS_KEY }, { fields: ids });
     revalidatePath(PATH, "layout");
+    return { ok: true };
+  });
+}
+
+/* ---------- E4b: o'quvchiga aylantirish, birinchi dars, yo'qotish ---------- */
+
+function refreshAll(leadId: string, extra: string[] = []) {
+  refresh(leadId);
+  for (const p of extra) revalidatePath(p);
+}
+
+/**
+ * O'quvchiga aylantirish (ADR 0023): shu telefonli o'quvchi bo'lsa — o'shanga bog'lanadi, bo'lmasa yangisi
+ * yaratiladi (ism, telefon, jins — lid formasidan, manba, qiziqqan kurs, o'quvchi formasida bir xil id li qo'shimcha
+ * maydonlar).
+ * Guruh tanlansa — sinovda qo'shiladi. Lid "O'quvchi bo'ldi" bosqichiga o'tadi. Hammasi bitta tranzaksiyada.
+ */
+export async function convertLeadAction(
+  input: unknown,
+): Promise<ActionResult<{ studentId: string; existing: boolean }>> {
+  return crmAction<{ studentId: string; existing: boolean }>(
+    FEATURE,
+    "leads.convert_to_student",
+    async (ctx) => {
+      const parsed = leadConvertInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const l = await loadLead(ctx, parsed.data.leadId);
+      if (!l) return { ok: false, error: uz.common.gone };
+      const stages = await listStages(ctx.db);
+      const from = stages.find((s) => s.id === l.stageId);
+      const won = stages.find((s) => s.kind === "won")!;
+      if (from?.kind !== "open") return { ok: false, error: uz.leads.notOpen };
+
+      const [existing] = await ctx.db
+        .select()
+        .from(students)
+        .where(and(eq(students.phone, l.phone), isNull(students.archivedAt)));
+      if (existing && !ctx.branch.options.some((b) => b.id === existing.branchId))
+        return { ok: false, error: uz.leads.studentOtherBranch };
+      const studentBranch = existing?.branchId ?? l.branchId;
+
+      const groupId = parsed.data.groupId;
+      const [g] = groupId
+        ? await ctx.db
+            .select({ id: groups.id, name: groups.name, branchId: groups.branchId })
+            .from(groups)
+            .where(and(eq(groups.id, groupId), isNull(groups.archivedAt)))
+        : [];
+      if (groupId && !g) return { ok: false, error: uz.groups.groupArchived };
+      if (g && g.branchId !== studentBranch) return { ok: false, error: uz.groups.branchMismatch };
+
+      const studentFields = await getStudentFields(ctx.db);
+      const customData = cleanCustomData(l.customData, studentFields);
+      const today = todayTashkent();
+
+      const result = await ctx.db.transaction(async (tx) => {
+        let studentId = existing?.id;
+        if (!studentId) {
+          const [row] = await tx
+            .insert(students)
+            .values({
+              branchId: l.branchId,
+              name: l.name,
+              phone: l.phone,
+              parentPhone: l.phone2,
+              gender: l.gender,
+              source: l.source,
+              interestedCourseId: l.courseId,
+              customData,
+              createdBy: ctx.staff.id,
+            })
+            .returning({ id: students.id });
+          studentId = row!.id;
+        }
+        let membershipId: string | null = null;
+        if (g) {
+          const [open] = await tx
+            .select({ id: groupMemberships.id })
+            .from(groupMemberships)
+            .where(
+              and(
+                eq(groupMemberships.groupId, g.id),
+                eq(groupMemberships.studentId, studentId),
+                isNull(groupMemberships.leftAt),
+              ),
+            );
+          if (!open) {
+            const [m] = await tx
+              .insert(groupMemberships)
+              .values({ groupId: g.id, studentId, status: "trial", enrolledAt: today, createdBy: ctx.staff.id })
+              .returning({ id: groupMemberships.id });
+            membershipId = m!.id;
+          }
+        }
+        await tx
+          .update(leads)
+          .set({ stageId: won.id, stageChangedAt: new Date(), studentId })
+          .where(eq(leads.id, l.id));
+        await tx.insert(leadEvents).values({
+          leadId: l.id,
+          fromStageId: l.stageId,
+          toStageId: won.id,
+          actorId: ctx.staff.id,
+          actorName: ctx.staff.name,
+        });
+        return { studentId, membershipId };
+      });
+
+      await ctx.audit(
+        "lead.convert",
+        { type: "lead", id: l.id },
+        { name: l.name, studentId: result.studentId, existing: !!existing, ...(g ? { group: g.name } : {}) },
+      );
+      if (!existing)
+        await ctx.audit(
+          "student.create",
+          { type: "student", id: result.studentId },
+          { name: l.name, phone: formatPhone(l.phone), branchId: l.branchId, fromLead: l.id },
+        );
+      if (g && result.membershipId) {
+        await ctx.audit(
+          "group.enroll",
+          { type: "group", id: g.id },
+          { student: l.name, studentId: result.studentId, membershipId: result.membershipId },
+        );
+        await ctx.audit("student.enroll", { type: "student", id: result.studentId }, { group: g.name, groupId: g.id });
+      }
+      refreshAll(l.id, ["/students", ...(g ? [`/groups/${g.id}`] : [])]);
+      return { ok: true, studentId: result.studentId, existing: !!existing };
+    },
+    { approval: { action: "leads.convert", input } },
+  );
+}
+
+/** Birinchi (sinov) darsga yozish yoki boshqa kunga ko'chirish — lid o'quvchi bo'lmaydi, hisobga tegmaydi */
+export async function scheduleFirstLessonAction(input: unknown): Promise<ActionResult> {
+  return crmAction(
+    FEATURE,
+    "leads.edit",
+    async (ctx) => {
+      const parsed = leadFirstLessonInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const l = await loadLead(ctx, parsed.data.leadId);
+      if (!l) return { ok: false, error: uz.common.gone };
+      const stages = await listStages(ctx.db);
+      if (stages.find((s) => s.id === l.stageId)?.kind !== "open") return { ok: false, error: uz.leads.notOpen };
+      const [g] = await ctx.db
+        .select({ id: groups.id, name: groups.name, branchId: groups.branchId })
+        .from(groups)
+        .where(and(eq(groups.id, parsed.data.groupId), isNull(groups.archivedAt)));
+      if (!g || !ctx.branch.options.some((b) => b.id === g.branchId))
+        return { ok: false, error: uz.groups.groupArchived };
+      if (g.branchId !== l.branchId) return { ok: false, error: uz.groups.branchMismatch };
+      const values = {
+        groupId: g.id,
+        lessonDate: parsed.data.date,
+        status: "scheduled" as const,
+        markedBy: null,
+        markedAt: null,
+      };
+      await ctx.db
+        .insert(leadFirstLessons)
+        .values({ leadId: l.id, createdBy: ctx.staff.id, ...values })
+        .onConflictDoUpdate({ target: [leadFirstLessons.tenantId, leadFirstLessons.leadId], set: values });
+      await ctx.audit(
+        "lead.first_lesson",
+        { type: "lead", id: l.id },
+        { name: l.name, group: g.name, date: parsed.data.date },
+      );
+      refreshAll(l.id, [`/groups/${g.id}`]);
+      return { ok: true };
+    },
+    { approval: { action: "leads.firstLesson", input } },
+  );
+}
+
+export async function cancelFirstLessonAction(leadId: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "leads.edit", async (ctx) => {
+    const l = await loadLead(ctx, leadId);
+    if (!l) return { ok: false, error: uz.common.gone };
+    const [row] = await ctx.db
+      .delete(leadFirstLessons)
+      .where(eq(leadFirstLessons.leadId, l.id))
+      .returning({ groupId: leadFirstLessons.groupId, date: leadFirstLessons.lessonDate });
+    if (!row) return { ok: true };
+    await ctx.audit("lead.first_lesson.cancel", { type: "lead", id: l.id }, { name: l.name, date: row.date });
+    refreshAll(l.id, [`/groups/${row.groupId}`]);
+    return { ok: true };
+  });
+}
+
+/**
+ * Birinchi darsga keldi / kelmadi — guruh davomatidan (o'qituvchi) yoki lid profilidan. Davomat qoidasi: kelajakdagi kun
+ * belgilanmaydi, o'tgan kun — `attendance.student_edit_past` (yoki `leads.edit`) bilan.
+ */
+export async function markFirstLessonAction(input: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, ["attendance.student_mark", "attendance.student_edit_past", "leads.edit"], async (ctx) => {
+    const parsed = leadFirstLessonMarkInput.safeParse(input);
+    if (!parsed.success) return { ok: false, error: uz.common.invalid };
+    const l = await loadLead(ctx, parsed.data.leadId);
+    if (!l) return { ok: false, error: uz.common.gone };
+    const [fl] = await ctx.db.select().from(leadFirstLessons).where(eq(leadFirstLessons.leadId, l.id));
+    if (!fl) return { ok: false, error: uz.common.gone };
+    const today = todayTashkent();
+    if (fl.lessonDate > today) return { ok: false, error: uz.leads.firstLessonFuture };
+    const gate = await ctx.requireAny(
+      fl.lessonDate < today
+        ? ["attendance.student_edit_past", "leads.edit"]
+        : ["attendance.student_mark", "attendance.student_edit_past", "leads.edit"],
+    );
+    if (gate) return gate;
+    const status = parsed.data.status;
+    await ctx.db
+      .update(leadFirstLessons)
+      .set(
+        status === "scheduled"
+          ? { status, markedBy: null, markedAt: null }
+          : { status, markedBy: ctx.staff.id, markedAt: new Date() },
+      )
+      .where(eq(leadFirstLessons.id, fl.id));
+    await ctx.audit(
+      "lead.first_lesson.mark",
+      { type: "lead", id: l.id },
+      { name: l.name, date: fl.lessonDate, status },
+    );
+    refreshAll(l.id, [`/groups/${fl.groupId}`]);
+    return { ok: true };
+  });
+}
+
+/** Yo'qotildi — sabab bilan; qaysi bosqichdan yo'qotilgani saqlanadi (tiklashda shu bosqichga qaytadi) */
+export async function loseLeadAction(input: unknown): Promise<ActionResult> {
+  return crmAction(
+    FEATURE,
+    "leads.status_change",
+    async (ctx) => {
+      const parsed = leadLoseInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const l = await loadLead(ctx, parsed.data.id);
+      if (!l) return { ok: false, error: uz.common.gone };
+      const stages = await listStages(ctx.db);
+      const from = stages.find((s) => s.id === l.stageId);
+      const lost = stages.find((s) => s.kind === "lost")!;
+      if (from?.kind !== "open") return { ok: false, error: uz.leads.notOpen };
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(leads)
+          .set({
+            stageId: lost.id,
+            stageChangedAt: new Date(),
+            lostFromStageId: from.id,
+            lostReason: parsed.data.reason,
+            lostNote: parsed.data.note || null,
+          })
+          .where(eq(leads.id, l.id));
+        await tx.insert(leadEvents).values({
+          leadId: l.id,
+          fromStageId: from.id,
+          toStageId: lost.id,
+          actorId: ctx.staff.id,
+          actorName: ctx.staff.name,
+        });
+      });
+      await ctx.audit(
+        "lead.lose",
+        { type: "lead", id: l.id },
+        {
+          name: l.name,
+          from: from.name,
+          reason: parsed.data.reason,
+          ...(parsed.data.note ? { note: parsed.data.note } : {}),
+        },
+      );
+      refresh(l.id);
+      return { ok: true };
+    },
+    { approval: { action: "leads.lose", input } },
+  );
+}
+
+/** Yo'qotilgan lidni tiklash — oldingi bosqichiga (u o'chirilgan bo'lsa — birinchi ish bosqichiga) */
+export async function restoreLeadAction(id: unknown): Promise<ActionResult> {
+  return crmAction(
+    FEATURE,
+    "leads.status_change",
+    async (ctx) => {
+      const l = await loadLead(ctx, id);
+      if (!l) return { ok: false, error: uz.common.gone };
+      const stages = await listStages(ctx.db);
+      if (stages.find((s) => s.id === l.stageId)?.kind !== "lost") return { ok: false, error: uz.common.invalid };
+      const dup = await openLeadByPhone(ctx, l.phone, l.id);
+      if (dup) return { ok: false, error: uz.leads.duplicate(dup.name, dup.stage) };
+      const target =
+        stages.find((s) => s.id === l.lostFromStageId && s.kind === "open") ?? stages.find((s) => s.kind === "open")!;
+      await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(leads)
+          .set({
+            stageId: target.id,
+            stageChangedAt: new Date(),
+            lostFromStageId: null,
+            lostReason: null,
+            lostNote: null,
+          })
+          .where(eq(leads.id, l.id));
+        await tx.insert(leadEvents).values({
+          leadId: l.id,
+          fromStageId: l.stageId,
+          toStageId: target.id,
+          actorId: ctx.staff.id,
+          actorName: ctx.staff.name,
+        });
+      });
+      await ctx.audit("lead.restore", { type: "lead", id: l.id }, { name: l.name, to: target.name });
+      refresh(l.id);
+      return { ok: true };
+    },
+    { approval: { action: "leads.restore", input: id } },
+  );
+}
+
+/** Yo'qotish sabablari ro'yxati */
+export async function saveLostReasonsAction(input: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "leads.edit", async ({ db, staff, audit }) => {
+    const parsed = lostReasonsInput.safeParse(input);
+    if (!parsed.success) return { ok: false, error: uz.common.invalid };
+    const list = [...new Set(parsed.data)];
+    await db
+      .insert(settings)
+      .values({ key: LOST_REASONS_KEY, value: list, updatedBy: staff.id })
+      .onConflictDoUpdate({
+        target: [settings.tenantId, settings.key],
+        set: { value: list, updatedBy: staff.id, updatedAt: new Date() },
+      });
+    await audit("settings.update", { type: "setting", id: LOST_REASONS_KEY }, { reasons: list });
+    refresh();
     return { ok: true };
   });
 }

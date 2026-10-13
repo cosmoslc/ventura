@@ -3,13 +3,26 @@ import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type TenantDb, createTenantDb } from "@ventura/db";
 import { migrateTenantDb } from "@ventura/db/migrate";
-import { branches, leadEvents, leadNotes, leadStages, leads, userBranches, users } from "@ventura/db/schema/tenant";
+import {
+  branches,
+  courses,
+  groups,
+  leadEvents,
+  leadFirstLessons,
+  leadNotes,
+  leadStages,
+  leads,
+  teachers,
+  userBranches,
+  users,
+} from "@ventura/db/schema/tenant";
 import { leadHistory, leadNotesOf, listLeads, listStages, staffOptions } from "@/app/(crm)/leads/data";
+import { groupAttendance } from "./attendance";
 
 /*
  * Lidlar haqiqiy PostgreSQL'da (ADR 0022): standart bosqichlar bir marta yaratiladi (bir vaqtdagi so'rovlarda ham),
  * ro'yxat filial bo'yicha va arxivsiz, tarix va izohlar, mas'ul xodimlar ro'yxati, bosqichni o'chirib bo'lmasligi
- * (lidi bor), boshqa mijoz ma'lumoti ko'rinmasligi.
+ * (lidi bor), birinchi dars (E4b: bitta yozuv, davomatda mehmon, CHECK), boshqa mijoz ma'lumoti ko'rinmasligi.
  * TENANT_TEST_ADMIN_URL berilmasa o'tkazib yuboriladi (CI'da "mijoz bazasi" vazifasi beradi).
  */
 
@@ -103,10 +116,61 @@ describe.skipIf(!ADMIN_URL)("lidlar (haqiqiy PostgreSQL)", () => {
     await expect(db.delete(leadStages).where(eq(leadStages.id, first!.id))).rejects.toThrow();
   });
 
+  it("birinchi dars: lidga bitta yozuv, davomatda mehmon sifatida, belgilanganda vaqt majburiy", async () => {
+    const [first] = await listStages(db);
+    const [c] = await db.insert(courses).values({ name: "IELTS" }).returning();
+    const [tch] = await db
+      .insert(teachers)
+      .values({ branchId: ids.a, name: "Ustoz", phone: "+998901119999" })
+      .returning();
+    const [g] = await db
+      .insert(groups)
+      .values({
+        branchId: ids.a,
+        courseId: c!.id,
+        teacherId: tch!.id,
+        name: "IELTS A",
+        days: ["mon", "wed", "fri"],
+        startTime: "09:00",
+        endTime: "10:30",
+        startDate: "2026-09-01",
+      })
+      .returning();
+    const [l] = await db
+      .insert(leads)
+      .values({ branchId: ids.a, name: "Sinovchi", phone: "+998901110009", stageId: first!.id })
+      .returning();
+    await db.insert(leadFirstLessons).values({ leadId: l!.id, groupId: g!.id, lessonDate: "2026-10-12" });
+    // Bitta lidga bitta yozuv
+    await expect(
+      db.insert(leadFirstLessons).values({ leadId: l!.id, groupId: g!.id, lessonDate: "2026-10-14" }),
+    ).rejects.toThrow();
+    // "Keldi" — kim va qachon belgilagani majburiy
+    await expect(
+      db.update(leadFirstLessons).set({ status: "came" }).where(eq(leadFirstLessons.leadId, l!.id)),
+    ).rejects.toThrow();
+    await db
+      .update(leadFirstLessons)
+      .set({ status: "came", markedAt: new Date() })
+      .where(eq(leadFirstLessons.leadId, l!.id));
+
+    const att = await groupAttendance(db, g!, "2026-10");
+    expect(att.guests).toEqual([
+      { leadId: l!.id, name: "Sinovchi", phone: "901110009", date: "2026-10-12", status: "came" },
+    ]);
+    // Lid o'quvchi emas — a'zolar va belgilarga kirmaydi
+    expect(att.members).toEqual([]);
+    expect(att.marks).toEqual({});
+    // Ro'yxatda birinchi dars ko'rinadi
+    const [row] = await listLeads(db, [ids.a], l!.id);
+    expect(row!.firstLesson).toEqual({ groupId: g!.id, groupName: "IELTS A", date: "2026-10-12", status: "came" });
+  });
+
   it("boshqa mijoz lid va bosqichlarni ko'rmaydi", async () => {
     expect(await other.select().from(leads)).toEqual([]);
     expect(await other.select().from(leadEvents)).toEqual([]);
     expect(await other.select().from(leadNotes)).toEqual([]);
+    expect(await other.select().from(leadFirstLessons)).toEqual([]);
     // Beta o'z standart bosqichlarini oladi, alfaga tegmaydi
     expect(await listStages(other)).toHaveLength(5);
     expect(await db.select().from(leadStages)).toHaveLength(5);

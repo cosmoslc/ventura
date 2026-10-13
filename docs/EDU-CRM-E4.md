@@ -1,13 +1,13 @@
 # E4 (Sotuv) — reja
 
-2026-10-13 · E4a tayyor (ADR 0022) · bo'lim: `leads` · EDU-CRM-PLAN E4
+2026-10-13 · E4a tayyor (ADR 0022), E4b tayyor (ADR 0023) · bo'lim: `leads` · EDU-CRM-PLAN E4
 
 E3 dagidek to'rt qismga bo'linadi. Har qism — alohida branch, PR va ADR.
 
 | Qism | Mazmuni | Holati |
 | --- | --- | --- |
 | E4a | Lidlar asosi: doska, ro'yxat, lid profili, bosqichlar tarixi, izoh va qo'ng'iroqlar, mas'ul xodim | tayyor (ADR 0022) |
-| E4b | Birinchi dars, o'quvchiga aylantirish, yo'qotilgan lidlar va sabablari | — |
+| E4b | Birinchi dars, o'quvchiga aylantirish, yo'qotilgan lidlar va sabablari | tayyor (ADR 0023) |
 | E4c | Lid formasi sozlamalari va tashqi ariza sahifasi (havola va sayt uchun iframe) | — |
 | E4d | Bugungi ishlar, bosh paneldagi lid kartalari, Playwright testi | — |
 
@@ -47,7 +47,7 @@ Lid analitikasi, CRM voronkasi va mavsumiy oqim — E5 (Hisobotlar).
 - Telefon takrori tekshirilmas edi: bir odam bir necha lid bo'lib qolar edi.
 - Mas'ul xodim nomi matn sifatida saqlanar edi; xodim nomi o'zgarsa, eski nom qolib ketar edi.
 
-## Qarorlar (taklif — Saidakbar tasdiqlaydi)
+## Qarorlar (Saidakbar tasdiqladi, 2026-10-13)
 
 1. **Bosqichlar markaz sozlamasida:** nom, rang, tartib.
    - "O'quvchi bo'ldi" va "Yo'qotildi" — tizim bosqichlari: o'chirilmaydi, doskada alohida.
