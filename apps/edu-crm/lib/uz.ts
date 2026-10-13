@@ -103,9 +103,9 @@ export const uz = {
     kpiActive: "Faol o'quvchilar",
     kpiActiveNote: "yangi",
     kpiAdvance: "Avans",
+    kpiAdvanceNote: (n: number) => `${n} ta avans`,
     kpiLeads: "Yangi lidlar",
     kpiRefunds: "Qaytarishlar",
-    notYetSalaries: "Ish haqi bo'limi hali ishga tushmagan",
     notYetLeads: "Lidlar bo'limi hali ishga tushmagan",
     // moliya dinamikasi
     flowTitle: "Moliya dinamikasi",
@@ -173,6 +173,7 @@ export const uz = {
     expensesLink: "Xarajatlar",
     other: "Boshqa",
     spendRefunds: "Qaytarishlar",
+    spendSalaries: "Ish haqi",
     spendNoCategory: "Toifasiz",
     // so'nggi amallar
     eventsTitle: "So'nggi amallar",

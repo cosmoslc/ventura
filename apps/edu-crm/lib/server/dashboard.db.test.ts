@@ -11,6 +11,7 @@ import {
   groupMemberships,
   groups,
   payments,
+  salaryEntries,
   students,
   teachers,
   users,
@@ -135,6 +136,11 @@ describe.skipIf(!ADMIN_URL)("bosh panel (haqiqiy PostgreSQL)", () => {
       date: "2026-10-09",
       methodId: cash!.id,
     });
+    // Ish haqi: avans chiqimga kiradi, bonus (pul emas) kirmaydi
+    await db.insert(salaryEntries).values([
+      { teacherId: tc!.id, kind: "advance", amount: 30_000, month: "2026-10", date: "2026-10-10", methodId: cash!.id },
+      { teacherId: tc!.id, kind: "bonus", amount: 99_000, month: "2026-10", date: "2026-10-10" },
+    ]);
     await db.insert(attendance).values([
       { groupId: g!.id, studentId: s1!.id, date: "2026-10-05", status: "present" },
       { groupId: g!.id, studentId: s1!.id, date: "2026-10-07", status: "late" },
@@ -154,8 +160,11 @@ describe.skipIf(!ADMIN_URL)("bosh panel (haqiqiy PostgreSQL)", () => {
       income: 250_000,
       refund: 20_000,
       expense: 80_000,
-      outflow: 100_000,
-      profit: 150_000,
+      salary: 30_000,
+      advance: 30_000,
+      advanceCount: 1,
+      outflow: 130_000,
+      profit: 120_000,
     });
     expect(d.cur.payCount).toBe(1);
     expect(d.prev).toMatchObject({ income: 150_000, outflow: 0 });
@@ -166,7 +175,7 @@ describe.skipIf(!ADMIN_URL)("bosh panel (haqiqiy PostgreSQL)", () => {
     expect(g).toMatchObject({ name: "IELTS", count: 1, teacherName: "Ustoz", att: 75 });
     expect(g.expected).toBeGreaterThan(0);
     expect(d.expected).toBe(g.expected);
-    expect(d.months.at(-1)).toMatchObject({ month: "2026-10", income: 250_000, outflow: 100_000 });
+    expect(d.months.at(-1)).toMatchObject({ month: "2026-10", income: 250_000, outflow: 130_000, advance: 30_000 });
     expect(d.days.at(-1)!.date).toBe(TODAY);
     expect(d.events.map((e) => e.amount)).not.toContain(999_000);
     expect(d.years).toEqual([2026]);

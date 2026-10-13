@@ -19,17 +19,22 @@ const flows: DayFlow[] = [
   { date: "2026-10-07", kind: "expense", amount: 70_000, count: 1, category: "Ijara" },
   { date: "2026-10-08", kind: "expense", amount: 30_000, count: 2, category: "Reklama" },
   { date: "2026-10-31", kind: "expense", amount: 10_000, count: 1, category: "Ijara" },
+  { date: "2026-10-10", kind: "salary", amount: 40_000, count: 1 },
+  { date: "2026-10-11", kind: "advance", amount: 15_000, count: 2 },
   { date: "2026-11-01", kind: "pay", amount: 999_000, count: 1 },
 ];
 
 describe("totalsFor", () => {
-  it("oy oralig'i: tushum = to'lov + qo'shimcha daromad, chiqim = xarajat + qaytarish", () => {
+  it("oy oralig'i: tushum = to'lov + qo'shimcha daromad, chiqim = xarajat + qaytarish + ish haqi", () => {
     expect(totalsFor(flows, monthRange("2026-10"))).toEqual({
       income: 350_000,
       expense: 110_000,
       refund: 20_000,
-      outflow: 130_000,
-      profit: 220_000,
+      salary: 55_000,
+      advance: 15_000,
+      advanceCount: 2,
+      outflow: 185_000,
+      profit: 165_000,
       payCount: 2,
       categories: { Ijara: 80_000, Reklama: 30_000 },
     });

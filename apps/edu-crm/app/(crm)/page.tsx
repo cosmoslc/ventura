@@ -22,6 +22,7 @@ export const metadata = { title: uz.home.title };
 const DASHBOARD = ["dashboard.view", "dashboard.financial_stats", "dashboard.conversion_stats"] as const;
 const LINK_PAGES = {
   payments: ["payments", "/payments"],
+  salaries: ["salaries", "/salaries"],
   expenses: ["expenses", "/expenses"],
   debtors: ["debtors", "/debtors"],
   attendance: ["attendance", "/attendance"],
@@ -77,12 +78,23 @@ export default async function HomePage({
 
 /** Ruxsat bo'lmasa pul raqamlari brauzerga umuman yuborilmaydi */
 function withoutMoney(d: DashboardData): DashboardData {
-  const zero = { income: 0, expense: 0, refund: 0, outflow: 0, profit: 0, payCount: 0, categories: {} };
+  const zero = {
+    income: 0,
+    expense: 0,
+    refund: 0,
+    salary: 0,
+    advance: 0,
+    advanceCount: 0,
+    outflow: 0,
+    profit: 0,
+    payCount: 0,
+    categories: {},
+  };
   return {
     ...d,
     cur: zero,
     prev: null,
-    months: d.months.map((m) => ({ ...m, income: 0, outflow: 0, profit: 0, refund: 0, payCount: 0 })),
+    months: d.months.map((m) => ({ ...m, income: 0, outflow: 0, profit: 0, refund: 0, advance: 0, payCount: 0 })),
     days: [],
     expected: 0,
     covered: 0,

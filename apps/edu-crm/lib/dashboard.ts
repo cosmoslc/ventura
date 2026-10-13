@@ -1,13 +1,13 @@
 /*
  * Bosh panel (eski tizimdagi DashboardHome) hisoblari — toza funksiyalar, Vitest bilan (ADR 0017). Pul oqimi
- * kunlik yig'indilardan olinadi: o'quvchi to'lovlari va qo'shimcha daromad — tushum; xarajatlar va qaytarishlar —
- * chiqim (ish haqi E3c'da qo'shiladi). Bekor qilingan yozuvlar bu yerga umuman kelmaydi.
+ * kunlik yig'indilardan olinadi: o'quvchi to'lovlari va qo'shimcha daromad — tushum; xarajatlar, qaytarishlar va
+ * berilgan ish haqi (maosh va avans, ADR 0018) — chiqim. Bekor qilingan yozuvlar bu yerga umuman kelmaydi.
  */
 
 /** Bir kunlik pul harakati */
 export interface DayFlow {
   date: string;
-  kind: "pay" | "income" | "refund" | "expense";
+  kind: "pay" | "income" | "refund" | "expense" | "salary" | "advance";
   amount: number;
   count: number;
   /** Xarajat toifasi (faqat `expense`) */
@@ -21,6 +21,10 @@ export interface Totals {
   income: number;
   expense: number;
   refund: number;
+  /** Berilgan ish haqi: maosh + avans */
+  salary: number;
+  advance: number;
+  advanceCount: number;
   outflow: number;
   profit: number;
   payCount: number;
@@ -30,20 +34,37 @@ export interface Totals {
 export const inRange = (date: string, r: Range) => !r || (date >= r.from && date < r.to);
 
 export function totalsFor(flows: readonly DayFlow[], r: Range): Totals {
-  const t: Totals = { income: 0, expense: 0, refund: 0, outflow: 0, profit: 0, payCount: 0, categories: {} };
+  const t: Totals = {
+    income: 0,
+    expense: 0,
+    refund: 0,
+    salary: 0,
+    advance: 0,
+    advanceCount: 0,
+    outflow: 0,
+    profit: 0,
+    payCount: 0,
+    categories: {},
+  };
   for (const f of flows) {
     if (!inRange(f.date, r)) continue;
     if (f.kind === "pay" || f.kind === "income") {
       t.income += f.amount;
       if (f.kind === "pay") t.payCount += f.count;
     } else if (f.kind === "refund") t.refund += f.amount;
-    else {
+    else if (f.kind === "salary" || f.kind === "advance") {
+      t.salary += f.amount;
+      if (f.kind === "advance") {
+        t.advance += f.amount;
+        t.advanceCount += f.count;
+      }
+    } else {
       t.expense += f.amount;
       const c = f.category ?? "";
       t.categories[c] = (t.categories[c] ?? 0) + f.amount;
     }
   }
-  t.outflow = t.expense + t.refund;
+  t.outflow = t.expense + t.refund + t.salary;
   t.profit = t.income - t.outflow;
   return t;
 }

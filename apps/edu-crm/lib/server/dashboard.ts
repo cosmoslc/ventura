@@ -1,5 +1,5 @@
 import "server-only";
-import { and, count, desc, eq, inArray, isNull, sql, sum } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, or, sql, sum } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import {
   additionalIncomes,
@@ -8,8 +8,10 @@ import {
   financeCategories,
   groups,
   payments,
+  salaryEntries,
   students,
   teachers,
+  userBranches,
 } from "@ventura/db/schema/tenant";
 import { listGroups, openGroupsByStudent } from "@/app/(crm)/groups/data";
 import {
@@ -37,6 +39,7 @@ export interface MonthPoint {
   outflow: number;
   profit: number;
   refund: number;
+  advance: number;
   payCount: number;
   /** Davomat foizi; null — belgilanmagan */
   att: number | null;
@@ -186,8 +189,39 @@ export async function loadDashboard(
       .limit(24),
   ]);
 
+  // Berilgan ish haqi (maosh va avans, ADR 0018): filial — o'qituvchi filiali yoki xodimning biriktirilgan filiallari
+  const salaryRows = await db
+    .select({ date: salaryEntries.date, kind: salaryEntries.kind, amount: sum(salaryEntries.amount), n: count() })
+    .from(salaryEntries)
+    .leftJoin(teachers, eq(teachers.id, salaryEntries.teacherId))
+    .where(
+      and(
+        isNull(salaryEntries.voidedAt),
+        inArray(salaryEntries.kind, ["salary", "advance"]),
+        filter
+          ? or(
+              inArray(teachers.branchId, [...filter]),
+              inArray(
+                salaryEntries.userId,
+                db
+                  .select({ id: userBranches.userId })
+                  .from(userBranches)
+                  .where(inArray(userBranches.branchId, [...filter])),
+              ),
+            )
+          : undefined,
+      ),
+    )
+    .groupBy(salaryEntries.date, salaryEntries.kind);
+
   /* ---------- Pul oqimi ---------- */
   const flows: DayFlow[] = [
+    ...salaryRows.map((r) => ({
+      date: r.date,
+      kind: r.kind === "advance" ? ("advance" as const) : ("salary" as const),
+      amount: Number(r.amount ?? 0),
+      count: r.n,
+    })),
     ...payRows.map((r) => ({
       date: r.date,
       kind: r.kind === "refund" ? ("refund" as const) : ("pay" as const),
@@ -244,6 +278,7 @@ export async function loadDashboard(
       outflow: t.outflow,
       profit: t.profit,
       refund: t.refund,
+      advance: t.advance,
       payCount: t.payCount,
       att: attFor(r),
       newStudents: live.filter((s) => inRange(s.joinedAt, r)).length,
