@@ -25,7 +25,8 @@
     "db:generate:tenant": "pnpm --filter @ventura/db db:generate:tenant",
     "db:migrate:tenant": "pnpm --filter @ventura/db db:migrate:tenant",
     "edu:tenant": "pnpm --filter @ventura/scripts edu:tenant",
-    "edu:staff": "pnpm --filter @ventura/scripts edu:staff"
+    "edu:staff": "pnpm --filter @ventura/scripts edu:staff",
+    "edu:seed": "pnpm --filter @ventura/scripts edu:seed"
   },
   "devDependencies": {
     "turbo": "^2.11.7",
