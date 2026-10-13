@@ -68,14 +68,14 @@ export function MetricCard({
   return (
     <div
       className={cn(
-        "flex min-w-0 flex-col gap-2.5 rounded-card border border-border-soft bg-card p-4 shadow-card",
+        "flex min-w-0 flex-col gap-1 rounded-card border border-border-soft bg-card p-4 shadow-card",
         highlight && HIGHLIGHT[tone],
         className,
       )}
       {...props}
     >
-      <div className="flex items-start justify-between gap-2">
-        <span className="line-clamp-2 min-h-8 content-center text-caption leading-snug font-semibold text-muted-foreground">
+      <div className="flex h-7 items-center justify-between gap-2">
+        <span className="truncate text-caption font-semibold text-muted-foreground" title={label}>
           {label}
         </span>
         {badge ? (
@@ -83,19 +83,22 @@ export function MetricCard({
             {badge}
           </span>
         ) : icon ? (
-          <span className={cn("grid size-8 shrink-0 place-items-center rounded-control [&_svg]:size-4", CHIP[tone])}>
+          <span className={cn("grid size-7 shrink-0 place-items-center rounded-control [&_svg]:size-4", CHIP[tone])}>
             {icon}
           </span>
         ) : null}
       </div>
       <div className="flex min-w-0 items-baseline gap-1.5">
-        <span className={cn("type-stat truncate leading-tight", colorValue ? VALUE[tone] : "text-foreground")}>
+        <span className={cn("type-stat truncate leading-7", colorValue ? VALUE[tone] : "text-foreground")}>
           {value}
         </span>
         {unit ? <span className="shrink-0 text-caption text-muted-foreground">{unit}</span> : null}
       </div>
       {foot ? (
-        <div className="mt-auto line-clamp-2 border-t border-border-soft pt-2.5 text-caption text-muted-foreground">
+        <div
+          className="mt-auto truncate border-t border-border-soft pt-1 text-caption leading-4 text-muted-foreground"
+          title={typeof foot === "string" ? foot : undefined}
+        >
           {foot}
         </div>
       ) : null}
