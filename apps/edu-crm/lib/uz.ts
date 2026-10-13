@@ -1989,7 +1989,7 @@ export const uz = {
     badgeEven: "Teng",
     balanceFoot: (income: string, out: string) => `Kirim: ${income} · Chiqim: ${out}`,
     cardRetention: "Retention",
-    retentionFoot: "Oy boshidagi o'quvchilardan qolganlar",
+    retentionFoot: "O'quvchilarni saqlash darajasi",
     cardAttendance: "Davomat",
     attendanceFoot: (month: string) => `${month} davomati`,
     cardGroups: "Aktiv guruhlar",

@@ -74,8 +74,10 @@ export function MetricCard({
       )}
       {...props}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate text-caption font-semibold text-muted-foreground">{label}</span>
+      <div className="flex items-start justify-between gap-2">
+        <span className="line-clamp-2 min-h-8 content-center text-caption leading-snug font-semibold text-muted-foreground">
+          {label}
+        </span>
         {badge ? (
           <span className={cn("shrink-0 rounded-badge px-2 py-0.5 text-2xs font-bold uppercase", CHIP[tone])}>
             {badge}
@@ -93,7 +95,9 @@ export function MetricCard({
         {unit ? <span className="shrink-0 text-caption text-muted-foreground">{unit}</span> : null}
       </div>
       {foot ? (
-        <div className="truncate border-t border-border-soft pt-2.5 text-caption text-muted-foreground">{foot}</div>
+        <div className="mt-auto line-clamp-2 border-t border-border-soft pt-2.5 text-caption text-muted-foreground">
+          {foot}
+        </div>
       ) : null}
     </div>
   );
