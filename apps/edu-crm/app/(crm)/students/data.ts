@@ -27,6 +27,8 @@ export interface StudentRow {
   groups: { id: string; name: string; teacher: string | null; status: string }[];
   /** Balans (to'lovlar − oylik hisoblar); null — moliya bo'limi o'chiq yoki ko'rish ruxsati yo'q */
   balance: number | null;
+  /** O'chirilgan (arxivga o'tkazilgan) vaqti; null — ro'yxatdagi o'quvchi */
+  archivedAt: string | null;
 }
 
 const localPhone = (phone: string | null) => (phone ?? "").replace(/\D/g, "").slice(-9);
@@ -53,6 +55,7 @@ export function toStudentRow(s: typeof students.$inferSelect): StudentRow {
     createdAt: s.createdAt.toISOString(),
     groups: [],
     balance: null,
+    archivedAt: s.archivedAt?.toISOString() ?? null,
   };
 }
 
@@ -69,6 +72,16 @@ export async function listStudents(db: TenantDb, filter: readonly string[] | nul
       ),
     )
     .orderBy(desc(students.createdAt));
+  return rows.map(toStudentRow);
+}
+
+/** O'chirilgan (arxivdagi) o'quvchilar — ro'yxatdagi "O'chirilganlar" filtri uchun, oxirgi o'chirilgani birinchi */
+export async function listArchivedStudentRows(db: TenantDb, filter: readonly string[] | null): Promise<StudentRow[]> {
+  const rows = await db
+    .select()
+    .from(students)
+    .where(and(isNotNull(students.archivedAt), filter ? inArray(students.branchId, [...filter]) : undefined))
+    .orderBy(desc(students.archivedAt));
   return rows.map(toStudentRow);
 }
 
