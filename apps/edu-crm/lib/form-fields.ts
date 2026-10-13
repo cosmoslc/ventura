@@ -12,6 +12,7 @@ import { z } from "zod";
 
 export const STAFF_FIELDS_KEY = "staff.form_fields";
 export const STUDENT_FIELDS_KEY = "students.form_fields";
+export const LEAD_FIELDS_KEY = "leads.form_fields";
 export const FIELD_TYPES = [
   "text",
   "number",
@@ -88,6 +89,7 @@ export const DEFAULT_STAFF_FIELDS: FormField[] = [
 ];
 
 export const DEFAULT_STUDENT_FIELDS: FormField[] = [];
+export const DEFAULT_LEAD_FIELDS: FormField[] = [];
 
 /** Bazadagi qiymat — buzilgan yoki yo'q bo'lsa standart ro'yxat */
 export function parseFormFields(value: unknown, defaults: FormField[]): FormField[] {

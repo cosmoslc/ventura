@@ -129,6 +129,46 @@ export const studentInput = z.object({
 });
 export type StudentInput = z.input<typeof studentInput>;
 
+/** Lid formasi (E4a): asosiy maydonlar; qolgani — "Lid formasi" sozlamasidagi qo'shimcha maydonlar */
+export const leadInput = z.object({
+  id: id.optional(),
+  branchId: id.nullable(),
+  name: z.string().trim().min(1, uz.leads.nameRequired).max(120),
+  phone: z.string().regex(/^\d{9}$/, uz.leads.phoneInvalid),
+  phone2: z
+    .string()
+    .regex(/^(\d{9})?$/, uz.leads.phoneInvalid)
+    .default(""),
+  source: z.string().trim().max(80).default(""),
+  courseId: id.nullable().default(null),
+  assignedTo: id.nullable().default(null),
+  targetDate: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2})?$/)
+    .default(""),
+  note: z.string().trim().max(1000).default(""),
+  customData: z.record(z.string().max(40), z.string().max(300)).default({}),
+});
+
+export const leadMoveInput = z.object({ id, stageId: id });
+export const leadAssignInput = z.object({ ids: z.array(id).min(1).max(500), userId: id.nullable() });
+export const leadNoteInput = z.object({
+  leadId: id,
+  kind: z.enum(["call", "message", "meeting", "note"]),
+  text: z.string().trim().min(1, uz.leads.noteRequired).max(2000),
+});
+export const leadStagesInput = z
+  .array(
+    z.object({
+      id: id.optional(),
+      name: z.string().trim().min(1).max(60),
+      color: z.string().regex(/^#[0-9a-f]{6}$/),
+      kind: z.enum(["open", "won", "lost"]),
+    }),
+  )
+  .min(3)
+  .max(20);
+
 export const studentTransferInput = z.object({
   studentId: id,
   branchId: id,
