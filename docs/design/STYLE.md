@@ -125,8 +125,10 @@ Kategoriya tartibi qat'iy: birinchi qator har doim `--chart-1`, ikkinchisi `--ch
 | --- | --- | --- | --- |
 | `--chart-1` | `#2a78d6` | `#3987e5` | Birinchi qator (masalan CPU) |
 | `--chart-2` | `#eb6834` | `#d95926` | Ikkinchi qator (masalan xotira) |
+| `--chart-3` | `#1baf7a` | `#199e70` | Uchinchi qator (masalan donut bo'lagi) |
+| `--chart-4` | `#eda100` | `#c98500` | To'rtinchi qator ("Boshqa" — to'rtinchi bo'lak) |
 
-Uchinchi qator kerak bo'lsa, avval validatordan o'tkazib, token qo'shiladi; rang avtomatik yasalmaydi.
+To'rt qator validatordan birga o'tgan (qo'shni juftlar): CVD ΔE 9.1 light / 8.4 dark, oddiy ko'rish ΔE 22.9 / 19.8. Light'da `--chart-3` va `--chart-4` oq fonda 3:1 dan past — ular faqat yonida yozuv (legenda va qiymat) bilan ishlatiladi. Beshinchi qator yasalmaydi: "Boshqa" ga qo'shiladi.
 
 ### 3.4 Shell ranglari
 
@@ -537,6 +539,14 @@ Qoidalar:
 - Kursor eng yaqin nuqtaga yopishadi: vertikal chiziq, nuqtalar va bitta oynada hamma qatorlar qiymati. Klaviaturada ←/→ bilan yuriladi, Esc yopadi.
 - Ekran o'quvchilari uchun yashirin jadval (`caption` majburiy).
 - Qator ranglari 3.3a tokenlaridan.
+
+### 11.32 Grafiklar: Sparkline, DonutChart, Gauge, TrendChart
+
+- Ranglar faqat 3.3a tokenlaridan (qator tartibi qat'iy: tushum `--chart-1`, chiqim `--chart-2`); holat ma'nosidagi bo'laklar (faol, muzlatilgan, ketgan) — `--success-fg` / `--warning-fg` / `--danger-fg`, har doim yozuv bilan.
+- **Sparkline** (`sparkline.tsx`) — KPI kartasidagi kichik grafik: `area` (trend) yoki `bar` (taqqoslash), o'q va yorliqsiz, ekran o'quvchisidan yashirin (qiymat kartada matn bilan).
+- **DonutChart** (`donut-chart.tsx`) — halqa va yonida legenda (har doim). Bo'laklar orasida 2px oraliq; ustiga kelganda bo'lak qalinlashadi, qolganlari xiralashadi, markazda foiz. Ko'pi bilan 4 kategoriya rangi — qolgani "Boshqa".
+- **Gauge** (`gauge.tsx`) — bitta ulush 270° yoyda, markazda foiz, `role="meter"`.
+- **TrendChart** (`trend-chart.tsx`) — vaqt bo'yicha bir nechta qator: chiziq (2px, birinchi qator 12% to'ldirish bilan) yoki guruhlangan ustunlar (2px oraliq, yuqori burchaklari 4px). Bitta Y o'qi (yozuv kengligiga qarab joy), uzuq "reja" chizig'i, legenda, kursor oynasi (← → bilan ham), yashirin jadval.
 
 ## 12. Fokus va qulaylik
 

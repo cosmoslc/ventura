@@ -37,7 +37,11 @@ import { FieldHint, Label } from "@ventura/ui/label";
 import { LogView } from "@ventura/ui/log-view";
 import { LineChart } from "@ventura/ui/line-chart";
 import { Logo } from "@ventura/ui/logo";
+import { DonutChart } from "@ventura/ui/donut-chart";
+import { Gauge } from "@ventura/ui/gauge";
 import { Meter } from "@ventura/ui/meter";
+import { Sparkline } from "@ventura/ui/sparkline";
+import { TrendChart } from "@ventura/ui/trend-chart";
 import { MoneyInput } from "@ventura/ui/money-input";
 import { demoColors, demoMetrics } from "@/lib/mock-data";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
@@ -64,6 +68,7 @@ const SECTIONS = [
   ["tanlov", "Tanlov"],
   ["badge", "Badge"],
   ["kartochkalar", "Kartochkalar"],
+  ["grafiklar", "Grafiklar"],
   ["jadval", "Jadval"],
   ["tablar", "Tablar"],
   ["qadamlar", "Qadamlar"],
@@ -350,6 +355,55 @@ function Badges() {
         <Badge tone="warning">O&apos;zak</Badge>
         <Badge>Rejim</Badge>
       </Row>
+    </div>
+  );
+}
+
+const TREND = ["Yan", "Fev", "Mar", "Apr", "May", "Iyn"].map((m, i) => ({
+  label: m,
+  tip: `${m} 2026`,
+  values: [18 + ((i * 7) % 9), 8 + ((i * 5) % 6)].map((v) => v * 1_000_000),
+}));
+
+function Charts() {
+  const fmt = (v: number) => `${(v / 1_000_000).toFixed(1)} mln`;
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Card className="space-y-2 p-4">
+          <div className="text-caption text-muted-foreground">Sparkline · area / bar</div>
+          <Sparkline values={[3, 5, 4, 7, 6, 9, 8]} />
+          <Sparkline values={[3, 5, 4, 7, 6, 9, 8]} kind="bar" color="var(--chart-2)" />
+        </Card>
+        <Card className="p-4">
+          <Gauge value={0.772} label="yig'ildi" />
+        </Card>
+      </div>
+      <Card className="p-4">
+        <DonutChart
+          center="4.2"
+          unit="mln so'm"
+          emptyText="Ma'lumot yo'q"
+          segments={[
+            { label: "Ijara", value: 1_800_000, color: "var(--chart-1)", display: "1.8 mln" },
+            { label: "Reklama", value: 1_200_000, color: "var(--chart-2)", display: "1.2 mln" },
+            { label: "Kommunal", value: 700_000, color: "var(--chart-3)", display: "700 ming" },
+            { label: "Boshqa", value: 500_000, color: "var(--chart-4)", display: "500 ming" },
+          ]}
+        />
+      </Card>
+      <Card className="p-4">
+        <TrendChart
+          points={TREND}
+          series={[
+            { key: "a", label: "Tushum", color: "var(--chart-1)" },
+            { key: "b", label: "Chiqim", color: "var(--chart-2)" },
+          ]}
+          limit={{ label: "Reja", value: 22_000_000 }}
+          formatValue={fmt}
+          caption="Tushum va chiqim"
+        />
+      </Card>
     </div>
   );
 }
@@ -766,6 +820,15 @@ export function UiCatalog() {
         <Section id="kartochkalar" title="Kartochkalar" description="Card, StatCard, Meter va LineChart">
           <Both>
             <Cards />
+          </Both>
+        </Section>
+        <Section
+          id="grafiklar"
+          title="Grafiklar"
+          description="Sparkline, DonutChart, Gauge va TrendChart (STYLE.md 11.32)"
+        >
+          <Both>
+            <Charts />
           </Both>
         </Section>
         <Section id="jadval" title="Jadval" description="Table, Badge, uch nuqta va Pagination">
