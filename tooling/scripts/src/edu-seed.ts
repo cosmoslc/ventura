@@ -2,13 +2,14 @@ import { asc, count } from "drizzle-orm";
 import { branches, courses, groupMemberships, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
 import { done, fail } from "./lib";
 import { flag, tenantContext } from "./edu-lib";
+import { SEED_GROUPS, seedPlan } from "./edu-seed-plan";
 
 /*
  * pnpm edu:seed -- --tenant sinov
  *
  * Faqat mahalliy sinov uchun: bo'sh markazga namuna ma'lumot — 10 ta xona, 20 ta kurs, 10 ta o'qituvchi,
- * 20 ta guruh (xona va o'qituvchi vaqti to'qnashmaydi), 20 ta o'quvchi va ularning a'zoliklari (faol, sinovda,
- * bir nechtasi sentabrda chiqqan — retention uchun). Markazda kurs allaqachon bo'lsa, hech narsa yozilmaydi.
+ * 20 ta guruh (xona va o'qituvchi vaqti to'qnashmaydi), 20 ta o'quvchi va ularning a'zoliklari — faqat joriy va o'tgan
+ * oy (sanalar: edu-seed-plan.ts). Markazda kurs allaqachon bo'lsa, hech narsa yozilmaydi.
  */
 
 const slug = flag("tenant") ?? "";
@@ -18,6 +19,9 @@ const [{ n }] = (await db.select({ n: count() }).from(courses)) as [{ n: number 
 if (n > 0) fail(`${tenant.name}: kurslar allaqachon bor (${n} ta) — namuna ma'lumot faqat bo'sh markazga yoziladi`);
 const [branch] = await db.select({ id: branches.id }).from(branches).orderBy(asc(branches.createdAt)).limit(1);
 if (!branch) fail("Filial topilmadi (avval pnpm edu:tenant)");
+
+const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tashkent" });
+const plan = seedPlan(today);
 
 // Takrorlanadigan tasodif: har ishga tushirishda bir xil natija
 let seed = 20261013;
@@ -126,7 +130,7 @@ const SLOTS = [
 const groupRows = await db
   .insert(groups)
   .values(
-    Array.from({ length: 20 }, (_, i) => {
+    Array.from({ length: SEED_GROUPS }, (_, i) => {
       const c = courseRows[i]!;
       const slot = SLOTS[i < 10 ? 0 : 1]!;
       return {
@@ -140,17 +144,16 @@ const groupRows = await db
         days: slot.days,
         startTime: slot.start,
         endTime: slot.end,
-        startDate: pick(["2026-07-01", "2026-08-01", "2026-09-01"]),
+        startDate: plan.groupStart[i]!,
         color: COLORS[i % COLORS.length]!,
       };
     }),
   )
-  .returning({ id: groups.id, startDate: groups.startDate });
+  .returning({ id: groups.id });
 
-// 5. O'quvchilar va a'zoliklar: har biri 1–2 guruhda; 4 tasi sinovda, 3 ta a'zolik sentabrda yopilgan
-for (let i = 0; i < 20; i++) {
+// 5. O'quvchilar va a'zoliklar (sanalar rejadan)
+for (const p of plan.students) {
   const male = rand() < 0.5;
-  const trial = i >= 16;
   const [s] = await db
     .insert(students)
     .values({
@@ -158,34 +161,19 @@ for (let i = 0; i < 20; i++) {
       name: fullName(male),
       phone: phone(),
       gender: male ? "male" : "female",
-      status: trial ? "trial" : "active",
-      joinedAt: trial ? "2026-10-05" : "2026-08-01",
+      status: p.trial ? "trial" : "active",
+      joinedAt: p.start,
       source: pick(["Instagram", "Telegram", "Tanish / Tavsiya", "Banner / Reklama"]),
     })
     .returning({ id: students.id });
-  const own = [groupRows[i]!, ...(i % 4 === 0 ? [groupRows[(i + 7) % 20]!] : [])];
-  for (const [k, g] of own.entries()) {
-    const enrolledAt = trial ? "2026-10-05" : g.startDate > "2026-08-01" ? g.startDate : "2026-08-01";
+  for (const g of p.groups) {
     await db.insert(groupMemberships).values({
-      groupId: g.id,
+      groupId: groupRows[g]!.id,
       studentId: s!.id,
-      status: trial ? "trial" : "active",
-      enrolledAt,
-      activatedAt: trial ? null : enrolledAt,
+      status: p.trial ? "trial" : "active",
+      enrolledAt: p.start,
+      activatedAt: p.trial ? null : p.start,
     });
-    // Retention uchun: ba'zi o'quvchilar avvalgi guruhdan sentabrda chiqqan
-    if (!trial && k === 0 && i % 7 === 3) {
-      const prev = groupRows[(i + 3) % 20]!;
-      await db.insert(groupMemberships).values({
-        groupId: prev.id,
-        studentId: s!.id,
-        status: "left",
-        enrolledAt: "2026-07-01" < prev.startDate ? prev.startDate : "2026-07-01",
-        activatedAt: "2026-07-01" < prev.startDate ? prev.startDate : "2026-07-01",
-        leftAt: "2026-09-15",
-        leftReason: "Vaqt to'g'ri kelmadi",
-      });
-    }
   }
 }
 
