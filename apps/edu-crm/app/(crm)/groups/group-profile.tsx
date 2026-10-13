@@ -131,7 +131,7 @@ export function GroupProfile({
   function pause(m: MemberRow, on: boolean) {
     startTransition(async () => {
       const res = await pauseMembershipAction({ id: m.id, pause: on });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: on ? uz.groups.frozen : uz.groups.unfrozen, description: m.name });
       router.refresh();
     });

@@ -344,6 +344,11 @@ function ReasonModal({ row, onClose, onSaved }: { row: ReportRow; onClose: () =>
         status: missed.status,
         reason: text,
       });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.reasonSaved, description: row.name });
       onClose();
@@ -404,6 +409,11 @@ function CallModal({ row, onClose, onSaved }: { row: ReportRow; onClose: () => v
     e.preventDefault();
     startTransition(async () => {
       const res = await logContactAction({ studentId: row.studentId, groupId: row.groupId, answered, text });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.callSaved, description: row.name });
       onClose();

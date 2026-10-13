@@ -48,6 +48,11 @@ export function VoidRecordDialog({
     if (!reason.trim()) return setError(t.voidReasonRequired);
     startTransition(async () => {
       const res = await onVoid({ id: target.id, reason });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: successTitle });
       onClose();

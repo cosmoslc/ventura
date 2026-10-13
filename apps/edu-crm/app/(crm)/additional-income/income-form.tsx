@@ -102,6 +102,11 @@ export function IncomeForm({
     if (showBranch && !branchId) return setError(uz.common.branchRequired);
     startTransition(async () => {
       const res = await saveIncomeAction(parsed.data);
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: editing ? t.updated : t.created, description: parsed.data.title });
       onOpenChange(false);

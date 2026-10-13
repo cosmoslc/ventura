@@ -1,6 +1,6 @@
 # E3 (Moliya) davomi — keyingi qismlar uchun eslatma
 
-2026-10-13 · E3a tayyor (ADR 0015, PR #20), E3b tayyor (ADR 0016), E3c tayyor (ADR 0018). E3d shu hujjat bo'yicha davom ettiriladi.
+2026-10-13 · E3a tayyor (ADR 0015, PR #20), E3b tayyor (ADR 0016), E3c tayyor (ADR 0018), E3d tayyor (ADR 0019). E3 yakunlandi.
 
 ## Qabul qilingan qarorlar (Saidakbar, 2026-10-12)
 
@@ -82,7 +82,7 @@ Asosiy qoida: hisob faqat `lib/billing.ts` va `lib/ledger.ts` dan olinadi, boshq
 | Avans | `salaries.advance_manage` yoki `finance.advance_give` |
 | Bonus va jarima | `salaries.kpi_edit` |
 
-## E3d. Tasdiq so'rovlari va pul auditi
+## E3d. Tasdiq so'rovlari va pul auditi — tayyor (ADR 0019)
 
 **Tasdiq so'rovlari:**
 - Lavozimda har ruxsat uchun uch holat: "ruxsat", "tasdiq bilan" yoki "taqiq".
@@ -100,5 +100,5 @@ Asosiy qoida: hisob faqat `lib/billing.ts` va `lib/ledger.ts` dan olinadi, boshq
 
 ## Muhit eslatmasi
 
-- Mijoz bazasi migratsiyalarini deploy o'zi qo'llaydi (deploydagi `migrate` qadami har safar `apps/edu-crm/scripts/provision.ts` ni ishga tushiradi). 0008 — moliya, 0009 — xarajat va qo'shimcha daromad, 0010 — ish haqi jadvallari. `pnpm db:migrate:tenant` faqat mijoz bazasini deploysiz yangilash uchun (`TENANT_MIGRATE_URL` kerak).
+- Mijoz bazasi migratsiyalarini deploy o'zi qo'llaydi (deploydagi `migrate` qadami har safar `apps/edu-crm/scripts/provision.ts` ni ishga tushiradi). 0008 — moliya, 0009 — xarajat va qo'shimcha daromad, 0010 — ish haqi, 0011 — tasdiq so'rovlari. `pnpm db:migrate:tenant` faqat mijoz bazasini deploysiz yangilash uchun (`TENANT_MIGRATE_URL` kerak).
 - Moliya integratsiya testi CI'da "mijoz bazasi" vazifasida `TENANT_TEST_ADMIN_URL` bilan ishlaydi.

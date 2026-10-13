@@ -111,6 +111,11 @@ export function RefundDialog({
         date,
         reason,
       });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.refunded, description: `${money(amount)} ${uz.common.som}` });
       onOpenChange(false);
@@ -235,6 +240,11 @@ export function CorrectionDialog({
     if (!reason.trim()) return setError(t.correctionReasonRequired);
     startTransition(async () => {
       const res = await correctionAction({ studentId, amount: delta, reason });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.corrected });
       onOpenChange(false);
@@ -306,6 +316,11 @@ export function VoidDialog({ entry, onClose }: { entry: PaymentRow | null; onClo
     if (!reason.trim()) return setError(t.voidReasonRequired);
     startTransition(async () => {
       const res = await voidEntryAction({ id: entry.id, reason });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.voidedOk });
       onClose();
@@ -393,6 +408,11 @@ export function EditEntryDialog({
         date,
         note,
       });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.updated });
       onClose();
@@ -531,6 +551,11 @@ export function DiscountDialog({
         affectsTeacher,
         reason,
       });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: f.discountSaved });
       onOpenChange(false);

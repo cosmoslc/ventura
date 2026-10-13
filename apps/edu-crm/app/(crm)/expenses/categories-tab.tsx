@@ -58,7 +58,7 @@ export function CategoriesTab({
         branchIds: c.branchIds ?? [],
         active,
       });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: t.categorySaved, description: c.name });
       router.refresh();
     });
@@ -67,7 +67,7 @@ export function CategoriesTab({
   function remove(c: CategoryRow) {
     startTransition(async () => {
       const res = await deleteCategoryAction(c.id);
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: t.categoryDeleted, description: c.name });
       router.refresh();
     });
@@ -224,6 +224,11 @@ function CategoryForm({
         branchIds: all ? [] : branchIds,
         active: editing?.active ?? true,
       });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.categorySaved, description: name.trim() });
       onClose();

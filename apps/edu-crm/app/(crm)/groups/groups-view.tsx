@@ -92,7 +92,7 @@ export function GroupsView({
 
   async function archive(g: GroupRow) {
     const res = await archiveGroupAction(g.id);
-    if (!res.ok) return void toast({ tone: "danger", title: res.error });
+    if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
     toast({ tone: "success", title: uz.groups.archived, description: g.name });
     router.refresh();
   }

@@ -3,7 +3,9 @@ import { pagePermissions } from "@/lib/access";
 import { navFor } from "@ventura/tenants";
 import { brandMark } from "@/components/brand";
 import { features } from "@/lib/manifest";
+import { pendingApprovalCount } from "@/lib/server/approvals";
 import { getBranchContext } from "@/lib/server/branch";
+import { getTenantDb } from "@/lib/server/deps";
 import { requireStaff, requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { CrmShell } from "./crm-shell";
@@ -17,6 +19,14 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
   const staff = await requireStaff();
   const nav = navFor(features, tenant.features, (_key, href) => canAny(staff.access, pagePermissions(href)));
   const branch = await getBranchContext();
+  // Tasdiqlar (ADR 0019): direktorga — hammasi, "tasdiq bilan" ruxsati bor xodimga — o'z so'rovlari
+  const showApprovals = staff.director || staff.access.approvals.size > 0;
+  const approvals = showApprovals
+    ? {
+        label: staff.director ? uz.approvals.navDirector : uz.approvals.navStaff,
+        count: await pendingApprovalCount(getTenantDb(tenant), staff),
+      }
+    : null;
   return (
     <CrmShell
       staff={{
@@ -27,6 +37,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       }}
       brand={{ name: tenant.name, mark: brandMark(tenant) }}
       nav={nav}
+      approvals={approvals}
       branches={
         branch.enabled && branch.options.length > 1 ? { options: branch.options, selected: branch.selected } : null
       }

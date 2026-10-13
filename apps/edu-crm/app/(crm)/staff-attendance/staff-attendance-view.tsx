@@ -83,7 +83,7 @@ export function StaffAttendanceView({
         checkIn: next.checkIn !== undefined ? next.checkIn : (cur?.checkIn ?? null),
         note: next.note ?? cur?.note ?? "",
       });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       router.refresh();
     });
   }
@@ -91,7 +91,7 @@ export function StaffAttendanceView({
   function markRest() {
     startTransition(async () => {
       const res = await markEmployeesPresentAction({ date });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: t.markedRest(res.marked) });
       router.refresh();
     });

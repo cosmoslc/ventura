@@ -142,6 +142,11 @@ export function ExpenseForm({
     if (showBranch && !branchId) return setError(uz.common.branchRequired);
     startTransition(async () => {
       const res = await saveExpenseAction(parsed.data);
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: editing ? t.updated : t.created, description: parsed.data.reason });
       onOpenChange(false);

@@ -3,7 +3,6 @@
 import { and, arrayOverlaps, eq, gt, isNull, lt, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { can } from "@ventura/auth/staff/policy";
 import { courses, groupMemberships, groupPrices, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
 import { OPENING_MONTH } from "@/lib/billing";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
@@ -69,7 +68,7 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
     FEATURE,
     editing ? ["groups.edit", "groups.change_teacher"] : "groups.create",
     async (ctx) => {
-      const { db, branch, staff, audit } = ctx;
+      const { db, branch, staff, audit, requireAny } = ctx;
       const parsed = groupInput.safeParse(input);
       if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
       const v = parsed.data;
@@ -94,9 +93,14 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
           existing.teacherSalaryPercent !== v.teacherSalaryPercent ||
           existing.teacherSalaryAmount !== v.teacherSalaryAmount ||
           (existing.note ?? "") !== v.note;
-        if (teacherChanged && !can(staff.access, "groups.change_teacher"))
-          return { ok: false, error: uz.groups.teacherChangeForbidden };
-        if (otherChanged && !can(staff.access, "groups.edit")) return { ok: false, error: uz.common.forbidden };
+        if (teacherChanged) {
+          const gate = await requireAny(["groups.change_teacher"]);
+          if (gate) return gate.pending ? gate : { ok: false, error: uz.groups.teacherChangeForbidden };
+        }
+        if (otherChanged) {
+          const gate = await requireAny(["groups.edit"]);
+          if (gate) return gate;
+        }
       }
 
       const branchId = existing?.branchId ?? resolveBranch(branch, v.branchId);
@@ -190,67 +194,88 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
       refresh(row!.id);
       return { ok: true, id: row!.id };
     },
+    { approval: { action: "groups.save", input: input } },
   );
 }
 
 export async function archiveGroupAction(id: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "groups.delete", async (ctx) => {
-    const parsed = uuid.safeParse(id);
-    if (!parsed.success) return { ok: false, error: uz.common.invalid };
-    const g = await loadGroup(ctx, parsed.data);
-    if (!g) return { ok: false, error: uz.common.gone };
-    // Guruh arxivga o'tadi, a'zoliklar shu kun bilan yopiladi; to'lov va davomat tarixi saqlanadi
-    const closed = await ctx.db.transaction(async (tx) => {
-      await tx.update(groups).set({ archivedAt: new Date() }).where(eq(groups.id, g.id));
-      const r = await tx
-        .update(groupMemberships)
-        .set({ status: "left", leftAt: todayTashkent(), leftReason: uz.groups.archivedGroupReason })
-        .where(and(eq(groupMemberships.groupId, g.id), isNull(groupMemberships.leftAt)))
-        .returning({ id: groupMemberships.id });
-      return r.length;
-    });
-    await ctx.audit("group.archive", { type: "group", id: g.id }, { name: g.name, closedMemberships: closed });
-    refresh(g.id);
-    revalidatePath("/archive");
-    return { ok: true };
-  });
+  return crmAction(
+    FEATURE,
+    "groups.delete",
+    async (ctx) => {
+      const parsed = uuid.safeParse(id);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const g = await loadGroup(ctx, parsed.data);
+      if (!g) return { ok: false, error: uz.common.gone };
+      // Guruh arxivga o'tadi, a'zoliklar shu kun bilan yopiladi; to'lov va davomat tarixi saqlanadi
+      const closed = await ctx.db.transaction(async (tx) => {
+        await tx.update(groups).set({ archivedAt: new Date() }).where(eq(groups.id, g.id));
+        const r = await tx
+          .update(groupMemberships)
+          .set({ status: "left", leftAt: todayTashkent(), leftReason: uz.groups.archivedGroupReason })
+          .where(and(eq(groupMemberships.groupId, g.id), isNull(groupMemberships.leftAt)))
+          .returning({ id: groupMemberships.id });
+        return r.length;
+      });
+      await ctx.audit("group.archive", { type: "group", id: g.id }, { name: g.name, closedMemberships: closed });
+      refresh(g.id);
+      revalidatePath("/archive");
+      return { ok: true };
+    },
+    { approval: { action: "groups.archive", input: id } },
+  );
 }
 
 /* ---------- A'zolik ---------- */
 
 export async function enrollStudentAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "groups.add_student", async (ctx) => {
-    const parsed = z.object({ groupId: uuid, studentId: uuid }).safeParse(input);
-    if (!parsed.success) return { ok: false, error: uz.common.invalid };
-    const g = await loadGroup(ctx, parsed.data.groupId);
-    if (!g) return { ok: false, error: uz.groups.groupArchived };
-    const [s] = await ctx.db
-      .select()
-      .from(students)
-      .where(and(eq(students.id, parsed.data.studentId), isNull(students.archivedAt)));
-    if (!s || !ctx.branch.options.some((b) => b.id === s.branchId))
-      return { ok: false, error: uz.groups.studentArchived };
-    if (s.branchId !== g.branchId) return { ok: false, error: uz.groups.branchMismatch };
-    const [open] = await ctx.db
-      .select({ id: groupMemberships.id })
-      .from(groupMemberships)
-      .where(
-        and(eq(groupMemberships.groupId, g.id), eq(groupMemberships.studentId, s.id), isNull(groupMemberships.leftAt)),
+  return crmAction(
+    FEATURE,
+    "groups.add_student",
+    async (ctx) => {
+      const parsed = z.object({ groupId: uuid, studentId: uuid }).safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const g = await loadGroup(ctx, parsed.data.groupId);
+      if (!g) return { ok: false, error: uz.groups.groupArchived };
+      const [s] = await ctx.db
+        .select()
+        .from(students)
+        .where(and(eq(students.id, parsed.data.studentId), isNull(students.archivedAt)));
+      if (!s || !ctx.branch.options.some((b) => b.id === s.branchId))
+        return { ok: false, error: uz.groups.studentArchived };
+      if (s.branchId !== g.branchId) return { ok: false, error: uz.groups.branchMismatch };
+      const [open] = await ctx.db
+        .select({ id: groupMemberships.id })
+        .from(groupMemberships)
+        .where(
+          and(
+            eq(groupMemberships.groupId, g.id),
+            eq(groupMemberships.studentId, s.id),
+            isNull(groupMemberships.leftAt),
+          ),
+        );
+      if (open) return { ok: false, error: uz.groups.alreadyMember };
+      const [m] = await ctx.db
+        .insert(groupMemberships)
+        .values({
+          groupId: g.id,
+          studentId: s.id,
+          status: "trial",
+          enrolledAt: todayTashkent(),
+          createdBy: ctx.staff.id,
+        })
+        .returning({ id: groupMemberships.id });
+      await ctx.audit(
+        "group.enroll",
+        { type: "group", id: g.id },
+        { student: s.name, studentId: s.id, membershipId: m!.id },
       );
-    if (open) return { ok: false, error: uz.groups.alreadyMember };
-    const [m] = await ctx.db
-      .insert(groupMemberships)
-      .values({ groupId: g.id, studentId: s.id, status: "trial", enrolledAt: todayTashkent(), createdBy: ctx.staff.id })
-      .returning({ id: groupMemberships.id });
-    await ctx.audit(
-      "group.enroll",
-      { type: "group", id: g.id },
-      { student: s.name, studentId: s.id, membershipId: m!.id },
-    );
-    await ctx.audit("student.enroll", { type: "student", id: s.id }, { group: g.name, groupId: g.id });
-    refresh(g.id, s.id);
-    return { ok: true };
-  });
+      await ctx.audit("student.enroll", { type: "student", id: s.id }, { group: g.name, groupId: g.id });
+      refresh(g.id, s.id);
+      return { ok: true };
+    },
+    { approval: { action: "groups.enroll", input: input } },
+  );
 }
 
 /** Ochiq a'zolik, guruh va o'quvchi bilan (filial cheklovi tekshirilgan) */
@@ -284,79 +309,94 @@ async function membershipAudit(
 }
 
 export async function activateMembershipAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "groups.add_student", async (ctx) => {
-    const parsed = membershipDateInput.safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const row = await loadMembership(ctx, parsed.data.id);
-    if (!row) return { ok: false, error: uz.common.gone };
-    if (row.m.status !== "trial") return { ok: false, error: uz.common.invalid };
-    const date = parsed.data.date;
-    // Oy boshidan faollashtirish mumkin (to'liq oy hisobi), undan oldin — yo'q
-    if (date < monthStart(row.m.enrolledAt)) return { ok: false, error: uz.groups.dateBeforeEnroll };
-    const promoted = await ctx.db.transaction(async (tx) => {
-      await tx
-        .update(groupMemberships)
-        .set({ status: "active", activatedAt: date, pausedAt: null })
-        .where(eq(groupMemberships.id, row.m.id));
-      return promoteTrialStudent(tx, row.s.id);
-    });
-    await membershipAudit(ctx, row, "activate", { date, ...(promoted ? { studentActivated: true } : {}) });
-    refresh(row.g.id, row.s.id);
-    return { ok: true };
-  });
+  return crmAction(
+    FEATURE,
+    "groups.add_student",
+    async (ctx) => {
+      const parsed = membershipDateInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const row = await loadMembership(ctx, parsed.data.id);
+      if (!row) return { ok: false, error: uz.common.gone };
+      if (row.m.status !== "trial") return { ok: false, error: uz.common.invalid };
+      const date = parsed.data.date;
+      // Oy boshidan faollashtirish mumkin (to'liq oy hisobi), undan oldin — yo'q
+      if (date < monthStart(row.m.enrolledAt)) return { ok: false, error: uz.groups.dateBeforeEnroll };
+      const promoted = await ctx.db.transaction(async (tx) => {
+        await tx
+          .update(groupMemberships)
+          .set({ status: "active", activatedAt: date, pausedAt: null })
+          .where(eq(groupMemberships.id, row.m.id));
+        return promoteTrialStudent(tx, row.s.id);
+      });
+      await membershipAudit(ctx, row, "activate", { date, ...(promoted ? { studentActivated: true } : {}) });
+      refresh(row.g.id, row.s.id);
+      return { ok: true };
+    },
+    { approval: { action: "groups.activate", input: input } },
+  );
 }
 
 export async function pauseMembershipAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "students.freeze", async (ctx) => {
-    const parsed = z.object({ id: uuid, pause: z.boolean() }).safeParse(input);
-    if (!parsed.success) return { ok: false, error: uz.common.invalid };
-    const row = await loadMembership(ctx, parsed.data.id);
-    if (!row) return { ok: false, error: uz.common.gone };
-    const today = todayTashkent();
-    if (parsed.data.pause) {
-      if (row.m.status === "paused") return { ok: true };
-      await ctx.db.transaction(async (tx) => {
-        await tx
-          .update(groupMemberships)
-          .set({ status: "paused", pausedAt: today })
-          .where(eq(groupMemberships.id, row.m.id));
-        await openPauses(tx, [row.m.id], today);
-      });
-    } else {
-      if (row.m.status !== "paused") return { ok: true };
-      // Faollashtirilgan bo'lsa faolga, sinovdan muzlatilgan bo'lsa sinovga qaytadi (asl sana saqlanadi)
-      await ctx.db.transaction(async (tx) => {
-        await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], today);
-        await tx
-          .update(groupMemberships)
-          .set({ status: row.m.activatedAt ? "active" : "trial", pausedAt: null })
-          .where(eq(groupMemberships.id, row.m.id));
-      });
-    }
-    await membershipAudit(ctx, row, parsed.data.pause ? "pause" : "unpause", {});
-    refresh(row.g.id, row.s.id);
-    return { ok: true };
-  });
+  return crmAction(
+    FEATURE,
+    "students.freeze",
+    async (ctx) => {
+      const parsed = z.object({ id: uuid, pause: z.boolean() }).safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const row = await loadMembership(ctx, parsed.data.id);
+      if (!row) return { ok: false, error: uz.common.gone };
+      const today = todayTashkent();
+      if (parsed.data.pause) {
+        if (row.m.status === "paused") return { ok: true };
+        await ctx.db.transaction(async (tx) => {
+          await tx
+            .update(groupMemberships)
+            .set({ status: "paused", pausedAt: today })
+            .where(eq(groupMemberships.id, row.m.id));
+          await openPauses(tx, [row.m.id], today);
+        });
+      } else {
+        if (row.m.status !== "paused") return { ok: true };
+        // Faollashtirilgan bo'lsa faolga, sinovdan muzlatilgan bo'lsa sinovga qaytadi (asl sana saqlanadi)
+        await ctx.db.transaction(async (tx) => {
+          await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], today);
+          await tx
+            .update(groupMemberships)
+            .set({ status: row.m.activatedAt ? "active" : "trial", pausedAt: null })
+            .where(eq(groupMemberships.id, row.m.id));
+        });
+      }
+      await membershipAudit(ctx, row, parsed.data.pause ? "pause" : "unpause", {});
+      refresh(row.g.id, row.s.id);
+      return { ok: true };
+    },
+    { approval: { action: "groups.pause", input: input } },
+  );
 }
 
 export async function leaveMembershipAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "groups.remove_student", async (ctx) => {
-    const parsed = membershipLeaveInput.safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const row = await loadMembership(ctx, parsed.data.id);
-    if (!row) return { ok: false, error: uz.common.gone };
-    const { date, reason } = parsed.data;
-    if (date < row.m.enrolledAt) return { ok: false, error: uz.groups.dateBeforeEnroll };
-    // To'lov qaytarish va qarz tekshiruvi (eski "Tark etish" oynasi) — Moliya bilan (E3)
-    await ctx.db.transaction(async (tx) => {
-      if (row.m.status === "paused") await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], date);
-      await tx
-        .update(groupMemberships)
-        .set({ status: "left", leftAt: date, leftReason: reason || null })
-        .where(eq(groupMemberships.id, row.m.id));
-    });
-    await membershipAudit(ctx, row, "leave", { date, ...(reason ? { reason } : {}), from: row.m.status });
-    refresh(row.g.id, row.s.id);
-    return { ok: true };
-  });
+  return crmAction(
+    FEATURE,
+    "groups.remove_student",
+    async (ctx) => {
+      const parsed = membershipLeaveInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const row = await loadMembership(ctx, parsed.data.id);
+      if (!row) return { ok: false, error: uz.common.gone };
+      const { date, reason } = parsed.data;
+      if (date < row.m.enrolledAt) return { ok: false, error: uz.groups.dateBeforeEnroll };
+      // To'lov qaytarish va qarz tekshiruvi (eski "Tark etish" oynasi) — Moliya bilan (E3)
+      await ctx.db.transaction(async (tx) => {
+        if (row.m.status === "paused") await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], date);
+        await tx
+          .update(groupMemberships)
+          .set({ status: "left", leftAt: date, leftReason: reason || null })
+          .where(eq(groupMemberships.id, row.m.id));
+      });
+      await membershipAudit(ctx, row, "leave", { date, ...(reason ? { reason } : {}), from: row.m.status });
+      refresh(row.g.id, row.s.id);
+      return { ok: true };
+    },
+    { approval: { action: "groups.leave", input: input } },
+  );
 }

@@ -178,6 +178,11 @@ export function PaymentDialog({
         note,
         discount: withDiscount ? { amount: discount, reason: discountReason } : null,
       });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.saved(res.receiptNo) });
       setDone({ id: res.id, receiptNo: res.receiptNo });

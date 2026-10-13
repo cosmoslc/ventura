@@ -14,7 +14,7 @@ import {
   ensurePositions,
   getStaffSessionPolicy,
   staffBranchIds,
-  staffPermissions,
+  staffPermissionLists,
   staffPositions,
 } from "@ventura/auth/staff";
 import { type Tenant, hasFeature } from "@ventura/tenants";
@@ -83,16 +83,16 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     return null;
   }
   const director = u.role === "director";
-  const [permissions, positions] = director
+  const [lists, positions] = director
     ? [null, []]
-    : await Promise.all([staffPermissions(deps.db, u.id), staffPositions(deps.db, u.id)]);
+    : await Promise.all([staffPermissionLists(deps.db, u.id), staffPositions(deps.db, u.id)]);
   return {
     id: u.id,
     name: u.name,
     phone: u.phoneNumber ?? "",
     role: u.role,
     director,
-    access: accessFor(u.role, permissions),
+    access: accessFor(u.role, lists?.permissions ?? null, lists?.approvals ?? []),
     positions,
     telegramLinked: !!u.telegramChatId && u.twoFactorEnabled,
     state: accessState({

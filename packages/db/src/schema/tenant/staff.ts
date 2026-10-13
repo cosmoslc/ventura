@@ -21,6 +21,11 @@ export const positions = pgTable(
       .array()
       .notNull()
       .default(sql`'{}'::text[]`),
+    /** "Tasdiq bilan" ruxsatlar — amal direktor tasdig'idan keyin bajariladi (ADR 0019) */
+    approvals: text("approvals")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     /** Tizim lavozimi (Bosh Direktor): o'chirilmaydi, ruxsatlari o'zgartirilmaydi */
     system: boolean("system").notNull().default(false),
     ...timestamps,

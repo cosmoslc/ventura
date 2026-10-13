@@ -86,7 +86,7 @@ export function PlansTab({
   function remove(p: PlanRow) {
     startTransition(async () => {
       const res = await deletePlanAction(p.id);
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: t.planDeleted, description: p.categoryName });
       router.refresh();
     });
@@ -344,6 +344,11 @@ function PlanForm({
     if (showBranch && !branchId) return setError(uz.common.branchRequired);
     startTransition(async () => {
       const res = await savePlanAction(parsed.data);
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: t.planSaved });
       onClose();

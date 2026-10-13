@@ -9,6 +9,8 @@ export interface PositionRow {
   name: string;
   color: string;
   permissions: string[];
+  /** "Tasdiq bilan" ruxsatlar (ADR 0019) */
+  approvals: string[];
   system: boolean;
   /** Shu lavozimdagi faol (bo'shatilmagan) xodimlar soni */
   users: number;
@@ -29,6 +31,7 @@ export async function listPositions(db: TenantDb): Promise<PositionRow[]> {
     name: p.name,
     color: p.color,
     permissions: p.permissions,
+    approvals: p.approvals,
     system: p.system,
     users: counts.find((c) => c.positionId === p.id)?.n ?? 0,
   }));

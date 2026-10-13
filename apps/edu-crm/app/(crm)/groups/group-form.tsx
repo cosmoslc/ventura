@@ -196,6 +196,11 @@ export function GroupForm({
     if (!parsed.success) return setError(firstError(parsed.error));
     startTransition(async () => {
       const res = await saveGroupAction(parsed.data);
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: editing ? uz.groups.updated : uz.groups.created, description: parsed.data.name });
       onOpenChange(false);

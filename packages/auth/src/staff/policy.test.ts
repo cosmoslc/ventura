@@ -8,7 +8,9 @@ import {
   can,
   canAny,
   inScope,
+  isApprovable,
   normalizePermissions,
+  permissionState,
 } from "./policy";
 
 describe("ruxsatlar katalogi", () => {
@@ -80,5 +82,33 @@ describe("filial bo'yicha cheklov", () => {
     expect(inScope(scope, "b2")).toBe(true);
     expect(inScope(scope, "b3")).toBe(false);
     expect(inScope(scope, null)).toBe(false);
+  });
+});
+
+describe("tasdiq bilan (ADR 0019)", () => {
+  it("ko'rish, eksport, chop etish, panel va ruxsatlarni boshqarish tasdiq bilan bo'lmaydi", () => {
+    expect(isApprovable("finance.payment_create")).toBe(true);
+    expect(isApprovable("students.delete")).toBe(true);
+    expect(isApprovable("finance.payment_view")).toBe(false);
+    expect(isApprovable("groups.attendance_view")).toBe(false);
+    expect(isApprovable("attendance.export")).toBe(false);
+    expect(isApprovable("finance.payment_receipt_print")).toBe(false);
+    expect(isApprovable("dashboard.financial_stats")).toBe(false);
+    expect(isApprovable("settings.roles_permissions")).toBe(false);
+    expect(isApprovable("staff.roles_assign")).toBe(false);
+    expect(isApprovable("noma'lum")).toBe(false);
+  });
+
+  it("boshqa lavozimi to'liq ruxsat bergan bo'lsa tasdiq kerak emas; tasdiqqa yaroqsizlari tushib qoladi", () => {
+    const a = accessFor(
+      "staff",
+      ["finance.payment_create"],
+      ["finance.payment_create", "finance.payment_delete", "finance.payment_view"],
+    );
+    expect([...a.approvals]).toEqual(["finance.payment_delete"]);
+    expect(permissionState(a, ["finance.payment_create"])).toBe("allow");
+    expect(permissionState(a, ["finance.payment_delete"])).toBe("approval");
+    expect(permissionState(a, ["finance.payment_edit"])).toBe("deny");
+    expect(permissionState(accessFor("director", null), ["finance.payment_edit"])).toBe("allow");
   });
 });

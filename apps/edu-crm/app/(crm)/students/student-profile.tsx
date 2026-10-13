@@ -250,7 +250,7 @@ function NotesTab({ studentId, notes, canWrite }: { studentId: string; notes: St
 
   async function remove(n: StudentNoteRow) {
     const res = await deleteStudentNoteAction(n.id);
-    if (!res.ok) return void toast({ tone: "danger", title: res.error });
+    if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
     toast({ tone: "success", title: uz.students.noteDeleted });
     router.refresh();
   }
