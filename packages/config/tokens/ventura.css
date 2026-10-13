@@ -75,6 +75,8 @@
   /* Grafik qatorlari (kategoriya tartibi qat'iy; dataviz validatori bilan tekshirilgan: oq va dark kartochkada) */
   --chart-1: #2a78d6;
   --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-4: #eda100;
   --neutral-fg: #475569;
   --neutral-bg: #f1f5f9;
   --neutral-border: #e2e8f0;
@@ -307,6 +309,8 @@
 
   --chart-1: #3987e5;
   --chart-2: #d95926;
+  --chart-3: #199e70;
+  --chart-4: #c98500;
   --neutral-fg: #cbd5e1;
   --neutral-bg: #1e293b;
   --neutral-border: #334155;

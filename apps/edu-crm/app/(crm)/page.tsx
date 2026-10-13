@@ -1,23 +1,110 @@
 import { ArrowRight, Building2, ShieldCheck } from "lucide-react";
 import Link from "next/link";
-import { canAny } from "@ventura/auth/staff/policy";
+import { type StaffAccess, can, canAny } from "@ventura/auth/staff/policy";
 import { pagePermissions } from "@/lib/access";
-import { navFor } from "@ventura/tenants";
+import { type Tenant, hasFeature, navFor } from "@ventura/tenants";
 import { Card, CardContent } from "@ventura/ui/card";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { features } from "@/lib/manifest";
-import { requireStaff, requireTenant } from "@/lib/server/session";
+import { resolvePeriod } from "@/lib/dashboard";
+import { getBranchContext } from "@/lib/server/branch";
+import { type DashboardData, loadDashboard } from "@/lib/server/dashboard";
+import { getTenantDb } from "@/lib/server/deps";
+import { todayTashkent } from "@/lib/server/memberships";
+import { type Staff, requireStaff, requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { FeatureIcon } from "./crm-shell";
+import { type DashboardLinks, DashboardView } from "./dashboard-view";
 
 export const metadata = { title: uz.home.title };
 
-/** Bosh sahifa (E0): kim kirgani, qaysi filiallar va qaysi bo'limlar ochiq. Ko'rsatkichlar — E5. */
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ ruxsat?: string }> }) {
+const DASHBOARD = ["dashboard.view", "dashboard.financial_stats", "dashboard.conversion_stats"] as const;
+const LINK_PAGES = {
+  payments: ["payments", "/payments"],
+  expenses: ["expenses", "/expenses"],
+  debtors: ["debtors", "/debtors"],
+  attendance: ["attendance", "/attendance"],
+  students: ["students", "/students"],
+  groups: ["groups", "/groups"],
+  teachers: ["teachers", "/teachers"],
+  rooms: ["groups", "/rooms"],
+} as const;
+
+const yearParam = (v: string | undefined, current: number): number | null =>
+  v === "all" ? null : v && /^\d{4}$/.test(v) ? Number(v) : current;
+const monthParam = (v: string | undefined, current: number): number | null =>
+  v === "all" ? null : v && /^(?:[1-9]|1[0-2])$/.test(v) ? Number(v) : current;
+
+/**
+ * Bosh sahifa. Boshqaruv paneli ruxsati bor xodimga — eski tizimdagi Bosh panel (ADR 0017), qolganlarga — kim
+ * kirgani va ochiq bo'limlar.
+ */
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ruxsat?: string; yil?: string; oy?: string }>;
+}) {
   const tenant = await requireTenant();
   const staff = await requireStaff();
-  const { ruxsat } = await searchParams;
+  const sp = await searchParams;
+  const notice = sp.ruxsat === "yoq" ? <Notice tone="warning">{uz.home.noPermission}</Notice> : null;
+  if (!canAny(staff.access, DASHBOARD)) return <SimpleHome tenant={tenant} staff={staff} notice={notice} />;
+
+  const today = todayTashkent();
+  const period = resolvePeriod(
+    yearParam(sp.yil, Number(today.slice(0, 4))),
+    monthParam(sp.oy, Number(today.slice(5, 7))),
+    today,
+  );
+  const branch = await getBranchContext();
+  const finance = can(staff.access, "dashboard.financial_stats");
+  const data = await loadDashboard(getTenantDb(tenant), branch.filter, period, today);
+  return (
+    <div className="space-y-4">
+      {notice}
+      <DashboardView
+        data={finance ? data : withoutMoney(data)}
+        period={period}
+        generatedAt={new Date().toISOString()}
+        finance={finance}
+        conversion={can(staff.access, "dashboard.conversion_stats")}
+        links={await linksFor(tenant, staff.access)}
+      />
+    </div>
+  );
+}
+
+/** Ruxsat bo'lmasa pul raqamlari brauzerga umuman yuborilmaydi */
+function withoutMoney(d: DashboardData): DashboardData {
+  const zero = { income: 0, expense: 0, refund: 0, outflow: 0, profit: 0, payCount: 0, categories: {} };
+  return {
+    ...d,
+    cur: zero,
+    prev: null,
+    months: d.months.map((m) => ({ ...m, income: 0, outflow: 0, profit: 0, refund: 0, payCount: 0 })),
+    days: [],
+    expected: 0,
+    covered: 0,
+    totalDebt: 0,
+    debtors: 0,
+    groups: d.groups.map((g) => ({ ...g, expected: 0, covered: 0, payPct: 0, debt: 0, debtors: 0 })),
+    events: [],
+  };
+}
+
+async function linksFor(tenant: Tenant, access: StaffAccess): Promise<DashboardLinks> {
+  const out: DashboardLinks = {};
+  for (const [key, [feature, href]] of Object.entries(LINK_PAGES) as [
+    keyof DashboardLinks,
+    readonly [string, string],
+  ][]) {
+    if (canAny(access, pagePermissions(href)) && (await hasFeature(tenant, feature))) out[key] = href;
+  }
+  return out;
+}
+
+function SimpleHome({ tenant, staff, notice }: { tenant: Tenant; staff: Staff; notice: React.ReactNode }) {
   const links = navFor(features, tenant.features, (_key, href) => canAny(staff.access, pagePermissions(href))).flatMap(
     (g) => g.links,
   );
@@ -26,7 +113,7 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   return (
     <div className="space-y-6">
       <PageHeader title={uz.home.greeting(staff.name)} description={tenant.name} />
-      {ruxsat === "yoq" ? <Notice tone="warning">{uz.home.noPermission}</Notice> : null}
+      {notice}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Card>
