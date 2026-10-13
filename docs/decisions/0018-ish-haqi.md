@@ -87,6 +87,11 @@ berilgan, bu summa ikki marta sanalmaydi.
   - tanlangan oy uchun hisoblangan, berilgan va qoldiq ko'rsatiladi;
   - to'lov usuli faqat maosh va avansda so'raladi.
 - Ro'yxatda direktor yo'q. Filial cheklovi bor xodim faqat o'z filiallaridagi xodim va o'qituvchilarni ko'radi.
+- **O'qituvchi profili, "Maosh" bo'limi:**
+  - tanlangan oy bo'yicha kartalar: hisoblangan, bonus/jarima, berilgan, qoldiq;
+  - guruhlar bo'yicha ulush (o'z oyligi alohida qatorda) va shu oy yozuvlari;
+  - "Maosh berish" tugmasi.
+  - Ma'lumot Ish haqi sahifasidagi bilan bir manbadan (`loadTeacherPayroll`). Eski profildagi balans kartalari o'rnida.
 
 ### Ruxsatlar (eski katalog)
 
@@ -118,4 +123,4 @@ Tahrirlash, bekor qilish va tiklash — o'sha turdagi yozuvning ruxsati bilan. H
 - Bosh panel (ADR 0017): maosh va avans chiqimga qo'shiladi, "Avans" KPI to'ladi. Bu bosh panel bilan ish haqi
   birlashtirilgach qilinadi.
 - E3d tasdiq so'rovlari shu server amallarini o'raydi.
-- O'qituvchi profilidagi maosh tabi (eski tizimdagi "revenueAccrual") — `loadPayroll` dan, keyingi qadamda.
+

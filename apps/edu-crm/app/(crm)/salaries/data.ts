@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { type SQL, and, desc, eq, gte, lte } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import type { TenantDb } from "@ventura/db";
 import { type SalaryEntryKind, paymentMethods, salaryEntries, teachers, users } from "@ventura/db/schema/tenant";
@@ -28,8 +28,27 @@ const creator = alias(users, "creator");
 const voider = alias(users, "voider");
 const localPhone = (p: string | null) => (p ?? "").replace(/\D/g, "").slice(-9);
 
+/** Bitta odamning shu oy hisobi uchun yozuvlari (bekor qilinganlari ham) — profildagi "Maosh" bo'limi */
+export async function listPersonEntries(
+  db: TenantDb,
+  ref: { userId?: string; teacherId?: string },
+  month: string,
+): Promise<SalaryEntryRow[]> {
+  return listEntries(
+    db,
+    and(
+      eq(salaryEntries.month, month),
+      ref.teacherId ? eq(salaryEntries.teacherId, ref.teacherId) : eq(salaryEntries.userId, ref.userId ?? ""),
+    ),
+  );
+}
+
 /** Sana oralig'idagi yozuvlar (bekor qilinganlari ham); filial cheklovi sahifada — ko'rinadigan xodimlar bo'yicha */
 export async function listSalaryEntries(db: TenantDb, range: { from: string; to: string }): Promise<SalaryEntryRow[]> {
+  return listEntries(db, and(gte(salaryEntries.date, range.from), lte(salaryEntries.date, range.to)));
+}
+
+async function listEntries(db: TenantDb, where: SQL | undefined): Promise<SalaryEntryRow[]> {
   const rows = await db
     .select({
       e: salaryEntries,
@@ -48,7 +67,7 @@ export async function listSalaryEntries(db: TenantDb, range: { from: string; to:
     .leftJoin(paymentMethods, eq(paymentMethods.id, salaryEntries.methodId))
     .leftJoin(creator, eq(creator.id, salaryEntries.createdBy))
     .leftJoin(voider, eq(voider.id, salaryEntries.voidedBy))
-    .where(and(gte(salaryEntries.date, range.from), lte(salaryEntries.date, range.to)))
+    .where(where)
     .orderBy(desc(salaryEntries.date), desc(salaryEntries.createdAt));
   return rows.map((r) => ({
     id: r.e.id,

@@ -93,11 +93,17 @@ async function teacherRows(
   month: string,
   today: string,
   moves: Awaited<ReturnType<typeof movesFor>>,
+  /** Faqat shu o'qituvchi (profil uchun; bo'shatilgani ham) */
+  onlyId?: string,
 ): Promise<TeacherPayrollRow[]> {
   const list = await db
     .select()
     .from(teachers)
-    .where(and(isNull(teachers.archivedAt), filter ? inArray(teachers.branchId, [...filter]) : undefined))
+    .where(
+      onlyId
+        ? eq(teachers.id, onlyId)
+        : and(isNull(teachers.archivedAt), filter ? inArray(teachers.branchId, [...filter]) : undefined),
+    )
     .orderBy(asc(teachers.name));
   if (!list.length) return [];
   const groupRows = await db
@@ -293,4 +299,16 @@ export async function loadPayroll(
   const revenue = t.reduce((sum, r) => sum + r.accrual.revenue, 0);
   const share = t.reduce((sum, r) => sum + r.accrual.total, 0);
   return { month, rows: [...t, ...s], totals: { revenue, share, center: revenue - share } };
+}
+
+/** Bitta o'qituvchining oy hisobi (profildagi "Maosh" bo'limi) va guruh nomlari */
+export async function loadTeacherPayroll(db: TenantDb, teacherId: string, month: string, today: string) {
+  const moves = await movesFor(db, month);
+  const [row] = await teacherRows(db, null, month, today, moves, teacherId);
+  if (!row) return null;
+  const ids = row.accrual.groups.map((g) => g.groupId);
+  const names = ids.length
+    ? await db.select({ id: groups.id, name: groups.name }).from(groups).where(inArray(groups.id, ids))
+    : [];
+  return { row, groupNames: Object.fromEntries(names.map((g) => [g.id, g.name])) as Record<string, string> };
 }

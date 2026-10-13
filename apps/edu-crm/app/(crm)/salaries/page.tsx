@@ -1,4 +1,5 @@
 import { canAny } from "@ventura/auth/staff/policy";
+import { recentMonths } from "@/lib/format";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { listPeople } from "@/lib/server/expenses";
@@ -14,12 +15,6 @@ export const metadata = { title: uz.salaries.title };
 
 const isDay = (v: string | undefined): v is string =>
   !!v && /^\d{4}-\d{2}-\d{2}$/.test(v) && new Date(`${v}T00:00:00Z`).toISOString().slice(0, 10) === v;
-
-/** Joriy oydan 12 oy orqaga (yozuv bir yildan eski kiritilmaydi) */
-function recentMonths(today: string, count = 13): string[] {
-  const [y, m] = today.split("-").map(Number);
-  return Array.from({ length: count }, (_, i) => new Date(Date.UTC(y!, m! - 1 - i, 1)).toISOString().slice(0, 7));
-}
 
 export default async function SalariesPage({
   searchParams,

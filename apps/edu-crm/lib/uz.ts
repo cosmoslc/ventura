@@ -1378,6 +1378,21 @@ export const uz = {
     voidTitle: "Ish haqi yozuvini bekor qilish",
     voidedOk: "Yozuv bekor qilindi",
     restoredOk: "Yozuv tiklandi",
+    // o'qituvchi profili
+    profileTitle: "Maosh",
+    accruedHint: (s: string) => `Guruhlariga tushgan: ${s}`,
+    paidHint: (s: string) => `Shundan avans: ${s}`,
+    remainingHint: "Hisoblangan + bonus − jarima − berilgan",
+    adjustHint: "Bonus − jarima",
+    groupsTitle: "Guruhlar bo'yicha ulush",
+    colGroup: "Guruh",
+    colRevenue: "Tushum",
+    colShare: "Ulush",
+    ownSalary: "O'z oyligi",
+    typeName: { percent: "Foiz", per_student: "O'quvchi boshiga", fixed: "Belgilangan" } as Record<string, string>,
+    noGroupPay: "Bu oy guruhlar bo'yicha hisob yo'q",
+    entriesTitle: "Shu oy yozuvlari",
+    noEntries: "Bu oy uchun yozuv yo'q",
   },
 
   incomes: {
