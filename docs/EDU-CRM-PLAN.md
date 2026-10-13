@@ -1,6 +1,6 @@
 # edu-crm: eski CRM'ni Ventura qolipiga ko'chirish rejasi
 
-2026-10-13 · holat: E0–E2 tayyor, E3 jarayonda (E3a va E3b tayyor) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
+2026-10-13 · holat: E0–E2 tayyor, E3 jarayonda (E3a, E3b, E3c tayyor) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
 
 ## 1. Maqsad
 
@@ -125,7 +125,7 @@ Bo'limlar: `payments`, `debtors`, `expenses`, `salaries`.
 - [x] To'lov qabul qilish, to'lov turlari, chek — ADR 0015
 - [x] Qaytarish, chegirmalar, qarzdorlar — ADR 0015
 - [x] Xarajatlar va toifalari, oylik rejalar, qo'shimcha daromad — ADR 0016
-- [ ] Ish haqi: o'qituvchi va xodimlar
+- [x] Ish haqi: o'qituvchi va xodimlar — ADR 0018
 - [ ] Pul amallari auditi, tasdiqlash so'rovlari
 
 **Qabul:** to'lov, qaytarish va qarz hisobi eski tizimdagi SQL testlar ssenariylari bilan bir xil natija beradi (testlar Vitest'ga ko'chirilgan).

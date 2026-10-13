@@ -87,6 +87,8 @@ export async function ensurePaymentMethods(db: TenantDb): Promise<PaymentMethodR
 export interface StudentAccount {
   studentId: string;
   charges: MonthCharge[];
+  /** Doimiy chegirmalar (o'qituvchi ulushi koeffitsienti uchun — lib/payroll.ts) */
+  discounts: Discount[];
   entries: LedgerEntry[];
   summary: LedgerSummary;
 }
@@ -262,7 +264,7 @@ export async function loadAccounts(
       month: e.month,
       date: e.date,
     }));
-    result.set(studentId, { studentId, charges, entries, summary: summarize(charges, entries) });
+    result.set(studentId, { studentId, charges, discounts, entries, summary: summarize(charges, entries) });
   }
   return result;
 }

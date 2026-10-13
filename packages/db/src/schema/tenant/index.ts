@@ -13,3 +13,4 @@ export * from "./groups";
 export * from "./attendance";
 export * from "./finance";
 export * from "./expenses";
+export * from "./payroll";
