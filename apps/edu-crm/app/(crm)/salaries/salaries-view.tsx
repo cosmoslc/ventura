@@ -202,7 +202,7 @@ function ListTab({
   function restore(e: SalaryEntryRow) {
     startTransition(async () => {
       const res = await restoreSalaryEntryAction(e.id);
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: t.restoredOk });
       router.refresh();
     });

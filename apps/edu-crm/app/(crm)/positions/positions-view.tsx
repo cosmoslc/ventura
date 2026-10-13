@@ -3,7 +3,7 @@
 import { Copy, Pencil, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { PERMISSION_CATEGORIES, normalizePermissions } from "@ventura/auth/staff/policy";
+import { PERMISSION_CATEGORIES, isApprovable, normalizePermissions } from "@ventura/auth/staff/policy";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -16,10 +16,11 @@ import { toast } from "@ventura/ui/toast";
 import { uz } from "@/lib/uz";
 import { clonePositionAction, deletePositionAction, savePositionAction } from "./actions";
 import type { PositionRow } from "./data";
-import { PermToggle } from "./perm-toggle";
+import { type PermState, PermToggle } from "./perm-toggle";
 import { PositionModal } from "./position-modal";
 
-type Filter = "all" | "allowed" | "denied";
+type Filter = "all" | "allowed" | "approval" | "denied";
+type Draft = { permissions: string[]; approvals: string[] };
 const TOTAL = PERMISSION_CATEGORIES.reduce((n, c) => n + c.permissions.length, 0);
 
 export function PositionsView({
@@ -37,7 +38,7 @@ export function PositionsView({
   const [roleQuery, setRoleQuery] = React.useState("");
   const [permQuery, setPermQuery] = React.useState("");
   const [filter, setFilter] = React.useState<Filter>("all");
-  const [draft, setDraft] = React.useState<string[] | null>(null);
+  const [draft, setDraft] = React.useState<Draft | null>(null);
   const [modal, setModal] = React.useState<{ open: boolean; editing: PositionRow | null }>({
     open: false,
     editing: null,
@@ -46,7 +47,12 @@ export function PositionsView({
   const [pending, startTransition] = React.useTransition();
 
   const selected = rows.find((r) => r.id === selectedId) ?? rows[0] ?? null;
-  const current = draft ?? selected?.permissions ?? [];
+  const current: Draft = draft ?? {
+    permissions: selected?.permissions ?? [],
+    approvals: selected?.approvals ?? [],
+  };
+  const stateOf = (p: string): PermState =>
+    current.permissions.includes(p) ? "allow" : current.approvals.includes(p) ? "approval" : "deny";
   const dirty = draft !== null;
   const locked = !canWrite || !selected || selected.system;
   const canGrant = (p: string) => grantable === null || grantable.includes(p);
@@ -59,16 +65,21 @@ export function PositionsView({
     setSelectedId(id);
   }
 
-  function toggle(perm: string, allowed: boolean) {
+  function toggle(perm: string, state: PermState) {
     if (!selected) return;
     if (selected.system) return toast({ tone: "warning", title: uz.positions.systemLocked });
-    const base = draft ?? selected.permissions;
-    const next = allowed ? [...base, perm] : base.filter((p) => p !== perm);
-    const normalized = normalizePermissions(next);
+    const permissions = normalizePermissions([
+      ...current.permissions.filter((p) => p !== perm),
+      ...(state === "allow" ? [perm] : []),
+    ]);
+    const approvals = normalizePermissions([
+      ...current.approvals.filter((p) => p !== perm),
+      ...(state === "approval" ? [perm] : []),
+    ]);
     // Asl holatga qaytsa — o'zgarish yo'q
-    const same =
-      normalized.length === selected.permissions.length && normalized.every((p) => selected.permissions.includes(p));
-    setDraft(same ? null : normalized);
+    const eq = (a: string[], b: string[]) => a.length === b.length && a.every((p) => b.includes(p));
+    const same = eq(permissions, selected.permissions) && eq(approvals, selected.approvals);
+    setDraft(same ? null : { permissions, approvals });
   }
 
   function saveDraft() {
@@ -78,7 +89,8 @@ export function PositionsView({
         id: selected.id,
         name: selected.name,
         color: selected.color,
-        permissions: draft,
+        permissions: draft.permissions,
+        approvals: draft.approvals,
       });
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
       toast({ tone: "success", title: uz.positions.saved(selected.name) });
@@ -107,7 +119,8 @@ export function PositionsView({
   }
 
   const pq = permQuery.trim().toLowerCase();
-  const allowedCount = current.length;
+  const allowedCount = current.permissions.length;
+  const approvalCount = current.approvals.length;
 
   return (
     <div className="space-y-6 pb-20">
@@ -219,7 +232,7 @@ export function PositionsView({
                   {selected.system ? <Badge tone="info">{uz.positions.system}</Badge> : null}
                 </div>
                 <div className="text-caption text-muted-foreground">
-                  {uz.positions.permCount(current.length)} · {uz.positions.users(selected.users)}
+                  {uz.positions.permCount(current.permissions.length)} · {uz.positions.users(selected.users)}
                 </div>
               </div>
               {canWrite && !selected.system ? (
@@ -242,7 +255,10 @@ export function PositionsView({
                 <TabsList>
                   <TabsTrigger value="all">{uz.positions.filterAll(TOTAL)}</TabsTrigger>
                   <TabsTrigger value="allowed">{uz.positions.filterAllowed(allowedCount)}</TabsTrigger>
-                  <TabsTrigger value="denied">{uz.positions.filterDenied(TOTAL - allowedCount)}</TabsTrigger>
+                  <TabsTrigger value="approval">{uz.positions.filterApproval(approvalCount)}</TabsTrigger>
+                  <TabsTrigger value="denied">
+                    {uz.positions.filterDenied(TOTAL - allowedCount - approvalCount)}
+                  </TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -250,13 +266,14 @@ export function PositionsView({
             <div className="grid gap-4 xl:grid-cols-2">
               {PERMISSION_CATEGORIES.map((cat) => {
                 const items = cat.permissions.filter((p) => {
-                  const on = current.includes(p.id);
-                  if (filter === "allowed" && !on) return false;
-                  if (filter === "denied" && on) return false;
+                  const st = stateOf(p.id);
+                  if (filter === "allowed" && st !== "allow") return false;
+                  if (filter === "approval" && st !== "approval") return false;
+                  if (filter === "denied" && st !== "deny") return false;
                   return !pq || p.name.toLowerCase().includes(pq) || p.id.includes(pq);
                 });
                 if (!items.length) return null;
-                const on = cat.permissions.filter((p) => current.includes(p.id)).length;
+                const on = cat.permissions.filter((p) => current.permissions.includes(p.id)).length;
                 return (
                   <Card key={cat.id} className="p-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
@@ -267,14 +284,16 @@ export function PositionsView({
                     </div>
                     <ul className="divide-y divide-border-soft">
                       {items.map((p) => {
-                        const allowed = current.includes(p.id);
+                        const state = stateOf(p.id);
                         return (
                           <li key={p.id} className="flex items-center justify-between gap-3 py-2">
                             <span className="min-w-0 text-body text-foreground">{p.name}</span>
                             <PermToggle
                               label={p.name}
-                              allowed={allowed}
-                              disabled={locked || (!allowed && !canGrant(p.id))}
+                              state={state}
+                              approvable={isApprovable(p.id)}
+                              disabled={locked}
+                              canRaise={canGrant(p.id)}
                               onChange={(v) => toggle(p.id, v)}
                             />
                           </li>

@@ -14,6 +14,8 @@ import {
   Coins,
   GraduationCap,
   KeyRound,
+  ClipboardCheck,
+  History,
   LayoutDashboard,
   LogOut,
   type LucideIcon,
@@ -75,6 +77,7 @@ const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/staff": { icon: IdCard, hue: "sky" },
   "/staff-attendance": { icon: UserCheck, hue: "teal" },
   "/payment-settings": { icon: Settings2, hue: "amber" },
+  "/money-audit": { icon: History, hue: "violet" },
   "/archive": { icon: Archive, hue: "slate" },
 };
 
@@ -98,7 +101,7 @@ const itemRank = (href: string) => {
 const SECTION_ORDER = ["Asos", "Moliya", "Sotuv va aloqa", "Hisobotlar", "Ofis", "O'quv"];
 const MAIN = "Asos";
 
-function sections(groups: NavGroup[]): NavSection[] {
+function sections(groups: NavGroup[], approvals: { label: string; count: number } | null): NavSection[] {
   const toItems = (g: NavGroup) =>
     [...g.links]
       .sort((a, b) => itemRank(a.href) - itemRank(b.href))
@@ -116,6 +119,17 @@ function sections(groups: NavGroup[]): NavSection[] {
       title: uz.nav.main,
       items: [
         { id: "/", label: uz.nav.home, icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
+        ...(approvals
+          ? [
+              {
+                id: "/approvals",
+                label: approvals.label,
+                icon: ClipboardCheck,
+                color: "var(--nav-hue-amber)",
+                count: approvals.count || undefined,
+              },
+            ]
+          : []),
         ...(main ? toItems(main) : []),
       ],
     },
@@ -140,12 +154,15 @@ export function CrmShell({
   staff,
   brand,
   nav,
+  approvals,
   branches,
   children,
 }: {
   staff: { name: string; roleLabel: string };
   brand: { name: string; mark?: React.ReactNode };
   nav: NavGroup[];
+  /** "Tasdiqlar" (direktor) yoki "So'rovlarim" (tasdiq bilan ruxsati bor xodim), kutilayotganlar soni bilan */
+  approvals: { label: string; count: number } | null;
   /** Filial tanlovi: ko'p filialli rejimda va xodimga bittadan ortiq filial ochiq bo'lsa */
   branches: { options: PickerBranch[]; selected: string } | null;
   children: React.ReactNode;
@@ -154,7 +171,7 @@ export function CrmShell({
   const router = useRouter();
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const navSections = React.useMemo(() => sections(nav), [nav]);
+  const navSections = React.useMemo(() => sections(nav, approvals), [nav, approvals]);
   const hrefs = React.useMemo(() => navSections.flatMap((s) => s.items.map((i) => i.id)), [navSections]);
   // Bosilgan band darhol aktiv ko'rinadi; sahifa serverdan kelguncha kontent xiralashadi (panel bilan bir xil)
   const [target, setTarget] = React.useState<{ id: string; from: string } | null>(null);

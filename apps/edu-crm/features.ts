@@ -99,6 +99,7 @@ export const features = [
     nav: [
       { label: "To'lovlar", href: "/payments" },
       { label: "To'lov sozlamalari", href: "/payment-settings", section: "Ofis" },
+      { label: "Pul amallari tarixi", href: "/money-audit", section: "Ofis" },
     ],
   },
   {

@@ -53,6 +53,11 @@ export function ActivateDialog({
     if (!target) return;
     startTransition(async () => {
       const res = await activateMembershipAction({ id: target.id, date });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({
         tone: "success",
@@ -147,6 +152,11 @@ export function LeaveDialog({
     if (!target) return;
     startTransition(async () => {
       const res = await leaveMembershipAction({ id: target.id, date, reason });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: uz.groups.removed, description: `${target.studentName} · ${target.groupName}` });
       onOpenChange(false);
@@ -267,6 +277,11 @@ export function EnrollDialog({
     if (!picked) return;
     startTransition(async () => {
       const res = await enrollStudentAction(pair(picked));
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: uz.groups.added, description: options.find((o) => o.id === picked)?.title });
       onOpenChange(false);

@@ -67,4 +67,4 @@ Saidakbar 14-qarorni qabul qildi: ruxsatlar lavozimlar orqali, eski tizimdagidek
 ## Oqibatlari
 
 - Keyingi bo'limlar o'z sahifa ruxsatini `lib/access.ts` ga qo'shadi va amallarini katalogdagi ruxsat bilan yopadi.
-- "Tasdiq" (ruxsat so'rash) oqimi E3 da; hozir ruxsat yo'q bo'lsa amal shunchaki rad etiladi.
+- "Tasdiq" (ruxsat so'rash) oqimi — ADR 0019.

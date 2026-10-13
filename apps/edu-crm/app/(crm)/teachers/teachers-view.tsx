@@ -145,7 +145,7 @@ export function TeachersView({
 
   async function archive(t: TeacherRow) {
     const res = await archiveTeacherAction(t.id);
-    if (!res.ok) return void toast({ tone: "danger", title: res.error });
+    if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
     toast({ tone: "success", title: uz.teachers.archived, description: t.name });
     router.refresh();
   }

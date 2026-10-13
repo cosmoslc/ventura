@@ -132,6 +132,11 @@ export function SalaryForm({
     if (cash && !methodId) return setError(t.methodRequired);
     startTransition(async () => {
       const res = await saveSalaryEntryAction(parsed.data);
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onClose();
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: editing ? t.updated : t.saved });
       onClose();

@@ -159,6 +159,17 @@ export function normalizePermissions(ids: Iterable<string>): Permission[] {
   return ALL_PERMISSIONS.filter((p) => set.has(p));
 }
 
+/*
+ * "Tasdiq bilan" bo'la oladigan ruxsatlar (EDU-CRM-PLAN E3d, ADR 0019). Eski tizimdagidek ko'rish, eksport, chop
+ * etish, boshqaruv paneli va ruxsatlarni boshqarishning o'zi tasdiq bilan bo'lmaydi — ular yo ruxsat, yo taqiq.
+ */
+const NOT_APPROVABLE = new Set<string>(["settings.roles_permissions", "settings.logs", "staff.roles_assign"]);
+export function isApprovable(p: string): boolean {
+  if (!isPermission(p) || NOT_APPROVABLE.has(p)) return false;
+  if (p.startsWith("dashboard.")) return false;
+  return !/(^|[._])(view|export|print)$/.test(p);
+}
+
 /* ---------- Tayyor shablonlar (eski tizimdagi 7 ta lavozim) ---------- */
 
 export interface PositionTemplate {

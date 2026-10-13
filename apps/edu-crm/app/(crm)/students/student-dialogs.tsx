@@ -82,6 +82,11 @@ function StatusModal({
   function save() {
     startTransition(async () => {
       const res = await setStudentStatusAction({ id: student.id, status, reason });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({ tone: "success", title: uz.students.statusSaved, description: student.name });
       onOpenChange(false);
@@ -158,7 +163,7 @@ function ArchiveModal({
   function archive() {
     startTransition(async () => {
       const res = await archiveStudentAction({ id: student.id, reason });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: uz.students.archived, description: student.name });
       onOpenChange(false);
       setReason("");

@@ -1,5 +1,5 @@
 import type { StaffRole } from "@ventura/db/schema/tenant";
-import { ALL_PERMISSIONS, type Permission, POSITION_TEMPLATES } from "./permissions";
+import { ALL_PERMISSIONS, type Permission, POSITION_TEMPLATES, isApprovable } from "./permissions";
 
 /*
  * Mijoz tizimi xodimlarining ruxsatlari (EDU-CRM-PLAN 14-qaror): eski tizimdagidek lavozimlar. Direktor hamma
@@ -15,13 +15,34 @@ export * from "./permissions";
 export interface StaffAccess {
   director: boolean;
   permissions: ReadonlySet<string>;
+  /** "Tasdiq bilan" — amal direktor tasdig'idan keyin bajariladi (ADR 0019); `permissions` da bo'lsa kerak emas */
+  approvals: ReadonlySet<string>;
 }
 
-export const DIRECTOR_ACCESS: StaffAccess = { director: true, permissions: new Set(ALL_PERMISSIONS) };
+export const DIRECTOR_ACCESS: StaffAccess = {
+  director: true,
+  permissions: new Set(ALL_PERMISSIONS),
+  approvals: new Set(),
+};
 
-export function accessFor(role: StaffRole, positionPermissions: readonly string[] | null): StaffAccess {
+export function accessFor(
+  role: StaffRole,
+  positionPermissions: readonly string[] | null,
+  positionApprovals: readonly string[] = [],
+): StaffAccess {
   if (role === "director") return DIRECTOR_ACCESS;
-  return { director: false, permissions: new Set(positionPermissions ?? legacyPermissions(role)) };
+  const permissions = new Set(positionPermissions ?? legacyPermissions(role));
+  // Boshqa lavozimi to'liq ruxsat bergan bo'lsa tasdiq kerak emas (eski tizimdagidek)
+  const approvals = new Set(positionApprovals.filter((p) => !permissions.has(p) && isApprovable(p)));
+  return { director: false, permissions, approvals };
+}
+
+export type PermissionState = "allow" | "approval" | "deny";
+
+/** Ro'yxatdagi birortasi ruxsat bo'lsa — "allow", aks holda birortasi tasdiq bilan bo'lsa — "approval" */
+export function permissionState(access: StaffAccess, permissions: readonly Permission[]): PermissionState {
+  if (canAny(access, permissions)) return "allow";
+  return permissions.some((p) => access.approvals.has(p)) ? "approval" : "deny";
 }
 
 export function can(access: StaffAccess, permission: Permission): boolean {

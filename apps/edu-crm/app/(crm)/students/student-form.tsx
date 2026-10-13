@@ -121,6 +121,11 @@ export function StudentForm({
     if (!parsed.success) return setError(firstError(parsed.error));
     startTransition(async () => {
       const res = await saveStudentAction(parsed.data);
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        return;
+      }
       if (!res.ok) return setError(res.error);
       toast({
         tone: "success",

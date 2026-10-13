@@ -3,7 +3,6 @@
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { can, canAny } from "@ventura/auth/staff/policy";
 import {
   DISCOUNT_KINDS,
   groupMemberships,
@@ -102,65 +101,71 @@ const paymentInput = z.object({
 });
 
 export async function recordPaymentAction(input: unknown): Promise<ActionResult<{ id: string; receiptNo: number }>> {
-  return crmAction<{ id: string; receiptNo: number }>(FEATURE, "finance.payment_create", async (ctx) => {
-    const parsed = paymentInput.safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const v = parsed.data;
-    const s = await loadStudent(ctx, v.studentId);
-    if (!s) return { ok: false, error: uz.common.gone };
-    const bad = dateError(v.date);
-    if (bad) return { ok: false, error: bad };
-    if (!(await activeMethod(ctx, v.methodId))) return { ok: false, error: uz.payments.methodInactive };
-    if (v.groupId && !v.month) return { ok: false, error: uz.payments.monthRequired };
-    if (v.groupId && !(await wasMember(ctx, s.id, v.groupId))) return { ok: false, error: uz.payments.groupNotMember };
-    const tag = { groupId: v.groupId, month: v.groupId ? v.month : null };
+  return crmAction<{ id: string; receiptNo: number }>(
+    FEATURE,
+    "finance.payment_create",
+    async (ctx) => {
+      const parsed = paymentInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const v = parsed.data;
+      const s = await loadStudent(ctx, v.studentId);
+      if (!s) return { ok: false, error: uz.common.gone };
+      const bad = dateError(v.date);
+      if (bad) return { ok: false, error: bad };
+      if (!(await activeMethod(ctx, v.methodId))) return { ok: false, error: uz.payments.methodInactive };
+      if (v.groupId && !v.month) return { ok: false, error: uz.payments.monthRequired };
+      if (v.groupId && !(await wasMember(ctx, s.id, v.groupId)))
+        return { ok: false, error: uz.payments.groupNotMember };
+      const tag = { groupId: v.groupId, month: v.groupId ? v.month : null };
 
-    const result = await ctx.db.transaction(async (tx) => {
-      await lockStudent(tx, s.id);
-      const receiptNo = await nextReceiptNo(tx);
-      const [row] = await tx
-        .insert(payments)
-        .values({
-          studentId: s.id,
-          ...tag,
-          kind: "payment",
+      const result = await ctx.db.transaction(async (tx) => {
+        await lockStudent(tx, s.id);
+        const receiptNo = await nextReceiptNo(tx);
+        const [row] = await tx
+          .insert(payments)
+          .values({
+            studentId: s.id,
+            ...tag,
+            kind: "payment",
+            amount: v.amount,
+            date: v.date,
+            methodId: v.methodId,
+            receiptNo,
+            note: v.note || null,
+            createdBy: ctx.staff.id,
+          })
+          .returning({ id: payments.id });
+        if (v.discount) {
+          await tx.insert(payments).values({
+            studentId: s.id,
+            ...tag,
+            kind: "discount",
+            amount: v.discount.amount,
+            date: v.date,
+            note: v.discount.reason,
+            createdBy: ctx.staff.id,
+          });
+        }
+        return { id: row!.id, receiptNo };
+      });
+      await ctx.audit(
+        "payment.create",
+        { type: "student", id: s.id },
+        {
+          paymentId: result.id,
+          receiptNo: result.receiptNo,
           amount: v.amount,
-          date: v.date,
-          methodId: v.methodId,
-          receiptNo,
-          note: v.note || null,
-          createdBy: ctx.staff.id,
-        })
-        .returning({ id: payments.id });
-      if (v.discount) {
-        await tx.insert(payments).values({
-          studentId: s.id,
           ...tag,
-          kind: "discount",
-          amount: v.discount.amount,
+          methodId: v.methodId,
           date: v.date,
-          note: v.discount.reason,
-          createdBy: ctx.staff.id,
-        });
-      }
-      return { id: row!.id, receiptNo };
-    });
-    await ctx.audit(
-      "payment.create",
-      { type: "student", id: s.id },
-      {
-        paymentId: result.id,
-        receiptNo: result.receiptNo,
-        amount: v.amount,
-        ...tag,
-        methodId: v.methodId,
-        date: v.date,
-        ...(v.discount ? { discount: v.discount.amount, discountReason: v.discount.reason } : {}),
-      },
-    );
-    refresh(s.id);
-    return { ok: true, ...result };
-  });
+          ...(v.discount ? { discount: v.discount.amount, discountReason: v.discount.reason } : {}),
+        },
+      );
+      refresh(s.id);
+      return { ok: true, ...result };
+    },
+    { approval: { action: "payments.record", input: input } },
+  );
 }
 
 /* ---------- Qaytarish ---------- */
@@ -175,88 +180,99 @@ const refundInput = z.object({
 });
 
 export async function refundAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "finance.payment_create", async (ctx) => {
-    const parsed = refundInput.safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const v = parsed.data;
-    const s = await loadStudent(ctx, v.studentId);
-    if (!s) return { ok: false, error: uz.common.gone };
-    const bad = dateError(v.date);
-    if (bad) return { ok: false, error: bad };
-    if (!(await activeMethod(ctx, v.methodId))) return { ok: false, error: uz.payments.methodInactive };
-    if (v.groupId && !(await wasMember(ctx, s.id, v.groupId))) return { ok: false, error: uz.payments.groupNotMember };
+  return crmAction(
+    FEATURE,
+    "finance.payment_create",
+    async (ctx) => {
+      const parsed = refundInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const v = parsed.data;
+      const s = await loadStudent(ctx, v.studentId);
+      if (!s) return { ok: false, error: uz.common.gone };
+      const bad = dateError(v.date);
+      if (bad) return { ok: false, error: bad };
+      if (!(await activeMethod(ctx, v.methodId))) return { ok: false, error: uz.payments.methodInactive };
+      if (v.groupId && !(await wasMember(ctx, s.id, v.groupId)))
+        return { ok: false, error: uz.payments.groupNotMember };
 
-    const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
-      await lockStudent(tx, s.id);
-      // Faqat o'quvchi foydasiga qolgan pul qaytariladi (eski tizimda tekshiruv yo'q edi)
-      const { summary } = await loadAccount(tx, s.id, todayTashkent());
-      const available = Math.max(0, summary.balance);
-      if (available === 0) return { ok: false, error: uz.payments.refundNone };
-      if (v.amount > available)
-        return { ok: false, error: uz.payments.refundTooBig(`${money(available)} ${uz.common.som}`) };
-      await tx.insert(payments).values({
-        studentId: s.id,
-        groupId: v.groupId,
-        kind: "refund",
-        amount: v.amount,
-        date: v.date,
-        methodId: v.methodId,
-        note: v.reason,
-        createdBy: ctx.staff.id,
+      const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
+        await lockStudent(tx, s.id);
+        // Faqat o'quvchi foydasiga qolgan pul qaytariladi (eski tizimda tekshiruv yo'q edi)
+        const { summary } = await loadAccount(tx, s.id, todayTashkent());
+        const available = Math.max(0, summary.balance);
+        if (available === 0) return { ok: false, error: uz.payments.refundNone };
+        if (v.amount > available)
+          return { ok: false, error: uz.payments.refundTooBig(`${money(available)} ${uz.common.som}`) };
+        await tx.insert(payments).values({
+          studentId: s.id,
+          groupId: v.groupId,
+          kind: "refund",
+          amount: v.amount,
+          date: v.date,
+          methodId: v.methodId,
+          note: v.reason,
+          createdBy: ctx.staff.id,
+        });
+        return { ok: true };
       });
+      if (!result.ok) return result;
+      await ctx.audit(
+        "payment.refund",
+        { type: "student", id: s.id },
+        {
+          amount: v.amount,
+          groupId: v.groupId,
+          methodId: v.methodId,
+          date: v.date,
+          reason: v.reason,
+        },
+      );
+      refresh(s.id);
       return { ok: true };
-    });
-    if (!result.ok) return result;
-    await ctx.audit(
-      "payment.refund",
-      { type: "student", id: s.id },
-      {
-        amount: v.amount,
-        groupId: v.groupId,
-        methodId: v.methodId,
-        date: v.date,
-        reason: v.reason,
-      },
-    );
-    refresh(s.id);
-    return { ok: true };
-  });
+    },
+    { approval: { action: "payments.refund", input: input } },
+  );
 }
 
 /* ---------- Balansni tuzatish ---------- */
 
 export async function correctionAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "students.balance_edit", async (ctx) => {
-    const parsed = z
-      .object({
-        studentId: uuid,
-        /** + o'quvchi foydasiga, − qarz */
-        amount: z
-          .number()
-          .int()
-          .refine((n) => n !== 0 && Math.abs(n) <= 10_000_000_000, uz.payments.amountRequired),
-        reason: z.string().trim().min(1, uz.payments.correctionReasonRequired).max(500),
-      })
-      .safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const v = parsed.data;
-    const s = await loadStudent(ctx, v.studentId);
-    if (!s) return { ok: false, error: uz.common.gone };
-    await ctx.db.transaction(async (tx) => {
-      await lockStudent(tx, s.id);
-      await tx.insert(payments).values({
-        studentId: s.id,
-        kind: "correction",
-        amount: v.amount,
-        date: todayTashkent(),
-        note: v.reason,
-        createdBy: ctx.staff.id,
+  return crmAction(
+    FEATURE,
+    "students.balance_edit",
+    async (ctx) => {
+      const parsed = z
+        .object({
+          studentId: uuid,
+          /** + o'quvchi foydasiga, − qarz */
+          amount: z
+            .number()
+            .int()
+            .refine((n) => n !== 0 && Math.abs(n) <= 10_000_000_000, uz.payments.amountRequired),
+          reason: z.string().trim().min(1, uz.payments.correctionReasonRequired).max(500),
+        })
+        .safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const v = parsed.data;
+      const s = await loadStudent(ctx, v.studentId);
+      if (!s) return { ok: false, error: uz.common.gone };
+      await ctx.db.transaction(async (tx) => {
+        await lockStudent(tx, s.id);
+        await tx.insert(payments).values({
+          studentId: s.id,
+          kind: "correction",
+          amount: v.amount,
+          date: todayTashkent(),
+          note: v.reason,
+          createdBy: ctx.staff.id,
+        });
       });
-    });
-    await ctx.audit("payment.correction", { type: "student", id: s.id }, { amount: v.amount, reason: v.reason });
-    refresh(s.id);
-    return { ok: true };
-  });
+      await ctx.audit("payment.correction", { type: "student", id: s.id }, { amount: v.amount, reason: v.reason });
+      refresh(s.id);
+      return { ok: true };
+    },
+    { approval: { action: "payments.correction", input: input } },
+  );
 }
 
 /* ---------- Bekor qilish va tiklash ---------- */
@@ -272,68 +288,82 @@ async function loadEntry(ctx: ActionCtx, id: string) {
 const voidPermission = (kind: string) => (kind === "correction" ? "students.balance_edit" : "finance.payment_delete");
 
 export async function voidEntryAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, ["finance.payment_delete", "students.balance_edit"], async (ctx) => {
-    const parsed = z
-      .object({ id: uuid, reason: z.string().trim().min(1, uz.payments.voidReasonRequired).max(500) })
-      .safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const found = await loadEntry(ctx, parsed.data.id);
-    if (!found) return { ok: false, error: uz.common.gone };
-    const { e, s } = found;
-    if (!can(ctx.staff.access, voidPermission(e.kind))) return { ok: false, error: uz.common.forbidden };
-    if (e.voidedAt) return { ok: true };
-    await ctx.db.transaction(async (tx) => {
-      await lockStudent(tx, s.id);
-      await tx
-        .update(payments)
-        .set({ voidedAt: new Date(), voidedBy: ctx.staff.id, voidReason: parsed.data.reason })
-        .where(and(eq(payments.id, e.id), isNull(payments.voidedAt)));
-    });
-    await ctx.audit(
-      "payment.void",
-      { type: "student", id: s.id },
-      {
-        paymentId: e.id,
-        kind: e.kind,
-        amount: e.amount,
-        receiptNo: e.receiptNo,
-        reason: parsed.data.reason,
-      },
-    );
-    refresh(s.id);
-    return { ok: true };
-  });
+  return crmAction(
+    FEATURE,
+    ["finance.payment_delete", "students.balance_edit"],
+    async (ctx) => {
+      const parsed = z
+        .object({ id: uuid, reason: z.string().trim().min(1, uz.payments.voidReasonRequired).max(500) })
+        .safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const found = await loadEntry(ctx, parsed.data.id);
+      if (!found) return { ok: false, error: uz.common.gone };
+      const { e, s } = found;
+      const gate = await ctx.requireAny([voidPermission(e.kind)]);
+      if (gate) return gate;
+      if (e.voidedAt) return { ok: true };
+      await ctx.db.transaction(async (tx) => {
+        await lockStudent(tx, s.id);
+        await tx
+          .update(payments)
+          .set({ voidedAt: new Date(), voidedBy: ctx.staff.id, voidReason: parsed.data.reason })
+          .where(and(eq(payments.id, e.id), isNull(payments.voidedAt)));
+      });
+      await ctx.audit(
+        "payment.void",
+        { type: "student", id: s.id },
+        {
+          paymentId: e.id,
+          kind: e.kind,
+          amount: e.amount,
+          receiptNo: e.receiptNo,
+          reason: parsed.data.reason,
+        },
+      );
+      refresh(s.id);
+      return { ok: true };
+    },
+    { approval: { action: "payments.void", input: input } },
+  );
 }
 
 export async function restoreEntryAction(id: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, ["finance.payment_delete", "students.balance_edit", "archive.restore"], async (ctx) => {
-    const parsed = uuid.safeParse(id);
-    if (!parsed.success) return { ok: false, error: uz.common.invalid };
-    const found = await loadEntry(ctx, parsed.data);
-    if (!found) return { ok: false, error: uz.common.gone };
-    const { e, s } = found;
-    if (!canAny(ctx.staff.access, [voidPermission(e.kind), "archive.restore"]))
-      return { ok: false, error: uz.common.forbidden };
-    if (!e.voidedAt) return { ok: true };
-    const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
-      await lockStudent(tx, s.id);
-      // Qaytarishni tiklash balansni manfiyga olib kelmasin
-      if (e.kind === "refund") {
-        const { summary } = await loadAccount(tx, s.id, todayTashkent());
-        if (e.amount > Math.max(0, summary.balance)) return { ok: false, error: uz.payments.restoreRefundTooBig };
-      }
-      await tx.update(payments).set({ voidedAt: null, voidedBy: null, voidReason: null }).where(eq(payments.id, e.id));
+  return crmAction(
+    FEATURE,
+    ["finance.payment_delete", "students.balance_edit", "archive.restore"],
+    async (ctx) => {
+      const parsed = uuid.safeParse(id);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const found = await loadEntry(ctx, parsed.data);
+      if (!found) return { ok: false, error: uz.common.gone };
+      const { e, s } = found;
+      const gate = await ctx.requireAny([voidPermission(e.kind), "archive.restore"]);
+      if (gate) return gate;
+      if (!e.voidedAt) return { ok: true };
+      const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
+        await lockStudent(tx, s.id);
+        // Qaytarishni tiklash balansni manfiyga olib kelmasin
+        if (e.kind === "refund") {
+          const { summary } = await loadAccount(tx, s.id, todayTashkent());
+          if (e.amount > Math.max(0, summary.balance)) return { ok: false, error: uz.payments.restoreRefundTooBig };
+        }
+        await tx
+          .update(payments)
+          .set({ voidedAt: null, voidedBy: null, voidReason: null })
+          .where(eq(payments.id, e.id));
+        return { ok: true };
+      });
+      if (!result.ok) return result;
+      await ctx.audit(
+        "payment.restore",
+        { type: "student", id: s.id },
+        { paymentId: e.id, kind: e.kind, amount: e.amount },
+      );
+      refresh(s.id);
       return { ok: true };
-    });
-    if (!result.ok) return result;
-    await ctx.audit(
-      "payment.restore",
-      { type: "student", id: s.id },
-      { paymentId: e.id, kind: e.kind, amount: e.amount },
-    );
-    refresh(s.id);
-    return { ok: true };
-  });
+    },
+    { approval: { action: "payments.restore", input: id } },
+  );
 }
 
 /* ---------- Tahrirlash ---------- */
@@ -349,71 +379,76 @@ const editInput = z.object({
 });
 
 export async function editEntryAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "finance.payment_edit", async (ctx) => {
-    const parsed = editInput.safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const v = parsed.data;
-    const found = await loadEntry(ctx, v.id);
-    if (!found) return { ok: false, error: uz.common.gone };
-    const { e, s } = found;
-    if (e.kind === "correction" || e.voidedAt) return { ok: false, error: uz.common.invalid };
-    const bad = dateError(v.date);
-    if (bad) return { ok: false, error: bad };
-    const cashKind = e.kind === "payment" || e.kind === "refund";
-    if (cashKind && (!v.methodId || (v.methodId !== e.methodId && !(await activeMethod(ctx, v.methodId)))))
-      return { ok: false, error: uz.payments.methodInactive };
-    if (v.groupId && v.groupId !== e.groupId && !(await wasMember(ctx, s.id, v.groupId)))
-      return { ok: false, error: uz.payments.groupNotMember };
-    if (e.kind !== "refund" && v.groupId && !v.month) return { ok: false, error: uz.payments.monthRequired };
-    if ((e.kind === "discount" || e.kind === "refund") && !v.note)
-      return { ok: false, error: uz.payments.voidReasonRequired };
+  return crmAction(
+    FEATURE,
+    "finance.payment_edit",
+    async (ctx) => {
+      const parsed = editInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const v = parsed.data;
+      const found = await loadEntry(ctx, v.id);
+      if (!found) return { ok: false, error: uz.common.gone };
+      const { e, s } = found;
+      if (e.kind === "correction" || e.voidedAt) return { ok: false, error: uz.common.invalid };
+      const bad = dateError(v.date);
+      if (bad) return { ok: false, error: bad };
+      const cashKind = e.kind === "payment" || e.kind === "refund";
+      if (cashKind && (!v.methodId || (v.methodId !== e.methodId && !(await activeMethod(ctx, v.methodId)))))
+        return { ok: false, error: uz.payments.methodInactive };
+      if (v.groupId && v.groupId !== e.groupId && !(await wasMember(ctx, s.id, v.groupId)))
+        return { ok: false, error: uz.payments.groupNotMember };
+      if (e.kind !== "refund" && v.groupId && !v.month) return { ok: false, error: uz.payments.monthRequired };
+      if ((e.kind === "discount" || e.kind === "refund") && !v.note)
+        return { ok: false, error: uz.payments.voidReasonRequired };
 
-    const next = {
-      groupId: v.groupId,
-      month: e.kind === "refund" || !v.groupId ? null : v.month,
-      amount: v.amount,
-      methodId: cashKind ? v.methodId : null,
-      date: v.date,
-      note: v.note || null,
-    };
-    const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
-      await lockStudent(tx, s.id);
-      // Qaytarish oshirilsa — balansda shuncha ortiqcha pul bo'lishi kerak
-      if (e.kind === "refund" && v.amount > e.amount) {
-        const { summary } = await loadAccount(tx, s.id, todayTashkent());
-        const extra = v.amount - e.amount;
-        if (extra > Math.max(0, summary.balance))
-          return {
-            ok: false,
-            error: uz.payments.refundTooBig(`${money(e.amount + Math.max(0, summary.balance))} ${uz.common.som}`),
-          };
-      }
-      await tx.update(payments).set(next).where(eq(payments.id, e.id));
+      const next = {
+        groupId: v.groupId,
+        month: e.kind === "refund" || !v.groupId ? null : v.month,
+        amount: v.amount,
+        methodId: cashKind ? v.methodId : null,
+        date: v.date,
+        note: v.note || null,
+      };
+      const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
+        await lockStudent(tx, s.id);
+        // Qaytarish oshirilsa — balansda shuncha ortiqcha pul bo'lishi kerak
+        if (e.kind === "refund" && v.amount > e.amount) {
+          const { summary } = await loadAccount(tx, s.id, todayTashkent());
+          const extra = v.amount - e.amount;
+          if (extra > Math.max(0, summary.balance))
+            return {
+              ok: false,
+              error: uz.payments.refundTooBig(`${money(e.amount + Math.max(0, summary.balance))} ${uz.common.som}`),
+            };
+        }
+        await tx.update(payments).set(next).where(eq(payments.id, e.id));
+        return { ok: true };
+      });
+      if (!result.ok) return result;
+      const before = {
+        groupId: e.groupId,
+        month: e.month,
+        amount: e.amount,
+        methodId: e.methodId,
+        date: e.date,
+        note: e.note,
+      };
+      const changed = (Object.keys(next) as (keyof typeof next)[]).filter((k) => before[k] !== next[k]);
+      await ctx.audit(
+        "payment.update",
+        { type: "student", id: s.id },
+        {
+          paymentId: e.id,
+          kind: e.kind,
+          receiptNo: e.receiptNo,
+          changed: Object.fromEntries(changed.map((k) => [k, { from: before[k], to: next[k] }])),
+        },
+      );
+      refresh(s.id);
       return { ok: true };
-    });
-    if (!result.ok) return result;
-    const before = {
-      groupId: e.groupId,
-      month: e.month,
-      amount: e.amount,
-      methodId: e.methodId,
-      date: e.date,
-      note: e.note,
-    };
-    const changed = (Object.keys(next) as (keyof typeof next)[]).filter((k) => before[k] !== next[k]);
-    await ctx.audit(
-      "payment.update",
-      { type: "student", id: s.id },
-      {
-        paymentId: e.id,
-        kind: e.kind,
-        receiptNo: e.receiptNo,
-        changed: Object.fromEntries(changed.map((k) => [k, { from: before[k], to: next[k] }])),
-      },
-    );
-    refresh(s.id);
-    return { ok: true };
-  });
+    },
+    { approval: { action: "payments.edit", input: input } },
+  );
 }
 
 /* ---------- Doimiy chegirmalar ---------- */
@@ -434,76 +469,87 @@ const discountInput = z
   .refine((d) => !d.toMonth || d.toMonth >= d.fromMonth, { message: uz.finance.discountMonthsInvalid });
 
 export async function saveDiscountAction(input: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "finance.payment_edit", async (ctx) => {
-    const parsed = discountInput.safeParse(input);
-    if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-    const v = parsed.data;
-    const s = await loadStudent(ctx, v.studentId);
-    if (!s) return { ok: false, error: uz.common.gone };
-    if (v.groupId && !(await wasMember(ctx, s.id, v.groupId))) return { ok: false, error: uz.payments.groupNotMember };
-    const values = {
-      groupId: v.groupId,
-      kind: v.kind,
-      value: v.value,
-      fromMonth: v.fromMonth,
-      toMonth: v.toMonth,
-      affectsTeacher: v.affectsTeacher,
-      reason: v.reason,
-    };
-    if (v.id) {
-      const [d] = await ctx.db
-        .select()
-        .from(studentDiscounts)
-        .where(and(eq(studentDiscounts.id, v.id), eq(studentDiscounts.studentId, s.id)));
-      if (!d) return { ok: false, error: uz.common.gone };
-      await ctx.db.update(studentDiscounts).set(values).where(eq(studentDiscounts.id, d.id));
-      const before = {
-        groupId: d.groupId,
-        kind: d.kind,
-        value: d.value,
-        fromMonth: d.fromMonth,
-        toMonth: d.toMonth,
-        affectsTeacher: d.affectsTeacher,
-        reason: d.reason,
+  return crmAction(
+    FEATURE,
+    "finance.payment_edit",
+    async (ctx) => {
+      const parsed = discountInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const v = parsed.data;
+      const s = await loadStudent(ctx, v.studentId);
+      if (!s) return { ok: false, error: uz.common.gone };
+      if (v.groupId && !(await wasMember(ctx, s.id, v.groupId)))
+        return { ok: false, error: uz.payments.groupNotMember };
+      const values = {
+        groupId: v.groupId,
+        kind: v.kind,
+        value: v.value,
+        fromMonth: v.fromMonth,
+        toMonth: v.toMonth,
+        affectsTeacher: v.affectsTeacher,
+        reason: v.reason,
       };
-      await ctx.audit("discount.update", { type: "student", id: s.id }, { discountId: d.id, before, after: values });
-    } else {
-      const [d] = await ctx.db
-        .insert(studentDiscounts)
-        .values({ studentId: s.id, ...values, createdBy: ctx.staff.id })
-        .returning({ id: studentDiscounts.id });
-      await ctx.audit("discount.create", { type: "student", id: s.id }, { discountId: d!.id, ...values });
-    }
-    refresh(s.id);
-    return { ok: true };
-  });
+      if (v.id) {
+        const [d] = await ctx.db
+          .select()
+          .from(studentDiscounts)
+          .where(and(eq(studentDiscounts.id, v.id), eq(studentDiscounts.studentId, s.id)));
+        if (!d) return { ok: false, error: uz.common.gone };
+        await ctx.db.update(studentDiscounts).set(values).where(eq(studentDiscounts.id, d.id));
+        const before = {
+          groupId: d.groupId,
+          kind: d.kind,
+          value: d.value,
+          fromMonth: d.fromMonth,
+          toMonth: d.toMonth,
+          affectsTeacher: d.affectsTeacher,
+          reason: d.reason,
+        };
+        await ctx.audit("discount.update", { type: "student", id: s.id }, { discountId: d.id, before, after: values });
+      } else {
+        const [d] = await ctx.db
+          .insert(studentDiscounts)
+          .values({ studentId: s.id, ...values, createdBy: ctx.staff.id })
+          .returning({ id: studentDiscounts.id });
+        await ctx.audit("discount.create", { type: "student", id: s.id }, { discountId: d!.id, ...values });
+      }
+      refresh(s.id);
+      return { ok: true };
+    },
+    { approval: { action: "payments.discount", input: input } },
+  );
 }
 
 export async function deleteDiscountAction(id: unknown): Promise<ActionResult> {
-  return crmAction(FEATURE, "finance.payment_edit", async (ctx) => {
-    const parsed = uuid.safeParse(id);
-    if (!parsed.success) return { ok: false, error: uz.common.invalid };
-    const [d] = await ctx.db.select().from(studentDiscounts).where(eq(studentDiscounts.id, parsed.data));
-    if (!d) return { ok: false, error: uz.common.gone };
-    const s = await loadStudent(ctx, d.studentId);
-    if (!s) return { ok: false, error: uz.common.gone };
-    await ctx.db.delete(studentDiscounts).where(eq(studentDiscounts.id, d.id));
-    await ctx.audit(
-      "discount.delete",
-      { type: "student", id: s.id },
-      {
-        discountId: d.id,
-        kind: d.kind,
-        value: d.value,
-        groupId: d.groupId,
-        fromMonth: d.fromMonth,
-        toMonth: d.toMonth,
-        reason: d.reason,
-      },
-    );
-    refresh(s.id);
-    return { ok: true };
-  });
+  return crmAction(
+    FEATURE,
+    "finance.payment_edit",
+    async (ctx) => {
+      const parsed = uuid.safeParse(id);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const [d] = await ctx.db.select().from(studentDiscounts).where(eq(studentDiscounts.id, parsed.data));
+      if (!d) return { ok: false, error: uz.common.gone };
+      const s = await loadStudent(ctx, d.studentId);
+      if (!s) return { ok: false, error: uz.common.gone };
+      await ctx.db.delete(studentDiscounts).where(eq(studentDiscounts.id, d.id));
+      await ctx.audit(
+        "discount.delete",
+        { type: "student", id: s.id },
+        {
+          discountId: d.id,
+          kind: d.kind,
+          value: d.value,
+          groupId: d.groupId,
+          fromMonth: d.fromMonth,
+          toMonth: d.toMonth,
+          reason: d.reason,
+        },
+      );
+      refresh(s.id);
+      return { ok: true };
+    },
+    { approval: { action: "payments.discountDelete", input: id } },
+  );
 }
 
 /* ---------- Sozlamalar ---------- */

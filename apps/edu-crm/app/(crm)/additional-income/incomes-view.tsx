@@ -93,7 +93,7 @@ export function IncomesView({
   function restore(r: IncomeRow) {
     startTransition(async () => {
       const res = await restoreIncomeAction(r.id);
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: t.restoredOk });
       router.refresh();
     });

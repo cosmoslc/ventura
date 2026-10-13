@@ -61,12 +61,23 @@ export async function ensurePositions(db: TenantDb): Promise<void> {
 
 /** Xodim lavozimlari ruxsatlarining birlashmasi (direktor uchun ishlatilmaydi) */
 export async function staffPermissions(db: TenantDb, userId: string): Promise<string[]> {
+  return (await staffPermissionLists(db, userId)).permissions;
+}
+
+/** Ruxsatlar va "tasdiq bilan" ruxsatlar — barcha lavozimlari bo'yicha birlashma */
+export async function staffPermissionLists(
+  db: TenantDb,
+  userId: string,
+): Promise<{ permissions: string[]; approvals: string[] }> {
   const rows = await db
-    .select({ permissions: positions.permissions })
+    .select({ permissions: positions.permissions, approvals: positions.approvals })
     .from(userPositions)
     .innerJoin(positions, eq(positions.id, userPositions.positionId))
     .where(eq(userPositions.userId, userId));
-  return [...new Set(rows.flatMap((r) => r.permissions))];
+  return {
+    permissions: [...new Set(rows.flatMap((r) => r.permissions))],
+    approvals: [...new Set(rows.flatMap((r) => r.approvals))],
+  };
 }
 
 export async function staffPositions(db: TenantDb, userId: string) {

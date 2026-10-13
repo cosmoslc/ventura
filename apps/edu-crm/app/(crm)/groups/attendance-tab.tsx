@@ -81,7 +81,7 @@ export function AttendanceTab({
     if (!date) return;
     startTransition(async () => {
       const res = await markAttendanceAction({ groupId, studentId, date, status, reason });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       router.refresh();
     });
   }
@@ -90,7 +90,7 @@ export function AttendanceTab({
     if (!date) return;
     startTransition(async () => {
       const res = await markRestPresentAction({ groupId, date });
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: uz.attendance.markedRest(res.marked) });
       router.refresh();
     });
