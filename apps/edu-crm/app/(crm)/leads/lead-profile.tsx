@@ -39,7 +39,7 @@ import {
   moveLeadAction,
   restoreLeadAction,
 } from "./actions";
-import type { LeadEventRow, LeadGroupOption, LeadNoteRow, LeadRow, StageRow, StaffOption } from "./data";
+import type { LeadEventRow, LeadGroupOption, LeadNoteRow, LeadRow, StageRow, StaffOption, WaitlistRow } from "./data";
 import {
   ArchiveDialog,
   AssignDialog,
@@ -51,6 +51,7 @@ import {
 } from "./lead-dialogs";
 import { LeadForm } from "./lead-form";
 import type { LeadPerms } from "./perms";
+import { WaitlistAssignDialog } from "./waitlists";
 
 const t = uz.leads;
 const NOTE_KINDS = ["call", "message", "meeting", "note"] as const;
@@ -84,6 +85,7 @@ export function LeadProfile({
   groups,
   lostReasons,
   existingStudent,
+  waitlists,
 }: {
   lead: LeadRow;
   stages: StageRow[];
@@ -101,13 +103,14 @@ export function LeadProfile({
   lostReasons: string[];
   /** Shu telefonli o'quvchi nomi (o'quvchiga aylantirishda bog'lanadi) */
   existingStudent: string | null;
+  waitlists: WaitlistRow[];
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("notes");
   const [formOpen, setFormOpen] = React.useState(false);
   const [assigning, setAssigning] = React.useState(false);
   const [archiving, setArchiving] = React.useState(false);
-  const [dialog, setDialog] = React.useState<"convert" | "lesson" | "lose" | null>(null);
+  const [dialog, setDialog] = React.useState<"convert" | "lesson" | "lose" | "waitlist" | null>(null);
   const [pending, startTransition] = React.useTransition();
   const stage = stages.find((s) => s.id === l.stageId);
   const openStages = stages.filter((s) => s.kind === "open");
@@ -167,6 +170,7 @@ export function LeadProfile({
               onArchive={() => setArchiving(true)}
               onFirstLesson={() => setDialog("lesson")}
               onLose={() => setDialog("lose")}
+              onWaitlist={() => setDialog("waitlist")}
             />
           </div>
         </div>
@@ -193,6 +197,9 @@ export function LeadProfile({
             {l.gender === "male" ? uz.students.male : l.gender === "female" ? uz.students.female : "—"}
           </Line>
           <Line label={t.source}>{l.source ?? "—"}</Line>
+          {l.waitlistId ? (
+            <Line label={t.tabWaitlists}>{waitlists.find((w) => w.id === l.waitlistId)?.name ?? "—"}</Line>
+          ) : null}
           <Line label={t.course}>{l.courseName ?? "—"}</Line>
           <Line label={t.assigned}>{l.assignedName ?? t.unassigned}</Line>
           <Line label={t.targetDate}>
@@ -422,6 +429,11 @@ export function LeadProfile({
         onClose={() => setDialog(null)}
       />
       <LoseDialog lead={dialog === "lose" ? l : null} reasons={lostReasons} onClose={() => setDialog(null)} />
+      <WaitlistAssignDialog
+        lead={dialog === "waitlist" ? l : null}
+        waitlists={waitlists}
+        onClose={() => setDialog(null)}
+      />
       <ArchiveDialog
         lead={archiving ? l : null}
         onClose={() => setArchiving(false)}

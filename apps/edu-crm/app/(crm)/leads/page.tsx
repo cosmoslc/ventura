@@ -4,7 +4,17 @@ import { todayTashkent } from "@/lib/server/memberships";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { courseOptions } from "../students/data";
-import { getLeadFields, getLostReasons, leadGroupOptions, listLeads, listStages, staffOptions } from "./data";
+import { can } from "@ventura/auth/staff/policy";
+import { groupFormOptions } from "../groups/data";
+import {
+  getLeadFields,
+  getLostReasons,
+  leadGroupOptions,
+  listLeads,
+  listStages,
+  listWaitlists,
+  staffOptions,
+} from "./data";
 import { LeadsView } from "./leads-view";
 import { leadPerms } from "./perms";
 
@@ -14,7 +24,8 @@ export default async function LeadsPage() {
   const { tenant, staff } = await requirePage("leads", "/leads");
   const db = getTenantDb(tenant);
   const branch = await getBranchContext();
-  const [stages, rows, courses, staffList, fields, groups, lostReasons] = await Promise.all([
+  const canCreateGroup = can(staff.access, "groups.create");
+  const [stages, rows, courses, staffList, fields, groups, lostReasons, waitlists, groupOpts] = await Promise.all([
     listStages(db),
     listLeads(db, branch.filter),
     courseOptions(db),
@@ -22,6 +33,8 @@ export default async function LeadsPage() {
     getLeadFields(db),
     leadGroupOptions(db, branch.filter),
     getLostReasons(db),
+    listWaitlists(db, branch.filter),
+    canCreateGroup ? groupFormOptions(db, branch.filter) : Promise.resolve(null),
   ]);
   return (
     <LeadsView
@@ -37,6 +50,8 @@ export default async function LeadsPage() {
       perms={leadPerms(staff.access)}
       groups={groups}
       lostReasons={lostReasons}
+      waitlists={waitlists}
+      groupForm={groupOpts ? { ...groupOpts, canChangeTeacher: can(staff.access, "groups.change_teacher") } : null}
     />
   );
 }

@@ -8,6 +8,7 @@ import {
   CalendarPlus,
   Eye,
   GraduationCap,
+  ListPlus,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -290,6 +291,7 @@ export function LeadMenu({
   onConvert,
   onFirstLesson,
   onLose,
+  onWaitlist,
 }: {
   lead: LeadRow;
   stageKind: StageRow["kind"];
@@ -302,6 +304,7 @@ export function LeadMenu({
   onConvert?: () => void;
   onFirstLesson?: () => void;
   onLose?: () => void;
+  onWaitlist?: () => void;
 }) {
   const router = useRouter();
   const { run } = useRun();
@@ -309,6 +312,7 @@ export function LeadMenu({
   const items = {
     move: open && perms.move && !!onMove,
     firstLesson: open && perms.edit && !!onFirstLesson,
+    waitlist: open && perms.edit && !!onWaitlist,
     convert: open && perms.convert && !!onConvert,
     lose: open && perms.move && !!onLose,
     restore: stageKind === "lost" && perms.move,
@@ -342,6 +346,11 @@ export function LeadMenu({
         {items.firstLesson ? (
           <DropdownMenuItem onSelect={onFirstLesson}>
             <CalendarPlus /> {t.firstLesson}
+          </DropdownMenuItem>
+        ) : null}
+        {items.waitlist ? (
+          <DropdownMenuItem onSelect={onWaitlist}>
+            <ListPlus /> {t.waitlistAssign}
           </DropdownMenuItem>
         ) : null}
         {items.move ? (

@@ -13,6 +13,7 @@ import {
   leadFirstLessons,
   leadNotes,
   leadStages,
+  leadWaitlists,
   leads,
   settings,
   students,
@@ -80,6 +81,7 @@ export interface LeadRow {
   createdByName: string | null;
   studentId: string | null;
   studentName: string | null;
+  waitlistId: string | null;
   lostReason: string | null;
   lostNote: string | null;
   lostFromStageId: string | null;
@@ -144,6 +146,7 @@ export async function listLeads(db: TenantDb, filter: readonly string[] | null, 
     createdByName,
     studentId: l.studentId,
     studentName,
+    waitlistId: l.waitlistId,
     lostReason: l.lostReason,
     lostNote: l.lostNote,
     lostFromStageId: l.lostFromStageId,
@@ -243,4 +246,33 @@ export async function leadGroupOptions(db: TenantDb, filter: readonly string[] |
 export async function getLostReasons(db: TenantDb): Promise<string[]> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, LOST_REASONS_KEY));
   return row ? parseLostReasons(row.value) : DEFAULT_LOST_REASONS;
+}
+
+export interface WaitlistRow {
+  id: string;
+  branchId: string;
+  name: string;
+  courseId: string | null;
+  courseName: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+/** Ochiq zahira guruhlar (ADR 0024); `filter` — getBranchContext().filter */
+export async function listWaitlists(db: TenantDb, filter: readonly string[] | null): Promise<WaitlistRow[]> {
+  const rows = await db
+    .select({ w: leadWaitlists, courseName: courses.name })
+    .from(leadWaitlists)
+    .leftJoin(courses, eq(courses.id, leadWaitlists.courseId))
+    .where(and(isNull(leadWaitlists.closedAt), filter ? inArray(leadWaitlists.branchId, [...filter]) : undefined))
+    .orderBy(asc(leadWaitlists.createdAt));
+  return rows.map(({ w, courseName }) => ({
+    id: w.id,
+    branchId: w.branchId,
+    name: w.name,
+    courseId: w.courseId,
+    courseName,
+    note: w.note,
+    createdAt: w.createdAt.toISOString(),
+  }));
 }

@@ -94,6 +94,7 @@ export function GroupForm({
   branches,
   selectedBranch,
   canChangeTeacher,
+  preset,
   onSaved,
 }: {
   open: boolean;
@@ -105,14 +106,17 @@ export function GroupForm({
   branches: PickerBranch[];
   selectedBranch: string;
   canChangeTeacher: boolean;
+  /** Yangi guruh uchun oldindan to'ldirish (zahira guruhni faollashtirish — ADR 0024) */
+  preset?: { name: string; courseId: string | null; branchId: string };
   onSaved: (id: string) => void;
 }) {
   const defaults = React.useCallback((): Form => {
-    const branchId = editing?.branchId ?? (selectedBranch !== "all" ? selectedBranch : (branches[0]?.id ?? ""));
+    const branchId =
+      editing?.branchId ?? preset?.branchId ?? (selectedBranch !== "all" ? selectedBranch : (branches[0]?.id ?? ""));
     return {
       branchId,
-      name: editing?.name ?? "",
-      courseId: editing?.courseId ?? "",
+      name: editing?.name ?? preset?.name ?? "",
+      courseId: editing?.courseId ?? preset?.courseId ?? "",
       teacherId: editing?.teacherId ?? "",
       roomId: editing?.roomId ?? "",
       price: editing ? editing.price : null,
@@ -128,7 +132,7 @@ export function GroupForm({
       note: editing?.note ?? "",
       priceFrom: todayLocal().slice(0, 7),
     };
-  }, [editing, selectedBranch, branches]);
+  }, [editing, preset, selectedBranch, branches]);
   const [form, setForm] = React.useState(defaults);
   const priceChanged = !!editing && (form.price ?? 0) !== editing.price;
   const [error, setError] = React.useState<string | null>(null);

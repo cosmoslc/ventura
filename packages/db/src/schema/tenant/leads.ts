@@ -49,6 +49,60 @@ export const leadStages = pgTable(
   ],
 );
 
+/**
+ * Zahira guruh — kutish ro'yxati (E4b, ADR 0024): kurs yoki vaqt bo'yicha guruh ochilishini kutayotgan lidlar.
+ * Faollashtirilganda (`group_id`) yoki yopilganda (`closed_at`) ro'yxat yopiladi; yozuv o'chirilmaydi.
+ */
+export const leadWaitlists = pgTable(
+  "lead_waitlists",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    branchId: uuid("branch_id").notNull(),
+    name: text("name").notNull(),
+    courseId: uuid("course_id"),
+    note: text("note"),
+    createdBy: uuid("created_by"),
+    /** Faollashtirilgan guruh */
+    groupId: uuid("group_id"),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    closedBy: uuid("closed_by"),
+    ...timestamps,
+  },
+  (t) => [
+    unique("lead_waitlists_tenant_id_uq").on(t.tenantId, t.id),
+    index("lead_waitlists_branch_idx").on(t.branchId),
+    foreignKey({
+      name: "lead_waitlists_branch_fk",
+      columns: [t.tenantId, t.branchId],
+      foreignColumns: [branches.tenantId, branches.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "lead_waitlists_course_fk",
+      columns: [t.tenantId, t.courseId],
+      foreignColumns: [courses.tenantId, courses.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "lead_waitlists_group_fk",
+      columns: [t.tenantId, t.groupId],
+      foreignColumns: [groups.tenantId, groups.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "lead_waitlists_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "lead_waitlists_closed_by_fk",
+      columns: [t.tenantId, t.closedBy],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
+    check("lead_waitlists_name_len", sql`length(${t.name}) between 1 and 120`),
+    check("lead_waitlists_closed", sql`${t.groupId} is null or ${t.closedAt} is not null`),
+    tenantPolicy("lead_waitlists"),
+  ],
+);
+
 export const leads = pgTable(
   "leads",
   {
@@ -74,6 +128,8 @@ export const leads = pgTable(
     stageChangedAt: timestamp("stage_changed_at", { withTimezone: true }).notNull().defaultNow(),
     /** O'quvchiga aylanganda (E4b) */
     studentId: uuid("student_id"),
+    /** Zahira guruhda kutayapti (E4b) */
+    waitlistId: uuid("waitlist_id"),
     /** Yo'qotilganda (E4b): sabab, izoh va qaysi bosqichdan */
     lostReason: text("lost_reason"),
     lostNote: text("lost_note"),
@@ -90,6 +146,7 @@ export const leads = pgTable(
     index("leads_stage_idx").on(t.stageId),
     index("leads_phone_idx").on(t.phone),
     index("leads_assigned_idx").on(t.assignedTo),
+    index("leads_waitlist_idx").on(t.waitlistId),
     foreignKey({
       name: "leads_branch_fk",
       columns: [t.tenantId, t.branchId],
@@ -119,6 +176,11 @@ export const leads = pgTable(
       name: "leads_student_fk",
       columns: [t.tenantId, t.studentId],
       foreignColumns: [students.tenantId, students.id],
+    }).onDelete("restrict"),
+    foreignKey({
+      name: "leads_waitlist_fk",
+      columns: [t.tenantId, t.waitlistId],
+      foreignColumns: [leadWaitlists.tenantId, leadWaitlists.id],
     }).onDelete("restrict"),
     foreignKey({
       name: "leads_created_by_fk",

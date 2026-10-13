@@ -21,6 +21,8 @@ import { markAttendanceAction, markRestPresentAction } from "@/app/(crm)/groups/
 import {
   archiveLeadAction,
   assignLeadsAction,
+  activateWaitlistAction,
+  assignWaitlistAction,
   convertLeadAction,
   loseLeadAction,
   moveLeadAction,
@@ -93,6 +95,8 @@ export const APPROVAL_ACTIONS = {
   "leads.firstLesson": scheduleFirstLessonAction,
   "leads.lose": loseLeadAction,
   "leads.restore": restoreLeadAction,
+  "leads.waitlist": assignWaitlistAction,
+  "leads.waitlistActivate": activateWaitlistAction,
   "attendance.mark": markAttendanceAction,
   "attendance.markRest": markRestPresentAction,
   "staffAttendance.mark": markEmployeeAction,

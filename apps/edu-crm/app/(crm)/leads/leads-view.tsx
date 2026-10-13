@@ -33,7 +33,7 @@ import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import { FieldsModal } from "../fields-modal";
 import { moveLeadAction, restoreLeadAction, saveLeadFieldsAction } from "./actions";
-import type { LeadGroupOption, LeadRow, StageRow, StaffOption } from "./data";
+import type { LeadGroupOption, LeadRow, StageRow, StaffOption, WaitlistRow } from "./data";
 import {
   ArchiveDialog,
   AssignDialog,
@@ -48,11 +48,12 @@ import {
 } from "./lead-dialogs";
 import { LeadForm } from "./lead-form";
 import type { LeadPerms } from "./perms";
+import { type GroupFormData, WaitlistAssignDialog, WaitlistsPanel } from "./waitlists";
 
 const t = uz.leads;
 const ALL = "all";
 const NONE = "none";
-type View = "board" | "list" | "lost" | "won";
+type View = "board" | "list" | "waitlists" | "lost" | "won";
 
 /**
  * Lidlar (E4a, ADR 0022): doska — ish bosqichlari ustunlarda, kartani sudrab yoki menyudan boshqa ustunga o'tkazish;
@@ -72,6 +73,8 @@ export function LeadsView({
   perms,
   groups,
   lostReasons,
+  waitlists,
+  groupForm,
 }: {
   stages: StageRow[];
   rows: LeadRow[];
@@ -86,6 +89,9 @@ export function LeadsView({
   /** Birinchi dars va o'quvchiga aylantirish uchun guruhlar */
   groups: LeadGroupOption[];
   lostReasons: string[];
+  waitlists: WaitlistRow[];
+  /** Faollashtirishda yangi guruh ochish uchun; null — xodim guruh ocholmaydi */
+  groupForm: GroupFormData | null;
 }) {
   const router = useRouter();
   const [view, setView] = React.useState<View>("board");
@@ -104,6 +110,7 @@ export function LeadsView({
   const [converting, setConverting] = React.useState<LeadRow | null>(null);
   const [lesson, setLesson] = React.useState<LeadRow | null>(null);
   const [losing, setLosing] = React.useState<LeadRow | null>(null);
+  const [waitlisting, setWaitlisting] = React.useState<LeadRow | null>(null);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   // Sudrab ko'chirishda server javobini kutmasdan ko'rsatish
   const [optimistic, setOptimistic] = React.useState<Record<string, string>>({});
@@ -174,6 +181,7 @@ export function LeadsView({
       onConvert={() => setConverting(l)}
       onFirstLesson={() => setLesson(l)}
       onLose={() => setLosing(l)}
+      onWaitlist={() => setWaitlisting(l)}
     />
   );
 
@@ -239,6 +247,9 @@ export function LeadsView({
         <TabsList>
           <TabsTrigger value="board">{t.viewBoard}</TabsTrigger>
           <TabsTrigger value="list">{t.viewList}</TabsTrigger>
+          <TabsTrigger value="waitlists">
+            {t.tabWaitlists} {waitlists.length ? <Badge tone="neutral">{waitlists.length}</Badge> : null}
+          </TabsTrigger>
           <TabsTrigger value="lost">
             {t.tabLost} {lostTotal ? <Badge tone="neutral">{lostTotal}</Badge> : null}
           </TabsTrigger>
@@ -248,7 +259,18 @@ export function LeadsView({
         </TabsList>
       </Tabs>
 
-      {!rows.length ? (
+      {view === "waitlists" ? (
+        <WaitlistsPanel
+          waitlists={waitlists}
+          leads={rows}
+          branches={branches}
+          selectedBranch={selectedBranch}
+          courses={courses}
+          groups={groups}
+          groupForm={groupForm}
+          perms={perms}
+        />
+      ) : !rows.length ? (
         <Card>
           <EmptyState icon={<UserPlus />} title={t.empty} description={t.emptyHint} />
         </Card>
@@ -258,6 +280,7 @@ export function LeadsView({
         <ClosedTable kind="won" leads={wonRows} stages={stages} canRestore={false} menu={menu} />
       ) : view === "board" ? (
         <Board
+          waitlistName={(id) => waitlists.find((w) => w.id === id)?.name ?? "—"}
           stages={openStages}
           leads={filtered}
           stageOf={stageOf}
@@ -307,6 +330,7 @@ export function LeadsView({
       <ConvertDialog lead={converting} groups={groups} onClose={() => setConverting(null)} />
       <FirstLessonDialog lead={lesson} groups={groups} today={today} onClose={() => setLesson(null)} />
       <LoseDialog lead={losing} reasons={lostReasons} onClose={() => setLosing(null)} />
+      <WaitlistAssignDialog lead={waitlisting} waitlists={waitlists} onClose={() => setWaitlisting(null)} />
       {perms.edit ? (
         <>
           <StagesModal open={stagesOpen} onOpenChange={setStagesOpen} stages={stages} counts={counts} />
@@ -329,6 +353,7 @@ export function LeadsView({
 }
 
 function Board({
+  waitlistName,
   stages,
   leads,
   stageOf,
@@ -337,6 +362,7 @@ function Board({
   onDrop,
   menu,
 }: {
+  waitlistName: (id: string) => string;
   stages: StageRow[];
   leads: LeadRow[];
   stageOf: (l: LeadRow) => string;
@@ -421,6 +447,7 @@ function Board({
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
                       {l.courseName ? <Badge tone="info">{l.courseName}</Badge> : null}
                       {l.source ? <Badge tone="neutral">{l.source}</Badge> : null}
+                      {l.waitlistId ? <Badge tone="info">{t.waitlistOf(waitlistName(l.waitlistId))}</Badge> : null}
                       {l.firstLesson ? (
                         <Badge
                           tone={
