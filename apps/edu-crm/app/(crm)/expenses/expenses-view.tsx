@@ -1,18 +1,16 @@
 "use client";
 
-import { Pencil, Plus, Receipt, RotateCcw, Search, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Receipt, RotateCcw, Trash2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
-import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Pagination } from "@ventura/ui/pagination";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
@@ -76,10 +74,23 @@ export function ExpensesView(props: ExpensesViewProps) {
   }
   const navigate = (next: Partial<Record<"from" | "to" | "month", string>>) =>
     router.push(query(next), { scroll: false });
+  /** Sarlavhadagi "qo'shish" tugmasi — tab ichidagi formani ochadi (har bosish yangi so'rov) */
+  const [addRequest, setAddRequest] = React.useState(0);
+  const listTab = tab === "variable" || tab === "fixed";
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t.title} description={t.description} />
+      <PageHeader
+        title={t.title}
+        description={t.description}
+        actions={
+          perms.create && (listTab || tab === "plans") ? (
+            <Button onClick={() => setAddRequest((n) => n + 1)}>
+              <Plus /> {listTab ? t.add : t.addPlan}
+            </Button>
+          ) : null
+        }
+      />
       <Tabs value={tab} onValueChange={changeTab}>
         <TabsList>
           {tabs.map((x) => (
@@ -91,7 +102,7 @@ export function ExpensesView(props: ExpensesViewProps) {
       </Tabs>
 
       {tab === "variable" || tab === "fixed" ? (
-        <ExpenseList key={tab} kind={tab} {...props} onRange={navigate} />
+        <ExpenseList key={tab} kind={tab} {...props} onRange={navigate} addRequest={addRequest} />
       ) : tab === "categories" ? (
         <CategoriesTab
           categories={props.categories}
@@ -109,6 +120,7 @@ export function ExpensesView(props: ExpensesViewProps) {
           branches={props.branches}
           selectedBranch={props.selectedBranch}
           canEdit={perms.create}
+          addRequest={addRequest}
           onMonth={(month) => navigate({ month })}
         />
       )}
@@ -129,7 +141,12 @@ function ExpenseList({
   selectedBranch,
   perms,
   onRange,
-}: ExpensesViewProps & { kind: "variable" | "fixed"; onRange: (next: { from?: string; to?: string }) => void }) {
+  addRequest,
+}: ExpensesViewProps & {
+  kind: "variable" | "fixed";
+  onRange: (next: { from?: string; to?: string }) => void;
+  addRequest: number;
+}) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
   const [person, setPerson] = React.useState(ALL);
@@ -141,6 +158,12 @@ function ExpenseList({
   const [editing, setEditing] = React.useState<ExpenseRow | null>(null);
   const [voiding, setVoiding] = React.useState<ExpenseRow | null>(null);
   const [, startTransition] = React.useTransition();
+  const [seenAdd, setSeenAdd] = React.useState(addRequest);
+  if (addRequest !== seenAdd) {
+    setSeenAdd(addRequest);
+    setEditing(null);
+    setFormOpen(true);
+  }
 
   const own = rows.filter((r) => r.kind === kind);
   const personOptions = [
@@ -190,100 +213,49 @@ function ExpenseList({
     <div className="space-y-4">
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div>
-          <Label htmlFor="exp-from">{t.from}</Label>
-          <Input id="exp-from" type="date" value={from} max={to} onChange={(e) => onRange({ from: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="exp-to">{t.to}</Label>
-          <Input id="exp-to" type="date" value={to} min={from} onChange={(e) => onRange({ to: e.target.value })} />
-        </div>
-        <div>
-          <Label>{t.person}</Label>
-          <Select value={person} onValueChange={filter(setPerson)}>
-            <SelectTrigger className="w-full" aria-label={t.person}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allPeople}</SelectItem>
-              {personOptions.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.category}</Label>
-          <Select value={category} onValueChange={filter(setCategory)}>
-            <SelectTrigger className="w-full" aria-label={t.category}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allCategories}</SelectItem>
-              {categories
-                .filter((c) => c.kind === "expense")
-                .map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.method}</Label>
-          <Select value={method} onValueChange={filter(setMethod)}>
-            <SelectTrigger className="w-full" aria-label={t.method}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allMethods}</SelectItem>
-              {methods.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          <div className="relative min-w-60 flex-1">
-            <Input
-              icon={<Search />}
-              placeholder={t.search}
-              value={query}
-              onChange={(e) => filter(setQuery)(e.target.value)}
-            />
-          </div>
+      <Card className="overflow-hidden">
+        <FilterBar>
+          <FilterSearch placeholder={t.search} value={query} onChange={(e) => filter(setQuery)(e.target.value)} />
+          <FilterDates from={from} to={to} onChange={onRange} fromLabel={t.from} toLabel={t.to} />
+          <FilterSelect
+            label={t.person}
+            value={person}
+            onValueChange={filter(setPerson)}
+            options={[
+              { value: ALL, label: t.allPeople },
+              ...personOptions.map(([id, name]) => ({ value: id, label: name })),
+            ]}
+          />
+          <FilterSelect
+            label={t.category}
+            value={category}
+            onValueChange={filter(setCategory)}
+            options={[
+              { value: ALL, label: t.allCategories },
+              ...categories.filter((c) => c.kind === "expense").map((c) => ({ value: c.id, label: c.name })),
+            ]}
+          />
+          <FilterSelect
+            label={t.method}
+            value={method}
+            onValueChange={filter(setMethod)}
+            options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+          />
           <ChoiceField
             control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
             label={t.showVoided}
           />
           {filtered ? (
             <Button variant="ghost" size="sm" onClick={clear}>
-              <X /> {t.clearFilters}
+              <RotateCcw /> {t.clearFilters}
             </Button>
           ) : null}
-          <span className="ml-auto text-caption font-semibold text-foreground">
-            {t.total(live.length, `${money(total)} ${uz.common.som}`)}
-          </span>
-          {perms.create ? (
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
-              <Plus /> {t.add}
-            </Button>
-          ) : null}
-        </div>
+          <FilterEnd>
+            <span className="text-caption font-semibold text-foreground">
+              {t.total(live.length, `${money(total)} ${uz.common.som}`)}
+            </span>
+          </FilterEnd>
+        </FilterBar>
         {shown.length ? (
           <>
             <TableWrap className="rounded-none border-0">

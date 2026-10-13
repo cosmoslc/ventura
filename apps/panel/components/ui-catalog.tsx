@@ -32,6 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ventura/ui/dropdown-menu";
+import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { LogView } from "@ventura/ui/log-view";
@@ -415,8 +416,33 @@ const ROWS = [
 
 function DataTable() {
   const [page, setPage] = React.useState(1);
+  const [status, setStatus] = React.useState("all");
+  const [range, setRange] = React.useState({ from: "2026-10-01", to: "2026-10-13" });
   return (
     <Card className="overflow-hidden">
+      <FilterBar>
+        <FilterSearch placeholder="Ism, telefon..." />
+        <FilterDates
+          from={range.from}
+          to={range.to}
+          onChange={(next) => setRange((r) => ({ ...r, ...next }))}
+          fromLabel="Sanadan"
+          toLabel="Sanagacha"
+        />
+        <FilterSelect
+          label="Holat"
+          value={status}
+          onValueChange={setStatus}
+          options={[
+            { value: "all", label: "Holat (Hammasi)" },
+            { value: "active", label: "Faol" },
+            { value: "paused", label: "Muzlatilgan" },
+          ]}
+        />
+        <FilterEnd>
+          <span className="text-caption text-muted-foreground">37 ta yozuv</span>
+        </FilterEnd>
+      </FilterBar>
       <TableWrap>
         <Table className="min-w-[520px]">
           <THead>
@@ -768,7 +794,11 @@ export function UiCatalog() {
             <Cards />
           </Both>
         </Section>
-        <Section id="jadval" title="Jadval" description="Table, Badge, uch nuqta va Pagination">
+        <Section
+          id="jadval"
+          title="Jadval"
+          description="Filtr qatori (FilterBar), Table, Badge, uch nuqta va Pagination"
+        >
           <Both>
             <DataTable />
           </Both>

@@ -1,29 +1,16 @@
 "use client";
 
-import {
-  Armchair,
-  Clock,
-  DoorOpen,
-  Layers,
-  Pencil,
-  Plus,
-  Search,
-  Trash2,
-  UserCheck,
-  Users,
-  UserRound,
-} from "lucide-react";
+import { Armchair, Clock, DoorOpen, Layers, Pencil, Plus, Trash2, UserCheck, Users, UserRound } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Input } from "@ventura/ui/input";
+import { FilterBar, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { Meter } from "@ventura/ui/meter";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { toast } from "@ventura/ui/toast";
 import { money } from "@/lib/format";
@@ -153,39 +140,29 @@ export function GroupsView({
         />
       </div>
 
-      <Card className="flex flex-wrap gap-2 p-3">
-        <div className="min-w-0 flex-1 sm:min-w-64">
-          <Input
-            icon={<Search />}
-            placeholder={uz.groups.search}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-        <Select value={course} onValueChange={setCourse}>
-          <SelectTrigger className="w-full sm:w-52" aria-label={uz.groups.course}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{uz.groups.allCourses}</SelectItem>
-            {courses.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={days} onValueChange={setDays}>
-          <SelectTrigger className="w-full sm:w-60" aria-label={uz.groups.days}>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{uz.groups.allDays}</SelectItem>
-            <SelectItem value="odd">{uz.groups.oddDays}</SelectItem>
-            <SelectItem value="even">{uz.groups.evenDays}</SelectItem>
-          </SelectContent>
-        </Select>
-      </Card>
+      <FilterBar standalone>
+        <FilterSearch placeholder={uz.groups.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <FilterSelect
+          label={uz.groups.course}
+          value={course}
+          onValueChange={setCourse}
+          options={[
+            { value: "all", label: uz.groups.allCourses },
+            ...courses.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <FilterSelect
+          label={uz.groups.days}
+          value={days}
+          onValueChange={setDays}
+          className="sm:w-56"
+          options={[
+            { value: "all", label: uz.groups.allDays },
+            { value: "odd", label: uz.groups.oddDays },
+            { value: "even", label: uz.groups.evenDays },
+          ]}
+        />
+      </FilterBar>
 
       {missing ? (
         <Card>

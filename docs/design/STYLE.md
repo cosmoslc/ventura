@@ -538,6 +538,15 @@ Qoidalar:
 - Ekran o'quvchilari uchun yashirin jadval (`caption` majburiy).
 - Qator ranglari 3.3a tokenlaridan.
 
+
+### 11.31 FilterBar — `filter-bar.tsx`
+
+- Ro'yxat filtrlari hamma sahifada bitta ko'rinishda (O'quvchilar sahifasi namuna): sarlavhasiz boshqaruvlar bir qatorda, `p-3`, `gap-2`.
+- Tartib: qidiruv (`FilterSearch`, qolgan kenglikni oladi) → sana oralig'i (`FilterDates`, "—" bilan) → tanlovlar (`FilterSelect`, birinchi band "Barcha ..." / "Holat (Hammasi)") → belgilar va "Tozalash" → o'ngda `FilterEnd` (yozuvlar soni, jami).
+- Yorliqlar ko'rinmaydi — `aria-label` va `title` sifatida beriladi.
+- Jadvalli sahifada qator jadval kartasining tepasida (pastki chiziq bilan); kartochkalar to'ri bo'lgan sahifada — alohida karta (`standalone`).
+- "Qo'shish" tugmasi filtr qatorida emas, sahifa sarlavhasida.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.

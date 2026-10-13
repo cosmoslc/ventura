@@ -1,18 +1,17 @@
 "use client";
 
-import { CheckCheck, CircleCheck, Clock, Search, UserX, Users, X } from "lucide-react";
+import { CheckCheck, CircleCheck, Clock, UserX, Users, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
 import { Meter } from "@ventura/ui/meter";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
@@ -111,29 +110,6 @@ export function StaffAttendanceView({
 
       {tab === "day" ? (
         <>
-          <div className="flex flex-wrap items-end gap-4">
-            <div>
-              <Label htmlFor="staff-att-date">{t.date}</Label>
-              <Input
-                id="staff-att-date"
-                type="date"
-                value={date}
-                max={today}
-                onChange={(e) => e.target.value && router.push(`${pathname}?date=${e.target.value}`, { scroll: false })}
-              />
-            </div>
-            {date !== today ? (
-              <Button variant="ghost" onClick={() => router.push(pathname, { scroll: false })}>
-                {t.today}
-              </Button>
-            ) : null}
-            {canMark && unmarked > 0 ? (
-              <Button className="ml-auto" onClick={markRest} disabled={pending}>
-                <CheckCheck /> {t.markRest}
-              </Button>
-            ) : null}
-          </div>
-
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatCard icon={<CircleCheck />} tone={2} label={t.statPresent} value={String(count("present"))} />
             <StatCard icon={<Clock />} tone={1} label={t.statLate} value={String(count("late"))} />
@@ -149,18 +125,31 @@ export function StaffAttendanceView({
 
           {!canMark ? <Notice tone="info">{t.readOnly}</Notice> : null}
 
-          <Card className="p-0">
-            <div className="border-b border-border p-4">
-              <div className="relative max-w-md">
-                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="pl-9"
-                  placeholder={t.search}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
-            </div>
+          <Card className="overflow-hidden">
+            <FilterBar>
+              <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+              <Input
+                type="date"
+                aria-label={t.date}
+                title={t.date}
+                className="w-full sm:w-44"
+                value={date}
+                max={today}
+                onChange={(e) => e.target.value && router.push(`${pathname}?date=${e.target.value}`, { scroll: false })}
+              />
+              {date !== today ? (
+                <Button variant="ghost" size="sm" onClick={() => router.push(pathname, { scroll: false })}>
+                  {t.today}
+                </Button>
+              ) : null}
+              {canMark && unmarked > 0 ? (
+                <FilterEnd>
+                  <Button onClick={markRest} disabled={pending}>
+                    <CheckCheck /> {t.markRest}
+                  </Button>
+                </FilterEnd>
+              ) : null}
+            </FilterBar>
             {visible.length ? (
               <TableWrap className="rounded-none border-0">
                 <Table>
@@ -194,28 +183,16 @@ export function StaffAttendanceView({
           </Card>
         </>
       ) : (
-        <Card className="p-0">
-          <div className="flex flex-wrap items-end gap-4 border-b border-border p-4">
-            <div className="w-48">
-              <Label>{t.period}</Label>
-              <Select value={period} onValueChange={setPeriod}>
-                <SelectTrigger className="w-full" aria-label={t.period}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {["7", "30"].map((p) => (
-                    <SelectItem key={p} value={p}>
-                      {t.periods[p]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="relative min-w-60 flex-1">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input className="pl-9" placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-            </div>
-          </div>
+        <Card className="overflow-hidden">
+          <FilterBar>
+            <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+            <FilterSelect
+              label={t.period}
+              value={period}
+              onValueChange={setPeriod}
+              options={["7", "30"].map((p) => ({ value: p, label: t.periods[p] }))}
+            />
+          </FilterBar>
           <p className="px-4 pt-3 text-caption text-muted-foreground">{t.rankingHint}</p>
           {ranking.length ? (
             <TableWrap className="rounded-none border-0">

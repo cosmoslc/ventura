@@ -1,6 +1,6 @@
 "use client";
 
-import { Banknote, CalendarCheck, Pencil, Plus, Printer, RotateCcw, Search, Trash2, Undo2, Wallet } from "lucide-react";
+import { Banknote, CalendarCheck, Pencil, Plus, Printer, RotateCcw, Trash2, Undo2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -8,12 +8,10 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
-import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
@@ -168,77 +166,40 @@ export function PaymentsView({
         </div>
       ) : null}
 
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div>
-          <Label htmlFor="pay-from">{t.from}</Label>
-          <Input id="pay-from" type="date" value={from} max={to} onChange={(e) => setRange({ from: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="pay-to">{t.to}</Label>
-          <Input id="pay-to" type="date" value={to} min={from} onChange={(e) => setRange({ to: e.target.value })} />
-        </div>
-        <div>
-          <Label>{t.kind}</Label>
-          <Select value={kind} onValueChange={setKind}>
-            <SelectTrigger className="w-full" aria-label={t.kind}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allKinds}</SelectItem>
-              {KINDS.map((k) => (
-                <SelectItem key={k} value={k}>
-                  {t.kinds[k]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.method}</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger className="w-full" aria-label={t.method}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allMethods}</SelectItem>
-              {methods.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.group}</Label>
-          <Select value={group} onValueChange={setGroup}>
-            <SelectTrigger className="w-full" aria-label={t.group}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{uz.debtors.allGroups}</SelectItem>
-              {groupNames.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          <div className="relative min-w-60 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          </div>
+      <Card className="overflow-hidden">
+        <FilterBar>
+          <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <FilterDates from={from} to={to} onChange={setRange} fromLabel={t.from} toLabel={t.to} />
+          <FilterSelect
+            label={t.kind}
+            value={kind}
+            onValueChange={setKind}
+            className="sm:w-40"
+            options={[{ value: ALL, label: t.allKinds }, ...KINDS.map((k) => ({ value: k, label: t.kinds[k] }))]}
+          />
+          <FilterSelect
+            label={t.method}
+            value={method}
+            onValueChange={setMethod}
+            options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+          />
+          <FilterSelect
+            label={t.group}
+            value={group}
+            onValueChange={setGroup}
+            options={[
+              { value: ALL, label: uz.debtors.allGroups },
+              ...groupNames.map(([id, name]) => ({ value: id, label: name })),
+            ]}
+          />
           <ChoiceField
             control={<Checkbox checked={showVoided} onCheckedChange={(v) => setShowVoided(v === true)} />}
             label={t.showVoided}
           />
-          <span className="text-caption text-muted-foreground">{t.count(visible.length)}</span>
-        </div>
+          <FilterEnd>
+            <span className="text-caption text-muted-foreground">{t.count(visible.length)}</span>
+          </FilterEnd>
+        </FilterBar>
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

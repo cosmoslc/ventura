@@ -1,15 +1,13 @@
 "use client";
 
-import { AlarmClock, CircleDollarSign, Search, UserX, Users, Wallet } from "lucide-react";
+import { AlarmClock, CircleDollarSign, UserX, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { displayPhone, formatMonth, money } from "@/lib/format";
@@ -102,70 +100,38 @@ export function DebtorsView({
         />
       </div>
 
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="sm:col-span-2 lg:col-span-1">
-          <Label htmlFor="debt-search">{uz.common.search}</Label>
-          <Input
-            id="debt-search"
-            icon={<Search />}
-            placeholder={t.search}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+      <Card className="overflow-hidden">
+        <FilterBar>
+          <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <FilterSelect
+            label={t.group}
+            value={group}
+            onValueChange={setGroup}
+            options={[
+              { value: ALL, label: t.allGroups },
+              ...groupOptions.map(([id, name]) => ({ value: id, label: name })),
+            ]}
           />
-        </div>
-        <div>
-          <Label>{t.group}</Label>
-          <Select value={group} onValueChange={setGroup}>
-            <SelectTrigger className="w-full" aria-label={t.group}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allGroups}</SelectItem>
-              {groupOptions.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.teacher}</Label>
-          <Select value={teacher} onValueChange={setTeacher}>
-            <SelectTrigger className="w-full" aria-label={t.teacher}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allTeachers}</SelectItem>
-              {teacherOptions.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.sort}</Label>
-          <Select value={sort} onValueChange={(v) => setSort(v as (typeof SORTS)[number])}>
-            <SelectTrigger className="w-full" aria-label={t.sort}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {SORTS.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {t.sorts[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-
-      <Card className="p-0">
-        <div className="border-b border-border px-4 py-3 text-caption text-muted-foreground">
-          {t.count(visible.length, rows.length)}
-        </div>
+          <FilterSelect
+            label={t.teacher}
+            value={teacher}
+            onValueChange={setTeacher}
+            options={[
+              { value: ALL, label: t.allTeachers },
+              ...teacherOptions.map(([id, name]) => ({ value: id, label: name })),
+            ]}
+          />
+          <FilterSelect
+            label={t.sort}
+            value={sort}
+            onValueChange={(v) => setSort(v as (typeof SORTS)[number])}
+            className="sm:w-52"
+            options={SORTS.map((s) => ({ value: s, label: t.sorts[s] }))}
+          />
+          <FilterEnd>
+            <span className="text-caption text-muted-foreground">{t.count(visible.length, rows.length)}</span>
+          </FilterEnd>
+        </FilterBar>
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

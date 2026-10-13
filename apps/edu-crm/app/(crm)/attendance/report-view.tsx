@@ -8,7 +8,6 @@ import {
   PhoneCall,
   PhoneOff,
   RotateCcw,
-  Search,
   TriangleAlert,
   UserX,
 } from "lucide-react";
@@ -19,13 +18,12 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { RadioCard, RadioGroup } from "@ventura/ui/checkbox";
-import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
 import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
+import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Textarea } from "@ventura/ui/textarea";
@@ -126,53 +124,6 @@ export function AttendanceReportView({
 
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <div>
-          <Label htmlFor="att-from">{t.from}</Label>
-          <Input id="att-from" type="date" value={from} max={to} onChange={(e) => setRange({ from: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="att-to">{t.to}</Label>
-          <Input id="att-to" type="date" value={to} min={from} onChange={(e) => setRange({ to: e.target.value })} />
-        </div>
-        <FilterSelect label={t.group} value={groupId} onChange={setGroupId} all={t.allGroups}>
-          {groupOptions.map(([id, name]) => (
-            <SelectItem key={id} value={id}>
-              {name}
-            </SelectItem>
-          ))}
-        </FilterSelect>
-        <FilterSelect label={t.course} value={courseId} onChange={setCourseId} all={t.allCourses}>
-          {courses.map((c) => (
-            <SelectItem key={c.id} value={c.id}>
-              {c.name}
-            </SelectItem>
-          ))}
-        </FilterSelect>
-        <FilterSelect label={t.memberStatus} value={memberStatus} onChange={setMemberStatus} all={t.allStatuses}>
-          {MEMBER_STATUSES.map((s) => (
-            <SelectItem key={s} value={s}>
-              {t.memberStatuses[s]}
-            </SelectItem>
-          ))}
-        </FilterSelect>
-        <div>
-          <Label>{t.filter}</Label>
-          <Select value={filter} onValueChange={(v) => setFilter(v as ReportFilter)}>
-            <SelectTrigger className="w-full" aria-label={t.filter}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FILTERS.map((f) => (
-                <SelectItem key={f} value={f}>
-                  {t.filters[f]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {KPIS.map((k) => (
           <button
@@ -194,17 +145,47 @@ export function AttendanceReportView({
         ))}
       </div>
 
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          <div className="relative min-w-60 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          </div>
-          <span className="text-caption text-muted-foreground">{t.count(visible.length, base.length)}</span>
-          <Button variant="ghost" onClick={reset}>
+      <Card className="overflow-hidden">
+        <FilterBar>
+          <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+          <FilterDates from={from} to={to} onChange={setRange} fromLabel={t.from} toLabel={t.to} />
+          <FilterSelect
+            label={t.group}
+            value={groupId}
+            onValueChange={setGroupId}
+            options={[
+              { value: ALL, label: t.allGroups },
+              ...groupOptions.map(([id, name]) => ({ value: id, label: name })),
+            ]}
+          />
+          <FilterSelect
+            label={t.course}
+            value={courseId}
+            onValueChange={setCourseId}
+            options={[{ value: ALL, label: t.allCourses }, ...courses.map((c) => ({ value: c.id, label: c.name }))]}
+          />
+          <FilterSelect
+            label={t.memberStatus}
+            value={memberStatus}
+            onValueChange={setMemberStatus}
+            options={[
+              { value: ALL, label: t.allStatuses },
+              ...MEMBER_STATUSES.map((s) => ({ value: s, label: t.memberStatuses[s] })),
+            ]}
+          />
+          <FilterSelect
+            label={t.filter}
+            value={filter}
+            onValueChange={(v) => setFilter(v as ReportFilter)}
+            options={FILTERS.map((f) => ({ value: f, label: t.filters[f] }))}
+          />
+          <Button variant="ghost" size="sm" onClick={reset}>
             <RotateCcw /> {t.reset}
           </Button>
-        </div>
+          <FilterEnd>
+            <span className="text-caption text-muted-foreground">{t.count(visible.length, base.length)}</span>
+          </FilterEnd>
+        </FilterBar>
 
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
@@ -342,35 +323,6 @@ export function AttendanceReportView({
         <ReasonModal row={reasonFor} onClose={() => setReasonFor(null)} onSaved={() => router.refresh()} />
       ) : null}
       {callFor ? <CallModal row={callFor} onClose={() => setCallFor(null)} onSaved={() => router.refresh()} /> : null}
-    </div>
-  );
-}
-
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  all,
-  children,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  all: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div>
-      <Label>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger className="w-full" aria-label={label}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL}>{all}</SelectItem>
-          {children}
-        </SelectContent>
-      </Select>
     </div>
   );
 }

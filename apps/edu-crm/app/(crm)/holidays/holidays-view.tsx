@@ -1,11 +1,12 @@
 "use client";
 
-import { CalendarOff, Check, Pencil, Plus, Search, Trash2, TriangleAlert } from "lucide-react";
+import { CalendarOff, Check, Pencil, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { FilterBar, FilterSearch } from "@ventura/ui/filter-bar";
 import { Checkbox, ChoiceField, RadioCard, RadioGroup } from "@ventura/ui/checkbox";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
@@ -97,16 +98,9 @@ export function HolidaysView({
         <div className="mt-1">{uz.holidays.bannerText}</div>
       </Notice>
 
-      <Card className="p-3">
-        <div className="sm:max-w-md">
-          <Input
-            icon={<Search />}
-            placeholder={uz.holidays.search}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-      </Card>
+      <FilterBar standalone>
+        <FilterSearch placeholder={uz.holidays.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+      </FilterBar>
 
       {visible.length ? (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

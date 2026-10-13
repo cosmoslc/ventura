@@ -1,16 +1,15 @@
 "use client";
 
-import { BookOpen, ChevronDown, Clock, Layers, Pencil, Plus, Search, Trash2, Users, Wallet } from "lucide-react";
+import { BookOpen, ChevronDown, Clock, Layers, Pencil, Plus, Trash2, Users, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Input } from "@ventura/ui/input";
+import { FilterBar, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { toast } from "@ventura/ui/toast";
 import { money } from "@/lib/format";
@@ -127,42 +126,32 @@ export function CoursesView({
         />
       </div>
 
-      <Card className="flex flex-wrap gap-2 p-3">
-        <div className="min-w-0 flex-1 sm:min-w-64">
-          <Input
-            icon={<Search />}
-            placeholder={uz.courses.search}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
+      <FilterBar standalone>
+        <FilterSearch placeholder={uz.courses.search} value={query} onChange={(e) => setQuery(e.target.value)} />
         {branches.length > 1 ? (
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-full sm:w-52">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{uz.common.allBranches}</SelectItem>
-              {branches.map((b) => (
-                <SelectItem key={b.id} value={b.id}>
-                  {b.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <FilterSelect
+            label={uz.common.branch}
+            value={branchFilter}
+            onValueChange={setBranchFilter}
+            options={[
+              { value: "all", label: uz.common.allBranches },
+              ...branches.map((b) => ({ value: b.id, label: b.name })),
+            ]}
+          />
         ) : null}
-        <Select value={sort} onValueChange={(v) => setSort(v as Sort)}>
-          <SelectTrigger className="w-full sm:w-60">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="default">{uz.courses.sortDefault}</SelectItem>
-            <SelectItem value="students">{uz.courses.sortStudents}</SelectItem>
-            <SelectItem value="groups">{uz.courses.sortGroups}</SelectItem>
-            <SelectItem value="revenue">{uz.courses.sortRevenue}</SelectItem>
-          </SelectContent>
-        </Select>
-      </Card>
+        <FilterSelect
+          label={uz.courses.sortDefault}
+          value={sort}
+          onValueChange={(v) => setSort(v as Sort)}
+          className="sm:w-56"
+          options={[
+            { value: "default", label: uz.courses.sortDefault },
+            { value: "students", label: uz.courses.sortStudents },
+            { value: "groups", label: uz.courses.sortGroups },
+            { value: "revenue", label: uz.courses.sortRevenue },
+          ]}
+        />
+      </FilterBar>
 
       {sorted.length ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

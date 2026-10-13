@@ -1,11 +1,12 @@
 "use client";
 
-import { Check, Pencil, Plus, Search, Tags, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, Tags, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
+import { FilterBar, FilterSearch } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
@@ -140,16 +141,9 @@ export function CategoriesTab({
 
   return (
     <div className="space-y-4">
-      <Card className="p-3">
-        <div className="sm:max-w-md">
-          <Input
-            icon={<Search />}
-            placeholder={t.categoriesSearch}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
-        </div>
-      </Card>
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.categoriesSearch} value={query} onChange={(e) => setQuery(e.target.value)} />
+      </FilterBar>
       <div className="grid gap-6 lg:grid-cols-2">
         {section("expense", t.expenseCategories)}
         {section("income", t.incomeCategories)}
