@@ -1,10 +1,17 @@
 "use client";
 
-import { Layers, LogOut, Pause, Play, Plus } from "lucide-react";
+import { Layers, LogOut, MoreHorizontal, Pause, Play, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { EmptyState } from "@ventura/ui/page-header";
 import { toast } from "@ventura/ui/toast";
 import { formatDate, money } from "@/lib/format";
@@ -95,7 +102,17 @@ export function StudentGroupsTab({
                     {m.courseName} · {m.teacherName}
                   </div>
                 </div>
-                <MembershipBadge status={m.status} activatedAt={m.activatedAt} />
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <MembershipBadge status={m.status} activatedAt={m.activatedAt} />
+                  <MembershipMenu
+                    m={m}
+                    perms={perms}
+                    disabled={pending}
+                    onActivate={() => setActivate(target(m))}
+                    onPause={(on) => pause(m, on)}
+                    onLeave={() => setLeave(target(m))}
+                  />
+                </div>
               </div>
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-caption">
                 <dt className="text-muted-foreground">{uz.groups.daysCard}:</dt>
@@ -119,29 +136,6 @@ export function StudentGroupsTab({
                   {money(m.price)} {uz.groups.perMonth}
                 </dd>
               </dl>
-              <div className="flex flex-wrap gap-1.5">
-                {m.status === "trial" && perms.addStudent ? (
-                  <Button size="sm" onClick={() => setActivate(target(m))}>
-                    <Play /> {uz.groups.activate}
-                  </Button>
-                ) : null}
-                {perms.freeze && m.status !== "trial" ? (
-                  <Button size="sm" variant="ghost" disabled={pending} onClick={() => pause(m, m.status !== "paused")}>
-                    {m.status === "paused" ? <Play /> : <Pause />}
-                    {m.status === "paused" ? uz.groups.unfreeze : uz.groups.freeze}
-                  </Button>
-                ) : null}
-                {perms.removeStudent ? (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-destructive-text"
-                    onClick={() => setLeave(target(m))}
-                  >
-                    <LogOut /> {uz.groups.remove}
-                  </Button>
-                ) : null}
-              </div>
             </div>
           ))}
         </div>
@@ -180,5 +174,62 @@ export function StudentGroupsTab({
       <ActivateDialog target={activate} onOpenChange={(o) => !o && setActivate(null)} />
       <LeaveDialog target={leave} onOpenChange={(o) => !o && setLeave(null)} />
     </div>
+  );
+}
+
+/** Guruh kartasidagi amallar — uch nuqta menyusida (faollashtirish, muzlatish, guruhdan chiqarish) */
+function MembershipMenu({
+  m,
+  perms,
+  disabled,
+  onActivate,
+  onPause,
+  onLeave,
+}: {
+  m: StudentMembershipRow;
+  perms: GroupPerms;
+  disabled: boolean;
+  onActivate: () => void;
+  onPause: (on: boolean) => void;
+  onLeave: () => void;
+}) {
+  const activate = m.status === "trial" && perms.addStudent;
+  const freeze = perms.freeze && m.status !== "trial";
+  if (!activate && !freeze && !perms.removeStudent) return null;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="subtle"
+          size="icon-sm"
+          disabled={disabled}
+          title={uz.common.actions}
+          aria-label={`${m.groupName} — ${uz.common.actions}`}
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        {activate ? (
+          <DropdownMenuItem onSelect={onActivate}>
+            <Play /> {uz.groups.activate}
+          </DropdownMenuItem>
+        ) : null}
+        {freeze ? (
+          <DropdownMenuItem onSelect={() => onPause(m.status !== "paused")}>
+            {m.status === "paused" ? <Play /> : <Pause />}
+            {m.status === "paused" ? uz.groups.unfreeze : uz.groups.freeze}
+          </DropdownMenuItem>
+        ) : null}
+        {perms.removeStudent ? (
+          <>
+            {activate || freeze ? <DropdownMenuSeparator /> : null}
+            <DropdownMenuItem danger onSelect={onLeave}>
+              <LogOut /> {uz.groups.remove}
+            </DropdownMenuItem>
+          </>
+        ) : null}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

@@ -1,24 +1,23 @@
 "use client";
 
-import { Pencil, Percent, Plus, Printer, RotateCcw, Scale, Trash2, Undo2, Wallet } from "lucide-react";
+import { Coins, Pencil, Printer, RotateCcw, Scale, Trash2, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { cn } from "@ventura/ui/lib/utils";
-import { ConfirmModal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
 import { formatDate, formatMonth, money, signedMoney } from "@/lib/format";
-import type { LedgerSummary } from "@/lib/ledger";
+import { type LedgerSummary, pastDebt } from "@/lib/ledger";
 import { uz } from "@/lib/uz";
-import { deleteDiscountAction, restoreEntryAction } from "./actions";
-import type { DiscountRow, PaymentRow, StudentGroupOption } from "./data";
-import { CorrectionDialog, DiscountDialog, EditEntryDialog, RefundDialog, VoidDialog } from "./finance-dialogs";
-import { BalanceText, type MethodOption, PaymentDialog } from "./payment-dialog";
+import { restoreEntryAction } from "./actions";
+import type { PaymentRow, StudentGroupOption } from "./data";
+import { EditEntryDialog, VoidDialog } from "./finance-dialogs";
+import { BalanceText, type MethodOption } from "./payment-dialog";
 import type { FinancePerms } from "./perms";
 
 const t = uz.finance;
@@ -29,31 +28,59 @@ const KIND_TONE = { payment: "success", refund: "danger", discount: "info", corr
 /** Yozuvning hisobga ta'siri (ishorali) */
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
 
+/**
+ * Profil tablari ustidagi doimiy kartalar: balans, coin va o'tgan oydan qarz (eski tizimdagi uchta ko'rsatkich).
+ * Coin tizimi birinchi versiyaga kirmaydi (EDU-CRM-PLAN, 10-qaror) — karta joyida turadi, qiymati 0.
+ */
+export function StudentMoneyCards({ summary, currentMonth }: { summary: LedgerSummary; currentMonth: string }) {
+  const past = pastDebt(summary, currentMonth);
+  const shown = past.months.slice(0, 2).map(formatMonth).join(", ");
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      <StatCard
+        icon={<Wallet />}
+        tone={summary.balance < 0 ? 3 : 2}
+        label={uz.students.cardBalance}
+        value={`${signedMoney(summary.balance)} ${uz.common.som}`}
+        hint={summary.balance < 0 ? t.debt : summary.balance > 0 ? t.credit : t.balanceHint}
+      />
+      <StatCard icon={<Coins />} tone={1} label={uz.students.cardCoins} value="0" hint={uz.students.cardCoinsHint} />
+      <StatCard
+        icon={<Scale />}
+        tone={past.amount > 0 ? 3 : 2}
+        label={uz.students.cardPastDebt}
+        value={past.amount > 0 ? `${money(past.amount)} ${uz.common.som}` : uz.students.pastDebtNone}
+        hint={
+          past.amount > 0
+            ? `${shown}${past.months.length > 2 ? ` +${past.months.length - 2}` : ""}`
+            : uz.students.pastDebtHint
+        }
+      />
+    </div>
+  );
+}
+
+/**
+ * "To'lovlar" tabi: guruhlar bo'yicha oylik hisob va yozuvlar. To'lov, qaytarish, balansni tuzatish va filialga
+ * o'tkazish — profildagi uch nuqta menyusida; chegirmalar — o'z tabida (ADR 0020).
+ */
 export function StudentFinanceTab({
-  studentId,
   summary,
   groups,
   entries,
-  discounts,
   methods,
   perms,
-  maxDiscountPercent,
+  onPay,
 }: {
-  studentId: string;
   summary: LedgerSummary;
   groups: StudentGroupOption[];
   entries: PaymentRow[];
-  discounts: DiscountRow[];
   methods: MethodOption[];
   perms: FinancePerms;
-  maxDiscountPercent: number;
+  /** Guruh bo'yicha to'lov oynasini ochish (oyna profilda) */
+  onPay: (groupId: string) => void;
 }) {
   const router = useRouter();
-  const [payFor, setPayFor] = React.useState<string | null | undefined>(undefined);
-  const [refundOpen, setRefundOpen] = React.useState(false);
-  const [correctOpen, setCorrectOpen] = React.useState(false);
-  const [discountFor, setDiscountFor] = React.useState<DiscountRow | null | undefined>(undefined);
-  const [discountDelete, setDiscountDelete] = React.useState<DiscountRow | null>(null);
   const [voiding, setVoiding] = React.useState<PaymentRow | null>(null);
   const [editing, setEditing] = React.useState<PaymentRow | null>(null);
   const [, startTransition] = React.useTransition();
@@ -68,50 +95,8 @@ export function StudentFinanceTab({
     });
   }
 
-  async function removeDiscount(d: DiscountRow) {
-    const res = await deleteDiscountAction(d.id);
-    if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
-    toast({ tone: "success", title: t.discountDeleted });
-    router.refresh();
-  }
-
   return (
     <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <StatCard
-          icon={<Wallet />}
-          tone={summary.balance < 0 ? 4 : 2}
-          label={summary.balance < 0 ? t.debt : summary.balance > 0 ? t.credit : t.balance}
-          value={`${money(Math.abs(summary.balance))} ${uz.common.som}`}
-          hint={t.balanceHint}
-        />
-        <StatCard icon={<Scale />} tone={1} label={t.charged} value={`${money(summary.charged)} ${uz.common.som}`} />
-        <StatCard icon={<Plus />} tone={3} label={t.paid} value={`${money(summary.credited)} ${uz.common.som}`} />
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        {perms.create ? (
-          <Button onClick={() => setPayFor(null)}>
-            <Wallet /> {t.pay}
-          </Button>
-        ) : null}
-        {perms.create && summary.balance > 0 ? (
-          <Button variant="ghost" onClick={() => setRefundOpen(true)}>
-            <Undo2 /> {p.refund}
-          </Button>
-        ) : null}
-        {perms.discount ? (
-          <Button variant="ghost" onClick={() => setDiscountFor(null)}>
-            <Percent /> {t.discountAdd}
-          </Button>
-        ) : null}
-        {perms.correct ? (
-          <Button variant="ghost" onClick={() => setCorrectOpen(true)}>
-            <Scale /> {p.correction}
-          </Button>
-        ) : null}
-      </div>
-
       {summary.otherDebt > 0 ? (
         <Notice tone="warning">{t.otherDebt(`${money(summary.otherDebt)} ${uz.common.som}`)}</Notice>
       ) : null}
@@ -133,7 +118,7 @@ export function StudentFinanceTab({
                   <div className="flex items-center gap-2">
                     <BalanceText value={g.balance} />
                     {perms.create && g.months.some((m) => m.due > 0) ? (
-                      <Button size="sm" onClick={() => setPayFor(g.groupId)}>
+                      <Button size="sm" onClick={() => onPay(g.groupId)}>
                         {t.pay}
                       </Button>
                     ) : null}
@@ -192,48 +177,6 @@ export function StudentFinanceTab({
             ))
         ) : (
           <Notice tone="info">{t.noCharges}</Notice>
-        )}
-      </section>
-
-      <section className="space-y-3">
-        <h3 className="type-heading text-base">{t.discountsTitle}</h3>
-        {discounts.length ? (
-          <ul className="space-y-2">
-            {discounts.map((d) => (
-              <li
-                key={d.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-card border border-border px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <div className="font-semibold text-foreground">
-                    {d.kind === "percent" ? `${d.value}%` : `${money(d.value)} ${uz.common.som}`} ·{" "}
-                    {d.groupName ?? t.discountAllGroups}
-                  </div>
-                  <div className="text-caption text-muted-foreground">
-                    {t.discountPeriod(formatMonth(d.fromMonth), d.toMonth ? formatMonth(d.toMonth) : null)} · {d.reason}
-                    {!d.affectsTeacher ? ` · ${t.discountTeacherNo}` : ""}
-                  </div>
-                </div>
-                {perms.discount ? (
-                  <div className="flex gap-1">
-                    <Button variant="icon" size="icon" aria-label={uz.common.edit} onClick={() => setDiscountFor(d)}>
-                      <Pencil />
-                    </Button>
-                    <Button
-                      variant="icon"
-                      size="icon"
-                      aria-label={uz.common.delete}
-                      onClick={() => setDiscountDelete(d)}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-body text-muted-foreground">{t.discountsEmpty}</p>
         )}
       </section>
 
@@ -324,45 +267,8 @@ export function StudentFinanceTab({
         )}
       </section>
 
-      <PaymentDialog
-        open={payFor !== undefined}
-        onOpenChange={(o) => !o && setPayFor(undefined)}
-        studentId={studentId}
-        groupId={payFor ?? undefined}
-        methods={methods}
-        maxDiscountPercent={maxDiscountPercent}
-      />
-      <RefundDialog
-        open={refundOpen}
-        onOpenChange={setRefundOpen}
-        studentId={studentId}
-        available={Math.max(0, summary.balance)}
-        groups={groups}
-        methods={methods}
-      />
-      <CorrectionDialog
-        open={correctOpen}
-        onOpenChange={setCorrectOpen}
-        studentId={studentId}
-        balance={summary.balance}
-      />
-      <DiscountDialog
-        open={discountFor !== undefined}
-        onOpenChange={(o) => !o && setDiscountFor(undefined)}
-        studentId={studentId}
-        groups={groups}
-        editing={discountFor ?? null}
-      />
       <VoidDialog entry={voiding} onClose={() => setVoiding(null)} />
       <EditEntryDialog entry={editing} onClose={() => setEditing(null)} groups={groups} methods={methods} />
-      <ConfirmModal
-        open={!!discountDelete}
-        onOpenChange={(o) => !o && setDiscountDelete(null)}
-        title={uz.common.confirmTitle}
-        message={t.discountDeleteText}
-        confirmLabel={uz.common.confirmDelete}
-        onConfirm={() => discountDelete && removeDiscount(discountDelete)}
-      />
     </div>
   );
 }

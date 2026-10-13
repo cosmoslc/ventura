@@ -32,6 +32,7 @@ import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import { formatDate, formatMonth, money } from "@/lib/format";
+import type { FormField } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { GroupFinance } from "../payments/data";
 import type { GroupAttendance } from "@/lib/server/attendance";
@@ -71,6 +72,7 @@ export function GroupProfile({
   teachers,
   rooms,
   studentCourses,
+  studentFields,
   branches,
   perms,
   canCreateStudent,
@@ -88,6 +90,8 @@ export function GroupProfile({
   teachers: TeacherOption[];
   rooms: RoomOption[];
   studentCourses: { id: string; name: string }[];
+  /** "O'quvchi formasi"dagi qo'shimcha maydonlar */
+  studentFields: FormField[];
   branches: PickerBranch[];
   perms: GroupPerms;
   canCreateStudent: boolean;
@@ -419,6 +423,7 @@ export function GroupProfile({
           branches={branches.filter((b) => b.id === g.branchId)}
           selectedBranch={g.branchId}
           courses={studentCourses}
+          fields={studentFields}
           onSaved={async (studentId) => {
             // Yaratilgan o'quvchi darhol shu guruhga (sinovda) qo'shiladi
             const res = await enrollStudentAction({ groupId: g.id, studentId });

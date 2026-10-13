@@ -135,8 +135,16 @@ export const studentInput = z.object({
   interestedCourseId: id.nullable().default(null),
   joinedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   note: z.string().trim().max(1000).default(""),
+  /** "O'quvchi formasi"dagi qo'shimcha maydonlar (serverda sozlamadagi ro'yxat bo'yicha tozalanadi) */
+  customData: z.record(z.string().max(40), z.string().max(300)).default({}),
 });
 export type StudentInput = z.input<typeof studentInput>;
+
+export const studentTransferInput = z.object({
+  studentId: id,
+  branchId: id,
+  reason: z.string().trim().max(500).default(""),
+});
 
 export const studentStatusInput = z.object({
   id,

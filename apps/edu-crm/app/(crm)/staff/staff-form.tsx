@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { firstError, staffInput } from "@/lib/rules";
-import { type StaffField, missingRequired } from "@/lib/staff-fields";
+import { type FormField, missingRequired } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import { saveStaffAction } from "./actions";
@@ -53,7 +53,7 @@ export function StaffForm({
   positions: PositionOption[];
   branches: PickerBranch[];
   selectedBranch: string;
-  fields: StaffField[];
+  fields: FormField[];
   perms: StaffPerms;
   /** Yangi xodim bo'lsa — vaqtinchalik parol */
   onSaved: (password: string | null) => void;

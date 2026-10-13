@@ -9,7 +9,7 @@ import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { openGroupsByStudent } from "../groups/data";
-import { courseOptions, listArchivedStudentRows, listStudents } from "./data";
+import { courseOptions, getStudentFields, listArchivedStudentRows, listStudents } from "./data";
 import { studentPerms } from "./perms";
 import { StudentsView } from "./students-view";
 
@@ -21,10 +21,11 @@ export default async function StudentsPage() {
   const branch = await getBranchContext();
   // "O'chirilganlar" filtri — Arxiv sahifasini ko'ra oladigan xodimga
   const canArchived = canAny(staff.access, pagePermissions("/archive"));
-  const [base, archivedBase, courses] = await Promise.all([
+  const [base, archivedBase, courses, fields] = await Promise.all([
     listStudents(db, branch.filter),
     canArchived ? listArchivedStudentRows(db, branch.filter) : Promise.resolve([]),
     courseOptions(db),
+    getStudentFields(db),
   ]);
   const ids = [...base, ...archivedBase].map((s) => s.id);
   const withFinance = financePerms(staff.access).view && (await hasFeature(tenant, "payments"));
@@ -45,6 +46,7 @@ export default async function StudentsPage() {
       branches={branch.options}
       selectedBranch={branch.selected}
       courses={courses}
+      fields={fields}
       perms={studentPerms(staff.access)}
     />
   );

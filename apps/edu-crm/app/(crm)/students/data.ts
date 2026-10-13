@@ -1,7 +1,8 @@
 import "server-only";
 import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { type StudentStatus, auditEvents, courses, studentNotes, students } from "@ventura/db/schema/tenant";
+import { type StudentStatus, auditEvents, courses, settings, studentNotes, students } from "@ventura/db/schema/tenant";
+import { DEFAULT_STUDENT_FIELDS, type FormField, STUDENT_FIELDS_KEY, parseFormFields } from "@/lib/form-fields";
 
 export interface StudentRow {
   id: string;
@@ -19,6 +20,8 @@ export interface StudentRow {
   source: string | null;
   interestedCourseId: string | null;
   note: string | null;
+  /** "O'quvchi formasi"dagi qo'shimcha maydonlar qiymati */
+  customData: Record<string, string>;
   status: StudentStatus;
   statusNote: string | null;
   joinedAt: string;
@@ -49,6 +52,7 @@ export function toStudentRow(s: typeof students.$inferSelect): StudentRow {
     source: s.source,
     interestedCourseId: s.interestedCourseId,
     note: s.note,
+    customData: s.customData,
     status: s.status,
     statusNote: s.statusNote,
     joinedAt: s.joinedAt,
@@ -83,6 +87,12 @@ export async function listArchivedStudentRows(db: TenantDb, filter: readonly str
     .where(and(isNotNull(students.archivedAt), filter ? inArray(students.branchId, [...filter]) : undefined))
     .orderBy(desc(students.archivedAt));
   return rows.map(toStudentRow);
+}
+
+/** "O'quvchi formasi" qo'shimcha maydonlari (sozlamalar jadvalidan) */
+export async function getStudentFields(db: TenantDb): Promise<FormField[]> {
+  const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, STUDENT_FIELDS_KEY));
+  return parseFormFields(row?.value, DEFAULT_STUDENT_FIELDS);
 }
 
 export async function courseOptions(db: TenantDb) {

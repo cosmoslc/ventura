@@ -670,8 +670,35 @@ export const uz = {
       "student.pause": "Guruhda muzlatildi",
       "student.unpause": "Guruhda qayta faollashtirildi",
       "student.leave": "Guruhdan chiqdi",
+      "student.transfer": "Boshqa filialga o'tkazildi",
     } as Record<string, string>,
     by: (name: string) => `Kim: ${name}`,
+    // o'quvchi formasi sozlamasi
+    formSettings: "O'quvchi formasi",
+    fieldsTitle: "O'quvchi qo'shimcha formasi sozlamalari",
+    fieldsIntro:
+      "O'quvchidan so'raladigan qo'shimcha maydonlarni shu yerda boshqarasiz. Ular o'quvchi qo'shish va tahrirlash formasida, profilda esa \"Qo'shimcha ma'lumotlar\" ichida chiqadi.",
+    // profil kartalari
+    cardBalance: "Balans",
+    cardCoins: "Coin",
+    cardCoinsHint: "Coin tizimi keyingi versiyada ulanadi",
+    cardPastDebt: "O'tgan oydan qarz",
+    pastDebtNone: "Qarz yo'q",
+    pastDebtHint: "Joriy oydan oldingi to'lanmagan oylar",
+    tabDiscounts: "Chegirmalar",
+    noteAdd: "Yangi eslatma",
+    // boshqa filialga o'tkazish
+    transfer: "Boshqa filialga o'tkazish",
+    transferBranch: "Yangi filial",
+    transferCurrent: (name: string) => `Hozirgi filial: ${name}`,
+    transferGroups: (n: number) =>
+      `O'quvchi hozirgi filialdagi ${n} ta guruhdan bugungi sana bilan chiqariladi. To'lovlar va balans o'zgarmaydi.`,
+    transferHint: 'Yangi filialdagi guruhga keyin "Guruhlar" tabidan qo\'shasiz.',
+    transferSame: "O'quvchi allaqachon shu filialda.",
+    transferReason: "Boshqa filialga o'tkazildi",
+    transferReasonPlaceholder: "Nega boshqa filialga o'tkazilmoqda?",
+    transferred: "O'quvchi boshqa filialga o'tkazildi",
+    transferChoose: "Filialni tanlang.",
   },
   groups: {
     title: "Guruhlar",
@@ -1571,6 +1598,7 @@ export const uz = {
       "students.save": "O'quvchini saqlash",
       "students.status": "O'quvchi holatini o'zgartirish",
       "students.archive": "O'quvchini o'chirish",
+      "students.transfer": "O'quvchini boshqa filialga o'tkazish",
       "groups.save": "Guruhni saqlash",
       "groups.archive": "Guruhni o'chirish",
       "groups.enroll": "Guruhga qo'shish",

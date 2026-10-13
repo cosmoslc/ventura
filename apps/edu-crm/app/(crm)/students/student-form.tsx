@@ -10,6 +10,7 @@ import { PhoneInput } from "@ventura/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
+import { type FormField, missingRequired } from "@/lib/form-fields";
 import { firstError, studentInput } from "@/lib/rules";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
@@ -33,6 +34,7 @@ interface Form {
   source: string;
   interestedCourseId: string;
   note: string;
+  customData: Record<string, string>;
 }
 
 /** Mahalliy sana (YYYY-MM-DD) — UTC emas, eski tizimdagi kun siljishi xatosi takrorlanmaydi */
@@ -49,6 +51,7 @@ export function StudentForm({
   branches,
   selectedBranch,
   courses,
+  fields,
   onSaved,
 }: {
   open: boolean;
@@ -57,6 +60,8 @@ export function StudentForm({
   branches: PickerBranch[];
   selectedBranch: string;
   courses: { id: string; name: string }[];
+  /** "O'quvchi formasi"dagi qo'shimcha maydonlar */
+  fields: FormField[];
   onSaved: (id: string) => void;
 }) {
   const defaults = React.useCallback(
@@ -75,6 +80,7 @@ export function StudentForm({
       source: editing?.source ?? "",
       interestedCourseId: editing?.interestedCourseId ?? "",
       note: editing?.note ?? "",
+      customData: editing?.customData ?? {},
     }),
     [editing, selectedBranch, branches],
   );
@@ -96,7 +102,9 @@ export function StudentForm({
     setForm((f) => ({ ...f, [k]: v }));
     setError(null);
   };
-  const showBranch = branches.length > 1 && (selectedBranch === "all" || !!editing);
+  const setCustom = (id: string, v: string) => set("customData", { ...form.customData, [id]: v });
+  // Filial faqat yangi o'quvchida tanlanadi; keyin — profildagi "Boshqa filialga o'tkazish" orqali
+  const showBranch = branches.length > 1 && selectedBranch === "all" && !editing;
   const listId = React.useId();
 
   function submit(e: React.FormEvent) {
@@ -117,8 +125,11 @@ export function StudentForm({
       interestedCourseId: form.interestedCourseId || null,
       joinedAt: form.joinedAt || todayLocal(),
       note: form.note,
+      customData: form.customData,
     });
     if (!parsed.success) return setError(firstError(parsed.error));
+    const missing = missingRequired(form.customData, fields);
+    if (missing) return setError(uz.staff.fieldMissing(missing.label));
     startTransition(async () => {
       const res = await saveStudentAction(parsed.data);
       if (!res.ok && res.pending) {
@@ -309,6 +320,42 @@ export function StudentForm({
             </SelectContent>
           </Select>
         </div>
+        {fields.length ? (
+          <div className="grid gap-4 border-t border-border-soft pt-4 sm:col-span-2 sm:grid-cols-2">
+            {fields.map((f) => (
+              <div key={f.id}>
+                <Label htmlFor={`student-f-${f.id}`}>
+                  {f.label}
+                  {f.required ? " *" : ""}
+                </Label>
+                {f.type === "select" ? (
+                  <Select value={form.customData[f.id] ?? ""} onValueChange={(v) => setCustom(f.id, v)}>
+                    <SelectTrigger id={`student-f-${f.id}`} className="w-full">
+                      <SelectValue placeholder={uz.students.choose} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {f.options.map((o) => (
+                        <SelectItem key={o} value={o}>
+                          {o}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    id={`student-f-${f.id}`}
+                    type={f.type === "tel" ? "tel" : f.type}
+                    inputMode={f.type === "number" ? "numeric" : undefined}
+                    placeholder={f.placeholder || f.label}
+                    value={form.customData[f.id] ?? ""}
+                    maxLength={300}
+                    onChange={(e) => setCustom(f.id, e.target.value)}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        ) : null}
         <div className="sm:col-span-2">
           <Label htmlFor="student-note">{uz.students.note}</Label>
           <Textarea

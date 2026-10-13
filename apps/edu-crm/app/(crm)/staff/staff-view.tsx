@@ -27,11 +27,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { displayPhone, formatDate, money } from "@/lib/format";
-import { type StaffField, formCompletion } from "@/lib/staff-fields";
+import { DEFAULT_STAFF_FIELDS, type FormField, formCompletion } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
+import { FieldsModal } from "../fields-modal";
+import { saveStaffFieldsAction } from "./actions";
 import type { PositionOption, StaffRow } from "./data";
-import { FieldsModal } from "./fields-modal";
 import { StaffForm } from "./staff-form";
 import { StaffLink, StaffMenu, type StaffPerms, TempPasswordModal } from "./staff-menu";
 
@@ -49,7 +50,7 @@ export function StaffView({
   positions: PositionOption[];
   branches: PickerBranch[];
   selectedBranch: string;
-  fields: StaffField[];
+  fields: FormField[];
   perms: StaffPerms;
 }) {
   const router = useRouter();
@@ -340,7 +341,16 @@ export function StaffView({
           }}
         />
       ) : null}
-      <FieldsModal open={fieldsOpen} onOpenChange={setFieldsOpen} fields={fields} canWrite={perms.edit} />
+      <FieldsModal
+        open={fieldsOpen}
+        onOpenChange={setFieldsOpen}
+        fields={fields}
+        canWrite={perms.edit}
+        defaults={DEFAULT_STAFF_FIELDS}
+        save={saveStaffFieldsAction}
+        title={uz.staff.fieldsTitle}
+        description={uz.staff.fieldsIntro}
+      />
       <TempPasswordModal password={password} onClose={() => setPassword(null)} />
     </div>
   );

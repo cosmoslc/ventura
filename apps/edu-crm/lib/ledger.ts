@@ -147,6 +147,15 @@ export function summarize(charges: readonly MonthCharge[], entries: readonly Led
   };
 }
 
+/** Joriy oydan oldingi oylardagi to'lanmagan qoldiq — profildagi "O'tgan oydan qarz" kartasi */
+export function pastDebt(summary: LedgerSummary, currentMonth: string): { amount: number; months: string[] } {
+  const months = summary.groups.flatMap((g) => g.months).filter((m) => m.month < currentMonth && m.due > 0);
+  return {
+    amount: months.reduce((s, m) => s + m.due, 0),
+    months: [...new Set(months.map((m) => m.month))].sort(),
+  };
+}
+
 /** Guruh uchun to'lov formasida taklif qilinadigan oy: eng eski yopilmagan oy, bo'lmasa joriy oy */
 export function suggestedMonth(summary: LedgerSummary, groupId: string, currentMonth: string): string {
   const g = summary.groups.find((x) => x.groupId === groupId);

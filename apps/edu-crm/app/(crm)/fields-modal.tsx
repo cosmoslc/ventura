@@ -11,11 +11,11 @@ import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { toast } from "@ventura/ui/toast";
-import { DEFAULT_STAFF_FIELDS, STAFF_FIELD_TYPES, type StaffField, type StaffFieldType } from "@/lib/staff-fields";
+import { FIELD_TYPES, type FieldType, type FormField } from "@/lib/form-fields";
+import type { ActionResult } from "@/lib/server/action";
 import { uz } from "@/lib/uz";
-import { saveStaffFieldsAction } from "./actions";
 
-const TYPE_ICON: Record<StaffFieldType, React.ReactNode> = {
+const TYPE_ICON: Record<FieldType, React.ReactNode> = {
   text: <Type />,
   number: <Hash />,
   date: <Calendar />,
@@ -37,21 +37,31 @@ function fieldId(label: string, taken: readonly string[]) {
   return id;
 }
 
+/** Formadagi qo'shimcha maydonlar sozlamasi — xodim va o'quvchi formalari uchun bitta oyna */
 export function FieldsModal({
   open,
   onOpenChange,
   fields,
   canWrite,
+  defaults,
+  save,
+  title,
+  description,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  fields: StaffField[];
+  fields: FormField[];
   canWrite: boolean;
+  /** "Standart holatga qaytarish" ro'yxati; bo'sh bo'lsa tugma ko'rinmaydi */
+  defaults: FormField[];
+  save: (fields: FormField[]) => Promise<ActionResult>;
+  title: string;
+  description: string;
 }) {
   const router = useRouter();
   const [list, setList] = React.useState(fields);
   const [label, setLabel] = React.useState("");
-  const [type, setType] = React.useState<StaffFieldType>("text");
+  const [type, setType] = React.useState<FieldType>("text");
   const [placeholder, setPlaceholder] = React.useState("");
   const [required, setRequired] = React.useState(false);
   const [optionsText, setOptionsText] = React.useState("");
@@ -67,9 +77,9 @@ export function FieldsModal({
     }
   }
 
-  function persist(next: StaffField[]) {
+  function persist(next: FormField[]) {
     startTransition(async () => {
-      const res = await saveStaffFieldsAction(next);
+      const res = await save(next);
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
       setList(next);
       toast({ tone: "success", title: uz.staff.fieldsSaved });
@@ -88,7 +98,7 @@ export function FieldsModal({
             .filter(Boolean)
         : [];
     if (type === "select" && !options.length) return setError(uz.staff.fieldOptionsRequired);
-    const field: StaffField = {
+    const field: FormField = {
       id: fieldId(
         name,
         list.map((f) => f.id),
@@ -114,17 +124,12 @@ export function FieldsModal({
       onOpenChange={onOpenChange}
       position="center"
       wide
-      title={uz.staff.fieldsTitle}
-      description={uz.staff.fieldsIntro}
+      title={title}
+      description={description}
       footer={
         <>
-          {canWrite ? (
-            <Button
-              variant="ghost"
-              className="mr-auto"
-              disabled={pending}
-              onClick={() => persist(DEFAULT_STAFF_FIELDS)}
-            >
+          {canWrite && defaults.length ? (
+            <Button variant="ghost" className="mr-auto" disabled={pending} onClick={() => persist(defaults)}>
               <RotateCcw /> {uz.staff.fieldsReset}
             </Button>
           ) : null}
@@ -182,12 +187,12 @@ export function FieldsModal({
                   setError(null);
                 }}
               />
-              <Select value={type} onValueChange={(v) => setType(v as StaffFieldType)}>
+              <Select value={type} onValueChange={(v) => setType(v as FieldType)}>
                 <SelectTrigger className="w-full" aria-label={uz.staff.fieldType}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STAFF_FIELD_TYPES.map((t) => (
+                  {FIELD_TYPES.map((t) => (
                     <SelectItem key={t} value={t}>
                       {uz.staff.fieldTypes[t]}
                     </SelectItem>

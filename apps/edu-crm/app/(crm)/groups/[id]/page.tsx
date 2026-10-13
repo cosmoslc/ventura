@@ -10,7 +10,7 @@ import { todayTashkent } from "@/lib/server/memberships";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
-import { courseOptions } from "../../students/data";
+import { courseOptions, getStudentFields } from "../../students/data";
 import { groupFormOptions, groupMembers, listGroups, studentCandidates } from "../data";
 import { GroupProfile } from "../group-profile";
 import { groupPerms } from "../perms";
@@ -38,11 +38,12 @@ export default async function GroupPage({
   const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(sp.month ?? "") ? sp.month! : today.slice(0, 7);
   const attendanceOn = await hasFeature(tenant, "attendance");
   const financeOn = financePerms(staff.access).view && (await hasFeature(tenant, "payments"));
-  const [members, candidates, options, studentCourses, attendance, finance] = await Promise.all([
+  const [members, candidates, options, studentCourses, studentFields, attendance, finance] = await Promise.all([
     groupMembers(db, group.id),
     studentCandidates(db, scope),
     groupFormOptions(db, scope),
     courseOptions(db),
+    getStudentFields(db),
     attendanceOn ? groupAttendance(db, group, month) : Promise.resolve(null),
     financeOn ? groupFinance(db, group.id, today) : Promise.resolve(null),
   ]);
@@ -55,6 +56,7 @@ export default async function GroupPage({
       teachers={options.teachers}
       rooms={options.rooms}
       studentCourses={studentCourses}
+      studentFields={studentFields}
       branches={branch.options}
       perms={groupPerms(staff.access)}
       canCreateStudent={can(staff.access, "students.create")}

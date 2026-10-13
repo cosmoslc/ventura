@@ -10,7 +10,7 @@ import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { StatCard } from "@ventura/ui/stat-card";
 import { displayPhone, formatDate, money } from "@/lib/format";
-import { type StaffField, formCompletion } from "@/lib/staff-fields";
+import { type FormField, formCompletion } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import type { PositionOption, StaffRow } from "./data";
@@ -30,7 +30,7 @@ export function StaffDetail({
   positions: PositionOption[];
   branches: PickerBranch[];
   selectedBranch: string;
-  fields: StaffField[];
+  fields: FormField[];
   perms: StaffPerms;
 }) {
   const router = useRouter();
