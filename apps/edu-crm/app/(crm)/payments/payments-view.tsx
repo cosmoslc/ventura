@@ -1,19 +1,15 @@
 "use client";
 
-import { Banknote, CalendarCheck, Pencil, Plus, Printer, RotateCcw, Search, Trash2, Undo2, Wallet } from "lucide-react";
+import { Banknote, CalendarCheck, Pencil, Plus, Printer, RotateCcw, Trash2, Undo2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
-import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
-import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
@@ -27,7 +23,6 @@ import type { FinancePerms } from "./perms";
 
 const t = uz.payments;
 const ALL = "all";
-const KINDS = ["payment", "refund", "discount", "correction"] as const;
 const KIND_TONE = { payment: "success", refund: "danger", discount: "info", correction: "neutral" } as const;
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
 
@@ -35,9 +30,8 @@ export function PaymentsView({
   rows,
   today,
   todayIncome,
-  from,
-  to,
-  rangeInvalid,
+  month,
+  months,
   methods,
   students,
   groups,
@@ -47,9 +41,9 @@ export function PaymentsView({
   rows: PaymentRow[];
   today: string;
   todayIncome: { sum: number; count: number };
-  from: string;
-  to: string;
-  rangeInvalid: boolean;
+  /** Tanlangan oy "YYYY-MM" */
+  month: string;
+  months: string[];
   methods: MethodOption[];
   students: PickStudent[];
   groups: StudentGroupOption[];
@@ -58,11 +52,8 @@ export function PaymentsView({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [kind, setKind] = React.useState(ALL);
-  const [method, setMethod] = React.useState(ALL);
   const [group, setGroup] = React.useState(ALL);
   const [query, setQuery] = React.useState("");
-  const [showVoided, setShowVoided] = React.useState(false);
   const [payOpen, setPayOpen] = React.useState(false);
   const [voiding, setVoiding] = React.useState<PaymentRow | null>(null);
   const [editing, setEditing] = React.useState<PaymentRow | null>(null);
@@ -73,16 +64,12 @@ export function PaymentsView({
   const refunds = live.filter((r) => r.kind === "refund");
   const incomeSum = income.reduce((s, r) => s + r.amount, 0);
   const refundSum = refunds.reduce((s, r) => s + r.amount, 0);
-  const byMethod = methods
-    .map((m) => ({ ...m, sum: live.filter((r) => r.methodId === m.id).reduce((s, r) => s + r.cash, 0) }))
-    .filter((m) => m.sum !== 0);
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
   const visible = rows.filter((r) => {
-    if (!showVoided && r.voided) return false;
-    if (kind !== ALL && r.kind !== kind) return false;
-    if (method !== ALL && r.methodId !== method) return false;
+    // Bekor qilinganlar ro'yxatda ko'rinmaydi (o'quvchi profilidagi "To'lovlar" tabida ko'rinadi va tiklanadi)
+    if (r.voided) return false;
     if (group !== ALL && r.groupId !== group) return false;
     if (!q) return true;
     return (
@@ -92,11 +79,7 @@ export function PaymentsView({
     );
   });
 
-  function setRange(next: { from?: string; to?: string }) {
-    const f = next.from ?? from;
-    const tt = next.to ?? to;
-    if (f && tt) router.push(`${pathname}?from=${f}&to=${tt}`, { scroll: false });
-  }
+  const setMonth = (m: string) => router.push(`${pathname}?month=${m}`, { scroll: false });
 
   function restore(e: PaymentRow) {
     startTransition(async () => {
@@ -124,8 +107,6 @@ export function PaymentsView({
           ) : null
         }
       />
-
-      {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -158,87 +139,30 @@ export function PaymentsView({
         />
       </div>
 
-      {byMethod.length ? (
-        <div className="flex flex-wrap gap-2">
-          {byMethod.map((m) => (
-            <Badge key={m.id} tone="neutral">
-              {m.name}: {money(m.sum)} {uz.common.som}
-            </Badge>
-          ))}
-        </div>
-      ) : null}
-
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div>
-          <Label htmlFor="pay-from">{t.from}</Label>
-          <Input id="pay-from" type="date" value={from} max={to} onChange={(e) => setRange({ from: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="pay-to">{t.to}</Label>
-          <Input id="pay-to" type="date" value={to} min={from} onChange={(e) => setRange({ to: e.target.value })} />
-        </div>
-        <div>
-          <Label>{t.kind}</Label>
-          <Select value={kind} onValueChange={setKind}>
-            <SelectTrigger className="w-full" aria-label={t.kind}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allKinds}</SelectItem>
-              {KINDS.map((k) => (
-                <SelectItem key={k} value={k}>
-                  {t.kinds[k]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.method}</Label>
-          <Select value={method} onValueChange={setMethod}>
-            <SelectTrigger className="w-full" aria-label={t.method}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allMethods}</SelectItem>
-              {methods.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.group}</Label>
-          <Select value={group} onValueChange={setGroup}>
-            <SelectTrigger className="w-full" aria-label={t.group}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{uz.debtors.allGroups}</SelectItem>
-              {groupNames.map(([id, name]) => (
-                <SelectItem key={id} value={id}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
-
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          <div className="relative min-w-60 flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          </div>
-          <ChoiceField
-            control={<Checkbox checked={showVoided} onCheckedChange={(v) => setShowVoided(v === true)} />}
-            label={t.showVoided}
-          />
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <FilterSelect
+          label={t.monthFilter}
+          value={month}
+          onValueChange={setMonth}
+          className="sm:w-44"
+          options={months.map((m) => ({ value: m, label: formatMonth(m) }))}
+        />
+        <FilterSelect
+          label={t.group}
+          value={group}
+          onValueChange={setGroup}
+          options={[
+            { value: ALL, label: uz.debtors.allGroups },
+            ...groupNames.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterEnd>
           <span className="text-caption text-muted-foreground">{t.count(visible.length)}</span>
-        </div>
+        </FilterEnd>
+      </FilterBar>
+
+      <Card className="overflow-hidden">
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

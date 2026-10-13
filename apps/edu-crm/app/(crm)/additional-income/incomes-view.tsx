@@ -1,18 +1,16 @@
 "use client";
 
-import { Coins, Hash, Pencil, PiggyBank, Plus, RotateCcw, Search, Trash2, Trophy } from "lucide-react";
+import { Coins, Hash, Pencil, PiggyBank, Plus, RotateCcw, Trash2, Trophy } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
-import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FilterBar, FilterDates, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Pagination } from "@ventura/ui/pagination";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
@@ -141,64 +139,31 @@ export function IncomesView({
         />
       </div>
 
-      <Card className="grid gap-4 p-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <Label htmlFor="inc-from">{uz.expenses.from}</Label>
-          <Input id="inc-from" type="date" value={from} max={to} onChange={(e) => setRange({ from: e.target.value })} />
-        </div>
-        <div>
-          <Label htmlFor="inc-to">{uz.expenses.to}</Label>
-          <Input id="inc-to" type="date" value={to} min={from} onChange={(e) => setRange({ to: e.target.value })} />
-        </div>
-        <div>
-          <Label>{uz.expenses.category}</Label>
-          <Select value={category} onValueChange={filter(setCategory)}>
-            <SelectTrigger className="w-full" aria-label={uz.expenses.category}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{uz.expenses.allCategories}</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>{t.method}</Label>
-          <Select value={method} onValueChange={filter(setMethod)}>
-            <SelectTrigger className="w-full" aria-label={t.method}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.allMethods}</SelectItem>
-              {methods.map((m) => (
-                <SelectItem key={m.id} value={m.id}>
-                  {m.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => filter(setQuery)(e.target.value)} />
+        <FilterDates from={from} to={to} onChange={setRange} fromLabel={uz.expenses.from} toLabel={uz.expenses.to} />
+        <FilterSelect
+          label={uz.expenses.category}
+          value={category}
+          onValueChange={filter(setCategory)}
+          options={[
+            { value: ALL, label: uz.expenses.allCategories },
+            ...categories.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.method}
+          value={method}
+          onValueChange={filter(setMethod)}
+          options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+        <ChoiceField
+          control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
+          label={uz.expenses.showVoided}
+        />
+      </FilterBar>
 
-      <Card className="p-0">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border p-4">
-          <div className="relative min-w-60 flex-1">
-            <Input
-              icon={<Search />}
-              placeholder={t.search}
-              value={query}
-              onChange={(e) => filter(setQuery)(e.target.value)}
-            />
-          </div>
-          <ChoiceField
-            control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
-            label={uz.expenses.showVoided}
-          />
-        </div>
+      <Card className="overflow-hidden">
         {shown.length ? (
           <>
             <TableWrap className="rounded-none border-0">

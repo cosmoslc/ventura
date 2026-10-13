@@ -32,6 +32,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@ventura/ui/dropdown-menu";
+import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { LogView } from "@ventura/ui/log-view";
@@ -469,50 +470,77 @@ const ROWS = [
 
 function DataTable() {
   const [page, setPage] = React.useState(1);
+  const [status, setStatus] = React.useState("all");
+  const [range, setRange] = React.useState({ from: "2026-10-01", to: "2026-10-13" });
   return (
-    <Card className="overflow-hidden">
-      <TableWrap>
-        <Table className="min-w-[520px]">
-          <THead>
-            <tr>
-              <Th>Loyiha</Th>
-              <Th>Domen</Th>
-              <Th>Holat</Th>
-              <Th className="text-right">Amallar</Th>
-            </tr>
-          </THead>
-          <TBody>
-            {ROWS.map(([name, client, domain, tone, label]) => (
-              <Tr key={domain}>
-                <Td>
-                  <div className="flex items-center gap-3">
-                    <Avatar name={name} size={32} />
-                    <div>
-                      <div className="text-body font-bold text-foreground">{name}</div>
-                      <div className="text-caption text-muted-foreground">{client}</div>
+    <div className="space-y-4">
+      <FilterBar standalone>
+        <FilterSearch placeholder="Ism, telefon..." />
+        <FilterDates
+          from={range.from}
+          to={range.to}
+          onChange={(next) => setRange((r) => ({ ...r, ...next }))}
+          fromLabel="Sanadan"
+          toLabel="Sanagacha"
+        />
+        <FilterSelect
+          label="Holat"
+          value={status}
+          onValueChange={setStatus}
+          options={[
+            { value: "all", label: "Holat (Hammasi)" },
+            { value: "active", label: "Faol" },
+            { value: "paused", label: "Muzlatilgan" },
+          ]}
+        />
+        <FilterEnd>
+          <span className="text-caption text-muted-foreground">37 ta yozuv</span>
+        </FilterEnd>
+      </FilterBar>
+      <Card className="overflow-hidden">
+        <TableWrap>
+          <Table className="min-w-[520px]">
+            <THead>
+              <tr>
+                <Th>Loyiha</Th>
+                <Th>Domen</Th>
+                <Th>Holat</Th>
+                <Th className="text-right">Amallar</Th>
+              </tr>
+            </THead>
+            <TBody>
+              {ROWS.map(([name, client, domain, tone, label]) => (
+                <Tr key={domain}>
+                  <Td>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={name} size={32} />
+                      <div>
+                        <div className="text-body font-bold text-foreground">{name}</div>
+                        <div className="text-caption text-muted-foreground">{client}</div>
+                      </div>
                     </div>
-                  </div>
-                </Td>
-                <Td>
-                  <span className="font-mono text-primary-text">{domain}</span>
-                </Td>
-                <Td>
-                  <Badge tone={tone} dot>
-                    {label}
-                  </Badge>
-                </Td>
-                <Td className="text-right">
-                  <Button variant="subtle" size="icon-sm" aria-label={`${name} amallari`}>
-                    <MoreHorizontal />
-                  </Button>
-                </Td>
-              </Tr>
-            ))}
-          </TBody>
-        </Table>
-      </TableWrap>
-      <Pagination page={page} pageCount={4} total={37} pageSize={10} onPageChange={setPage} />
-    </Card>
+                  </Td>
+                  <Td>
+                    <span className="font-mono text-primary-text">{domain}</span>
+                  </Td>
+                  <Td>
+                    <Badge tone={tone} dot>
+                      {label}
+                    </Badge>
+                  </Td>
+                  <Td className="text-right">
+                    <Button variant="subtle" size="icon-sm" aria-label={`${name} amallari`}>
+                      <MoreHorizontal />
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableWrap>
+        <Pagination page={page} pageCount={4} total={37} pageSize={10} onPageChange={setPage} />
+      </Card>
+    </div>
   );
 }
 
@@ -831,7 +859,11 @@ export function UiCatalog() {
             <Charts />
           </Both>
         </Section>
-        <Section id="jadval" title="Jadval" description="Table, Badge, uch nuqta va Pagination">
+        <Section
+          id="jadval"
+          title="Jadval"
+          description="Filtr qatori (FilterBar), Table, Badge, uch nuqta va Pagination"
+        >
           <Both>
             <DataTable />
           </Both>
