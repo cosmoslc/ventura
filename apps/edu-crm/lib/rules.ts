@@ -184,3 +184,56 @@ export type GroupInput = z.input<typeof groupInput>;
 
 export const membershipDateInput = z.object({ id, date: day });
 export const membershipLeaveInput = z.object({ id, date: day, reason: z.string().trim().max(500).default("") });
+
+/* ---------- Xarajatlar va qo'shimcha daromad (ADR 0016) ---------- */
+
+const amount = (msg: string) => z.number({ error: msg }).int(msg).positive(msg).max(10_000_000_000, msg);
+/** Xodim yoki o'qituvchi: "user:<id>" / "teacher:<id>" */
+export const personRef = z.string().regex(/^(user|teacher):[0-9a-f-]{36}$/);
+
+export const expenseInput = z.object({
+  id: id.optional(),
+  branchId: id.nullable(),
+  kind: z.enum(["variable", "fixed"]),
+  categoryId: z.uuid({ error: uz.expenses.categoryRequired }),
+  reason: z.string().trim().min(1, uz.expenses.reasonRequired).max(300),
+  amount: amount(uz.expenses.amountRequired),
+  date: day,
+  methodId: z.uuid({ error: uz.expenses.methodRequired }),
+  person: personRef.nullable().default(null),
+});
+export type ExpenseInput = z.input<typeof expenseInput>;
+
+export const incomeInput = z.object({
+  id: id.optional(),
+  branchId: id.nullable(),
+  categoryId: z.uuid({ error: uz.expenses.categoryRequired }),
+  title: z.string().trim().min(1, uz.incomes.titleRequired).max(120),
+  amount: amount(uz.expenses.amountRequired),
+  date: day,
+  methodId: z.uuid({ error: uz.expenses.methodRequired }),
+  payer: z.string().trim().max(120).default(""),
+});
+export type IncomeInput = z.input<typeof incomeInput>;
+
+export const planInput = z.object({
+  id: id.optional(),
+  branchId: id.nullable(),
+  categoryId: z.uuid({ error: uz.expenses.categoryRequired }),
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, uz.expenses.planMonthRequired),
+  amount: amount(uz.expenses.planAmountRequired),
+  methodId: id.nullable().default(null),
+  person: personRef.nullable().default(null),
+  note: z.string().trim().max(300).default(""),
+});
+export type PlanInput = z.input<typeof planInput>;
+
+export const financeCategoryInput = z.object({
+  id: id.optional(),
+  kind: z.enum(["expense", "income"]),
+  name: z.string().trim().min(1, uz.expenses.categoryNameRequired).max(60),
+  /** bo'sh — barcha filiallar */
+  branchIds: z.array(id).max(100).default([]),
+  active: z.boolean().default(true),
+});
+export type FinanceCategoryInput = z.input<typeof financeCategoryInput>;

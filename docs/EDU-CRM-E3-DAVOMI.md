@@ -1,6 +1,6 @@
 # E3 (Moliya) davomi — keyingi qismlar uchun eslatma
 
-2026-10-12 · E3a tayyor (ADR 0015, PR #20). E3b, E3c va E3d shu hujjat bo'yicha davom ettiriladi.
+2026-10-13 · E3a tayyor (ADR 0015, PR #20), E3b tayyor (ADR 0016). E3c va E3d shu hujjat bo'yicha davom ettiriladi.
 
 ## Qabul qilingan qarorlar (Saidakbar, 2026-10-12)
 
@@ -16,7 +16,7 @@
 
 Asosiy qoida: hisob faqat `lib/billing.ts` va `lib/ledger.ts` dan olinadi, boshqa joyda formula yozilmaydi.
 
-## E3b. Xarajatlar va qo'shimcha daromad
+## E3b. Xarajatlar va qo'shimcha daromad — tayyor (ADR 0016)
 
 **Eski tizimda nima bor edi:**
 - `finance` jadvali (`type`, `amount`, `category` matni, `date`, `status`, `expense_type`, `payment_method`, `staff`), toifalar va oylik rejalar.
@@ -100,5 +100,5 @@ Asosiy qoida: hisob faqat `lib/billing.ts` va `lib/ledger.ts` dan olinadi, boshq
 
 ## Muhit eslatmasi
 
-- Deploydan keyin mijoz bazasi migratsiyasini ishga tushirish kerak: `pnpm db:migrate:tenant`. 0008 migratsiyasi moliya jadvallarini yaratadi.
+- Deploydan keyin mijoz bazasi migratsiyasini ishga tushirish kerak: `pnpm db:migrate:tenant`. 0008 migratsiyasi moliya jadvallarini, 0009 — xarajat va qo'shimcha daromad jadvallarini yaratadi.
 - Moliya integratsiya testi CI'da "mijoz bazasi" vazifasida `TENANT_TEST_ADMIN_URL` bilan ishlaydi.

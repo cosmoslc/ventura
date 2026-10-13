@@ -525,6 +525,8 @@ Qoidalar:
 
 - Bitta ulush chegaraga nisbatan (CPU, xotira, disk): ustida nom va `NN% · tafsilot` (mono), ostida 6px yo'l.
 - To'ldirilgan qism holatni bildiradi: `--primary` → `warnAt` dan `--warning-fg` → `dangerAt` dan `--danger-fg`; bo'sh yo'l — shu rangning 16% li och qatlami. Qiymat har doim matnda ham bor (rang yolg'iz ma'no tashimaydi).
+- `state` — holatni chaqiruvchi o'zi beradi (chegaralar o'rniga), masalan xarajat rejasi: 80% dan sariq, limitdan oshsa qizil.
+- `overflow` — 100% dan oshgan qiymat matnda haqiqiy foiz bilan (masalan, `130%`), yo'l to'la qoladi.
 - `role="meter"`, `aria-valuenow`, `aria-valuetext`.
 
 ### 11.30 LineChart — `line-chart.tsx`

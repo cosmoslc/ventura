@@ -64,6 +64,13 @@
       "when": 1791818074686,
       "tag": "0008_e3a_finance",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791862888743,
+      "tag": "0009_e3b_expenses",
+      "breakpoints": true
     }
   ]
 }

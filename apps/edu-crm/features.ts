@@ -116,7 +116,10 @@ export const features = [
     group: "Moliya",
     type: "regular",
     routes: ["/api/expenses"],
-    nav: [{ label: "Xarajatlar", href: "/expenses" }],
+    nav: [
+      { label: "Xarajatlar", href: "/expenses" },
+      { label: "Qo'shimcha daromadlar", href: "/additional-income" },
+    ],
   },
   {
     key: "salaries",

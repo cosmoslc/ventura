@@ -3,8 +3,10 @@ import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { inScope } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
 import {
+  additionalIncomes,
   branches,
   courses,
+  expenses,
   groups,
   positions,
   rooms,
@@ -123,13 +125,23 @@ export async function assignableStaff(db: TenantDb): Promise<BranchStaff[]> {
 
 /** O'chirishdan oldin: filialga bog'langan yozuvlar soni */
 export async function branchUsage(db: TenantDb, branchId: string) {
-  const [[c], [r], [t], [gr], [st]] = await Promise.all([
+  const [[c], [r], [t], [gr], [st], [ex], [inc]] = await Promise.all([
     db.select({ n: count() }).from(courses).where(eq(courses.branchId, branchId)),
     db.select({ n: count() }).from(rooms).where(eq(rooms.branchId, branchId)),
     // Bo'shatilganlari ham: ularning tarixi filialga bog'liq
     db.select({ n: count() }).from(teachers).where(eq(teachers.branchId, branchId)),
     db.select({ n: count() }).from(groups).where(eq(groups.branchId, branchId)),
     db.select({ n: count() }).from(students).where(eq(students.branchId, branchId)),
+    // Pul yozuvlari (bekor qilinganlari ham) filialsiz qolmaydi — ADR 0016
+    db.select({ n: count() }).from(expenses).where(eq(expenses.branchId, branchId)),
+    db.select({ n: count() }).from(additionalIncomes).where(eq(additionalIncomes.branchId, branchId)),
   ]);
-  return { courses: c?.n ?? 0, rooms: r?.n ?? 0, teachers: t?.n ?? 0, groups: gr?.n ?? 0, students: st?.n ?? 0 };
+  return {
+    courses: c?.n ?? 0,
+    rooms: r?.n ?? 0,
+    teachers: t?.n ?? 0,
+    groups: gr?.n ?? 0,
+    students: st?.n ?? 0,
+    finance: (ex?.n ?? 0) + (inc?.n ?? 0),
+  };
 }

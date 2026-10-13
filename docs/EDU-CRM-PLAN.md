@@ -1,6 +1,6 @@
 # edu-crm: eski CRM'ni Ventura qolipiga ko'chirish rejasi
 
-2026-10-12 · holat: E0 tayyor, E1 jarayonda (ma'lumotnomalar tayyor) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
+2026-10-13 · holat: E0–E2 tayyor, E3 jarayonda (E3a va E3b tayyor) · Ventura bosqichlaridan (SPEC 13-bo'lim) alohida yo'nalish
 
 ## 1. Maqsad
 
@@ -124,7 +124,7 @@ Bo'limlar: `payments`, `debtors`, `expenses`, `salaries`.
 
 - [x] To'lov qabul qilish, to'lov turlari, chek — ADR 0015
 - [x] Qaytarish, chegirmalar, qarzdorlar — ADR 0015
-- [ ] Xarajatlar va toifalari, qo'shimcha daromad
+- [x] Xarajatlar va toifalari, oylik rejalar, qo'shimcha daromad — ADR 0016
 - [ ] Ish haqi: o'qituvchi va xodimlar
 - [ ] Pul amallari auditi, tasdiqlash so'rovlari
 
@@ -146,7 +146,7 @@ Bo'lim: `leads`.
 Bo'lim: `reports`.
 
 - [ ] Bosh sahifa ko'rsatkichlari
-- [ ] Moliyaviy hisobotlar: pul oqimi, kurs daromadi, xarajatlar, chegirmalar
+- [ ] Moliyaviy hisobotlar: pul oqimi (qo'shimcha daromad ham — ADR 0016), kurs daromadi, xarajatlar, chegirmalar
 - [ ] O'quv hisobotlari: davomat, guruhdan chiqqanlar, xavf ostidagi o'quvchilar, saqlab qolish
 - [ ] Excel'ga eksport
 

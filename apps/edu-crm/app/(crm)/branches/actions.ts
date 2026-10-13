@@ -97,6 +97,7 @@ export async function deleteBranchAction(id: unknown): Promise<ActionResult> {
       usage.teachers ? uz.branches.dataTeachers(usage.teachers) : null,
       usage.groups ? uz.branches.dataGroups(usage.groups) : null,
       usage.students ? uz.branches.dataStudents(usage.students) : null,
+      usage.finance ? uz.branches.dataFinance(usage.finance) : null,
     ].filter((p): p is string => !!p);
     if (parts.length) return { ok: false, error: uz.branches.hasData(parts.join(", ")) };
 
