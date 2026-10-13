@@ -1,0 +1,1 @@
+ALTER TABLE "students" ADD COLUMN "custom_data" jsonb DEFAULT '{}'::jsonb NOT NULL;

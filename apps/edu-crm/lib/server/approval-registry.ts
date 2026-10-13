@@ -30,7 +30,12 @@ import {
 } from "@/app/(crm)/payments/actions";
 import { restoreSalaryEntryAction, saveSalaryEntryAction, voidSalaryEntryAction } from "@/app/(crm)/salaries/actions";
 import { markEmployeeAction, markEmployeesPresentAction } from "@/app/(crm)/staff-attendance/actions";
-import { archiveStudentAction, saveStudentAction, setStudentStatusAction } from "@/app/(crm)/students/actions";
+import {
+  archiveStudentAction,
+  saveStudentAction,
+  setStudentStatusAction,
+  transferStudentAction,
+} from "@/app/(crm)/students/actions";
 
 /*
  * "Tasdiq bilan" bo'la oladigan amallar reyestri (ADR 0019): kalit → server amali. Direktor so'rovni tasdiqlaganda
@@ -63,6 +68,7 @@ export const APPROVAL_ACTIONS = {
   "students.save": saveStudentAction,
   "students.status": setStudentStatusAction,
   "students.archive": archiveStudentAction,
+  "students.transfer": transferStudentAction,
   "groups.save": saveGroupAction,
   "groups.archive": archiveGroupAction,
   "groups.enroll": enrollStudentAction,

@@ -41,6 +41,7 @@ import { Logo } from "@ventura/ui/logo";
 import { DonutChart } from "@ventura/ui/donut-chart";
 import { Gauge } from "@ventura/ui/gauge";
 import { Meter } from "@ventura/ui/meter";
+import { MetricCard } from "@ventura/ui/metric-card";
 import { Sparkline } from "@ventura/ui/sparkline";
 import { TrendChart } from "@ventura/ui/trend-chart";
 import { MoneyInput } from "@ventura/ui/money-input";
@@ -49,6 +50,7 @@ import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { Pagination } from "@ventura/ui/pagination";
 import { PhoneInput } from "@ventura/ui/phone-input";
+import { SearchSelect } from "@ventura/ui/search-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { StepList } from "@ventura/ui/step-list";
@@ -251,6 +253,8 @@ function Buttons() {
 }
 
 function Inputs() {
+  const [group, setGroup] = React.useState<string[]>([]);
+  const [langs, setLangs] = React.useState<string[]>(["en"]);
   const [phone, setPhone] = React.useState("90123");
   const [price, setPrice] = React.useState<number | null>(1500000);
   const [color, setColor] = React.useState(demoColors[0]!.value);
@@ -284,6 +288,36 @@ function Inputs() {
             <SelectItem value="sawmill">Pilorama tizimi</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div>
+        <Label>Qidiruvli tanlov (SearchSelect)</Label>
+        <SearchSelect
+          options={[
+            { value: "g1", label: "IELTS 7.0", hint: "IELTS · Dilshod · 14:00" },
+            { value: "g2", label: "Matematika 9", hint: "Matematika · Aziza · 16:00" },
+            { value: "g3", label: "Ingliz tili A1", hint: "General English · Bobur · 09:00" },
+          ]}
+          value={group}
+          onChange={setGroup}
+          placeholder="Guruhni tanlang"
+          searchPlaceholder="Guruh qidirish..."
+          emptyText="Hech narsa topilmadi"
+        />
+      </div>
+      <div>
+        <Label>Ko&apos;p tanlov (SearchSelect multiple)</Label>
+        <SearchSelect
+          multiple
+          searchable={false}
+          options={[
+            { value: "en", label: "Ingliz" },
+            { value: "ru", label: "Rus" },
+            { value: "de", label: "Nemis" },
+          ]}
+          value={langs}
+          onChange={setLangs}
+          placeholder="Tanlang"
+        />
       </div>
       <div>
         <Label>Telefon (noto&apos;liq)</Label>
@@ -412,6 +446,20 @@ function Charts() {
 function Cards() {
   return (
     <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <MetricCard
+          label="Balansi"
+          value="−538"
+          unit="so'm"
+          badge="Qarz"
+          tone="danger"
+          colorValue
+          highlight
+          foot="Kirim: 138 462 · Chiqim: 139 000"
+        />
+        <MetricCard label="Retention" value="93%" icon={<Rocket />} tone="primary" colorValue foot="Saqlash darajasi" />
+        <MetricCard label="Aktiv guruhlar" value="2" unit="ta guruh" icon={<FolderKanban />} tone="info" />
+      </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard icon={<FolderKanban />} label="Faol loyihalar" value="24" tone={1} trend={{ value: "3", up: true }} />
         <StatCard icon={<Rocket />} label="Bugungi deploylar" value="12" tone={2} />
@@ -845,7 +893,7 @@ export function UiCatalog() {
             <Badges />
           </Both>
         </Section>
-        <Section id="kartochkalar" title="Kartochkalar" description="Card, StatCard, Meter va LineChart">
+        <Section id="kartochkalar" title="Kartochkalar" description="Card, StatCard, MetricCard, Meter va LineChart">
           <Both>
             <Cards />
           </Both>

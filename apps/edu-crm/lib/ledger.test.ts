@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { MonthCharge } from "./billing";
-import { type LedgerEntry, cash, overdueDays, signed, suggestedAmount, suggestedMonth, summarize } from "./ledger";
+import {
+  type LedgerEntry,
+  cash,
+  overdueDays,
+  pastDebt,
+  signed,
+  suggestedAmount,
+  suggestedMonth,
+  summarize,
+} from "./ledger";
 
 const charge = (groupId: string, month: string, amount: number): MonthCharge => ({
   membershipId: `m-${groupId}`,
@@ -209,5 +218,28 @@ describe("muddat", () => {
     expect(overdueDays("2026-09", 10, "2026-10-12")).toBe(32);
     expect(overdueDays("2026-10", 15, "2026-10-12")).toBe(0);
     expect(overdueDays("2026-02", 28, "2026-03-01")).toBe(1);
+  });
+});
+
+describe("o'tgan oydan qarz (profil kartasi)", () => {
+  it("faqat joriy oydan oldingi to'lanmagan qoldiq, guruhlar bo'yicha yig'iladi", () => {
+    const s = summarize(
+      [
+        charge("A", "2026-08", 300_000),
+        charge("A", "2026-09", 300_000),
+        charge("A", "2026-10", 300_000),
+        charge("B", "2026-09", 200_000),
+      ],
+      [entry("payment", 400_000, "A"), entry("payment", 50_000, "B")],
+    );
+    expect(pastDebt(s, "2026-10")).toEqual({ amount: 200_000 + 150_000, months: ["2026-09"] });
+  });
+
+  it("joriy oy qarzi va to'langan oylar hisobga olinmaydi", () => {
+    const s = summarize(
+      [charge("A", "2026-09", 300_000), charge("A", "2026-10", 300_000)],
+      [entry("payment", 300_000, "A")],
+    );
+    expect(pastDebt(s, "2026-10")).toEqual({ amount: 0, months: [] });
   });
 });

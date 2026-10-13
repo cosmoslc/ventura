@@ -113,30 +113,27 @@ export const teacherInput = z.object({
 });
 export type TeacherInput = z.input<typeof teacherInput>;
 
+/**
+ * O'quvchi formasi (ADR 0020): asosiy maydonlar — ism, telefon, jins va izoh. Qolgani markazning o'zi qo'shadigan
+ * qo'shimcha maydonlar (`customData`, serverda sozlamadagi ro'yxat bo'yicha tozalanadi). Eski ustunlar (tug'ilgan sana,
+ * maktab, ota-ona...) bazada qoladi — Excel importi ularni to'ldiradi, profil to'ldirilganini ko'rsatadi.
+ */
 export const studentInput = z.object({
   id: id.optional(),
   branchId: id.nullable(),
   name: z.string().trim().min(1, uz.students.nameRequired).max(120),
   phone: z.string().regex(/^\d{9}$/, uz.students.phoneInvalid),
-  parentName: z.string().trim().max(120).default(""),
-  parentPhone: z
-    .string()
-    .regex(/^(\d{9})?$/, uz.students.parentPhoneInvalid)
-    .default(""),
-  birthDate: z
-    .string()
-    .regex(/^(\d{4}-\d{2}-\d{2})?$/)
-    .default(""),
   gender: z.enum(["male", "female"]).nullable().default(null),
-  school: z.string().trim().max(120).default(""),
-  grade: z.string().trim().max(40).default(""),
-  address: z.string().trim().max(300).default(""),
-  source: z.string().trim().max(80).default(""),
-  interestedCourseId: id.nullable().default(null),
-  joinedAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   note: z.string().trim().max(1000).default(""),
+  customData: z.record(z.string().max(40), z.string().max(300)).default({}),
 });
 export type StudentInput = z.input<typeof studentInput>;
+
+export const studentTransferInput = z.object({
+  studentId: id,
+  branchId: id,
+  reason: z.string().trim().max(500).default(""),
+});
 
 export const studentStatusInput = z.object({
   id,

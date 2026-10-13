@@ -3,7 +3,7 @@ import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import type { BranchScope, StaffAccess } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
 import { type SalaryType, positions, settings, userBranches, userPositions, users } from "@ventura/db/schema/tenant";
-import { STAFF_FIELDS_KEY, type StaffField, parseStaffFields } from "@/lib/staff-fields";
+import { DEFAULT_STAFF_FIELDS, STAFF_FIELDS_KEY, type FormField, parseFormFields } from "@/lib/form-fields";
 
 export interface StaffPosition {
   id: string;
@@ -44,9 +44,9 @@ export interface PositionOption extends StaffPosition {
   assignable: boolean;
 }
 
-export async function getStaffFields(db: TenantDb): Promise<StaffField[]> {
+export async function getStaffFields(db: TenantDb): Promise<FormField[]> {
   const [row] = await db.select({ value: settings.value }).from(settings).where(eq(settings.key, STAFF_FIELDS_KEY));
-  return parseStaffFields(row?.value);
+  return parseFormFields(row?.value, DEFAULT_STAFF_FIELDS);
 }
 
 export async function positionOptions(db: TenantDb, access: StaffAccess): Promise<PositionOption[]> {

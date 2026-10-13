@@ -556,6 +556,19 @@ Qoidalar:
 - **Gauge** (`gauge.tsx`) — bitta ulush 270° yoyda, markazda foiz, `role="meter"`.
 - **TrendChart** (`trend-chart.tsx`) — vaqt bo'yicha bir nechta qator: chiziq (2px, birinchi qator 12% to'ldirish bilan) yoki guruhlangan ustunlar (2px oraliq, yuqori burchaklari 4px). Bitta Y o'qi (yozuv kengligiga qarab joy), uzuq "reja" chizig'i, legenda, kursor oynasi (← → bilan ham), yashirin jadval.
 
+### 11.33 SearchSelect — `search-select.tsx`
+
+- Qidiruvli tanlov: bitta qiymat (guruh tanlash) yoki `multiple` (ko'p tanlov, bandlarda checkbox). Bandda ikkinchi qator (`hint`) bo'lishi mumkin.
+- Ro'yxat portalda emas, trigger ostida ochiladi (balandlik bo'yicha silliq o'tish, `ease-ios`, 200ms) — 13-bo'lim 8-qoidasidan ongli istisno: Radix Dialog fokus tuzog'i portaldagi qidiruv maydoniga fokus bermaydi, forma esa ko'pincha modal ichida.
+- Klaviatura: ↑ ↓ — band, Enter — tanlash, Escape — faqat ro'yxat yopiladi (modal emas). Tashqariga bosilsa yopiladi.
+- Bitta tanlovda tanlangan bandni qayta bosish — tozalash.
+
+### 11.34 MetricCard — `metric-card.tsx`
+
+- Profil tepasidagi ixcham ko'rsatkich (o'qituvchi profili, ADR 0021): yorliq va o'ngda kichik rangli ikonka yoki belgi (`badge`, masalan "Qarz"), ostida katta qiymat + birlik, chiziq ostida izoh (`foot`).
+- StatCard'dan farqi — bir qatorga 5–6 ta sig'adi; StatCard sahifa statistikasi uchun qoladi.
+- Ohang (`tone`): `neutral`, `primary`, `success`, `warning`, `danger`, `info` — faqat holat tokenlari. `colorValue` — qiymat ham ohang rangida; `highlight` — karta foni va chegarasi ohangda (balans qarzda yoki qoldiqda).
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
@@ -606,4 +619,4 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 - Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
 - Select'da harf bilan qidirish (typeahead).
-- Keyingi bosqichlar komponentlari: skeleton, tooltip, nusxalash va yashirin qiymat maydoni, qidiruvli select, sana tanlash, logo yuklash.
+- Keyingi bosqichlar komponentlari: skeleton, tooltip, nusxalash va yashirin qiymat maydoni, sana tanlash, logo yuklash.

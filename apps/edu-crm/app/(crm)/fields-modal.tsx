@@ -1,6 +1,19 @@
 "use client";
 
-import { Calendar, Hash, List, PhoneCall, Plus, RotateCcw, Trash2, Type } from "lucide-react";
+import {
+  Calendar,
+  CheckSquare,
+  Clock,
+  Hash,
+  List,
+  ListChecks,
+  PhoneCall,
+  Plus,
+  RotateCcw,
+  Trash2,
+  Type,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -11,16 +24,20 @@ import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { toast } from "@ventura/ui/toast";
-import { DEFAULT_STAFF_FIELDS, STAFF_FIELD_TYPES, type StaffField, type StaffFieldType } from "@/lib/staff-fields";
+import { type FieldType, type FormField, hasOptions } from "@/lib/form-fields";
+import type { ActionResult } from "@/lib/server/action";
 import { uz } from "@/lib/uz";
-import { saveStaffFieldsAction } from "./actions";
 
-const TYPE_ICON: Record<StaffFieldType, React.ReactNode> = {
+const TYPE_ICON: Record<FieldType, React.ReactNode> = {
   text: <Type />,
   number: <Hash />,
-  date: <Calendar />,
   tel: <PhoneCall />,
+  date: <Calendar />,
+  time: <Clock />,
   select: <List />,
+  multiselect: <ListChecks />,
+  checkbox: <CheckSquare />,
+  group: <Users />,
 };
 
 /** Maydon id: nomdan lotin harflari, takrorlansa raqam qo'shiladi */
@@ -37,21 +54,34 @@ function fieldId(label: string, taken: readonly string[]) {
   return id;
 }
 
+/** Formadagi qo'shimcha maydonlar sozlamasi — xodim va o'quvchi formalari uchun bitta oyna */
 export function FieldsModal({
   open,
   onOpenChange,
   fields,
   canWrite,
+  defaults,
+  types,
+  save,
+  title,
+  description,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  fields: StaffField[];
+  fields: FormField[];
   canWrite: boolean;
+  /** "Standart holatga qaytarish" ro'yxati; bo'sh bo'lsa tugma ko'rinmaydi */
+  defaults: FormField[];
+  /** Shu formada tanlash mumkin bo'lgan maydon turlari */
+  types: readonly FieldType[];
+  save: (fields: FormField[]) => Promise<ActionResult>;
+  title: string;
+  description: string;
 }) {
   const router = useRouter();
   const [list, setList] = React.useState(fields);
   const [label, setLabel] = React.useState("");
-  const [type, setType] = React.useState<StaffFieldType>("text");
+  const [type, setType] = React.useState<FieldType>("text");
   const [placeholder, setPlaceholder] = React.useState("");
   const [required, setRequired] = React.useState(false);
   const [optionsText, setOptionsText] = React.useState("");
@@ -67,9 +97,9 @@ export function FieldsModal({
     }
   }
 
-  function persist(next: StaffField[]) {
+  function persist(next: FormField[]) {
     startTransition(async () => {
-      const res = await saveStaffFieldsAction(next);
+      const res = await save(next);
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
       setList(next);
       toast({ tone: "success", title: uz.staff.fieldsSaved });
@@ -80,22 +110,21 @@ export function FieldsModal({
   function add() {
     const name = label.trim();
     if (!name) return setError(uz.staff.fieldLabelRequired);
-    const options =
-      type === "select"
-        ? optionsText
-            .split(",")
-            .map((s) => s.trim())
-            .filter(Boolean)
-        : [];
-    if (type === "select" && !options.length) return setError(uz.staff.fieldOptionsRequired);
-    const field: StaffField = {
+    const options = hasOptions(type)
+      ? optionsText
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+    if (hasOptions(type) && !options.length) return setError(uz.staff.fieldOptionsRequired);
+    const field: FormField = {
       id: fieldId(
         name,
         list.map((f) => f.id),
       ),
       label: name,
       type,
-      placeholder: placeholder.trim(),
+      placeholder: type === "date" || type === "time" ? "" : placeholder.trim(),
       required,
       options,
     };
@@ -114,17 +143,12 @@ export function FieldsModal({
       onOpenChange={onOpenChange}
       position="center"
       wide
-      title={uz.staff.fieldsTitle}
-      description={uz.staff.fieldsIntro}
+      title={title}
+      description={description}
       footer={
         <>
-          {canWrite ? (
-            <Button
-              variant="ghost"
-              className="mr-auto"
-              disabled={pending}
-              onClick={() => persist(DEFAULT_STAFF_FIELDS)}
-            >
+          {canWrite && defaults.length ? (
+            <Button variant="ghost" className="mr-auto" disabled={pending} onClick={() => persist(defaults)}>
               <RotateCcw /> {uz.staff.fieldsReset}
             </Button>
           ) : null}
@@ -147,7 +171,7 @@ export function FieldsModal({
                 </div>
                 <div className="truncate text-caption text-muted-foreground">
                   {uz.staff.fieldTypes[f.type]}
-                  {f.type === "select" ? ` · ${f.options.join(", ")}` : f.placeholder ? ` · ${f.placeholder}` : ""}
+                  {hasOptions(f.type) ? ` · ${f.options.join(", ")}` : f.placeholder ? ` · ${f.placeholder}` : ""}
                 </div>
               </div>
               {canWrite ? (
@@ -182,12 +206,12 @@ export function FieldsModal({
                   setError(null);
                 }}
               />
-              <Select value={type} onValueChange={(v) => setType(v as StaffFieldType)}>
+              <Select value={type} onValueChange={(v) => setType(v as FieldType)}>
                 <SelectTrigger className="w-full" aria-label={uz.staff.fieldType}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STAFF_FIELD_TYPES.map((t) => (
+                  {types.map((t) => (
                     <SelectItem key={t} value={t}>
                       {uz.staff.fieldTypes[t]}
                     </SelectItem>
@@ -195,20 +219,21 @@ export function FieldsModal({
                 </SelectContent>
               </Select>
             </div>
-            {type === "select" ? (
+            {hasOptions(type) ? (
               <div>
                 <Label htmlFor="field-options">{uz.staff.fieldOptions}</Label>
                 <Input id="field-options" value={optionsText} onChange={(e) => setOptionsText(e.target.value)} />
               </div>
-            ) : (
+            ) : type === "date" || type === "time" ? null : (
               <Input
                 aria-label={uz.staff.fieldPlaceholder}
-                placeholder={uz.staff.fieldPlaceholder}
+                placeholder={type === "checkbox" ? uz.staff.fieldCheckboxHint : uz.staff.fieldPlaceholder}
                 value={placeholder}
                 maxLength={80}
                 onChange={(e) => setPlaceholder(e.target.value)}
               />
             )}
+            {type === "group" ? <p className="text-caption text-muted-foreground">{uz.staff.fieldGroupHint}</p> : null}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <ChoiceField
                 label={uz.staff.fieldRequiredCheck}

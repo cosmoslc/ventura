@@ -16,7 +16,8 @@
     "server:check": "tsx src/server-check.ts",
     "deploy:run": "tsx src/deploy-run.ts",
     "edu:tenant": "tsx src/edu-tenant.ts",
-    "edu:staff": "tsx src/edu-staff.ts"
+    "edu:staff": "tsx src/edu-staff.ts",
+    "edu:seed": "tsx src/edu-seed.ts"
   },
   "dependencies": {
     "@ventura/auth": "workspace:*",

@@ -1,6 +1,16 @@
 "use client";
 
-import { ArchiveRestore, GraduationCap, Plus, RotateCcw, Search, Snowflake, UserCheck, Users } from "lucide-react";
+import {
+  ArchiveRestore,
+  ClipboardList,
+  GraduationCap,
+  Plus,
+  RotateCcw,
+  Search,
+  Snowflake,
+  UserCheck,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -15,13 +25,17 @@ import { Pagination } from "@ventura/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
+import type { SearchSelectOption } from "@ventura/ui/search-select";
 import { toast } from "@ventura/ui/toast";
 import { BalanceText } from "../payments/payment-dialog";
 import { displayPhone, formatDate } from "@/lib/format";
+import { DEFAULT_STUDENT_FIELDS, FIELD_TYPES, type FormField } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import { restoreArchivedAction } from "../archive/actions";
 import type { PickerBranch } from "../branch-picker";
 import { ExcelMenu } from "../excel/excel-menu";
+import { FieldsModal } from "../fields-modal";
+import { saveStudentFieldsAction } from "./actions";
 import type { StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
 import { StudentForm } from "./student-form";
@@ -65,7 +79,8 @@ export function StudentsView({
   canRestore,
   branches,
   selectedBranch,
-  courses,
+  fields,
+  groupChoices,
   perms,
 }: {
   rows: StudentRow[];
@@ -74,10 +89,12 @@ export function StudentsView({
   canRestore: boolean;
   branches: PickerBranch[];
   selectedBranch: string;
-  courses: { id: string; name: string }[];
+  fields: FormField[];
+  groupChoices: SearchSelectOption[];
   perms: StudentPerms;
 }) {
   const router = useRouter();
+  const [fieldsOpen, setFieldsOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [status, setStatus] = React.useState("all");
   const [groupFilter, setGroupFilter] = React.useState("all");
@@ -142,6 +159,11 @@ export function StudentsView({
         actions={
           <>
             <ExcelMenu table="students" branches={branches} selectedBranch={selectedBranch} canImport={perms.create} />
+            {perms.edit ? (
+              <Button variant="ghost" onClick={() => setFieldsOpen(true)}>
+                <ClipboardList /> {uz.students.formSettings}
+              </Button>
+            ) : null}
             {perms.create ? (
               <Button onClick={() => openForm(null)}>
                 <Plus /> {uz.students.add}
@@ -399,8 +421,22 @@ export function StudentsView({
           editing={editing}
           branches={branches}
           selectedBranch={selectedBranch}
-          courses={courses}
+          fields={fields}
+          groups={groupChoices}
           onSaved={() => router.refresh()}
+        />
+      ) : null}
+      {perms.edit ? (
+        <FieldsModal
+          open={fieldsOpen}
+          onOpenChange={setFieldsOpen}
+          fields={fields}
+          canWrite
+          defaults={DEFAULT_STUDENT_FIELDS}
+          types={FIELD_TYPES}
+          save={saveStudentFieldsAction}
+          title={uz.students.fieldsTitle}
+          description={uz.students.fieldsIntro}
         />
       ) : null}
     </div>

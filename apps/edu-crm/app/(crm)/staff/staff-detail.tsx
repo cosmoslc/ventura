@@ -10,7 +10,7 @@ import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { StatCard } from "@ventura/ui/stat-card";
 import { displayPhone, formatDate, money } from "@/lib/format";
-import { type StaffField, formCompletion } from "@/lib/staff-fields";
+import { type FormField, fieldText, formCompletion } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import type { PositionOption, StaffRow } from "./data";
@@ -30,7 +30,7 @@ export function StaffDetail({
   positions: PositionOption[];
   branches: PickerBranch[];
   selectedBranch: string;
-  fields: StaffField[];
+  fields: FormField[];
   perms: StaffPerms;
 }) {
   const router = useRouter();
@@ -148,7 +148,11 @@ export function StaffDetail({
           {fields.length ? (
             <div className="grid gap-2 sm:grid-cols-2">
               {fields.map((f) => {
-                const v = row.customData[f.id];
+                const v = fieldText(f, row.customData[f.id], {
+                  yes: uz.staff.yes,
+                  no: uz.staff.no,
+                  groupName: () => undefined,
+                });
                 return (
                   <div key={f.id} className="rounded-control border border-border-soft bg-muted px-3 py-2.5">
                     <div className="text-caption font-semibold text-muted-foreground">{f.label}</div>

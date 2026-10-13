@@ -20,7 +20,7 @@ import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/actio
 import { tenantDeps } from "@/lib/server/deps";
 import { requestOrigin } from "@/lib/server/request";
 import { firstError, staffInput } from "@/lib/rules";
-import { STAFF_FIELDS_KEY, cleanCustomData, missingRequired, staffFieldsSchema } from "@/lib/staff-fields";
+import { STAFF_FIELDS_KEY, cleanCustomData, missingRequired, formFieldsSchema } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import { type StaffRow, getStaffFields, listStaff, withinAccess } from "./data";
 
@@ -270,10 +270,11 @@ export async function resetStaffTelegramAction(id: unknown): Promise<ActionResul
 
 export async function saveStaffFieldsAction(input: unknown): Promise<ActionResult> {
   return crmAction(FEATURE, "staff.edit", async ({ db, staff, audit }) => {
-    const parsed = staffFieldsSchema.safeParse(input);
+    const parsed = formFieldsSchema.safeParse(input);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const ids = parsed.data.map((f) => f.id);
     if (new Set(ids).size !== ids.length) return { ok: false, error: uz.common.invalid };
+    if (parsed.data.some((f) => f.type === "group")) return { ok: false, error: uz.common.invalid };
     await db
       .insert(settings)
       .values({ key: STAFF_FIELDS_KEY, value: parsed.data, updatedBy: staff.id })

@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { check, date, foreignKey, index, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { check, date, foreignKey, index, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { courses } from "./academic";
 import { users } from "./auth";
 import { tenantId, tenantPolicy, timestamps } from "./columns";
@@ -39,6 +39,8 @@ export const students = pgTable(
     source: text("source"),
     interestedCourseId: uuid("interested_course_id"),
     note: text("note"),
+    /** "O'quvchi formasi"dagi qo'shimcha maydonlar qiymati (maydon id → matn; ADR 0020) */
+    customData: jsonb("custom_data").$type<Record<string, string>>().notNull().default({}),
     status: text("status", { enum: STUDENT_STATUSES }).notNull().default("trial"),
     /** Oxirgi holat o'zgarishi sababi */
     statusNote: text("status_note"),

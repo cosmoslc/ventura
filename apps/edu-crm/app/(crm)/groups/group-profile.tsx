@@ -32,6 +32,8 @@ import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import { formatDate, formatMonth, money } from "@/lib/format";
+import type { SearchSelectOption } from "@ventura/ui/search-select";
+import type { FormField } from "@/lib/form-fields";
 import { uz } from "@/lib/uz";
 import type { GroupFinance } from "../payments/data";
 import type { GroupAttendance } from "@/lib/server/attendance";
@@ -70,7 +72,8 @@ export function GroupProfile({
   courses,
   teachers,
   rooms,
-  studentCourses,
+  studentFields,
+  studentGroups,
   branches,
   perms,
   canCreateStudent,
@@ -87,7 +90,9 @@ export function GroupProfile({
   courses: CourseOption[];
   teachers: TeacherOption[];
   rooms: RoomOption[];
-  studentCourses: { id: string; name: string }[];
+  /** "O'quvchi formasi"dagi qo'shimcha maydonlar va guruh tanlash variantlari */
+  studentFields: FormField[];
+  studentGroups: SearchSelectOption[];
   branches: PickerBranch[];
   perms: GroupPerms;
   canCreateStudent: boolean;
@@ -418,7 +423,8 @@ export function GroupProfile({
           editing={null}
           branches={branches.filter((b) => b.id === g.branchId)}
           selectedBranch={g.branchId}
-          courses={studentCourses}
+          fields={studentFields}
+          groups={studentGroups}
           onSaved={async (studentId) => {
             // Yaratilgan o'quvchi darhol shu guruhga (sinovda) qo'shiladi
             const res = await enrollStudentAction({ groupId: g.id, studentId });
