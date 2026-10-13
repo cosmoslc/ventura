@@ -213,49 +213,50 @@ function ExpenseList({
     <div className="space-y-4">
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => filter(setQuery)(e.target.value)} />
+        <FilterDates from={from} to={to} onChange={onRange} fromLabel={t.from} toLabel={t.to} />
+        <FilterSelect
+          label={t.person}
+          value={person}
+          onValueChange={filter(setPerson)}
+          options={[
+            { value: ALL, label: t.allPeople },
+            ...personOptions.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.category}
+          value={category}
+          onValueChange={filter(setCategory)}
+          options={[
+            { value: ALL, label: t.allCategories },
+            ...categories.filter((c) => c.kind === "expense").map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.method}
+          value={method}
+          onValueChange={filter(setMethod)}
+          options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+        <ChoiceField
+          control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
+          label={t.showVoided}
+        />
+        {filtered ? (
+          <Button variant="ghost" size="sm" onClick={clear}>
+            <RotateCcw /> {t.clearFilters}
+          </Button>
+        ) : null}
+        <FilterEnd>
+          <span className="text-caption font-semibold text-foreground">
+            {t.total(live.length, `${money(total)} ${uz.common.som}`)}
+          </span>
+        </FilterEnd>
+      </FilterBar>
+
       <Card className="overflow-hidden">
-        <FilterBar>
-          <FilterSearch placeholder={t.search} value={query} onChange={(e) => filter(setQuery)(e.target.value)} />
-          <FilterDates from={from} to={to} onChange={onRange} fromLabel={t.from} toLabel={t.to} />
-          <FilterSelect
-            label={t.person}
-            value={person}
-            onValueChange={filter(setPerson)}
-            options={[
-              { value: ALL, label: t.allPeople },
-              ...personOptions.map(([id, name]) => ({ value: id, label: name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.category}
-            value={category}
-            onValueChange={filter(setCategory)}
-            options={[
-              { value: ALL, label: t.allCategories },
-              ...categories.filter((c) => c.kind === "expense").map((c) => ({ value: c.id, label: c.name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.method}
-            value={method}
-            onValueChange={filter(setMethod)}
-            options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
-          />
-          <ChoiceField
-            control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
-            label={t.showVoided}
-          />
-          {filtered ? (
-            <Button variant="ghost" size="sm" onClick={clear}>
-              <RotateCcw /> {t.clearFilters}
-            </Button>
-          ) : null}
-          <FilterEnd>
-            <span className="text-caption font-semibold text-foreground">
-              {t.total(live.length, `${money(total)} ${uz.common.som}`)}
-            </span>
-          </FilterEnd>
-        </FilterBar>
         {shown.length ? (
           <>
             <TableWrap className="rounded-none border-0">

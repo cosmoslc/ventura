@@ -419,8 +419,8 @@ function DataTable() {
   const [status, setStatus] = React.useState("all");
   const [range, setRange] = React.useState({ from: "2026-10-01", to: "2026-10-13" });
   return (
-    <Card className="overflow-hidden">
-      <FilterBar>
+    <div className="space-y-4">
+      <FilterBar standalone>
         <FilterSearch placeholder="Ism, telefon..." />
         <FilterDates
           from={range.from}
@@ -443,48 +443,50 @@ function DataTable() {
           <span className="text-caption text-muted-foreground">37 ta yozuv</span>
         </FilterEnd>
       </FilterBar>
-      <TableWrap>
-        <Table className="min-w-[520px]">
-          <THead>
-            <tr>
-              <Th>Loyiha</Th>
-              <Th>Domen</Th>
-              <Th>Holat</Th>
-              <Th className="text-right">Amallar</Th>
-            </tr>
-          </THead>
-          <TBody>
-            {ROWS.map(([name, client, domain, tone, label]) => (
-              <Tr key={domain}>
-                <Td>
-                  <div className="flex items-center gap-3">
-                    <Avatar name={name} size={32} />
-                    <div>
-                      <div className="text-body font-bold text-foreground">{name}</div>
-                      <div className="text-caption text-muted-foreground">{client}</div>
+      <Card className="overflow-hidden">
+        <TableWrap>
+          <Table className="min-w-[520px]">
+            <THead>
+              <tr>
+                <Th>Loyiha</Th>
+                <Th>Domen</Th>
+                <Th>Holat</Th>
+                <Th className="text-right">Amallar</Th>
+              </tr>
+            </THead>
+            <TBody>
+              {ROWS.map(([name, client, domain, tone, label]) => (
+                <Tr key={domain}>
+                  <Td>
+                    <div className="flex items-center gap-3">
+                      <Avatar name={name} size={32} />
+                      <div>
+                        <div className="text-body font-bold text-foreground">{name}</div>
+                        <div className="text-caption text-muted-foreground">{client}</div>
+                      </div>
                     </div>
-                  </div>
-                </Td>
-                <Td>
-                  <span className="font-mono text-primary-text">{domain}</span>
-                </Td>
-                <Td>
-                  <Badge tone={tone} dot>
-                    {label}
-                  </Badge>
-                </Td>
-                <Td className="text-right">
-                  <Button variant="subtle" size="icon-sm" aria-label={`${name} amallari`}>
-                    <MoreHorizontal />
-                  </Button>
-                </Td>
-              </Tr>
-            ))}
-          </TBody>
-        </Table>
-      </TableWrap>
-      <Pagination page={page} pageCount={4} total={37} pageSize={10} onPageChange={setPage} />
-    </Card>
+                  </Td>
+                  <Td>
+                    <span className="font-mono text-primary-text">{domain}</span>
+                  </Td>
+                  <Td>
+                    <Badge tone={tone} dot>
+                      {label}
+                    </Badge>
+                  </Td>
+                  <Td className="text-right">
+                    <Button variant="subtle" size="icon-sm" aria-label={`${name} amallari`}>
+                      <MoreHorizontal />
+                    </Button>
+                  </Td>
+                </Tr>
+              ))}
+            </TBody>
+          </Table>
+        </TableWrap>
+        <Pagination page={page} pageCount={4} total={37} pageSize={10} onPageChange={setPage} />
+      </Card>
+    </div>
   );
 }
 

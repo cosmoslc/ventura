@@ -541,10 +541,10 @@ Qoidalar:
 
 ### 11.31 FilterBar — `filter-bar.tsx`
 
-- Ro'yxat filtrlari hamma sahifada bitta ko'rinishda (O'quvchilar sahifasi namuna): sarlavhasiz boshqaruvlar bir qatorda, `p-3`, `gap-2`.
+- Ro'yxat filtrlari hamma sahifada bitta ko'rinishda: sarlavhasiz boshqaruvlar bir qatorda, `p-3`, `gap-2`.
 - Tartib: qidiruv (`FilterSearch`, qolgan kenglikni oladi) → sana oralig'i (`FilterDates`, "—" bilan) → tanlovlar (`FilterSelect`, birinchi band "Barcha ..." / "Holat (Hammasi)") → belgilar va "Tozalash" → o'ngda `FilterEnd` (yozuvlar soni, jami).
 - Yorliqlar ko'rinmaydi — `aria-label` va `title` sifatida beriladi.
-- Jadvalli sahifada qator jadval kartasining tepasida (pastki chiziq bilan); kartochkalar to'ri bo'lgan sahifada — alohida karta (`standalone`).
+- Filtr qatori har doim alohida karta (`standalone`, Guruhlar sahifasidagidek): ro'yxat yoki jadval kartasidan oldin, ular orasida sahifa oralig'i.
 - "Qo'shish" tugmasi filtr qatorida emas, sahifa sarlavhasida.
 
 ## 12. Fokus va qulaylik

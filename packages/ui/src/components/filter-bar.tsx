@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 /*
  * Ro'yxat filtrlari — hamma sahifada bitta ko'rinish (STYLE.md 11.31): sarlavhasiz boshqaruvlar bir qatorda,
- * qidiruv birinchi, keyin tanlovlar ("Barcha ..." bandi bilan). Jadvalli sahifada qator jadval kartasining tepasida
- * (pastki chiziq bilan), kartochkalar to'ri bo'lgan sahifada — alohida karta (`standalone`).
+ * qidiruv birinchi, keyin tanlovlar ("Barcha ..." bandi bilan). Sahifalarda alohida karta (`standalone`) sifatida,
+ * ro'yxatdan oldin; `standalone`siz — boshqa karta ichidagi qator (pastki chiziq bilan).
  */
 
 export function FilterBar({

@@ -139,30 +139,31 @@ export function IncomesView({
         />
       </div>
 
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => filter(setQuery)(e.target.value)} />
+        <FilterDates from={from} to={to} onChange={setRange} fromLabel={uz.expenses.from} toLabel={uz.expenses.to} />
+        <FilterSelect
+          label={uz.expenses.category}
+          value={category}
+          onValueChange={filter(setCategory)}
+          options={[
+            { value: ALL, label: uz.expenses.allCategories },
+            ...categories.map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.method}
+          value={method}
+          onValueChange={filter(setMethod)}
+          options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+        <ChoiceField
+          control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
+          label={uz.expenses.showVoided}
+        />
+      </FilterBar>
+
       <Card className="overflow-hidden">
-        <FilterBar>
-          <FilterSearch placeholder={t.search} value={query} onChange={(e) => filter(setQuery)(e.target.value)} />
-          <FilterDates from={from} to={to} onChange={setRange} fromLabel={uz.expenses.from} toLabel={uz.expenses.to} />
-          <FilterSelect
-            label={uz.expenses.category}
-            value={category}
-            onValueChange={filter(setCategory)}
-            options={[
-              { value: ALL, label: uz.expenses.allCategories },
-              ...categories.map((c) => ({ value: c.id, label: c.name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.method}
-            value={method}
-            onValueChange={filter(setMethod)}
-            options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
-          />
-          <ChoiceField
-            control={<Checkbox checked={showVoided} onCheckedChange={(v) => filter(setShowVoided)(v === true)} />}
-            label={uz.expenses.showVoided}
-          />
-        </FilterBar>
         {shown.length ? (
           <>
             <TableWrap className="rounded-none border-0">

@@ -24,6 +24,7 @@ import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { FilterBar } from "@ventura/ui/filter-bar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -283,68 +284,68 @@ export function TeachersView({
         </div>
       ) : null}
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-border-soft p-3">
-          <div className="min-w-0 flex-1 sm:max-w-sm sm:min-w-64">
-            <Input
-              icon={<Search />}
-              placeholder={uz.teachers.search}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-          {branches.length > 1 ? (
-            <Select
-              value={branchFilter}
-              onValueChange={(v) => {
-                setBranchFilter(v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-52" aria-label={uz.common.branch}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{uz.common.allBranches}</SelectItem>
-                {branches.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null}
-          {tab === "teachers" ? (
-            <Select
-              value={salaryFilter}
-              onValueChange={(v) => {
-                setSalaryFilter(v);
-                setPage(1);
-              }}
-            >
-              <SelectTrigger className="w-full sm:w-56" aria-label={uz.teachers.salaryFilter}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{uz.teachers.salaryFilter}</SelectItem>
-                {(["percent", "per_student", "fixed"] as const).map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {uz.teachers.salaryFilterOptions[t]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null}
-          {active ? (
-            <Button variant="ghost" size="sm" title={uz.teachers.clearHint} onClick={resetFilters}>
-              <RotateCcw /> {uz.teachers.clear}
-            </Button>
-          ) : null}
+      <FilterBar standalone>
+        <div className="min-w-0 flex-1 sm:max-w-sm sm:min-w-64">
+          <Input
+            icon={<Search />}
+            placeholder={uz.teachers.search}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+          />
         </div>
+        {branches.length > 1 ? (
+          <Select
+            value={branchFilter}
+            onValueChange={(v) => {
+              setBranchFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-52" aria-label={uz.common.branch}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{uz.common.allBranches}</SelectItem>
+              {branches.map((b) => (
+                <SelectItem key={b.id} value={b.id}>
+                  {b.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        {tab === "teachers" ? (
+          <Select
+            value={salaryFilter}
+            onValueChange={(v) => {
+              setSalaryFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-full sm:w-56" aria-label={uz.teachers.salaryFilter}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{uz.teachers.salaryFilter}</SelectItem>
+              {(["percent", "per_student", "fixed"] as const).map((t) => (
+                <SelectItem key={t} value={t}>
+                  {uz.teachers.salaryFilterOptions[t]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        {active ? (
+          <Button variant="ghost" size="sm" title={uz.teachers.clearHint} onClick={resetFilters}>
+            <RotateCcw /> {uz.teachers.clear}
+          </Button>
+        ) : null}
+      </FilterBar>
 
+      <Card className="overflow-hidden">
         {visible.length ? (
           <>
             <TableWrap>

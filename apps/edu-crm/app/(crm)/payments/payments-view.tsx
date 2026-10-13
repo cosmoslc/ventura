@@ -139,29 +139,30 @@ export function PaymentsView({
         />
       </div>
 
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <FilterSelect
+          label={t.monthFilter}
+          value={month}
+          onValueChange={setMonth}
+          className="sm:w-44"
+          options={months.map((m) => ({ value: m, label: formatMonth(m) }))}
+        />
+        <FilterSelect
+          label={t.group}
+          value={group}
+          onValueChange={setGroup}
+          options={[
+            { value: ALL, label: uz.debtors.allGroups },
+            ...groupNames.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterEnd>
+          <span className="text-caption text-muted-foreground">{t.count(visible.length)}</span>
+        </FilterEnd>
+      </FilterBar>
+
       <Card className="overflow-hidden">
-        <FilterBar>
-          <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          <FilterSelect
-            label={t.monthFilter}
-            value={month}
-            onValueChange={setMonth}
-            className="sm:w-44"
-            options={months.map((m) => ({ value: m, label: formatMonth(m) }))}
-          />
-          <FilterSelect
-            label={t.group}
-            value={group}
-            onValueChange={setGroup}
-            options={[
-              { value: ALL, label: uz.debtors.allGroups },
-              ...groupNames.map(([id, name]) => ({ value: id, label: name })),
-            ]}
-          />
-          <FilterEnd>
-            <span className="text-caption text-muted-foreground">{t.count(visible.length)}</span>
-          </FilterEnd>
-        </FilterBar>
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

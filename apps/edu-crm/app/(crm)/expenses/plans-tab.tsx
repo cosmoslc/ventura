@@ -122,44 +122,45 @@ export function PlansTab({
         </Card>
       </div>
 
+      <FilterBar standalone>
+        <Input
+          type="month"
+          aria-label={t.planMonth}
+          title={t.planMonth}
+          className="w-full sm:w-44"
+          value={month}
+          onChange={(e) => e.target.value && onMonth(e.target.value)}
+        />
+        <FilterSelect
+          label={t.category}
+          value={category}
+          onValueChange={setCategory}
+          options={[
+            { value: ALL, label: t.allCategories },
+            ...categories.filter((c) => c.kind === "expense").map((c) => ({ value: c.id, label: c.name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.person}
+          value={person}
+          onValueChange={setPerson}
+          options={[
+            { value: ALL, label: t.allPeople },
+            ...personOptions.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.method}
+          value={method}
+          onValueChange={setMethod}
+          options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+        />
+        <FilterEnd>
+          <span className="text-caption font-semibold text-foreground">{formatMonth(month)}</span>
+        </FilterEnd>
+      </FilterBar>
+
       <Card className="overflow-hidden">
-        <FilterBar>
-          <Input
-            type="month"
-            aria-label={t.planMonth}
-            title={t.planMonth}
-            className="w-full sm:w-44"
-            value={month}
-            onChange={(e) => e.target.value && onMonth(e.target.value)}
-          />
-          <FilterSelect
-            label={t.category}
-            value={category}
-            onValueChange={setCategory}
-            options={[
-              { value: ALL, label: t.allCategories },
-              ...categories.filter((c) => c.kind === "expense").map((c) => ({ value: c.id, label: c.name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.person}
-            value={person}
-            onValueChange={setPerson}
-            options={[
-              { value: ALL, label: t.allPeople },
-              ...personOptions.map(([id, name]) => ({ value: id, label: name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.method}
-            value={method}
-            onValueChange={setMethod}
-            options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
-          />
-          <FilterEnd>
-            <span className="text-caption font-semibold text-foreground">{formatMonth(month)}</span>
-          </FilterEnd>
-        </FilterBar>
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

@@ -8,6 +8,7 @@ import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { FilterBar } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Pagination } from "@ventura/ui/pagination";
@@ -178,96 +179,96 @@ export function StudentsView({
         />
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-border-soft p-3">
-          <div className="min-w-0 flex-1 sm:max-w-sm sm:min-w-64">
-            <Input
-              icon={<Search />}
-              placeholder={uz.students.search}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
-                setPage(1);
-              }}
-            />
-          </div>
-          <Select
-            value={groupFilter}
-            onValueChange={(v) => {
-              setGroupFilter(v);
+      <FilterBar standalone>
+        <div className="min-w-0 flex-1 sm:max-w-sm sm:min-w-64">
+          <Input
+            icon={<Search />}
+            placeholder={uz.students.search}
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
               setPage(1);
             }}
-          >
-            <SelectTrigger className="w-full sm:w-48" aria-label={uz.students.colGroups}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{uz.students.allGroups}</SelectItem>
-              {groupOptions.map((g) => (
-                <SelectItem key={g.id} value={g.id}>
-                  {g.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={teacherFilter}
-            onValueChange={(v) => {
-              setTeacherFilter(v);
-              // Tanlangan guruh bu ustozniki bo'lmasa — tozalanadi
-              if (v !== "all" && !rows.some((r) => r.groups.some((g) => g.id === groupFilter && g.teacher === v)))
-                setGroupFilter("all");
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-48" aria-label={uz.teachers.teacherFilter}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{uz.students.allTeachers}</SelectItem>
-              {teacherOptions.map((t) => (
-                <SelectItem key={t} value={t}>
-                  {t}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={status}
-            onValueChange={(v) => {
-              setStatus(v);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="w-full sm:w-52" aria-label={uz.students.colStatus}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{uz.students.statusFilter}</SelectItem>
-              {STATUS_FILTERS.filter((s) => s !== "archived" || archived).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s === "archived" ? uz.students.archivedFilter : uz.students.status[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {active ? (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setQuery("");
-                setStatus("all");
-                setGroupFilter("all");
-                setTeacherFilter("all");
-                setPage(1);
-              }}
-            >
-              <RotateCcw /> {uz.teachers.clear}
-            </Button>
-          ) : null}
+          />
         </div>
+        <Select
+          value={groupFilter}
+          onValueChange={(v) => {
+            setGroupFilter(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-48" aria-label={uz.students.colGroups}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{uz.students.allGroups}</SelectItem>
+            {groupOptions.map((g) => (
+              <SelectItem key={g.id} value={g.id}>
+                {g.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={teacherFilter}
+          onValueChange={(v) => {
+            setTeacherFilter(v);
+            // Tanlangan guruh bu ustozniki bo'lmasa — tozalanadi
+            if (v !== "all" && !rows.some((r) => r.groups.some((g) => g.id === groupFilter && g.teacher === v)))
+              setGroupFilter("all");
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-48" aria-label={uz.teachers.teacherFilter}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{uz.students.allTeachers}</SelectItem>
+            {teacherOptions.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={status}
+          onValueChange={(v) => {
+            setStatus(v);
+            setPage(1);
+          }}
+        >
+          <SelectTrigger className="w-full sm:w-52" aria-label={uz.students.colStatus}>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{uz.students.statusFilter}</SelectItem>
+            {STATUS_FILTERS.filter((s) => s !== "archived" || archived).map((s) => (
+              <SelectItem key={s} value={s}>
+                {s === "archived" ? uz.students.archivedFilter : uz.students.status[s]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {active ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setQuery("");
+              setStatus("all");
+              setGroupFilter("all");
+              setTeacherFilter("all");
+              setPage(1);
+            }}
+          >
+            <RotateCcw /> {uz.teachers.clear}
+          </Button>
+        ) : null}
+      </FilterBar>
 
+      <Card className="overflow-hidden">
         {visible.length ? (
           <>
             <TableWrap>

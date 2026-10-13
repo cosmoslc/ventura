@@ -100,38 +100,39 @@ export function DebtorsView({
         />
       </div>
 
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <FilterSelect
+          label={t.group}
+          value={group}
+          onValueChange={setGroup}
+          options={[
+            { value: ALL, label: t.allGroups },
+            ...groupOptions.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.teacher}
+          value={teacher}
+          onValueChange={setTeacher}
+          options={[
+            { value: ALL, label: t.allTeachers },
+            ...teacherOptions.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.sort}
+          value={sort}
+          onValueChange={(v) => setSort(v as (typeof SORTS)[number])}
+          className="sm:w-52"
+          options={SORTS.map((s) => ({ value: s, label: t.sorts[s] }))}
+        />
+        <FilterEnd>
+          <span className="text-caption text-muted-foreground">{t.count(visible.length, rows.length)}</span>
+        </FilterEnd>
+      </FilterBar>
+
       <Card className="overflow-hidden">
-        <FilterBar>
-          <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          <FilterSelect
-            label={t.group}
-            value={group}
-            onValueChange={setGroup}
-            options={[
-              { value: ALL, label: t.allGroups },
-              ...groupOptions.map(([id, name]) => ({ value: id, label: name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.teacher}
-            value={teacher}
-            onValueChange={setTeacher}
-            options={[
-              { value: ALL, label: t.allTeachers },
-              ...teacherOptions.map(([id, name]) => ({ value: id, label: name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.sort}
-            value={sort}
-            onValueChange={(v) => setSort(v as (typeof SORTS)[number])}
-            className="sm:w-52"
-            options={SORTS.map((s) => ({ value: s, label: t.sorts[s] }))}
-          />
-          <FilterEnd>
-            <span className="text-caption text-muted-foreground">{t.count(visible.length, rows.length)}</span>
-          </FilterEnd>
-        </FilterBar>
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>

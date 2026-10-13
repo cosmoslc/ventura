@@ -125,31 +125,32 @@ export function StaffAttendanceView({
 
           {!canMark ? <Notice tone="info">{t.readOnly}</Notice> : null}
 
-          <Card className="overflow-hidden">
-            <FilterBar>
-              <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-              <Input
-                type="date"
-                aria-label={t.date}
-                title={t.date}
-                className="w-full sm:w-44"
-                value={date}
-                max={today}
-                onChange={(e) => e.target.value && router.push(`${pathname}?date=${e.target.value}`, { scroll: false })}
-              />
-              {date !== today ? (
-                <Button variant="ghost" size="sm" onClick={() => router.push(pathname, { scroll: false })}>
-                  {t.today}
+          <FilterBar standalone>
+            <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+            <Input
+              type="date"
+              aria-label={t.date}
+              title={t.date}
+              className="w-full sm:w-44"
+              value={date}
+              max={today}
+              onChange={(e) => e.target.value && router.push(`${pathname}?date=${e.target.value}`, { scroll: false })}
+            />
+            {date !== today ? (
+              <Button variant="ghost" size="sm" onClick={() => router.push(pathname, { scroll: false })}>
+                {t.today}
+              </Button>
+            ) : null}
+            {canMark && unmarked > 0 ? (
+              <FilterEnd>
+                <Button onClick={markRest} disabled={pending}>
+                  <CheckCheck /> {t.markRest}
                 </Button>
-              ) : null}
-              {canMark && unmarked > 0 ? (
-                <FilterEnd>
-                  <Button onClick={markRest} disabled={pending}>
-                    <CheckCheck /> {t.markRest}
-                  </Button>
-                </FilterEnd>
-              ) : null}
-            </FilterBar>
+              </FilterEnd>
+            ) : null}
+          </FilterBar>
+
+          <Card className="overflow-hidden">
             {visible.length ? (
               <TableWrap className="rounded-none border-0">
                 <Table>
@@ -183,8 +184,8 @@ export function StaffAttendanceView({
           </Card>
         </>
       ) : (
-        <Card className="overflow-hidden">
-          <FilterBar>
+        <>
+          <FilterBar standalone>
             <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
             <FilterSelect
               label={t.period}
@@ -193,53 +194,56 @@ export function StaffAttendanceView({
               options={["7", "30"].map((p) => ({ value: p, label: t.periods[p] }))}
             />
           </FilterBar>
-          <p className="px-4 pt-3 text-caption text-muted-foreground">{t.rankingHint}</p>
-          {ranking.length ? (
-            <TableWrap className="rounded-none border-0">
-              <Table>
-                <THead>
-                  <Tr>
-                    <Th className="w-12 text-center">{t.colRank}</Th>
-                    <Th>{t.colEmployee}</Th>
-                    <Th className="text-center">{t.colPresent}</Th>
-                    <Th className="text-center">{t.colLate}</Th>
-                    <Th className="text-center">{t.colAbsent}</Th>
-                    <Th className="text-center">{t.colRecords}</Th>
-                    <Th className="w-48">{t.colRate}</Th>
-                  </Tr>
-                </THead>
-                <TBody>
-                  {ranking.map((r, i) => {
-                    const e = byKey.get(r.key)!;
-                    return (
-                      <Tr key={r.key}>
-                        <Td className="text-center text-muted-foreground">{i + 1}</Td>
-                        <Td>
-                          <div className="font-medium">{e.name}</div>
-                          <div className="text-caption text-muted-foreground">{e.role}</div>
-                        </Td>
-                        <Td className="text-center">{r.present}</Td>
-                        <Td className="text-center">{r.late}</Td>
-                        <Td className="text-center">{r.absent}</Td>
-                        <Td className="text-center">{r.records}</Td>
-                        <Td>
-                          {r.rate === null ? (
-                            <span className="text-muted-foreground">{t.noRecords}</span>
-                          ) : (
-                            // Meter yuqori qiymatni "xavf" deb bo'yaydi — bu yerda teskari, shuning uchun chegaralar o'chirilgan
-                            <Meter label="" value={r.rate / 100} warnAt={2} dangerAt={2} />
-                          )}
-                        </Td>
-                      </Tr>
-                    );
-                  })}
-                </TBody>
-              </Table>
-            </TableWrap>
-          ) : (
-            <EmptyState icon={<Users />} title={t.empty} description={t.emptyHint} />
-          )}
-        </Card>
+
+          <Card className="overflow-hidden">
+            <p className="px-4 pt-3 text-caption text-muted-foreground">{t.rankingHint}</p>
+            {ranking.length ? (
+              <TableWrap className="rounded-none border-0">
+                <Table>
+                  <THead>
+                    <Tr>
+                      <Th className="w-12 text-center">{t.colRank}</Th>
+                      <Th>{t.colEmployee}</Th>
+                      <Th className="text-center">{t.colPresent}</Th>
+                      <Th className="text-center">{t.colLate}</Th>
+                      <Th className="text-center">{t.colAbsent}</Th>
+                      <Th className="text-center">{t.colRecords}</Th>
+                      <Th className="w-48">{t.colRate}</Th>
+                    </Tr>
+                  </THead>
+                  <TBody>
+                    {ranking.map((r, i) => {
+                      const e = byKey.get(r.key)!;
+                      return (
+                        <Tr key={r.key}>
+                          <Td className="text-center text-muted-foreground">{i + 1}</Td>
+                          <Td>
+                            <div className="font-medium">{e.name}</div>
+                            <div className="text-caption text-muted-foreground">{e.role}</div>
+                          </Td>
+                          <Td className="text-center">{r.present}</Td>
+                          <Td className="text-center">{r.late}</Td>
+                          <Td className="text-center">{r.absent}</Td>
+                          <Td className="text-center">{r.records}</Td>
+                          <Td>
+                            {r.rate === null ? (
+                              <span className="text-muted-foreground">{t.noRecords}</span>
+                            ) : (
+                              // Meter yuqori qiymatni "xavf" deb bo'yaydi — bu yerda teskari, shuning uchun chegaralar o'chirilgan
+                              <Meter label="" value={r.rate / 100} warnAt={2} dangerAt={2} />
+                            )}
+                          </Td>
+                        </Tr>
+                      );
+                    })}
+                  </TBody>
+                </Table>
+              </TableWrap>
+            ) : (
+              <EmptyState icon={<Users />} title={t.empty} description={t.emptyHint} />
+            )}
+          </Card>
+        </>
       )}
     </div>
   );

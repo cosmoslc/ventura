@@ -145,48 +145,48 @@ export function AttendanceReportView({
         ))}
       </div>
 
-      <Card className="overflow-hidden">
-        <FilterBar>
-          <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          <FilterDates from={from} to={to} onChange={setRange} fromLabel={t.from} toLabel={t.to} />
-          <FilterSelect
-            label={t.group}
-            value={groupId}
-            onValueChange={setGroupId}
-            options={[
-              { value: ALL, label: t.allGroups },
-              ...groupOptions.map(([id, name]) => ({ value: id, label: name })),
-            ]}
-          />
-          <FilterSelect
-            label={t.course}
-            value={courseId}
-            onValueChange={setCourseId}
-            options={[{ value: ALL, label: t.allCourses }, ...courses.map((c) => ({ value: c.id, label: c.name }))]}
-          />
-          <FilterSelect
-            label={t.memberStatus}
-            value={memberStatus}
-            onValueChange={setMemberStatus}
-            options={[
-              { value: ALL, label: t.allStatuses },
-              ...MEMBER_STATUSES.map((s) => ({ value: s, label: t.memberStatuses[s] })),
-            ]}
-          />
-          <FilterSelect
-            label={t.filter}
-            value={filter}
-            onValueChange={(v) => setFilter(v as ReportFilter)}
-            options={FILTERS.map((f) => ({ value: f, label: t.filters[f] }))}
-          />
-          <Button variant="ghost" size="sm" onClick={reset}>
-            <RotateCcw /> {t.reset}
-          </Button>
-          <FilterEnd>
-            <span className="text-caption text-muted-foreground">{t.count(visible.length, base.length)}</span>
-          </FilterEnd>
-        </FilterBar>
+      <FilterBar standalone>
+        <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+        <FilterDates from={from} to={to} onChange={setRange} fromLabel={t.from} toLabel={t.to} />
+        <FilterSelect
+          label={t.group}
+          value={groupId}
+          onValueChange={setGroupId}
+          options={[
+            { value: ALL, label: t.allGroups },
+            ...groupOptions.map(([id, name]) => ({ value: id, label: name })),
+          ]}
+        />
+        <FilterSelect
+          label={t.course}
+          value={courseId}
+          onValueChange={setCourseId}
+          options={[{ value: ALL, label: t.allCourses }, ...courses.map((c) => ({ value: c.id, label: c.name }))]}
+        />
+        <FilterSelect
+          label={t.memberStatus}
+          value={memberStatus}
+          onValueChange={setMemberStatus}
+          options={[
+            { value: ALL, label: t.allStatuses },
+            ...MEMBER_STATUSES.map((s) => ({ value: s, label: t.memberStatuses[s] })),
+          ]}
+        />
+        <FilterSelect
+          label={t.filter}
+          value={filter}
+          onValueChange={(v) => setFilter(v as ReportFilter)}
+          options={FILTERS.map((f) => ({ value: f, label: t.filters[f] }))}
+        />
+        <Button variant="ghost" size="sm" onClick={reset}>
+          <RotateCcw /> {t.reset}
+        </Button>
+        <FilterEnd>
+          <span className="text-caption text-muted-foreground">{t.count(visible.length, base.length)}</span>
+        </FilterEnd>
+      </FilterBar>
 
+      <Card className="overflow-hidden">
         {visible.length ? (
           <TableWrap className="rounded-none border-0">
             <Table>
