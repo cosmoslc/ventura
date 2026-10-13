@@ -599,7 +599,7 @@ export function StagesModal({
 
 /* ---------- E4b ---------- */
 
-/** O'quvchiga aylantirish: guruh (ixtiyoriy, lid filialidagi) va jins; shu telefonli o'quvchi bo'lsa — bog'lanadi */
+/** O'quvchiga aylantirish: faqat guruh (ixtiyoriy, lid filialidagi); shu telefonli o'quvchi bo'lsa — bog'lanadi */
 export function ConvertDialog({
   lead,
   groups,
@@ -614,14 +614,12 @@ export function ConvertDialog({
 }) {
   const router = useRouter();
   const [groupId, setGroupId] = React.useState<string[]>([]);
-  const [gender, setGender] = React.useState(NONE);
   const [pending, startTransition] = React.useTransition();
   const [shownFor, setShownFor] = React.useState<string | null>(null);
   if ((lead?.id ?? null) !== shownFor) {
     setShownFor(lead?.id ?? null);
     if (lead) {
       setGroupId(lead.firstLesson ? [lead.firstLesson.groupId] : []);
-      setGender(NONE);
     }
   }
   const options = lead ? groups.filter((g) => g.branchId === lead.branchId) : [];
@@ -629,11 +627,7 @@ export function ConvertDialog({
   function submit() {
     if (!lead) return;
     startTransition(async () => {
-      const res = await convertLeadAction({
-        leadId: lead.id,
-        groupId: groupId[0] ?? null,
-        gender: gender === NONE ? null : gender,
-      });
+      const res = await convertLeadAction({ leadId: lead.id, groupId: groupId[0] ?? null });
       if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
       toast({ tone: "success", title: res.existing ? t.convertedLinked : t.converted, description: lead.name });
       onClose();
@@ -672,21 +666,6 @@ export function ConvertDialog({
             emptyText={uz.common.nothingFound}
           />
         </div>
-        {!existingStudent ? (
-          <div>
-            <Label>{t.convertGender}</Label>
-            <Select value={gender} onValueChange={setGender}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>{t.choose}</SelectItem>
-                <SelectItem value="male">{uz.students.male}</SelectItem>
-                <SelectItem value="female">{uz.students.female}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        ) : null}
       </div>
     </Modal>
   );

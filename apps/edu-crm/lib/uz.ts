@@ -756,6 +756,8 @@ export const uz = {
     namePlaceholder: "Aziz Karimov",
     phone: "Telefon raqam",
     phone2: "Qo'shimcha telefon",
+    gender: "Jinsi",
+    courseSearch: "Kurs qidirish...",
     targetDate: "Keyingi aloqa sanasi",
     note: "Izoh",
     notePlaceholder: "Nimaga qiziqdi, qachon qo'ng'iroq qilish kerak...",
@@ -841,7 +843,7 @@ export const uz = {
     convert: "O'quvchiga aylantirish",
     convertTitle: (name: string) => `${name} — o'quvchiga aylantirish`,
     convertIntro:
-      "Lid o'quvchi bo'ladi: ism, telefon, manba va qiziqqan kurs o'quvchiga o'tadi. Guruh tanlansa — sinovda qo'shiladi.",
+      "Lid o'quvchi bo'ladi: ism, telefon, jins, manba va qiziqqan kurs o'quvchiga o'tadi. Guruh tanlansa — sinovda qo'shiladi.",
     convertExisting: (name: string) =>
       `Bu raqam bilan o'quvchi bor: ${name}. Yangisi yaratilmaydi — lid shu o'quvchiga bog'lanadi.`,
     convertGroup: "Guruh (ixtiyoriy)",

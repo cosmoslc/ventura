@@ -139,6 +139,7 @@ export const leadInput = z.object({
     .string()
     .regex(/^(\d{9})?$/, uz.leads.phoneInvalid)
     .default(""),
+  gender: z.enum(["male", "female"]).nullable().default(null),
   source: z.string().trim().max(80).default(""),
   courseId: id.nullable().default(null),
   assignedTo: id.nullable().default(null),
@@ -157,11 +158,7 @@ export const leadNoteInput = z.object({
   kind: z.enum(["call", "message", "meeting", "note"]),
   text: z.string().trim().min(1, uz.leads.noteRequired).max(2000),
 });
-export const leadConvertInput = z.object({
-  leadId: id,
-  groupId: id.nullable().default(null),
-  gender: z.enum(["male", "female"]).nullable().default(null),
-});
+export const leadConvertInput = z.object({ leadId: id, groupId: id.nullable().default(null) });
 export const leadFirstLessonInput = z.object({
   leadId: id,
   groupId: id,

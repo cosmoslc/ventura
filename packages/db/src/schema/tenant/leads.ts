@@ -59,6 +59,7 @@ export const leads = pgTable(
     /** +998XXXXXXXXX */
     phone: text("phone").notNull(),
     phone2: text("phone2"),
+    gender: text("gender", { enum: ["male", "female"] }),
     /** Qayerdan kelgan (Instagram, Telegram, tavsiya, veb-sayt forma...) */
     source: text("source"),
     courseId: uuid("course_id"),

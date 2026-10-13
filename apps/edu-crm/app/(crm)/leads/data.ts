@@ -65,6 +65,7 @@ export interface LeadRow {
   /** 9 ta mahalliy raqam */
   phone: string;
   phone2: string | null;
+  gender: "male" | "female" | null;
   source: string | null;
   courseId: string | null;
   courseName: string | null;
@@ -128,6 +129,7 @@ export async function listLeads(db: TenantDb, filter: readonly string[] | null, 
     name: l.name,
     phone: localPhone(l.phone),
     phone2: l.phone2 ? localPhone(l.phone2) : null,
+    gender: l.gender,
     source: l.source,
     courseId: l.courseId,
     courseName,

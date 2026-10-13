@@ -135,6 +135,7 @@ export async function saveLeadAction(input: unknown): Promise<ActionResult<{ id:
         name: v.name,
         phone,
         phone2: v.phone2 ? `+998${v.phone2}` : null,
+        gender: v.gender,
         source: v.source || null,
         courseId: v.courseId,
         assignedTo: v.assignedTo,
@@ -428,7 +429,8 @@ function refreshAll(leadId: string, extra: string[] = []) {
 
 /**
  * O'quvchiga aylantirish (ADR 0023): shu telefonli o'quvchi bo'lsa — o'shanga bog'lanadi, bo'lmasa yangisi
- * yaratiladi (ism, telefon, jins, manba, qiziqqan kurs, o'quvchi formasida bir xil id li qo'shimcha maydonlar).
+ * yaratiladi (ism, telefon, jins — lid formasidan, manba, qiziqqan kurs, o'quvchi formasida bir xil id li qo'shimcha
+ * maydonlar).
  * Guruh tanlansa — sinovda qo'shiladi. Lid "O'quvchi bo'ldi" bosqichiga o'tadi. Hammasi bitta tranzaksiyada.
  */
 export async function convertLeadAction(
@@ -479,7 +481,7 @@ export async function convertLeadAction(
               name: l.name,
               phone: l.phone,
               parentPhone: l.phone2,
-              gender: parsed.data.gender,
+              gender: l.gender,
               source: l.source,
               interestedCourseId: l.courseId,
               customData,

@@ -189,6 +189,9 @@ export function LeadProfile({
         </div>
 
         <dl className="divide-y divide-border-soft border-y border-border-soft text-body">
+          <Line label={t.gender}>
+            {l.gender === "male" ? uz.students.male : l.gender === "female" ? uz.students.female : "—"}
+          </Line>
           <Line label={t.source}>{l.source ?? "—"}</Line>
           <Line label={t.course}>{l.courseName ?? "—"}</Line>
           <Line label={t.assigned}>{l.assignedName ?? t.unassigned}</Line>
