@@ -7,10 +7,8 @@ import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
-import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
+import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
-import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
@@ -25,7 +23,6 @@ import type { FinancePerms } from "./perms";
 
 const t = uz.payments;
 const ALL = "all";
-const KINDS = ["payment", "refund", "discount", "correction"] as const;
 const KIND_TONE = { payment: "success", refund: "danger", discount: "info", correction: "neutral" } as const;
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
 
@@ -33,9 +30,8 @@ export function PaymentsView({
   rows,
   today,
   todayIncome,
-  from,
-  to,
-  rangeInvalid,
+  month,
+  months,
   methods,
   students,
   groups,
@@ -45,9 +41,9 @@ export function PaymentsView({
   rows: PaymentRow[];
   today: string;
   todayIncome: { sum: number; count: number };
-  from: string;
-  to: string;
-  rangeInvalid: boolean;
+  /** Tanlangan oy "YYYY-MM" */
+  month: string;
+  months: string[];
   methods: MethodOption[];
   students: PickStudent[];
   groups: StudentGroupOption[];
@@ -56,11 +52,8 @@ export function PaymentsView({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [kind, setKind] = React.useState(ALL);
-  const [method, setMethod] = React.useState(ALL);
   const [group, setGroup] = React.useState(ALL);
   const [query, setQuery] = React.useState("");
-  const [showVoided, setShowVoided] = React.useState(false);
   const [payOpen, setPayOpen] = React.useState(false);
   const [voiding, setVoiding] = React.useState<PaymentRow | null>(null);
   const [editing, setEditing] = React.useState<PaymentRow | null>(null);
@@ -71,16 +64,12 @@ export function PaymentsView({
   const refunds = live.filter((r) => r.kind === "refund");
   const incomeSum = income.reduce((s, r) => s + r.amount, 0);
   const refundSum = refunds.reduce((s, r) => s + r.amount, 0);
-  const byMethod = methods
-    .map((m) => ({ ...m, sum: live.filter((r) => r.methodId === m.id).reduce((s, r) => s + r.cash, 0) }))
-    .filter((m) => m.sum !== 0);
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
   const visible = rows.filter((r) => {
-    if (!showVoided && r.voided) return false;
-    if (kind !== ALL && r.kind !== kind) return false;
-    if (method !== ALL && r.methodId !== method) return false;
+    // Bekor qilinganlar ro'yxatda ko'rinmaydi (o'quvchi profilidagi "To'lovlar" tabida ko'rinadi va tiklanadi)
+    if (r.voided) return false;
     if (group !== ALL && r.groupId !== group) return false;
     if (!q) return true;
     return (
@@ -90,11 +79,7 @@ export function PaymentsView({
     );
   });
 
-  function setRange(next: { from?: string; to?: string }) {
-    const f = next.from ?? from;
-    const tt = next.to ?? to;
-    if (f && tt) router.push(`${pathname}?from=${f}&to=${tt}`, { scroll: false });
-  }
+  const setMonth = (m: string) => router.push(`${pathname}?month=${m}`, { scroll: false });
 
   function restore(e: PaymentRow) {
     startTransition(async () => {
@@ -122,8 +107,6 @@ export function PaymentsView({
           ) : null
         }
       />
-
-      {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -156,32 +139,15 @@ export function PaymentsView({
         />
       </div>
 
-      {byMethod.length ? (
-        <div className="flex flex-wrap gap-2">
-          {byMethod.map((m) => (
-            <Badge key={m.id} tone="neutral">
-              {m.name}: {money(m.sum)} {uz.common.som}
-            </Badge>
-          ))}
-        </div>
-      ) : null}
-
       <Card className="overflow-hidden">
         <FilterBar>
           <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
-          <FilterDates from={from} to={to} onChange={setRange} fromLabel={t.from} toLabel={t.to} />
           <FilterSelect
-            label={t.kind}
-            value={kind}
-            onValueChange={setKind}
-            className="sm:w-40"
-            options={[{ value: ALL, label: t.allKinds }, ...KINDS.map((k) => ({ value: k, label: t.kinds[k] }))]}
-          />
-          <FilterSelect
-            label={t.method}
-            value={method}
-            onValueChange={setMethod}
-            options={[{ value: ALL, label: t.allMethods }, ...methods.map((m) => ({ value: m.id, label: m.name }))]}
+            label={t.monthFilter}
+            value={month}
+            onValueChange={setMonth}
+            className="sm:w-44"
+            options={months.map((m) => ({ value: m, label: formatMonth(m) }))}
           />
           <FilterSelect
             label={t.group}
@@ -191,10 +157,6 @@ export function PaymentsView({
               { value: ALL, label: uz.debtors.allGroups },
               ...groupNames.map(([id, name]) => ({ value: id, label: name })),
             ]}
-          />
-          <ChoiceField
-            control={<Checkbox checked={showVoided} onCheckedChange={(v) => setShowVoided(v === true)} />}
-            label={t.showVoided}
           />
           <FilterEnd>
             <span className="text-caption text-muted-foreground">{t.count(visible.length)}</span>

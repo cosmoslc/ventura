@@ -924,6 +924,7 @@ export const uz = {
       correction: "Tuzatish",
     } as Record<string, string>,
     search: "O'quvchi, telefon, guruh yoki chek raqami...",
+    monthFilter: "Oy",
     showVoided: "Bekor qilinganlar",
     rangeInvalid: "Sana oralig'i noto'g'ri (ko'pi bilan 1 yil)",
     count: (shown: number) => `${shown} ta yozuv`,
