@@ -18,6 +18,7 @@
     "edu:tenant": "tsx src/edu-tenant.ts",
     "edu:staff": "tsx src/edu-staff.ts",
     "edu:seed": "tsx src/edu-seed.ts",
+    "edu:seed-reports": "tsx src/edu-seed-reports.ts",
     "edu:e2e-seed": "tsx src/edu-e2e-seed.ts"
   },
   "dependencies": {
