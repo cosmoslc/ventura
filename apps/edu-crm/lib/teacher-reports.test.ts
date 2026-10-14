@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { type TeacherCounts, lessonMinutes, rankTeachers, teacherRow, teacherTotal } from "./teacher-reports";
+import {
+  type TeacherCounts,
+  lessonMinutes,
+  rankTeachers,
+  teacherLeaders,
+  teacherRow,
+  teacherTotal,
+} from "./teacher-reports";
 
 const counts = (over: Partial<TeacherCounts>): TeacherCounts => ({
   teacherId: "t",
@@ -62,5 +69,16 @@ describe("o'qituvchi reytingi", () => {
     ]);
     expect(rows.map((r) => r.name)).toEqual(["D", "C", "B", "A"]);
     expect(lessonMinutes("15:00", "16:30")).toBe(90);
+  });
+});
+
+describe("reyting yetakchilari", () => {
+  it("ko'rsatkichsiz qatorlar o'tkazib yuboriladi, soni chegaralanadi", () => {
+    const empty = teacherRow(counts({ teacherId: "e", marks: 0, base: 0 }));
+    const a = teacherRow(counts({ teacherId: "a" }));
+    const b = teacherRow(counts({ teacherId: "b", base: 0, marks: 10, attended: 5 }));
+    const c = teacherRow(counts({ teacherId: "c" }));
+    expect(teacherLeaders([empty, a, b, c], 2).map((r) => r.teacherId)).toEqual(["a", "b"]);
+    expect(teacherLeaders([empty], 3)).toEqual([]);
   });
 });

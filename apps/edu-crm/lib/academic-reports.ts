@@ -213,3 +213,114 @@ export function cohorts(spans: readonly StudentSpan[], today: string, n = 6): Co
     return { month, size: group.length, cells };
   });
 }
+
+/* ---------- Ko'rinish uchun qo'shimcha hisoblar (grafiklar) ---------- */
+
+export type TenureKey = "week" | "month" | "quarter" | "half" | "long";
+
+/** Qancha o'qib ketgan: 7 kungacha, 30 kungacha, 90 kungacha, 180 kungacha, undan ortiq */
+const TENURE_LIMITS: readonly (readonly [TenureKey, number])[] = [
+  ["week", 7],
+  ["month", 30],
+  ["quarter", 90],
+  ["half", 180],
+];
+
+export const tenureKey = (days: number): TenureKey => TENURE_LIMITS.find(([, max]) => days <= max)?.[0] ?? "long";
+
+/** Chiqishlar muddati bo'yicha taqsimot: har guruhda sinovda va faol chiqqanlar (bo'sh guruhlar ham qaytadi) */
+export function tenureBuckets(items: readonly { days: number; trial: boolean }[]) {
+  const keys: TenureKey[] = [...TENURE_LIMITS.map(([k]) => k), "long"];
+  return keys.map((key) => {
+    const list = items.filter((i) => tenureKey(i.days) === key);
+    return { key, trial: list.filter((i) => i.trial).length, active: list.filter((i) => !i.trial).length };
+  });
+}
+
+export interface TrendBucket {
+  /** "YYYY-MM-DD" (kun) yoki "YYYY-MM" (oy) */
+  key: string;
+  count: number;
+}
+
+const addDays = (d: string, n: number) => {
+  const [y, m, dd] = d.split("-").map(Number);
+  return new Date(Date.UTC(y!, m! - 1, dd! + n)).toISOString().slice(0, 10);
+};
+
+const monthKeys = (from: string, to: string) => {
+  const out: string[] = [];
+  for (let m = from; m <= to; m = addMonths(m, 1)) out.push(m);
+  return out;
+};
+
+/**
+ * Chiqishlar dinamikasi: bitta oy tanlansa — kunlar (oy boshidan bugungacha), aks holda oylar (yil — shu yil
+ * bugungi oygacha, barcha davr — oxirgi 24 oy). Kelajak bo'sh ustun bo'lib chizilmaydi.
+ */
+export function leaveTrend(
+  leftDates: readonly string[],
+  range: { from: string; to: string } | null,
+  monthly: boolean,
+  today: string,
+): TrendBucket[] {
+  const count = (prefix: string) => leftDates.filter((d) => d.startsWith(prefix)).length;
+  if (range && !monthly) {
+    const last = range.to <= today ? addDays(range.to, -1) : today;
+    const out: TrendBucket[] = [];
+    for (let d = range.from; d <= last; d = addDays(d, 1)) out.push({ key: d, count: count(d) });
+    return out;
+  }
+  const cur = today.slice(0, 7);
+  const first = range ? range.from.slice(0, 7) : (leftDates.map((d) => d.slice(0, 7)).sort()[0] ?? cur);
+  const lastKey = range ? addMonths(range.to.slice(0, 7), -1) : cur;
+  const keys = monthKeys(first, lastKey < cur ? lastKey : cur);
+  return (range ? keys : keys.slice(-24)).map((key) => ({ key, count: count(key) }));
+}
+
+export interface RetentionPoint {
+  month: string;
+  base: number;
+  churned: number;
+  /** Ushlab turish, %; baza bo'sh bo'lsa null */
+  rate: number | null;
+}
+
+/** Oxirgi `n` oy (joriy oy oxirida): har oy uchun ushlab turish — shu oyning o'zida baza va ketganlar */
+export function monthlyRetention(spans: readonly StudentSpan[], today: string, n = 12): RetentionPoint[] {
+  const current = today.slice(0, 7);
+  return Array.from({ length: n }, (_, i) => addMonths(current, i - n + 1)).map((month) => {
+    const s = churnStats(spans, { from: `${month}-01`, to: `${addMonths(month, 1)}-01` });
+    return { month, base: s.base.length, churned: s.churned.length, rate: s.retentionRate };
+  });
+}
+
+export interface RiskItem {
+  studentId: string;
+  groupId: string;
+  level: RiskLevel;
+  factors: readonly RiskFactor[];
+}
+
+const LEVELS: readonly RiskLevel[] = ["critical", "high", "medium"];
+
+/**
+ * Xavf taqsimoti: o'quvchilar — o'z eng yuqori darajasi bo'yicha (ko'p guruhda bo'lsa bir marta), omillar — shu omili
+ * bor o'quvchilar, guruhlar — shu guruhdagi xavfli o'quvchilar; guruhlar ko'pidan kamiga.
+ */
+export function riskBreakdown(items: readonly RiskItem[]) {
+  const best = new Map<string, number>();
+  for (const i of items) best.set(i.studentId, Math.min(best.get(i.studentId) ?? 9, LEVELS.indexOf(i.level)));
+  const levels = LEVELS.map((level, idx) => ({ level, count: [...best.values()].filter((v) => v === idx).length }));
+  const factorKeys: RiskFactor[] = ["consecutive", "missed", "uncontacted", "debt"];
+  const factors = factorKeys.map((factor) => ({
+    factor,
+    count: new Set(items.filter((i) => i.factors.includes(factor)).map((i) => i.studentId)).size,
+  }));
+  const perGroup = new Map<string, Set<string>>();
+  for (const i of items) perGroup.set(i.groupId, (perGroup.get(i.groupId) ?? new Set()).add(i.studentId));
+  const groups = [...perGroup]
+    .map(([groupId, set]) => ({ groupId, count: set.size }))
+    .sort((a, b) => b.count - a.count);
+  return { students: best.size, levels, factors, groups };
+}
