@@ -44,7 +44,13 @@ export default async function ReportPage({
   const today = todayTashkent();
   const period = reportPeriod(sp, today, def.periodMode);
   const branch = await getBranchContext();
-  const data = await def.load({ db: getTenantDb(tenant), filter: branch.filter, period, today });
+  const data = await def.load({
+    db: getTenantDb(tenant),
+    filter: branch.filter,
+    period,
+    today,
+    finance: canAny(staff.access, ["dashboard.financial_stats"]),
+  });
   const cy = Number(today.slice(0, 4));
   const years = Array.from({ length: 6 }, (_, i) => cy - i);
   const q = new URLSearchParams();
