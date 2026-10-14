@@ -7,6 +7,7 @@ import {
   expensePlans,
   expenses,
   financeCategories,
+  financePlans,
   groups,
   payments,
   studentDiscounts,
@@ -22,10 +23,14 @@ import {
   chargeDiscount,
   expenseRows,
   inMonths,
+  type PlanCell,
+  type PlanKey,
   percent,
+  planTable,
   yearMonths,
 } from "@/lib/reports";
 import { uz } from "@/lib/uz";
+import type { BranchContext } from "./branch";
 import { loadFlows } from "./dashboard";
 import { loadAccounts } from "./finance";
 
@@ -37,6 +42,9 @@ import { loadAccounts } from "./finance";
 
 const t = uz.reports;
 
+/** year — faqat yil; period — yil + oy yoki barcha davr; month — yil + oy (barcha davrsiz) */
+export type PeriodMode = "year" | "period" | "month";
+
 /** Davr: yil (oy yo'q) yoki yil + oy; `months` null — barcha davr */
 export interface ReportPeriod {
   year: number | null;
@@ -47,11 +55,7 @@ export interface ReportPeriod {
   label: string;
 }
 
-export function reportPeriod(
-  params: { yil?: string; oy?: string },
-  today: string,
-  mode: "year" | "period",
-): ReportPeriod {
+export function reportPeriod(params: { yil?: string; oy?: string }, today: string, mode: PeriodMode): ReportPeriod {
   const cy = Number(today.slice(0, 4));
   const y =
     params.yil === "all" && mode === "period" ? null : /^\d{4}$/.test(params.yil ?? "") ? Number(params.yil) : cy;
@@ -89,7 +93,7 @@ export interface ReportDef {
   group: "finance" | "academic" | "leads" | "teachers";
   feature: string;
   permissions: readonly Permission[];
-  periodMode: "year" | "period";
+  periodMode: PeriodMode;
   load(args: LoadArgs): Promise<ReportData>;
 }
 
@@ -133,6 +137,126 @@ async function cashflow({ db, filter, period, today }: LoadArgs): Promise<Report
     table,
     note: t.cashflow.note,
   };
+}
+
+/* ---------- Reja, fakt va prognoz ---------- */
+
+/** Joriy oyda o'quvchilar hisobidagi hisoblangan summa — to'lovlar prognozi uchun */
+async function expectedPayments(db: TenantDb, filter: readonly string[] | null, today: string) {
+  const { charges } = await chargesOf(db, filter, today);
+  const month = today.slice(0, 7);
+  return charges.filter((c) => c.month === month).reduce((s, c) => s + c.amount, 0);
+}
+
+async function cashflowPlan({ db, filter, period, today }: LoadArgs): Promise<ReportData> {
+  const months = period.months ?? yearMonths(Number(today.slice(0, 4)));
+  const scope = (col: typeof financePlans.branchId | typeof expensePlans.branchId) =>
+    filter ? inArray(col, [...filter]) : undefined;
+  const [flows, financeRows, expenseRows, expected] = await Promise.all([
+    loadFlows(db, filter),
+    db
+      .select({ line: financePlans.line, month: financePlans.month, amount: financePlans.amount })
+      .from(financePlans)
+      .where(and(scope(financePlans.branchId), inArray(financePlans.month, months))),
+    db
+      .select({ month: expensePlans.month, amount: expensePlans.amount })
+      .from(expensePlans)
+      .where(and(scope(expensePlans.branchId), inArray(expensePlans.month, months))),
+    // Kelgusi oylar bo'lmasa o'quvchi hisobi kerak emas
+    months.some((m) => m >= today.slice(0, 7)) ? expectedPayments(db, filter, today) : 0,
+  ]);
+  const plans: Partial<Record<PlanKey, Map<string, number>>> = {};
+  const addPlan = (key: PlanKey, month: string, amount: number) => {
+    const map = (plans[key] ??= new Map());
+    map.set(month, (map.get(month) ?? 0) + amount);
+  };
+  for (const r of financeRows) addPlan(r.line, r.month, Number(r.amount));
+  for (const r of expenseRows) addPlan("expenses", r.month, Number(r.amount));
+
+  const data = planTable(months, { flows, plans, expectedPayments: expected, today });
+  const p = t.plan;
+  const pct = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
+  const row = (label: string, c: PlanCell, kind: ReportRow["kind"] = "row"): ReportRow => ({
+    kind,
+    cells: {
+      label,
+      plan: c.plan,
+      fact: c.fact,
+      done: c.plan && c.fact !== null ? percent(c.fact, c.plan) : null,
+      forecast: c.forecast,
+      forecastDone: c.plan ? percent(c.forecast, c.plan) : null,
+    },
+  });
+  const section = (label: string): ReportRow => ({ kind: "section", cells: { label } });
+  const { income, outflow, net, lines } = data;
+  return {
+    metrics: [
+      {
+        label: p.incomeFact,
+        value: income.fact,
+        kind: "money",
+        tone: "success",
+        foot: income.plan ? p.planFoot(money(income.plan), pct(percent(income.fact ?? 0, income.plan))) : p.noPlan,
+      },
+      {
+        label: p.incomeForecast,
+        value: income.forecast,
+        kind: "money",
+        tone: "primary",
+        foot: income.plan ? p.ofPlan(pct(percent(income.forecast, income.plan))) : undefined,
+      },
+      {
+        label: p.outflowForecast,
+        value: outflow.forecast,
+        kind: "money",
+        tone: "danger",
+        foot: outflow.plan ? p.ofPlan(pct(percent(outflow.forecast, outflow.plan))) : undefined,
+      },
+      { label: p.netForecast, value: net.forecast, kind: "money", tone: net.forecast < 0 ? "danger" : "primary" },
+    ],
+    table: {
+      columns: [
+        { key: "label", label: p.label, kind: "text" },
+        { key: "plan", label: p.plan, kind: "money" },
+        { key: "fact", label: p.fact, kind: "money" },
+        { key: "done", label: p.done, kind: "percent" },
+        { key: "forecast", label: p.forecast, kind: "money" },
+        { key: "forecastDone", label: p.forecastDone, kind: "percent" },
+      ],
+      rows: [
+        section(p.income),
+        row(p.payments, lines.payments),
+        row(p.extra, lines.income),
+        row(p.incomeTotal, income, "total"),
+        section(p.outflow),
+        row(p.salary, lines.salary),
+        row(p.expenses, lines.expenses),
+        row(p.refunds, lines.refunds),
+        row(p.outflowTotal, outflow, "total"),
+        row(p.net, net, "total"),
+      ],
+    },
+    note: p.note,
+  };
+}
+
+/** Rejani kiritish — hisobotni ko'radigan ruxsat (reja pul yozuvi emas) */
+export const PLAN_EDIT: readonly Permission[] = FINANCE;
+
+/** Rejani kiritish oynasi uchun: xodim ko'radigan filiallarning shu yildagi rejalari */
+export async function planEditorRows(db: TenantDb, branch: BranchContext, year: number) {
+  const ids = branch.options.map((b) => b.id);
+  if (!ids.length) return [];
+  const rows = await db
+    .select({
+      branchId: financePlans.branchId,
+      month: financePlans.month,
+      line: financePlans.line,
+      amount: financePlans.amount,
+    })
+    .from(financePlans)
+    .where(and(inArray(financePlans.branchId, ids), inArray(financePlans.month, yearMonths(year))));
+  return rows.map((r) => ({ ...r, amount: Number(r.amount) }));
 }
 
 /* ---------- Xarajatlar tahlili ---------- */
@@ -483,6 +607,7 @@ async function courseRevenue({ db, filter, period, today }: LoadArgs): Promise<R
 
 export const REPORTS = {
   cashflow: { group: "finance", feature: "payments", permissions: FINANCE, periodMode: "year", load: cashflow },
+  plan: { group: "finance", feature: "payments", permissions: FINANCE, periodMode: "month", load: cashflowPlan },
   expenses: {
     group: "finance",
     feature: "expenses",
