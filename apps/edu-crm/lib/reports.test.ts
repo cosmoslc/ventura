@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import type { DayFlow } from "./dashboard";
-import { cashflowTable, chargeBase, chargeDiscount, expenseRows, percent, yearMonths } from "./reports";
+import {
+  cashflowTable,
+  chargeBase,
+  chargeDiscount,
+  expenseRows,
+  forecastCell,
+  percent,
+  planTable,
+  yearMonths,
+} from "./reports";
 import { reportPeriod } from "./server/reports";
 
 const L = {
@@ -122,5 +131,61 @@ describe("hisobot davri", () => {
     expect(reportPeriod({ yil: "all" }, today, "period")).toMatchObject({ year: null, months: null, range: null });
     // Yillik hisobotda "barcha" yo'q — joriy yil
     expect(reportPeriod({ yil: "all" }, today, "year").year).toBe(2026);
+  });
+});
+
+describe("reja, fakt va prognoz", () => {
+  const today = "2026-10-14";
+  const flows = [
+    flow("2026-07-10", "expense", 300, "Ijara"),
+    flow("2026-08-10", "expense", 600, "Ijara"),
+    flow("2026-09-10", "expense", 900, "Ijara"),
+    flow("2026-09-05", "pay", 5000),
+    flow("2026-10-03", "pay", 1000),
+    flow("2026-10-04", "expense", 100, "Ijara"),
+    flow("2026-10-05", "salary", 700),
+    flow("2026-10-06", "advance", 100),
+  ];
+  const input = {
+    flows,
+    plans: {
+      payments: new Map([["2026-10", 4000]]),
+      salary: new Map([
+        ["2026-10", 500],
+        ["2026-11", 900],
+      ]),
+    },
+    expectedPayments: 3000,
+    today,
+  };
+
+  it("o'tgan oy — fakt; joriy oy — fakt va kutilgandan kattasi; kelgusi — kutilgan", () => {
+    expect(forecastCell("payments", "2026-09", input)).toEqual({ plan: null, fact: 5000, forecast: 5000 });
+    // To'lov: kutilgan — o'quvchi hisobidagi joriy oy summasi (reja emas)
+    expect(forecastCell("payments", "2026-10", input)).toEqual({ plan: 4000, fact: 1000, forecast: 3000 });
+    expect(forecastCell("payments", "2026-12", input)).toEqual({ plan: null, fact: null, forecast: 3000 });
+    // Ish haqi + avans; fakt rejadan oshgan — fakt
+    expect(forecastCell("salary", "2026-10", input)).toEqual({ plan: 500, fact: 800, forecast: 800 });
+    expect(forecastCell("salary", "2026-11", input).forecast).toBe(900);
+    // Reja yo'q — oxirgi 3 to'liq oy o'rtachasi (iyul–sentyabr)
+    expect(forecastCell("expenses", "2026-10", input)).toEqual({ plan: null, fact: 100, forecast: 600 });
+    expect(forecastCell("refunds", "2026-11", input).forecast).toBe(0);
+  });
+
+  it("jami: reja faqat kiritilgan bo'lsa, sof oqim, kelmagan oy faktsiz", () => {
+    const oct = planTable(["2026-10"], input);
+    expect(oct.income).toEqual({ plan: 4000, fact: 1000, forecast: 3000 });
+    expect(oct.outflow).toEqual({ plan: 500, fact: 900, forecast: 1400 });
+    expect(oct.net).toEqual({ plan: 3500, fact: 100, forecast: 1600 });
+    const later = planTable(["2026-11", "2026-12"], input);
+    expect(later.lines.payments).toEqual({ plan: null, fact: null, forecast: 6000 });
+    expect(later.lines.salary.plan).toBe(900);
+    expect(later.net.fact).toBeNull();
+    expect(later.net.plan).toBeNull();
+  });
+
+  it("oylik hisobotda barcha davr yo'q", () => {
+    expect(reportPeriod({ yil: "all" }, today, "month")).toMatchObject({ year: 2026, month: 10 });
+    expect(reportPeriod({ yil: "2026", oy: "all" }, today, "month").months).toHaveLength(12);
   });
 });

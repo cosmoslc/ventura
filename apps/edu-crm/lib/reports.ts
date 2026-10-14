@@ -1,3 +1,4 @@
+import { addMonths } from "./billing";
 import type { DayFlow } from "./dashboard";
 
 /*
@@ -223,3 +224,86 @@ export const inMonths = (month: string, months: readonly string[] | null) => !mo
 
 /** Foiz (0..100), bo'luvchi 0 bo'lsa null */
 export const percent = (part: number, whole: number) => (whole > 0 ? (part / whole) * 100 : null);
+
+/* ---------- Reja, fakt va prognoz ---------- */
+
+/** Pul oqimi rejasi qatorlari: payments/income/salary — `finance_plans`, expenses — xarajat rejalari yig'indisi */
+export type PlanKey = "payments" | "income" | "salary" | "expenses" | "refunds";
+export const PLAN_KEYS: readonly PlanKey[] = ["payments", "income", "salary", "expenses", "refunds"];
+
+const FLOW_KINDS: Record<PlanKey, readonly DayFlow["kind"][]> = {
+  payments: ["pay"],
+  income: ["income"],
+  salary: ["salary", "advance"],
+  expenses: ["expense"],
+  refunds: ["refund"],
+};
+
+export interface PlanCell {
+  plan: number | null;
+  /** Hali kelmagan oy(lar) — null */
+  fact: number | null;
+  forecast: number;
+}
+
+export interface ForecastInput {
+  flows: readonly DayFlow[];
+  /** Oy → summa; qator yo'q — reja kiritilmagan */
+  plans: Partial<Record<PlanKey, ReadonlyMap<string, number>>>;
+  /** Joriy oyda o'quvchilar hisobidagi hisoblangan summa (to'lovlar prognozi) */
+  expectedPayments: number;
+  today: string;
+}
+
+/**
+ * Bitta oy, bitta qator. Prognoz:
+ * - o'tgan oy — fakt;
+ * - joriy oy — fakt va kutilgan summadan kattasi;
+ * - kelgusi oy — kutilgan summa.
+ * Kutilgan: to'lovlar — joriy oy hisoblangan summasi (o'quvchilar tarkibi o'zgarmasa); qolganlari — reja, reja
+ * bo'lmasa oxirgi 3 to'liq oy o'rtachasi.
+ */
+export function forecastCell(key: PlanKey, month: string, input: ForecastInput): PlanCell {
+  const thisMonth = input.today.slice(0, 7);
+  const factOf = (m: string) =>
+    sumOf(input.flows.filter((f) => f.date.startsWith(m) && FLOW_KINDS[key].includes(f.kind)).map((f) => f.amount));
+  const plan = input.plans[key]?.get(month) ?? null;
+  const fact = month > thisMonth ? null : factOf(month);
+  if (month < thisMonth) return { plan, fact, forecast: fact ?? 0 };
+  const recent = [1, 2, 3].map((n) => factOf(addMonths(thisMonth, -n)));
+  const expected = key === "payments" ? input.expectedPayments : (plan ?? Math.round(sumOf(recent) / 3));
+  return { plan, fact, forecast: fact === null ? expected : Math.max(fact, expected) };
+}
+
+/** Bir necha oy yig'indisi: reja — hech bo'lmasa bitta oyda bo'lsa; fakt — kelgan oylar bo'yicha */
+export function sumCells(cells: readonly PlanCell[]): PlanCell {
+  const plans = cells.map((c) => c.plan).filter((v): v is number => v !== null);
+  const facts = cells.map((c) => c.fact).filter((v): v is number => v !== null);
+  return {
+    plan: plans.length ? sumOf(plans) : null,
+    fact: facts.length ? sumOf(facts) : null,
+    forecast: sumOf(cells.map((c) => c.forecast)),
+  };
+}
+
+export interface PlanTable {
+  lines: Record<PlanKey, PlanCell>;
+  income: PlanCell;
+  outflow: PlanCell;
+  net: PlanCell;
+}
+
+/** Tanlangan oylar bo'yicha har qator, jami kirim, jami chiqim va sof oqim */
+export function planTable(months: readonly string[], input: ForecastInput): PlanTable {
+  const lines = Object.fromEntries(
+    PLAN_KEYS.map((k) => [k, sumCells(months.map((m) => forecastCell(k, m, input)))]),
+  ) as Record<PlanKey, PlanCell>;
+  const income = sumCells([lines.payments, lines.income]);
+  const outflow = sumCells([lines.salary, lines.expenses, lines.refunds]);
+  const net: PlanCell = {
+    plan: income.plan !== null && outflow.plan !== null ? income.plan - outflow.plan : null,
+    fact: income.fact === null ? null : income.fact - (outflow.fact ?? 0),
+    forecast: income.forecast - outflow.forecast,
+  };
+  return { lines, income, outflow, net };
+}

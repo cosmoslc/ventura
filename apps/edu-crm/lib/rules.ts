@@ -331,3 +331,29 @@ export const salaryEntryInput = z.object({
   note: z.string().trim().max(500).default(""),
 });
 export type SalaryEntryInput = z.input<typeof salaryEntryInput>;
+
+/* ---------- Pul oqimi rejasi (ADR 0030) ---------- */
+
+/** `finance_plans.line` bilan bir xil (bazadagi CHECK) */
+export const FINANCE_PLAN_LINES = ["payments", "income", "salary"] as const;
+
+/** Bir filialning bir yillik rejasi: har oy va qator uchun summa; null — reja yo'q (qator o'chiriladi) */
+export const financePlanInput = z.object({
+  branchId: id.nullable(),
+  year: z.number().int().min(2000).max(2100),
+  cells: z
+    .array(
+      z.object({
+        month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+        line: z.enum(FINANCE_PLAN_LINES),
+        amount: z
+          .number({ error: uz.reports.plan.amountInvalid })
+          .int(uz.reports.plan.amountInvalid)
+          .positive(uz.reports.plan.amountInvalid)
+          .max(10_000_000_000, uz.reports.plan.amountInvalid)
+          .nullable(),
+      }),
+    )
+    .max(36),
+});
+export type FinancePlanInput = z.input<typeof financePlanInput>;

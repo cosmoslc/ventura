@@ -6,7 +6,7 @@ E3 va E4 dagidek qismlarga bo'linadi. Har qism — alohida branch, PR va ADR.
 
 | Qism | Mazmuni | Holati |
 | --- | --- | --- |
-| E5a | Bo'lim asosi (hisobotlar sahifasi, umumiy filtr qatori, Excel) va moliya: pul oqimi, xarajatlar, chegirmalar, kurs daromadi | tayyor (ADR 0030) |
+| E5a | Bo'lim asosi (hisobotlar sahifasi, umumiy filtr qatori, Excel) va moliya: pul oqimi, reja-fakt-prognoz, xarajatlar, chegirmalar, kurs daromadi | tayyor (ADR 0030) |
 | E5b | O'quv: guruhdan chiqish sabablari, xavfli o'quvchilar, o'quvchini ushlab turish | — |
 | E5c | Lidlar: voronka, yo'qotilgan lidlar, manbalar, mavsumiy oqim | — |
 | E5d | O'qituvchi samaradorlik reytingi | — |
@@ -37,7 +37,7 @@ o'chirish mumkin, bu brauzerda eslab qolinadi.
 - **Pul oqimi rejasi** alohida jadvalda, hisobotning o'zidan tahrirlanardi. Xarajatlar rejasi esa boshqa joyda
   edi — ikki xil reja yashardi.
 
-## Qarorlar (taklif — Saidakbar tasdig'i kerak; E5a shu bo'yicha qilingan)
+## Qarorlar (Saidakbar tasdiqladi, 2026-10-14)
 
 1. **Bitta manba.** Har hisobot raqami tegishli ro'yxat sahifasidagi bilan bir xil funksiyadan olinadi:
    - to'lov va qarz — o'quvchi hisobidan (`lib/ledger.ts`, ADR 0015);
@@ -57,13 +57,13 @@ o'chirish mumkin, bu brauzerda eslab qolinadi.
    - **Kirim:** o'quvchi to'lovlari, qo'shimcha daromad.
    - **Chiqim:** xarajat toifalari, ish haqi, avans, qaytarishlar.
    - **Natija:** sof oqim va yig'ma qoldiq.
-   - **Reja ustunlari** — faqat xarajatlar uchun (ADR 0016 rejalari). Kirim rejasi (eski tizimdagi "Reja / Fakt /
-     Prognoz") hozircha olinmaydi — kerak bo'lsa alohida qaror.
+   - **Reja, fakt va prognoz** — alohida hisobot (Saidakbar: "kirim rejasi, reja, prognoz, fakt ham kelsin"):
+     - reja: to'lovlar, qo'shimcha daromad va ish haqi — filial va oy bo'yicha yangi `finance_plans` jadvali;
+       xarajatlar — ADR 0016 toifa rejalari yig'indisi (ikki xil xarajat rejasi bo'lmaydi);
+     - prognoz haqiqiy hisob: eski tizimda bu ustun doim bo'sh edi. Qoidasi ADR 0030 da.
    - Lid, o'quvchi, guruh ko'rsatkichlari pul oqimidan ajratiladi — ular E5b/E5c hisobotlarida.
-6. **Olinmaydi (hozircha):**
-   - ballar, imtihon, tanga — bu bo'limlar Ventura'da hali yo'q;
-   - SMS hisoboti — SMS ulanganda;
-   - jurnallar va "tez kunda" bandlari — ma'lumoti yo'q.
+6. **Hozircha olinmaydigan hisobotlar** — pastdagi "Keyinga qoldirilgan hisobotlar" ro'yxatida. Ular oxirida baribir
+   qo'shiladi (Saidakbar, 2026-10-14); ro'yxat har qismda to'ldirib boriladi.
 7. **Ruxsatlar:**
 
    | Hisobot | Ruxsat |
@@ -73,3 +73,30 @@ o'chirish mumkin, bu brauzerda eslab qolinadi.
    | Lidlar | `dashboard.conversion_stats` |
 
    Mavjud ruxsatlar; yangi ruxsat qo'shilmaydi.
+
+## Keyinga qoldirilgan hisobotlar (oxirida qo'shiladi)
+
+Eski CRM "Hisobotlar" menyusi (`src/features/admin/utils/constants.jsx`, `REPORT_MENU`) va EDU-CRM-PLAN bilan
+solishtirilgan. Har band uchun: nima kerak bo'lishi va nimaga bog'liq. "Soxta" — eski sahifa qo'lda yozilgan
+raqamlarni ko'rsatardi (`ReportsSubPages.jsx`), ya'ni ko'chiradigan haqiqiy hisob yo'q.
+
+| # | Hisobot | Eski tizimda | Nimaga bog'liq |
+| --- | --- | --- | --- |
+| 1 | Ballar hisoboti | O'quvchilar guruhi | Ball tizimi (EDU-CRM-PLAN 8-bo'lim: birinchi versiyada yo'q) |
+| 2 | Imtihon hisoboti | O'quvchilar guruhi | Imtihonlar bo'limi (`exams`) |
+| 3 | Tanga hisoboti | O'quvchilar guruhi | Tanga tizimi (`coins`) |
+| 4 | Jurnallar | O'qituvchi guruhi, soxta | O'qituvchi portali va dars jurnali |
+| 5 | O'quvchi ushlab turish (o'qituvchi kesimida) | "Tez kunda" | E5b ushlab turish hisobi tayyor bo'lgach — o'qituvchi bo'yicha guruhlash |
+| 6 | Davomat sifati (o'qituvchi) | "Tez kunda" | Davomat o'z vaqtida belgilanishi; E5d bilan birga ko'rib chiqiladi |
+| 7 | Guruh dolzarbligi | "Tez kunda" | Ta'rifi aniqlanishi kerak (to'lish, o'sish, ketish) |
+| 8 | Imtihon va baholar sifati | "Tez kunda" | Imtihonlar va ball tizimi |
+| 9 | SMS va xabarlar | Kommunikatsiya, soxta | SMS yuborish (`sms`) |
+| 10 | Qo'ng'iroqlar tahlili | "Tez kunda" | Telefoniya ulanishi; hozircha lid qo'ng'iroq yozuvlari bor (ADR 0022) |
+| 11 | Telegram bot aktivligi | "Tez kunda" | Bot xabarlari jurnali |
+| 12 | Student app aktivligi | "Tez kunda" | O'quvchi portali (EDU-CRM-PLAN 8-bo'lim) |
+| 13 | Takliflar (referal) | "Tez kunda" | Taklif tizimi |
+| 14 | Xodimlar faollik hisoboti | "Tez kunda" | Faoliyat jurnali bor (ADR 0002) — hisobot ko'rinishi E6 da |
+| 15 | Xodimlar davomati hisoboti | Tizim guruhi, soxta | Xodimlar davomati sahifasi bor (30 kun); oylik hisobot ko'rinishi keyin |
+| 16 | Vazifalar bajarish | "Tez kunda" | Vazifalar bo'limi |
+| 17 | Operatsion ko'rsatkichlar rejasi | Pul oqimi sahifasining ikkinchi jadvali: lidlar, sinov darsi, birinchi to'lov, konversiya, o'quvchilar, ketganlar, guruhlar, o'rtacha guruh, davomat — reja / fakt / prognoz | Fakt qismi E5b/E5c hisobotlarida; reja jadvali — `finance_plans` kabi alohida |
+

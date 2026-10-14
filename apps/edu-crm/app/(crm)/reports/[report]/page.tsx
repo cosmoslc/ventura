@@ -9,9 +9,10 @@ import { PageHeader } from "@ventura/ui/page-header";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { todayTashkent } from "@/lib/server/memberships";
-import { REPORTS, isReportKey, reportPeriod } from "@/lib/server/reports";
+import { PLAN_EDIT, REPORTS, isReportKey, planEditorRows, reportPeriod } from "@/lib/server/reports";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
+import { PlanEditor } from "../plan-editor";
 import { ReportFilters } from "../report-filters";
 import { ReportTableView, formatCell } from "../report-table";
 
@@ -47,7 +48,11 @@ export default async function ReportPage({
   const q = new URLSearchParams();
   if (period.year === null) q.set("yil", "all");
   else q.set("yil", String(period.year));
-  if (def.periodMode === "period") q.set("oy", period.month === null ? "all" : String(period.month));
+  if (def.periodMode !== "year") q.set("oy", period.month === null ? "all" : String(period.month));
+  const editor =
+    report === "plan" && period.year !== null && canAny(staff.access, PLAN_EDIT)
+      ? await planEditorRows(getTenantDb(tenant), branch, period.year)
+      : null;
 
   return (
     <div className="space-y-6">
@@ -67,6 +72,11 @@ export default async function ReportPage({
         month={period.month}
         years={years}
         excelHref={`/reports/excel/${report}?${q.toString()}`}
+        actions={
+          editor && period.year !== null ? (
+            <PlanEditor year={period.year} rows={editor} branches={branch.options} selectedBranch={branch.selected} />
+          ) : null
+        }
       />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
