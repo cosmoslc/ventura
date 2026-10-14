@@ -149,7 +149,8 @@ Bo'lim: `reports`.
 - [x] Moliyaviy hisobotlar: pul oqimi (qo'shimcha daromad ham — ADR 0016), kurs daromadi, xarajatlar, chegirmalar — ADR 0030 (E5a)
 - [x] O'quv hisobotlari: davomat (ADR 0014), guruhdan chiqqanlar, xavf ostidagi o'quvchilar, saqlab qolish — ADR 0031 (E5b)
 - [x] Lid hisobotlari: CRM voronka, yo'qotilgan lidlar, manbalar samaradorligi, mavsumiy oqim — ADR 0032 (E5c)
-- [ ] Excel'ga eksport
+- [x] O'qituvchi samaradorlik reytingi — ADR 0033 (E5d)
+- [x] Excel'ga eksport — har hisobotda (ADR 0030)
 
 **Qabul:** har hisobot raqami tegishli ro'yxat sahifasidagi yig'indi bilan mos keladi.
 

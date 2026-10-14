@@ -34,6 +34,7 @@ import { uz } from "@/lib/uz";
 import { leavesReport, retentionReport, riskReport } from "./academic-reports";
 import type { BranchContext } from "./branch";
 import { funnelReport, lostReport, seasonalReport, sourcesReport } from "./lead-reports";
+import { teachersReport } from "./teacher-reports";
 import { loadFlows } from "./dashboard";
 import { loadAccounts } from "./finance";
 
@@ -646,6 +647,13 @@ export const REPORTS = {
   lost: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "period", load: lostReport },
   sources: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "period", load: sourcesReport },
   seasonal: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "year", load: seasonalReport },
+  teachers: {
+    group: "teachers",
+    feature: "teachers",
+    permissions: ACADEMIC,
+    periodMode: "period",
+    load: teachersReport,
+  },
 } as const satisfies Record<string, ReportDef>;
 
 export type ReportKey = keyof typeof REPORTS;
