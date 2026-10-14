@@ -8,6 +8,7 @@ import {
   courses,
   expensePlans,
   expenses,
+  financePlans,
   groupMemberships,
   groups,
   payments,
@@ -45,6 +46,7 @@ function appUrl() {
 let db: TenantDb;
 let other: TenantDb;
 let studentId = "";
+let branchId = "";
 
 describe.skipIf(!ADMIN_URL)("hisobotlar (haqiqiy PostgreSQL)", () => {
   beforeAll(async () => {
@@ -62,6 +64,7 @@ describe.skipIf(!ADMIN_URL)("hisobotlar (haqiqiy PostgreSQL)", () => {
     other = createTenantDb(appUrl(), "beta", { max: 2 });
 
     const [b] = await db.insert(branches).values({ name: "Markaz" }).returning();
+    branchId = b!.id;
     const [staff] = await db.insert(users).values({ name: "Kassir", email: "k@rep.local" }).returning();
     const [c] = await db.insert(courses).values({ name: "Ingliz tili", price: 300_000 }).returning();
     const [tc] = await db
@@ -180,6 +183,51 @@ describe.skipIf(!ADMIN_URL)("hisobotlar (haqiqiy PostgreSQL)", () => {
     expect(k.metrics[0]!.value).toBe(oct.reduce((s, c) => s + c.amount, 0));
     expect(k.metrics[1]!.value).toBe(200_000);
     expect(k.table.rows[0]!.cells).toMatchObject({ course: "Ingliz tili", groups: 1, students: 1 });
+  });
+
+  it("reja, fakt va prognoz — kirim rejasi, xarajat rejasi va o'quvchi hisobidan kutilgan to'lov", async () => {
+    await db.insert(financePlans).values([
+      { branchId, month: "2026-10", line: "payments", amount: 300_000 },
+      { branchId, month: "2026-10", line: "salary", amount: 40_000 },
+      { branchId, month: "2026-11", line: "income", amount: 70_000 },
+    ]);
+    const acc = (await loadAccounts(db, [studentId], TODAY)).get(studentId)!;
+    const expected = acc.charges.filter((c) => c.month === "2026-10").reduce((s, c) => s + c.amount, 0);
+    const r = await load("plan");
+    const cells = (label: string) => r.table.rows.find((x) => x.cells.label === label)!.cells;
+    expect(cells("O'quvchi to'lovlari")).toMatchObject({
+      plan: 300_000,
+      fact: 200_000,
+      forecast: Math.max(200_000, expected),
+    });
+    expect(cells("Qo'shimcha daromad")).toMatchObject({ plan: null, fact: 50_000 });
+    expect(cells("Xarajatlar")).toMatchObject({ plan: 100_000, fact: 80_000, forecast: 100_000 });
+    expect(cells("Ish haqi va avans")).toMatchObject({ plan: 40_000, fact: 0, forecast: 40_000 });
+    // Fakt — pul oqimi hisoboti bilan bir xil
+    expect(cells("Jami kirim").fact).toBe(250_000);
+
+    // Butun yil: noyabr rejasi va kelgusi oylar prognozi qo'shiladi
+    const year = await REPORTS.plan.load({
+      db,
+      filter: null,
+      period: reportPeriod({ yil: "2026", oy: "all" }, TODAY, "month"),
+      today: TODAY,
+    });
+    const extra = year.table.rows.find((x) => x.cells.label === "Qo'shimcha daromad")!.cells;
+    expect(extra.plan).toBe(70_000);
+    expect(extra.fact).toBe(50_000);
+
+    // Bazadagi himoya: summa musbat, qator ro'yxatdan, bitta katak — bitta qator
+    await expect(
+      db.insert(financePlans).values({ branchId, month: "2026-12", line: "payments", amount: 0 }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(financePlans).values({ branchId, month: "2026-12", line: "rent" as "payments", amount: 1 }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(financePlans).values({ branchId, month: "2026-10", line: "payments", amount: 1 }),
+    ).rejects.toThrow();
+    expect(await other.select().from(financePlans)).toEqual([]);
   });
 
   it("boshqa mijoz hech narsa ko'rmaydi", async () => {

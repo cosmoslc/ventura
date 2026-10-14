@@ -2,6 +2,7 @@
 
 import { FileSpreadsheet } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import type * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { FilterBar, FilterEnd, FilterSelect } from "@ventura/ui/filter-bar";
 import { uz } from "@/lib/uz";
@@ -10,7 +11,7 @@ const t = uz.reports;
 const ALL = "all";
 
 /**
- * Umumiy filtr qatori (ADR 0030): yil va (davrli hisobotda) oy. Tanlov manzilda saqlanadi (`?yil=&oy=`) — havolani
+ * Umumiy filtr qatori (ADR 0030): yil va (davrli va oylik hisobotda) oy. Tanlov manzilda saqlanadi (`?yil=&oy=`) — havolani
  * ulashsa o'sha davr ochiladi. Filial — tepadagi umumiy tanlov. O'ngda Excel.
  */
 export function ReportFilters({
@@ -19,12 +20,15 @@ export function ReportFilters({
   month,
   years,
   excelHref,
+  actions,
 }: {
-  mode: "year" | "period";
+  mode: "year" | "period" | "month";
   year: number | null;
   month: number | null;
   years: number[];
   excelHref: string;
+  /** Hisobotga xos tugma (masalan rejani kiritish) — Excel yonida */
+  actions?: React.ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -47,7 +51,7 @@ export function ReportFilters({
           ...years.map((y) => ({ value: String(y), label: t.yearLabel(y) })),
         ]}
       />
-      {mode === "period" && year !== null ? (
+      {mode !== "year" && year !== null ? (
         <FilterSelect
           label={t.month}
           value={month === null ? ALL : String(month)}
@@ -59,6 +63,7 @@ export function ReportFilters({
         />
       ) : null}
       <FilterEnd>
+        {actions}
         <Button variant="ghost" asChild>
           <a href={excelHref} download>
             <FileSpreadsheet /> {t.excel}

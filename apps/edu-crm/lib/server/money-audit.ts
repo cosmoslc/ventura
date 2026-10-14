@@ -12,7 +12,7 @@ import { MONEY_GROUPS, type MoneyGroup } from "@/lib/money-audit";
 
 const PREFIXES: Record<MoneyGroup, readonly string[]> = {
   payment: ["payment.", "discount."],
-  expense: ["expense.", "expense_plan."],
+  expense: ["expense.", "expense_plan.", "finance_plan."],
   additional_income: ["additional_income."],
   salary_entry: ["salary_entry."],
   approval: ["approval."],

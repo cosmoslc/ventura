@@ -269,3 +269,43 @@ export const expensePlans = pgTable(
     tenantPolicy("expense_plans"),
   ],
 );
+
+/**
+ * Pul oqimi rejasi (ADR 0030): filial + oy + qator bo'yicha bitta summa. Xarajatlar rejasi bu yerda emas — u
+ * toifalar bo'yicha `expense_plans` dan yig'iladi. Reja pul yozuvi emas: summa bo'shatilsa qator o'chiriladi.
+ */
+export const FINANCE_PLAN_LINES = ["payments", "income", "salary"] as const;
+export type FinancePlanLine = (typeof FINANCE_PLAN_LINES)[number];
+
+export const financePlans = pgTable(
+  "finance_plans",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    branchId: uuid("branch_id").notNull(),
+    month: text("month").notNull(),
+    /** payments — o'quvchi to'lovlari, income — qo'shimcha daromad, salary — ish haqi va avans */
+    line: text("line").$type<FinancePlanLine>().notNull(),
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    createdBy: uuid("created_by"),
+    ...timestamps,
+  },
+  (t) => [
+    unique("finance_plans_cell_uq").on(t.tenantId, t.branchId, t.month, t.line),
+    index("finance_plans_month_idx").on(t.month),
+    foreignKey({
+      name: "finance_plans_branch_fk",
+      columns: [t.tenantId, t.branchId],
+      foreignColumns: [branches.tenantId, branches.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "finance_plans_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
+    check("finance_plans_amount", sql`${t.amount} > 0`),
+    check("finance_plans_month", sql`${t.month} ~ '${sql.raw(MONTH)}'`),
+    check("finance_plans_line", sql`${t.line} in ('payments', 'income', 'salary')`),
+    tenantPolicy("finance_plans"),
+  ],
+);
