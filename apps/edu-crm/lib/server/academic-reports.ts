@@ -28,7 +28,7 @@ import type { LoadArgs } from "./reports";
 
 const t = uz.reports;
 const pctLabel = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
-const monthShort = (month: string) => uz.months[Number(month.slice(5, 7)) - 1]!.slice(0, 3);
+const monthShort = (month: string) => uz.monthsShort[Number(month.slice(5, 7)) - 1]!;
 
 /* ---------- Ko'rinish ma'lumoti (ADR 0034): grafiklar va ro'yxatlar; jadval va Excel — yuqoridagi `table/extra` ---------- */
 
