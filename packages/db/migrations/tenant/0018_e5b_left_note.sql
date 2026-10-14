@@ -1,0 +1,2 @@
+ALTER TABLE "group_memberships" ADD COLUMN "left_note" text;--> statement-breakpoint
+ALTER TABLE "group_memberships" ADD CONSTRAINT "group_memberships_left_note_len" CHECK ("group_memberships"."left_note" is null or length("group_memberships"."left_note") <= 500);

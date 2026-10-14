@@ -22,7 +22,7 @@ export function ReportFilters({
   excelHref,
   actions,
 }: {
-  mode: "year" | "period" | "month";
+  mode: "year" | "period" | "month" | "none";
   year: number | null;
   month: number | null;
   years: number[];
@@ -42,15 +42,17 @@ export function ReportFilters({
 
   return (
     <FilterBar standalone>
-      <FilterSelect
-        label={t.year}
-        value={year === null ? ALL : String(year)}
-        onValueChange={(v) => set({ yil: v })}
-        options={[
-          ...(mode === "period" ? [{ value: ALL, label: t.allYears }] : []),
-          ...years.map((y) => ({ value: String(y), label: t.yearLabel(y) })),
-        ]}
-      />
+      {mode === "none" ? null : (
+        <FilterSelect
+          label={t.year}
+          value={year === null ? ALL : String(year)}
+          onValueChange={(v) => set({ yil: v })}
+          options={[
+            ...(mode === "period" ? [{ value: ALL, label: t.allYears }] : []),
+            ...years.map((y) => ({ value: String(y), label: t.yearLabel(y) })),
+          ]}
+        />
+      )}
       {mode !== "year" && year !== null ? (
         <FilterSelect
           label={t.month}

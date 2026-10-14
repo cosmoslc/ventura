@@ -33,7 +33,7 @@ import {
   leadMoveInput,
   leadNoteInput,
   leadStagesInput,
-  lostReasonsInput,
+  reasonListInput,
   waitlistActivateInput,
   waitlistAssignInput,
   waitlistInput,
@@ -647,7 +647,7 @@ export async function restoreLeadAction(id: unknown): Promise<ActionResult> {
 /** Yo'qotish sabablari ro'yxati */
 export async function saveLostReasonsAction(input: unknown): Promise<ActionResult> {
   return crmAction(FEATURE, "leads.edit", async ({ db, staff, audit }) => {
-    const parsed = lostReasonsInput.safeParse(input);
+    const parsed = reasonListInput.safeParse(input);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
     const list = [...new Set(parsed.data)];
     await db

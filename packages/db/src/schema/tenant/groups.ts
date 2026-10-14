@@ -113,6 +113,8 @@ export const groupMemberships = pgTable(
     /** Davr yopilgan sana (guruhdan chiqqan) */
     leftAt: date("left_at", { mode: "string" }),
     leftReason: text("left_reason"),
+    /** Chiqarishdagi izoh (sabab ro'yxatdan tanlanadi, izoh — erkin matn; ADR 0031) */
+    leftNote: text("left_note"),
     createdBy: uuid("created_by"),
     ...timestamps,
   },
@@ -139,6 +141,7 @@ export const groupMemberships = pgTable(
       columns: [t.tenantId, t.createdBy],
       foreignColumns: [users.tenantId, users.id],
     }).onDelete("restrict"),
+    check("group_memberships_left_note_len", sql`${t.leftNote} is null or length(${t.leftNote}) <= 500`),
     check("group_memberships_left_consistent", sql`(${t.status} = 'left') = (${t.leftAt} is not null)`),
     check("group_memberships_activated", sql`${t.status} <> 'active' or ${t.activatedAt} is not null`),
     tenantPolicy("group_memberships"),

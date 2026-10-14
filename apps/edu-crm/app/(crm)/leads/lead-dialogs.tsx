@@ -39,6 +39,7 @@ import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { STAGE_COLORS, type StageDraft, stagesError } from "@/lib/leads";
 import { uz } from "@/lib/uz";
+import { ReasonsModal } from "../reasons-modal";
 import {
   archiveLeadAction,
   assignLeadsAction,
@@ -869,91 +870,19 @@ export function LostReasonsModal({
   onOpenChange: (open: boolean) => void;
   reasons: string[];
 }) {
-  const router = useRouter();
-  const [list, setList] = React.useState(reasons);
-  const [draft, setDraft] = React.useState("");
-  const [pending, startTransition] = React.useTransition();
-  const [wasOpen, setWasOpen] = React.useState(false);
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) {
-      setList(reasons);
-      setDraft("");
-    }
-  }
-  function add() {
-    const v = draft.trim();
-    if (!v || list.includes(v)) return;
-    setList([...list, v]);
-    setDraft("");
-  }
-  function save() {
-    startTransition(async () => {
-      const res = await saveLostReasonsAction(list);
-      if (!res.ok) return void toast({ tone: "danger", title: res.error });
-      toast({ tone: "success", title: t.lostReasonsSaved });
-      onOpenChange(false);
-      router.refresh();
-    });
-  }
   return (
-    <Modal
+    <ReasonsModal
       open={open}
       onOpenChange={onOpenChange}
-      position="center"
-      title={t.lostReasonsTitle}
-      description={t.lostReasonsIntro}
-      footer={
-        <>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {uz.common.cancel}
-          </Button>
-          <Button onClick={save} disabled={pending || !list.length}>
-            {uz.common.save}
-          </Button>
-        </>
-      }
-    >
-      <div className="space-y-3">
-        <ul className="space-y-2">
-          {list.map((r) => (
-            <li
-              key={r}
-              className="flex items-center justify-between gap-2 rounded-control border border-border-soft px-3 py-2"
-            >
-              <span className="text-body text-foreground">{r}</span>
-              <Button
-                variant="icon"
-                size="icon-sm"
-                className="text-destructive-text"
-                aria-label={`${r} — ${uz.common.delete}`}
-                disabled={list.length < 2}
-                onClick={() => setList(list.filter((x) => x !== r))}
-              >
-                <Trash2 />
-              </Button>
-            </li>
-          ))}
-        </ul>
-        <div className="flex gap-2">
-          <Input
-            aria-label={t.lostReasonAdd}
-            placeholder={t.lostReasonPlaceholder}
-            value={draft}
-            maxLength={80}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                add();
-              }
-            }}
-          />
-          <Button variant="ghost" onClick={add} disabled={!draft.trim()}>
-            <Plus /> {t.lostReasonAdd}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      reasons={reasons}
+      save={saveLostReasonsAction}
+      text={{
+        title: t.lostReasonsTitle,
+        intro: t.lostReasonsIntro,
+        add: t.lostReasonAdd,
+        placeholder: t.lostReasonPlaceholder,
+        saved: t.lostReasonsSaved,
+      }}
+    />
   );
 }

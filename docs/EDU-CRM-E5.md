@@ -1,13 +1,13 @@
 # E5 (Hisobotlar) — reja
 
-2026-10-14 · E5a tayyor (ADR 0030) · bo'lim: `reports` · EDU-CRM-PLAN E5
+2026-10-14 · E5a, E5b tayyor (ADR 0030, 0031) · bo'lim: `reports` · EDU-CRM-PLAN E5
 
 E3 va E4 dagidek qismlarga bo'linadi. Har qism — alohida branch, PR va ADR.
 
 | Qism | Mazmuni | Holati |
 | --- | --- | --- |
 | E5a | Bo'lim asosi (hisobotlar sahifasi, umumiy filtr qatori, Excel) va moliya: pul oqimi, reja-fakt-prognoz, xarajatlar, chegirmalar, kurs daromadi | tayyor (ADR 0030) |
-| E5b | O'quv: guruhdan chiqish sabablari, xavfli o'quvchilar, o'quvchini ushlab turish | — |
+| E5b | O'quv: guruhdan chiqish sabablari (sabablar ro'yxati bilan), xavfli o'quvchilar, o'quvchini ushlab turish | tayyor (ADR 0031) |
 | E5c | Lidlar: voronka, yo'qotilgan lidlar, manbalar, mavsumiy oqim | — |
 | E5d | O'qituvchi samaradorlik reytingi | — |
 
@@ -98,5 +98,5 @@ raqamlarni ko'rsatardi (`ReportsSubPages.jsx`), ya'ni ko'chiradigan haqiqiy hiso
 | 14 | Xodimlar faollik hisoboti | "Tez kunda" | Faoliyat jurnali bor (ADR 0002) — hisobot ko'rinishi E6 da |
 | 15 | Xodimlar davomati hisoboti | Tizim guruhi, soxta | Xodimlar davomati sahifasi bor (30 kun); oylik hisobot ko'rinishi keyin |
 | 16 | Vazifalar bajarish | "Tez kunda" | Vazifalar bo'limi |
-| 17 | Operatsion ko'rsatkichlar rejasi | Pul oqimi sahifasining ikkinchi jadvali: lidlar, sinov darsi, birinchi to'lov, konversiya, o'quvchilar, ketganlar, guruhlar, o'rtacha guruh, davomat — reja / fakt / prognoz | Fakt qismi E5b/E5c hisobotlarida; reja jadvali — `finance_plans` kabi alohida |
-
+| 17 | Operatsion ko'rsatkichlar rejasi | Pul oqimi sahifasining ikkinchi jadvali: lidlar, sinov darsi, birinchi to'lov, konversiya, o'quvchilar, ketganlar, guruhlar, o'rtacha guruh, davomat — reja / fakt / prognoz | Fakt qismi E5b/E5c hisobotlarida; reja jadvali — `finance_plans` kabi alohida || 18 | Xavf chegaralari sozlamasi | Eski "Xavf sozlamalari" oynasi | Chegaralar hozir doimiy (ADR 0031); markaz sozlamasi — `settings` kaliti |
+| 19 | Ushlab turish segmentlari va bog'lanish izohlari oynasi | Eski "O'quvchi ushlab turish" sahifasi | Baholar (1-band); izohlar hozir o'quvchi eslatmalarida |
