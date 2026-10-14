@@ -71,16 +71,14 @@ describe.skipIf(!ADMIN_URL)("lid hisobotlari (haqiqiy PostgreSQL)", () => {
         .insert(leads)
         .values({ branchId: b!.id, stageId: path.at(-1)!, ...v })
         .returning();
-      await db
-        .insert(leadEvents)
-        .values(
-          path.map((to, i) => ({
-            leadId: l!.id,
-            fromStageId: path[i - 1] ?? null,
-            toStageId: to,
-            at: at(`2026-10-0${i + 1}`),
-          })),
-        );
+      await db.insert(leadEvents).values(
+        path.map((to, i) => ({
+          leadId: l!.id,
+          fromStageId: path[i - 1] ?? null,
+          toStageId: to,
+          at: at(`2026-10-0${i + 1}`),
+        })),
+      );
       return l!;
     };
     // Instagram: o'quvchi bo'ldi (to'lagan) va yo'qotilgan (2-bosqichdan)
