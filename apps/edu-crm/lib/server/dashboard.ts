@@ -118,16 +118,13 @@ export interface DashboardData {
 const WEEKDAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const pct = (ok: number, tot: number) => (tot ? (ok / tot) * 100 : null);
 
-export async function loadDashboard(
-  db: TenantDb,
-  filter: readonly string[] | null,
-  period: Period,
-  today: string,
-): Promise<DashboardData> {
+/**
+ * Pul oqimi kunlar bo'yicha (bosh panel va pul oqimi hisoboti uchun bitta manba): o'quvchi to'lovlari va
+ * qaytarishlar, qo'shimcha daromad, xarajatlar (toifasi bilan), berilgan ish haqi va avans. Bekor qilinganlar kirmaydi.
+ */
+export async function loadFlows(db: TenantDb, filter: readonly string[] | null): Promise<DayFlow[]> {
   const studentScope = filter ? inArray(students.branchId, [...filter]) : undefined;
-  const groupScope = filter ? inArray(groups.branchId, [...filter]) : undefined;
-
-  const [payRows, incomeRows, expenseRows, attRows, studentRows, groupList, teacherCount, recent] = await Promise.all([
+  const [payRows, incomeRows, expenseRows] = await Promise.all([
     db
       .select({ date: payments.date, kind: payments.kind, amount: sum(payments.amount), n: count() })
       .from(payments)
@@ -147,6 +144,68 @@ export async function loadDashboard(
       .innerJoin(financeCategories, eq(financeCategories.id, expenses.categoryId))
       .where(and(isNull(expenses.voidedAt), filter ? inArray(expenses.branchId, [...filter]) : undefined))
       .groupBy(expenses.date, financeCategories.name),
+  ]);
+
+  // Berilgan ish haqi (maosh va avans, ADR 0018): filial — o'qituvchi filiali yoki xodimning biriktirilgan filiallari
+  const salaryRows = await db
+    .select({ date: salaryEntries.date, kind: salaryEntries.kind, amount: sum(salaryEntries.amount), n: count() })
+    .from(salaryEntries)
+    .leftJoin(teachers, eq(teachers.id, salaryEntries.teacherId))
+    .where(
+      and(
+        isNull(salaryEntries.voidedAt),
+        inArray(salaryEntries.kind, ["salary", "advance"]),
+        filter
+          ? or(
+              inArray(teachers.branchId, [...filter]),
+              inArray(
+                salaryEntries.userId,
+                db
+                  .select({ id: userBranches.userId })
+                  .from(userBranches)
+                  .where(inArray(userBranches.branchId, [...filter])),
+              ),
+            )
+          : undefined,
+      ),
+    )
+    .groupBy(salaryEntries.date, salaryEntries.kind);
+
+  return [
+    ...salaryRows.map((r) => ({
+      date: r.date,
+      kind: r.kind === "advance" ? ("advance" as const) : ("salary" as const),
+      amount: Number(r.amount ?? 0),
+      count: r.n,
+    })),
+    ...payRows.map((r) => ({
+      date: r.date,
+      kind: r.kind === "refund" ? ("refund" as const) : ("pay" as const),
+      amount: Number(r.amount ?? 0),
+      count: r.n,
+    })),
+    ...incomeRows.map((r) => ({ date: r.date, kind: "income" as const, amount: Number(r.amount ?? 0), count: r.n })),
+    ...expenseRows.map((r) => ({
+      date: r.date,
+      kind: "expense" as const,
+      amount: Number(r.amount ?? 0),
+      count: r.n,
+      category: r.category,
+    })),
+  ];
+}
+
+export async function loadDashboard(
+  db: TenantDb,
+  filter: readonly string[] | null,
+  period: Period,
+  today: string,
+): Promise<DashboardData> {
+  const studentScope = filter ? inArray(students.branchId, [...filter]) : undefined;
+  const groupScope = filter ? inArray(groups.branchId, [...filter]) : undefined;
+
+  const [flows, attRows, studentRows, groupList, teacherCount, recent] = await Promise.all([
+    loadFlows(db, filter),
     db
       .select({
         date: attendance.date,
@@ -188,55 +247,6 @@ export async function loadDashboard(
       .orderBy(desc(payments.createdAt))
       .limit(24),
   ]);
-
-  // Berilgan ish haqi (maosh va avans, ADR 0018): filial — o'qituvchi filiali yoki xodimning biriktirilgan filiallari
-  const salaryRows = await db
-    .select({ date: salaryEntries.date, kind: salaryEntries.kind, amount: sum(salaryEntries.amount), n: count() })
-    .from(salaryEntries)
-    .leftJoin(teachers, eq(teachers.id, salaryEntries.teacherId))
-    .where(
-      and(
-        isNull(salaryEntries.voidedAt),
-        inArray(salaryEntries.kind, ["salary", "advance"]),
-        filter
-          ? or(
-              inArray(teachers.branchId, [...filter]),
-              inArray(
-                salaryEntries.userId,
-                db
-                  .select({ id: userBranches.userId })
-                  .from(userBranches)
-                  .where(inArray(userBranches.branchId, [...filter])),
-              ),
-            )
-          : undefined,
-      ),
-    )
-    .groupBy(salaryEntries.date, salaryEntries.kind);
-
-  /* ---------- Pul oqimi ---------- */
-  const flows: DayFlow[] = [
-    ...salaryRows.map((r) => ({
-      date: r.date,
-      kind: r.kind === "advance" ? ("advance" as const) : ("salary" as const),
-      amount: Number(r.amount ?? 0),
-      count: r.n,
-    })),
-    ...payRows.map((r) => ({
-      date: r.date,
-      kind: r.kind === "refund" ? ("refund" as const) : ("pay" as const),
-      amount: Number(r.amount ?? 0),
-      count: r.n,
-    })),
-    ...incomeRows.map((r) => ({ date: r.date, kind: "income" as const, amount: Number(r.amount ?? 0), count: r.n })),
-    ...expenseRows.map((r) => ({
-      date: r.date,
-      kind: "expense" as const,
-      amount: Number(r.amount ?? 0),
-      count: r.n,
-      category: r.category,
-    })),
-  ];
 
   /* ---------- Davomat ---------- */
   const attFor = (r: Range) => {
