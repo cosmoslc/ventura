@@ -44,7 +44,8 @@ test("lid yaratilishidan o'quvchiga aylanishigacha", async ({ page }) => {
   await page.getByRole("tab", { name: new RegExp(t.tabWon) }).click();
   const row = page.getByRole("row", { name: new RegExp(name) });
   await expect(row).toBeVisible();
-  await row.getByRole("link", { name }).click();
+  // Qatorda ikkita havola: lid (ism) va o'quvchi — lid profiliga o'tamiz
+  await row.locator('a[href^="/leads/"]').click();
   await expect(page).toHaveURL(/\/leads\/[0-9a-f-]{36}$/);
   await expect(page.getByText(t.becameStudent(name))).toBeVisible();
   await expect(page.getByRole("link", { name: t.openStudent })).toHaveAttribute("href", new URL(studentUrl).pathname);
