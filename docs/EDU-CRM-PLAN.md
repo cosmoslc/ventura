@@ -136,7 +136,7 @@ Bo'lim: `leads`.
 
 - [x] Lidlar doskasi, lid profili, bosqichlar tarixi — ADR 0022 (E4a)
 - [x] Birinchi dars, yo'qotilgan lidlar va sabablari — ADR 0023 (E4b, o'quvchiga aylantirish bilan)
-- [ ] Lid formasi sozlamalari
+- [x] Lid formasi sozlamalari, tashqi ariza sahifasi, lidlar Exceli — ADR 0022, 0026 (E4c)
 - [ ] Bugungi ishlar (workbench)
 
 **Qabul:** lid yaratilishidan o'quvchiga aylanishigacha oqim Playwright testida o'tadi.

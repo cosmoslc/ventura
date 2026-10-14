@@ -8,6 +8,7 @@ export interface LeadPerms {
   reassign: boolean;
   notes: boolean;
   convert: boolean;
+  importExport: boolean;
 }
 
 export function leadPerms(access: StaffAccess): LeadPerms {
@@ -19,5 +20,6 @@ export function leadPerms(access: StaffAccess): LeadPerms {
     reassign: can(access, "leads.reassign"),
     notes: can(access, "leads.call_log"),
     convert: can(access, "leads.convert_to_student"),
+    importExport: can(access, "leads.import_export"),
   };
 }

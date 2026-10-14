@@ -1,6 +1,7 @@
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { todayTashkent } from "@/lib/server/memberships";
+import { getApplyForm } from "@/lib/server/apply";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { courseOptions } from "../students/data";
@@ -25,17 +26,19 @@ export default async function LeadsPage() {
   const db = getTenantDb(tenant);
   const branch = await getBranchContext();
   const canCreateGroup = can(staff.access, "groups.create");
-  const [stages, rows, courses, staffList, fields, groups, lostReasons, waitlists, groupOpts] = await Promise.all([
-    listStages(db),
-    listLeads(db, branch.filter),
-    courseOptions(db),
-    staffOptions(db, branch.filter),
-    getLeadFields(db),
-    leadGroupOptions(db, branch.filter),
-    getLostReasons(db),
-    listWaitlists(db, branch.filter),
-    canCreateGroup ? groupFormOptions(db, branch.filter) : Promise.resolve(null),
-  ]);
+  const [stages, rows, courses, staffList, fields, groups, lostReasons, waitlists, groupOpts, applyForm] =
+    await Promise.all([
+      listStages(db),
+      listLeads(db, branch.filter),
+      courseOptions(db),
+      staffOptions(db, branch.filter),
+      getLeadFields(db),
+      leadGroupOptions(db, branch.filter),
+      getLostReasons(db),
+      listWaitlists(db, branch.filter),
+      canCreateGroup ? groupFormOptions(db, branch.filter) : Promise.resolve(null),
+      getApplyForm(db),
+    ]);
   return (
     <LeadsView
       stages={stages}
@@ -51,6 +54,7 @@ export default async function LeadsPage() {
       groups={groups}
       lostReasons={lostReasons}
       waitlists={waitlists}
+      applyForm={applyForm}
       groupForm={groupOpts ? { ...groupOpts, canChangeTeacher: can(staff.access, "groups.change_teacher") } : null}
     />
   );

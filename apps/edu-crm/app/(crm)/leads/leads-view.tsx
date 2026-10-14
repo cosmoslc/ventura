@@ -4,10 +4,12 @@ import {
   CalendarCheck,
   CalendarClock,
   ClipboardList,
+  Globe,
   Columns3,
   ListX,
   Phone,
   Plus,
+  Settings2,
   UserCheck,
   UserPlus,
   UserX,
@@ -20,19 +22,23 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Checkbox } from "@ventura/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@ventura/ui/dropdown-menu";
 import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
+import type { ApplyForm } from "@/lib/apply-form";
 import { displayPhone, formatDate } from "@/lib/format";
 import { DEFAULT_LEAD_FIELDS, FIELD_TYPES, type FormField } from "@/lib/form-fields";
 import { LEAD_SOURCES, daysIn } from "@/lib/leads";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
+import { ExcelMenu } from "../excel/excel-menu";
 import { FieldsModal } from "../fields-modal";
 import { moveLeadAction, restoreLeadAction, saveLeadFieldsAction } from "./actions";
+import { ApplySettingsModal } from "./apply-settings";
 import type { LeadGroupOption, LeadRow, StageRow, StaffOption, WaitlistRow } from "./data";
 import {
   ArchiveDialog,
@@ -74,6 +80,7 @@ export function LeadsView({
   groups,
   lostReasons,
   waitlists,
+  applyForm,
   groupForm,
 }: {
   stages: StageRow[];
@@ -90,6 +97,8 @@ export function LeadsView({
   groups: LeadGroupOption[];
   lostReasons: string[];
   waitlists: WaitlistRow[];
+  /** Ariza sahifasi sozlamasi (ADR 0026) */
+  applyForm: ApplyForm;
   /** Faollashtirishda yangi guruh ochish uchun; null — xodim guruh ocholmaydi */
   groupForm: GroupFormData | null;
 }) {
@@ -107,6 +116,7 @@ export function LeadsView({
   const [stagesOpen, setStagesOpen] = React.useState(false);
   const [fieldsOpen, setFieldsOpen] = React.useState(false);
   const [reasonsOpen, setReasonsOpen] = React.useState(false);
+  const [applyOpen, setApplyOpen] = React.useState(false);
   const [converting, setConverting] = React.useState<LeadRow | null>(null);
   const [lesson, setLesson] = React.useState<LeadRow | null>(null);
   const [losing, setLosing] = React.useState<LeadRow | null>(null);
@@ -193,17 +203,30 @@ export function LeadsView({
         actions={
           <>
             {perms.edit ? (
-              <>
-                <Button variant="ghost" onClick={() => setStagesOpen(true)}>
-                  <Columns3 /> {t.stagesButton}
-                </Button>
-                <Button variant="ghost" onClick={() => setFieldsOpen(true)}>
-                  <ClipboardList /> {t.fieldsButton}
-                </Button>
-                <Button variant="ghost" onClick={() => setReasonsOpen(true)}>
-                  <ListX /> {t.lostReasonsButton}
-                </Button>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost">
+                    <Settings2 /> {t.settingsButton}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem onSelect={() => setStagesOpen(true)}>
+                    <Columns3 /> {t.stagesButton}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setFieldsOpen(true)}>
+                    <ClipboardList /> {t.fieldsButton}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setReasonsOpen(true)}>
+                    <ListX /> {t.lostReasonsButton}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setApplyOpen(true)}>
+                    <Globe /> {t.applyButton}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+            {perms.importExport ? (
+              <ExcelMenu table="leads" branches={branches} selectedBranch={selectedBranch} canImport />
             ) : null}
             {perms.create ? (
               <Button onClick={() => openForm(null)}>
@@ -335,6 +358,13 @@ export function LeadsView({
         <>
           <StagesModal open={stagesOpen} onOpenChange={setStagesOpen} stages={stages} counts={counts} />
           <LostReasonsModal open={reasonsOpen} onOpenChange={setReasonsOpen} reasons={lostReasons} />
+          <ApplySettingsModal
+            open={applyOpen}
+            onOpenChange={setApplyOpen}
+            value={applyForm}
+            branches={branches}
+            fields={fields}
+          />
           <FieldsModal
             open={fieldsOpen}
             onOpenChange={setFieldsOpen}

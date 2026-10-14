@@ -1,6 +1,6 @@
 # E4 (Sotuv) — reja
 
-2026-10-13 · E4a tayyor (ADR 0022), E4b tayyor (ADR 0023, 0024) · bo'lim: `leads` · EDU-CRM-PLAN E4
+2026-10-14 · E4a tayyor (ADR 0022), E4b tayyor (ADR 0023, 0024), E4c tayyor (ADR 0026) · bo'lim: `leads` · EDU-CRM-PLAN E4
 
 E3 dagidek to'rt qismga bo'linadi. Har qism — alohida branch, PR va ADR.
 
@@ -9,7 +9,7 @@ E3 dagidek to'rt qismga bo'linadi. Har qism — alohida branch, PR va ADR.
 | E4a | Lidlar asosi: doska, ro'yxat, lid profili, bosqichlar tarixi, izoh va qo'ng'iroqlar, mas'ul xodim | tayyor (ADR 0022) |
 | E4b | Birinchi dars, o'quvchiga aylantirish, yo'qotilgan lidlar va sabablari | tayyor (ADR 0023) |
 | E4b+ | Zahira guruhlar (kutish ro'yxati) va faollashtirish | tayyor (ADR 0024) |
-| E4c | Lid formasi sozlamalari va tashqi ariza sahifasi (havola va sayt uchun iframe) | — |
+| E4c | Tashqi ariza sahifasi (havola va iframe), spamdan himoya, lidlar Exceli | tayyor (ADR 0026) |
 | E4d | Bugungi ishlar, bosh paneldagi lid kartalari, Playwright testi | — |
 
 Lid analitikasi, CRM voronkasi va mavsumiy oqim — E5 (Hisobotlar).

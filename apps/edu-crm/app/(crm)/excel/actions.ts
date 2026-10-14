@@ -14,17 +14,24 @@ import { uz } from "@/lib/uz";
  * tanlanadi, qatorlar serverda tekshiriladi va bitta tranzaksiyada yoziladi. Ruxsat — yaratish ruxsati.
  */
 
-const TABLES = ["students", "groups", "teachers"] as const;
-const FEATURE: Record<ImportTable, string> = { students: "students", groups: "groups", teachers: "teachers" };
+const TABLES = ["students", "groups", "teachers", "leads"] as const;
+const FEATURE: Record<ImportTable, string> = {
+  students: "students",
+  groups: "groups",
+  teachers: "teachers",
+  leads: "leads",
+};
 const PERMISSION: Record<ImportTable, Permission> = {
   students: "students.create",
   groups: "groups.create",
   teachers: "staff.create",
+  leads: "leads.import_export",
 };
 const PATHS: Record<ImportTable, string[]> = {
   students: ["/students", "/groups"],
   groups: ["/groups", "/courses", "/rooms", "/teachers"],
   teachers: ["/teachers"],
+  leads: ["/leads"],
 };
 
 export async function readExcelAction(form: FormData): Promise<ActionResult<{ rows: string[][] }>> {
@@ -79,7 +86,7 @@ async function run(
     if (!commit) return { ok: true, errors, imported: 0 };
     const valid = results.flatMap((r) => (r.prepared ? [r.prepared] : []));
     if (!valid.length) return { ok: false, error: uz.excel.nothing };
-    const created = await writeImport(ctx.db, valid, ctx.staff.id);
+    const created = await writeImport(ctx.db, valid, ctx.staff.id, ctx.staff.name);
     // Har yozuv o'z tarixiga (o'quvchi profilidagi Tarix), umumiy natija — bitta yozuv
     for (const c of created)
       await ctx.audit(`${c.type}.create`, { type: c.type, id: c.id }, { name: c.name, import: true });

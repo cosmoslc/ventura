@@ -2,12 +2,14 @@ import ExcelJS from "exceljs";
 import { notFound } from "next/navigation";
 import { type Permission, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
+import { fieldText } from "@/lib/form-fields";
 import { formatDate } from "@/lib/format";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { requireStaff, requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { listGroups, openGroupsByStudent } from "../../groups/data";
+import { getLeadFields, listLeads, listStages } from "../../leads/data";
 import { listStudents } from "../../students/data";
 import { listTeachers } from "../../teachers/data";
 
@@ -36,6 +38,12 @@ const TABLES = {
     view: ["staff.view", "staff.create", "staff.edit"],
     file: "Ustozlar",
     sheet: "Ustozlar",
+  },
+  leads: {
+    feature: "leads",
+    view: ["leads.import_export"],
+    file: "Lidlar",
+    sheet: "Lidlar",
   },
 } as const satisfies Record<string, { feature: string; view: readonly Permission[]; file: string; sheet: string }>;
 
@@ -86,6 +94,13 @@ const TEMPLATE: Record<keyof typeof TABLES, { headers: string[]; sample: string[
       ["Malika Karimova", "+998 91 444 55 66", "", "3 000 000 [Fiks]", ""],
     ],
   },
+  leads: {
+    headers: ["Ism familiya", "Telefon", "Qo'shimcha telefon", "Jinsi", "Manba", "Kurs", "Keyingi aloqa", "Izoh"],
+    sample: [
+      ["Aziz Karimov", "+998 90 123 45 67", "", "Erkak", "Instagram", "Ingliz tili", "20.10.2026", "Kechki guruh"],
+      ["Madina Yusupova", "+998 93 222 33 44", "+998 91 555 66 77", "Ayol", "Tanish / Tavsiya", "", "", ""],
+    ],
+  },
 };
 
 const phone = (p: string) => (p ? `+998 ${p.slice(0, 2)} ${p.slice(2, 5)} ${p.slice(5, 7)} ${p.slice(7, 9)}` : "");
@@ -132,6 +147,32 @@ async function rowsFor(table: keyof typeof TABLES, filter: readonly string[] | n
         formatDate(g.startDate),
         g.price,
         g.studentIds.length,
+      ]),
+    };
+  }
+  if (table === "leads") {
+    const [list, stages, fields] = await Promise.all([listLeads(db, filter), listStages(db), getLeadFields(db)]);
+    const stageName = (id: string) => stages.find((s) => s.id === id)?.name ?? "";
+    const gender = (g: string | null) => (g === "male" ? uz.students.male : g === "female" ? uz.students.female : "");
+    const custom = fields.filter((f) => f.type !== "group");
+    const text = (f: (typeof custom)[number], v: string | undefined) =>
+      fieldText(f, v, { yes: uz.staff.yes, no: uz.staff.no, groupName: () => undefined }) ?? "";
+    // Sarlavhalar import qoliplariga tushadi; "Bosqich", "Mas'ul" va qo'shimcha maydonlar importda o'tkazib yuboriladi
+    return {
+      headers: [...TEMPLATE.leads.headers, "Bosqich", "Mas'ul", "Qo'shilgan", ...custom.map((f) => f.label)],
+      rows: list.map((l) => [
+        l.name,
+        phone(l.phone),
+        l.phone2 ? phone(l.phone2) : "",
+        gender(l.gender),
+        l.source ?? "",
+        l.courseName ?? "",
+        l.targetDate ? formatDate(l.targetDate) : "",
+        l.note ?? "",
+        stageName(l.stageId),
+        l.assignedName ?? "",
+        formatDate(new Date(l.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Tashkent" })),
+        ...custom.map((f) => text(f, l.customData[f.id])),
       ]),
     };
   }

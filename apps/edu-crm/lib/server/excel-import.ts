@@ -1,12 +1,24 @@
 import "server-only";
 import { and, eq, isNull } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { courses, groupMemberships, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
+import {
+  courses,
+  groupMemberships,
+  groups,
+  leadEvents,
+  leadStages,
+  leads,
+  rooms,
+  students,
+  teachers,
+} from "@ventura/db/schema/tenant";
+import { listStages } from "@/app/(crm)/leads/data";
 import {
   type ImportTable,
   normName,
   parseDate,
   parseDays,
+  parseGender,
   parseMoney,
   parsePhone,
   parseSalary,
@@ -41,7 +53,8 @@ interface Ctx {
 type Prepared =
   | { table: "students"; values: typeof students.$inferInsert; groupIds: string[]; joinedAt: string }
   | { table: "groups"; values: typeof groups.$inferInsert }
-  | { table: "teachers"; values: typeof teachers.$inferInsert };
+  | { table: "teachers"; values: typeof teachers.$inferInsert }
+  | { table: "leads"; values: typeof leads.$inferInsert };
 
 /* ---------- O'quvchilar ---------- */
 
@@ -279,14 +292,81 @@ async function prepareTeachers(ctx: Ctx, rows: ImportRow[]) {
   });
 }
 
+/* ---------- Lidlar (E4c) ---------- */
+
+async function prepareLeads(ctx: Ctx, rows: ImportRow[]) {
+  const [open, courseList, stages] = await Promise.all([
+    ctx.db
+      .select({ phone: leads.phone })
+      .from(leads)
+      .innerJoin(leadStages, eq(leadStages.id, leads.stageId))
+      .where(and(isNull(leads.archivedAt), eq(leadStages.kind, "open"))),
+    ctx.db
+      .select({ id: courses.id, name: courses.name, branchId: courses.branchId })
+      .from(courses)
+      .where(isNull(courses.archivedAt)),
+    listStages(ctx.db),
+  ]);
+  // Yangi lidlar birinchi ish ustuniga tushadi (qo'lda qo'shilgandek)
+  const stageId = stages.find((s) => s.kind === "open")!.id;
+  const taken = new Set(open.map((l) => l.phone));
+  const seen = new Set<string>();
+  return rows.map((r): { error: string | null; prepared?: Prepared } => {
+    const name = get(r, "name");
+    if (!name) return { error: uz.excel.errName };
+    const phone = parsePhone(get(r, "phone"));
+    if (!phone) return { error: uz.excel.errPhone };
+    const full = `+998${phone}`;
+    if (taken.has(full)) return { error: uz.excel.errLeadExists };
+    if (seen.has(full)) return { error: uz.excel.errDuplicate };
+    const phone2Raw = get(r, "phone2");
+    const phone2 = phone2Raw ? parsePhone(phone2Raw) : null;
+    if (phone2Raw && !phone2) return { error: uz.excel.errPhone2 };
+    const genderRaw = get(r, "gender");
+    const gender = genderRaw ? parseGender(genderRaw) : null;
+    if (genderRaw && !gender) return { error: uz.excel.errGender };
+    let courseId: string | null = null;
+    if (get(r, "course")) {
+      const hits = courseList.filter(
+        (c) => normName(c.name) === normName(get(r, "course")) && (!c.branchId || c.branchId === ctx.branchId),
+      );
+      if (hits.length !== 1) return { error: uz.excel.errCourseMissing(get(r, "course")) };
+      courseId = hits[0]!.id;
+    }
+    const targetRaw = get(r, "targetDate");
+    const targetDate = targetRaw ? parseDate(targetRaw) : null;
+    if (targetRaw && !targetDate) return { error: uz.excel.errDate(targetRaw) };
+    seen.add(full);
+    return {
+      error: null,
+      prepared: {
+        table: "leads",
+        values: {
+          branchId: ctx.branchId,
+          name: name.slice(0, 120),
+          phone: full,
+          phone2: phone2 && phone2 !== phone ? `+998${phone2}` : null,
+          gender,
+          source: get(r, "source").slice(0, 80) || null,
+          courseId,
+          targetDate,
+          note: get(r, "note").slice(0, 1000) || null,
+          stageId,
+        },
+      },
+    };
+  });
+}
+
 export async function prepareImport(table: ImportTable, ctx: Ctx, rows: ImportRow[]) {
   if (table === "students") return prepareStudents(ctx, rows);
   if (table === "groups") return prepareGroups(ctx, rows);
+  if (table === "leads") return prepareLeads(ctx, rows);
   return prepareTeachers(ctx, rows);
 }
 
 /** To'g'ri qatorlarni bitta tranzaksiyada yozadi; yaratilgan yozuvlar (jurnal uchun) */
-export async function writeImport(db: TenantDb, prepared: Prepared[], by: string) {
+export async function writeImport(db: TenantDb, prepared: Prepared[], by: string, byName: string) {
   return db.transaction(async (tx) => {
     const created: { type: string; id: string; name: string }[] = [];
     for (const p of prepared) {
@@ -306,6 +386,19 @@ export async function writeImport(db: TenantDb, prepared: Prepared[], by: string
           });
         }
         created.push({ type: "student", id: s!.id, name: p.values.name });
+      } else if (p.table === "leads") {
+        const [l] = await tx
+          .insert(leads)
+          .values({ ...p.values, createdBy: by })
+          .returning({ id: leads.id });
+        await tx.insert(leadEvents).values({
+          leadId: l!.id,
+          fromStageId: null,
+          toStageId: p.values.stageId,
+          actorId: by,
+          actorName: byName,
+        });
+        created.push({ type: "lead", id: l!.id, name: p.values.name });
       } else if (p.table === "groups") {
         const [g] = await tx.insert(groups).values(p.values).returning({ id: groups.id });
         created.push({ type: "group", id: g!.id, name: p.values.name });

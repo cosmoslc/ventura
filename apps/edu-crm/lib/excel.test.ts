@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { detectColumns, parseDate, parseDays, parseMoney, parsePhone, parseSalary, parseTimeRange } from "./excel";
+import {
+  detectColumns,
+  parseDate,
+  parseDays,
+  parseGender,
+  parseMoney,
+  parsePhone,
+  parseSalary,
+  parseTimeRange,
+} from "./excel";
 
 describe("parsePhone", () => {
   it("turli yozuvlarni 9 raqamga keltiradi", () => {
@@ -86,5 +95,31 @@ describe("detectColumns", () => {
     expect(
       detectColumns("teachers", ["O'qituvchi F.I.SH", "Telefon raqami", "Filial", "Tug'ilgan sana", "Maosh", "Izoh"]),
     ).toEqual(["name", "phone", "", "birthDate", "salary", "note"]);
+  });
+});
+
+describe("lidlar (E4c)", () => {
+  it("lid eksport sarlavhalari qayta importda to'g'ri tushadi, qolganlari o'tkaziladi", () => {
+    expect(
+      detectColumns("leads", [
+        "Ism familiya",
+        "Telefon",
+        "Qo'shimcha telefon",
+        "Jinsi",
+        "Manba",
+        "Kurs",
+        "Keyingi aloqa",
+        "Izoh",
+        "Bosqich",
+        "Mas'ul",
+        "Qo'shilgan",
+      ]),
+    ).toEqual(["name", "phone", "phone2", "gender", "source", "course", "targetDate", "note", "", "", ""]);
+  });
+  it("jins yozuvlari", () => {
+    expect(parseGender("Erkak")).toBe("male");
+    expect(parseGender("qiz")).toBe("female");
+    expect(parseGender("F")).toBe("female");
+    expect(parseGender("noma'lum")).toBeNull();
   });
 });
