@@ -16,6 +16,7 @@ import {
   settings,
   users,
 } from "@ventura/db/schema/tenant";
+import { APPLY_FORM_KEY, applyFormSchema } from "@/lib/apply-form";
 import { LEAD_FIELDS_KEY, cleanCustomData, formFieldsSchema, missingRequired } from "@/lib/form-fields";
 import { LOST_REASONS_KEY, stagesError } from "@/lib/leads";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
@@ -658,6 +659,34 @@ export async function saveLostReasonsAction(input: unknown): Promise<ActionResul
       });
     await audit("settings.update", { type: "setting", id: LOST_REASONS_KEY }, { reasons: list });
     refresh();
+    return { ok: true };
+  });
+}
+
+/** Ariza sahifasi sozlamasi (ADR 0026): filial xodimning filiallaridan, maydonlar "Lid formasi"dan */
+export async function saveApplyFormAction(input: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "leads.edit", async (ctx) => {
+    const parsed = applyFormSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, error: uz.common.invalid };
+    const v = parsed.data;
+    if (v.branchId && !ctx.branch.options.some((b) => b.id === v.branchId))
+      return { ok: false, error: uz.common.branchForbidden };
+    const known = new Set((await getLeadFields(ctx.db)).filter((f) => f.type !== "group").map((f) => f.id));
+    const value = { ...v, fieldIds: [...new Set(v.fieldIds)].filter((id) => known.has(id)) };
+    await ctx.db
+      .insert(settings)
+      .values({ key: APPLY_FORM_KEY, value, updatedBy: ctx.staff.id })
+      .onConflictDoUpdate({
+        target: [settings.tenantId, settings.key],
+        set: { value, updatedBy: ctx.staff.id, updatedAt: new Date() },
+      });
+    await ctx.audit(
+      "settings.update",
+      { type: "setting", id: APPLY_FORM_KEY },
+      { enabled: value.enabled, branchId: value.branchId, fields: value.fieldIds },
+    );
+    refresh();
+    revalidatePath("/ariza");
     return { ok: true };
   });
 }

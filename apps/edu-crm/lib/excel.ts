@@ -4,7 +4,7 @@
  * telefon faqat to'g'ri formatda, narxdagi kasr ajratkichi raqamga qo'shilmaydi, sana UTC siljishisiz.
  */
 
-export type ImportTable = "students" | "groups" | "teachers";
+export type ImportTable = "students" | "groups" | "teachers" | "leads";
 export const MAX_IMPORT_ROWS = 2000;
 export const MAX_IMPORT_BYTES = 2 * 1024 * 1024;
 
@@ -149,7 +149,31 @@ export const FIELDS: Record<ImportTable, FieldDef[]> = {
     { key: "percent", label: "Foiz stavkasi (%)", match: /foiz|percent|%/ },
     { key: "note", label: "Izoh / Malaka", match: /izoh|note|malaka|comment/ },
   ],
+  // Lidlar (E4c): eksport sarlavhalari shu qoliplarga tushadi — eksport qilingan fayl qayta import qilinadi
+  leads: [
+    { key: "name", label: "Ism familiya", required: true, match: /f\.?i\.?sh|fio|ism|familiya|name/ },
+    {
+      key: "phone",
+      label: "Telefon raqami",
+      required: true,
+      match: /^(?!.*(qo'shimcha|ikkinchi|keyingi|ota|ona|parent)).*(tel|phone|raqam|number)/,
+    },
+    { key: "phone2", label: "Qo'shimcha telefon", match: /(qo'shimcha|ikkinchi).*(tel|phone|raqam)|phone ?2|tel.* 2$/ },
+    { key: "gender", label: "Jinsi", match: /jins|gender|sex/ },
+    { key: "source", label: "Manba", match: /manba|source|qayerdan/ },
+    { key: "course", label: "Kurs", match: /kurs|course/ },
+    { key: "targetDate", label: "Keyingi aloqa sanasi", match: /keyingi|follow|target/ },
+    { key: "note", label: "Izoh", match: /izoh|note|comment|tavsif/ },
+  ],
 };
+
+/** Jins: "Erkak", "Ayol", "M", "F", "o'g'il", "qiz" → male / female; tanilmasa null */
+export function parseGender(raw: string): "male" | "female" | null {
+  const s = normHeader(raw);
+  if (/^(erkak|male|m|o'g'il|ogil|yigit|er)$/.test(s)) return "male";
+  if (/^(ayol|female|f|qiz|w|woman)$/.test(s)) return "female";
+  return null;
+}
 
 /** Sarlavhalar bo'yicha ustun → maydon (har maydon bir marta); topilmasa — bo'sh */
 export function detectColumns(table: ImportTable, headers: string[]): string[] {

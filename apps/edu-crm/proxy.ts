@@ -10,7 +10,20 @@ import { tenantForHost } from "@/lib/server/tenant";
  * 2) sessiya cookie'si bo'lmasa — /login (optimistik; haqiqiy tekshiruv serverda: requireStaff, requireFeature).
  */
 
-const PUBLIC = ["/login", "/health", "/bolim-yopiq"];
+const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/ariza"];
+/** Boshqa saytga iframe qilib qo'yiladigan sahifalar (ADR 0026); qolganlari ramkada ochilmaydi (clickjacking) */
+const EMBEDDABLE = ["/ariza"];
+
+const under = (list: readonly string[], pathname: string) =>
+  list.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+function framing(res: NextResponse, pathname: string): NextResponse {
+  if (!under(EMBEDDABLE, pathname)) {
+    res.headers.set("X-Frame-Options", "DENY");
+    res.headers.set("Content-Security-Policy", "frame-ancestors 'none'");
+  }
+  return res;
+}
 
 /** Yo'naltirish so'rov domeniga (mijoz domeni): `request.url` da server ichki manzili bo'lishi mumkin. */
 function sameHost(request: NextRequest, path: string): URL {
@@ -19,6 +32,10 @@ function sameHost(request: NextRequest, path: string): URL {
 }
 
 export function proxy(request: NextRequest) {
+  return framing(route(request), request.nextUrl.pathname);
+}
+
+function route(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   const tenant = tenantForHost(request.headers.get("host"));
   // Notanish domen: sahifalar o'zi "Bunday tizim topilmadi" ko'rsatadi
@@ -31,7 +48,7 @@ export function proxy(request: NextRequest) {
     return NextResponse.rewrite(new URL("/bolim-yopiq", request.url));
   }
 
-  if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
+  if (under(PUBLIC, pathname)) return NextResponse.next();
   if (!getSessionCookie(request, { cookiePrefix: "edu" })) {
     if (pathname.startsWith("/api/")) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     return NextResponse.redirect(sameHost(request, "/login"));
