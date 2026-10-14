@@ -2469,6 +2469,7 @@ export const uz = {
       lost: "Yo'qotilgan lidlar",
       sources: "Manbalar samaradorligi",
       seasonal: "Mavsumiy oqim",
+      teachers: "O'qituvchi samaradorlik reytingi",
     } as Record<string, string>,
     hints: {
       cashflow: "Yil bo'yicha oyma-oy kirim, chiqim va sof oqim",
@@ -2483,6 +2484,7 @@ export const uz = {
       lost: "Nega va qaysi bosqichdan yo'qotildi",
       sources: "Qaysi manbadan qancha lid va o'quvchi keldi",
       seasonal: "Oylar bo'yicha lidlar oqimi va reklama oylari",
+      teachers: "Dars yuklamasi, davomat, ushlab turish va konversiya",
     } as Record<string, string>,
     cashflow: {
       label: "Ko'rsatkich",
@@ -2741,6 +2743,26 @@ export const uz = {
       adviceLater: "Reklama oylari tavsiyasi kamida 6 oylik lid ma'lumotida chiqadi.",
       footnote:
         "Lidlar — qo'shilgan oyi bo'yicha; o'quvchi bo'ldi — shu oy lidlaridan hozir o'quvchi bo'lganlar. Yangi o'quvchilar — shu oyda birinchi marta faollashtirilganlar (lid orqali kelmaganlar ham). Hali kelmagan oylar bo'sh.",
+    },
+    teachers: {
+      count: "O'qituvchilar",
+      teacher: "O'qituvchi",
+      groups: "Guruhlar",
+      students: "O'quvchilar",
+      lessons: "O'tilgan darslar",
+      hours: "Soat",
+      hoursFoot: (h: number) => `${h} soat`,
+      markedRate: "Davomat olingan",
+      attendance: "O'quvchilar davomati",
+      retention: "Ushlab turish",
+      leftFoot: (n: number) => `${n} ta o'quvchi chiqdi`,
+      left: "Chiqqan",
+      trialConv: "Sinovdan o'tish",
+      firstConv: "Birinchi darsdan o'quvchi",
+      salary: "Hisoblangan maosh",
+      footnote:
+        "Darslar — guruh jadvali bo'yicha (bayramlarsiz, bugungacha, arxivlangan guruh arxiv kunigacha). Davomat olingan — o'tilgan darslardan belgisi borlari. Ushlab turish — davr boshida guruhlarida bo'lgan faol o'quvchilardan davrda chiqmaganlari. Sinovdan o'tish — davrda qo'shilganlardan faollashtirilganlari (hali sinovdagilar kirmaydi). Birinchi darsdan o'quvchi — birinchi darsga kelgan lidlardan o'quvchi bo'lganlari. Tartib — ushlab turish, keyin davomat bo'yicha; umumiy ball yo'q.",
+      salaryNote: "Maosh — ish haqi bo'limidagi hisoblangan summa (davrdagi o'tgan oylar).",
     },
     courses: {
       course: "Kurs",
