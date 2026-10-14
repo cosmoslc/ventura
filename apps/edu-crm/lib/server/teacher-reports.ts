@@ -23,6 +23,22 @@ import type { LoadArgs } from "./reports";
  */
 
 const t = uz.reports.teachers;
+
+/** Ko'rinish uchun qo'shimcha ma'lumot (ADR 0034): reyting tartibidagi o'qituvchilar, jami qatorsiz */
+export interface TeachersViewData {
+  teachers: {
+    id: string;
+    name: string;
+    groups: number;
+    students: number;
+    lessons: number;
+    hours: number;
+    markedRate: number | null;
+    attendance: number | null;
+    retention: number | null;
+  }[];
+}
+
 const EPOCH = "2000-01-01";
 
 const dayBefore = (d: string) => {
@@ -237,6 +253,19 @@ function build(rows: TeacherRow[], total: TeacherRow, withSalary: boolean): Repo
       ],
     },
     note: withSalary ? `${t.footnote} ${t.salaryNote}` : t.footnote,
+    view: {
+      teachers: rows.map((r) => ({
+        id: r.teacherId,
+        name: r.name,
+        groups: r.groups,
+        students: r.students,
+        lessons: r.lessons,
+        hours: Math.round(r.hours),
+        markedRate: r.markedRate,
+        attendance: r.attendance,
+        retention: r.retention,
+      })),
+    } satisfies TeachersViewData,
   };
 }
 

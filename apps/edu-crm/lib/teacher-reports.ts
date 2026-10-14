@@ -101,3 +101,11 @@ export function lessonMinutes(start: string, end: string): number {
   const m = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
   return Math.max(0, m(end) - m(start));
 }
+
+/** Reyting yetakchilari: tartiblangan ro'yxatning boshidan, ushlab turish yoki davomati hisoblanganlar (bo'sh qatorlar o'tkazib yuboriladi) */
+export function teacherLeaders<T extends Pick<TeacherRow, "retention" | "attendance">>(
+  ranked: readonly T[],
+  n: number,
+): T[] {
+  return ranked.filter((r) => r.retention !== null || r.attendance !== null).slice(0, n);
+}

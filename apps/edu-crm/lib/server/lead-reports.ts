@@ -15,6 +15,9 @@ import { formatDate } from "@/lib/format";
 import {
   type FunnelLead,
   type LeadKind,
+  type MonthAdvice,
+  type SeasonMonth,
+  type SourceRow,
   bestSource,
   biggestDrop,
   countShare,
@@ -38,6 +41,48 @@ const pctLabel = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`)
 const day = (col: typeof leads.createdAt | typeof leads.stageChangedAt) =>
   sql<string>`to_char(${col} at time zone 'Asia/Tashkent', 'YYYY-MM-DD')`;
 const inPeriod = (d: string, r: ReportPeriod["range"]) => !r || (d >= r.from && d < r.to);
+
+/* ---------- Ko'rinish ma'lumoti (ADR 0034): grafiklar uchun, jadval/Excel'ga tegmaydi ---------- */
+
+export interface FunnelViewData {
+  steps: {
+    name: string;
+    /** Bosqich rangi (lead_stages.color); oxirgi pog'ona — muvaffaqiyat rangi */
+    color: string;
+    count: number;
+    share: number | null;
+    conv: number | null;
+    drop: number;
+    days: number | null;
+  }[];
+  /** Eng katta tushish bo'lgan pog'ona indeksi */
+  dropIndex: number | null;
+  outcome: { open: number; won: number; lost: number };
+}
+
+export interface ShareItem {
+  key: string;
+  count: number;
+  share: number;
+}
+
+export interface LostViewData {
+  reasons: ShareItem[];
+  stages: (ShareItem & { color: string | null })[];
+  staff: ShareItem[];
+}
+
+export interface SourcesViewData {
+  rows: SourceRow[];
+  finance: boolean;
+  best: string | null;
+}
+
+export interface SeasonalViewData {
+  year: number;
+  months: SeasonMonth[];
+  advice: MonthAdvice[] | null;
+}
 
 /** Oldingi xuddi shunday davr (oy → oldingi oy, yil → oldingi yil); barcha davr — yo'q */
 function prevRange(period: ReportPeriod): { from: string; to: string } | null {
@@ -94,7 +139,7 @@ async function loadLeads(db: LoadArgs["db"], filter: LoadArgs["filter"]): Promis
 
 const openStagesOf = (db: LoadArgs["db"]) =>
   db
-    .select({ id: leadStages.id, name: leadStages.name, kind: leadStages.kind })
+    .select({ id: leadStages.id, name: leadStages.name, kind: leadStages.kind, color: leadStages.color })
     .from(leadStages)
     .orderBy(asc(leadStages.position), asc(leadStages.name));
 
@@ -189,6 +234,26 @@ export async function funnelReport({ db, filter, period }: LoadArgs): Promise<Re
         },
       })),
     },
+    view: {
+      steps: steps.map((s) => ({
+        name: stepName(s.index),
+        color: s.index < open.length ? open[s.index]!.color : "var(--success-fg)",
+        count: s.count,
+        share: s.share,
+        conv: s.conv,
+        drop: s.index ? s.drop : 0,
+        days:
+          s.index < open.length && days.has(open[s.index]!.id)
+            ? Math.round(days.get(open[s.index]!.id)! * 10) / 10
+            : null,
+      })),
+      dropIndex: drop?.index ?? null,
+      outcome: {
+        open: funnel.filter((f) => f.kind === "open").length,
+        won,
+        lost: funnel.filter((f) => f.kind === "lost").length,
+      },
+    } satisfies FunnelViewData,
     note: k.footnote,
     extra: [
       {
@@ -274,6 +339,14 @@ export async function lostReport({ db, filter, period }: LoadArgs): Promise<Repo
         { kind: "total", cells: { reason: t.total, count: lost.length, share: lost.length ? 100 : null } },
       ],
     },
+    view: {
+      reasons,
+      stages: stages.map((r) => ({
+        ...r,
+        color: stageRows.find((s) => s.name === r.key)?.color ?? null,
+      })),
+      staff,
+    } satisfies LostViewData,
     note: k.footnote,
     extra: [
       {
@@ -429,6 +502,7 @@ export async function sourcesReport({ db, filter, period, finance }: LoadArgs): 
         },
       ],
     },
+    view: { rows, finance: !!finance, best: best?.source ?? null } satisfies SourcesViewData,
     note: finance ? `${k.footnote} ${k.revenueNote}` : k.footnote,
   };
 }
@@ -518,6 +592,7 @@ export async function seasonalReport({ db, filter, period, today }: LoadArgs): P
         },
       ],
     },
+    view: { year, months, advice } satisfies SeasonalViewData,
     note: advice ? k.footnote : `${k.footnote} ${k.adviceLater}`,
     extra: advice
       ? [

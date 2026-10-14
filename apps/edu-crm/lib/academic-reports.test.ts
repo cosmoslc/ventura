@@ -6,7 +6,11 @@ import {
   cohorts,
   daysBetween,
   leaveSummary,
+  leaveTrend,
+  monthlyRetention,
+  riskBreakdown,
   riskOf,
+  tenureBuckets,
 } from "./academic-reports";
 
 const leave = (over: Partial<LeaveRecord>): LeaveRecord => ({
@@ -134,5 +138,77 @@ describe("o'quvchini ushlab turish", () => {
     expect(rows[0]!.cells).toEqual([100, 100, 50]);
     expect(rows[1]!.cells).toEqual([null, null, null]);
     expect(rows[2]!.cells).toEqual([100, null, null]);
+  });
+});
+
+describe("ko'rinish uchun hisoblar", () => {
+  it("muddat guruhlari: chegaralar kiritiladi, sinov va faol alohida", () => {
+    const b = tenureBuckets([
+      { days: 0, trial: true },
+      { days: 7, trial: false },
+      { days: 8, trial: false },
+      { days: 90, trial: true },
+      { days: 181, trial: false },
+    ]);
+    expect(b.map((x) => [x.key, x.trial, x.active])).toEqual([
+      ["week", 1, 1],
+      ["month", 0, 1],
+      ["quarter", 1, 0],
+      ["half", 0, 0],
+      ["long", 0, 1],
+    ]);
+  });
+
+  it("chiqishlar dinamikasi: oy — kunlar bugungacha, yil — oylar bugungi oygacha", () => {
+    const dates = ["2026-10-02", "2026-10-02", "2026-10-05", "2026-09-20"];
+    const days = leaveTrend(dates, { from: "2026-10-01", to: "2026-11-01" }, false, "2026-10-04");
+    expect(days.map((d) => d.key)).toEqual(["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"]);
+    expect(days.map((d) => d.count)).toEqual([0, 2, 0, 0]);
+    const months = leaveTrend(dates, { from: "2026-01-01", to: "2027-01-01" }, true, "2026-10-04");
+    expect(months).toHaveLength(10);
+    expect(months.at(-1)).toEqual({ key: "2026-10", count: 3 });
+    expect(months.at(-2)).toEqual({ key: "2026-09", count: 1 });
+    // barcha davr: birinchi chiqishdan joriy oygacha
+    expect(leaveTrend(dates, null, true, "2026-10-04").map((m) => m.key)).toEqual(["2026-09", "2026-10"]);
+    expect(leaveTrend([], null, true, "2026-10-04").map((m) => m.key)).toEqual(["2026-10"]);
+  });
+
+  it("oylik ushlab turish: har oy o'z bazasi bilan", () => {
+    const span = (over: Partial<StudentSpan>): StudentSpan => ({
+      studentId: "s",
+      firstJoin: "2026-08-10",
+      churned: false,
+      lastLeft: null,
+      lastReason: null,
+      courseId: null,
+      ...over,
+    });
+    const pts = monthlyRetention(
+      [span({ studentId: "a" }), span({ studentId: "b", churned: true, lastLeft: "2026-10-03" })],
+      "2026-10-14",
+      3,
+    );
+    expect(pts.map((p) => p.month)).toEqual(["2026-08", "2026-09", "2026-10"]);
+    expect(pts.map((p) => [p.base, p.churned, p.rate])).toEqual([
+      [2, 0, 100],
+      [2, 0, 100],
+      [2, 1, 50],
+    ]);
+  });
+
+  it("xavf taqsimoti: o'quvchi bir marta (eng yuqori darajada), omillar va guruhlar", () => {
+    const r = riskBreakdown([
+      { studentId: "a", groupId: "g1", level: "medium", factors: ["debt"] },
+      { studentId: "a", groupId: "g2", level: "critical", factors: ["consecutive", "uncontacted"] },
+      { studentId: "b", groupId: "g1", level: "high", factors: ["missed", "debt"] },
+    ]);
+    expect(r.students).toBe(2);
+    expect(r.levels).toEqual([
+      { level: "critical", count: 1 },
+      { level: "high", count: 1 },
+      { level: "medium", count: 0 },
+    ]);
+    expect(r.factors.map((f) => f.count)).toEqual([1, 1, 1, 2]);
+    expect(r.groups[0]).toEqual({ groupId: "g1", count: 2 });
   });
 });

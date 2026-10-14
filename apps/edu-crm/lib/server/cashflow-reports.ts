@@ -3,6 +3,14 @@ import { and, inArray } from "drizzle-orm";
 import type { Permission } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
 import { expensePlans, financePlans } from "@ventura/db/schema/tenant";
+import {
+  type MonthFlow,
+  type PlanMonth,
+  monthlyFlows,
+  outflowBreakdown,
+  planMonths,
+  shortMonth,
+} from "@/lib/cashflow-views";
 import { money } from "@/lib/format";
 import {
   type ReportData,
@@ -29,12 +37,20 @@ const t = uz.reports;
 
 /* ---------- Pul oqimi ---------- */
 
+/** Pul oqimi ko'rinishi uchun qo'shimcha ma'lumot (grafiklar) */
+export interface CashflowViewData {
+  year: number;
+  months: MonthFlow[];
+  /** Yillik chiqim tarkibi: [nom, summa], kamayish tartibida */
+  breakdown: [string, number][];
+}
+
 export async function cashflow({ db, filter, period, today }: LoadArgs): Promise<ReportData> {
   const flows = await loadFlows(db, filter);
   const year = period.year ?? Number(today.slice(0, 4));
   const table = cashflowTable(flows, year, today, {
     ...t.cashflow,
-    months: uz.months.map((m) => m.slice(0, 3)),
+    months: uz.months.map(shortMonth),
   });
   const total = (label: string) => {
     const row = table.rows.find((r) => r.cells.label === label);
@@ -62,10 +78,24 @@ export async function cashflow({ db, filter, period, today }: LoadArgs): Promise
     ],
     table,
     note: t.cashflow.note,
+    view: {
+      year,
+      months: monthlyFlows(flows, year, today),
+      breakdown: outflowBreakdown(flows, year, today, t.cashflow),
+    } satisfies CashflowViewData,
   };
 }
 
 /* ---------- Reja, fakt va prognoz ---------- */
+
+/** Reja ko'rinishi uchun qo'shimcha ma'lumot: qatorlar (jadvaldagi bilan bir xil) va oyma-oy kirim/chiqim */
+export interface PlanViewData {
+  lines: Record<PlanKey, PlanCell>;
+  income: PlanCell;
+  outflow: PlanCell;
+  net: PlanCell;
+  months: PlanMonth[];
+}
 
 /** Joriy oyda o'quvchilar hisobidagi hisoblangan summa — to'lovlar prognozi uchun */
 async function expectedPayments(db: TenantDb, filter: readonly string[] | null, today: string) {
@@ -115,6 +145,13 @@ export async function cashflowPlan({ db, filter, period, today }: LoadArgs): Pro
   });
   const section = (label: string): ReportRow => ({ kind: "section", cells: { label } });
   const { income, outflow, net, lines } = data;
+  const view: PlanViewData = {
+    lines,
+    income,
+    outflow,
+    net,
+    months: planMonths(months, { flows, plans, expectedPayments: expected, today }),
+  };
   return {
     metrics: [
       {
@@ -163,6 +200,7 @@ export async function cashflowPlan({ db, filter, period, today }: LoadArgs): Pro
       ],
     },
     note: p.note,
+    view,
   };
 }
 
