@@ -1,3 +1,5 @@
+import { parseReasonList } from "./reasons";
+
 /*
  * Lidlar (E4a, ADR 0022): standart bosqichlar, manbalar va bosqichlar ro'yxati qoidalari. Bosqichlar markaz
  * sozlamasida: ochiq bosqichlar (doskadagi ustunlar) qo'shiladi, nomlanadi, bo'yaladi va tartiblanadi; "O'quvchi bo'ldi"
@@ -49,13 +51,7 @@ export const DEFAULT_LOST_REASONS = [
 ];
 
 /** Bazadagi qiymat: 1–30 ta, takrorsiz, bo'sh emas; buzilgan bo'lsa standart ro'yxat */
-export function parseLostReasons(value: unknown): string[] {
-  if (!Array.isArray(value)) return DEFAULT_LOST_REASONS;
-  const list = [...new Set(value.filter((v): v is string => typeof v === "string").map((v) => v.trim()))].filter(
-    (v) => v.length > 0 && v.length <= 80,
-  );
-  return list.length ? list.slice(0, 30) : DEFAULT_LOST_REASONS;
-}
+export const parseLostReasons = (value: unknown): string[] => parseReasonList(value, DEFAULT_LOST_REASONS);
 
 export interface StageDraft {
   id?: string;

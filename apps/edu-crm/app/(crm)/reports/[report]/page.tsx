@@ -1,17 +1,19 @@
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { canAny } from "@ventura/auth/staff/policy";
+import { can, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
 import { Card } from "@ventura/ui/card";
 import { MetricCard } from "@ventura/ui/metric-card";
 import { PageHeader } from "@ventura/ui/page-header";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
+import { getLeaveReasons } from "@/lib/server/leave-reasons";
 import { todayTashkent } from "@/lib/server/memberships";
 import { PLAN_EDIT, REPORTS, isReportKey, planEditorRows, reportPeriod } from "@/lib/server/reports";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
+import { LeaveReasonsButton } from "../leave-reasons-button";
 import { PlanEditor } from "../plan-editor";
 import { ReportFilters } from "../report-filters";
 import { ReportTableView, formatCell } from "../report-table";
@@ -46,13 +48,15 @@ export default async function ReportPage({
   const cy = Number(today.slice(0, 4));
   const years = Array.from({ length: 6 }, (_, i) => cy - i);
   const q = new URLSearchParams();
-  if (period.year === null) q.set("yil", "all");
-  else q.set("yil", String(period.year));
-  if (def.periodMode !== "year") q.set("oy", period.month === null ? "all" : String(period.month));
+  if (def.periodMode !== "none") q.set("yil", period.year === null ? "all" : String(period.year));
+  if (def.periodMode !== "year" && def.periodMode !== "none")
+    q.set("oy", period.month === null ? "all" : String(period.month));
   const editor =
     report === "plan" && period.year !== null && canAny(staff.access, PLAN_EDIT)
       ? await planEditorRows(getTenantDb(tenant), branch, period.year)
       : null;
+  const leaveReasons =
+    report === "leaves" && can(staff.access, "groups.edit") ? await getLeaveReasons(getTenantDb(tenant)) : null;
 
   return (
     <div className="space-y-6">
@@ -75,6 +79,8 @@ export default async function ReportPage({
         actions={
           editor && period.year !== null ? (
             <PlanEditor year={period.year} rows={editor} branches={branch.options} selectedBranch={branch.selected} />
+          ) : leaveReasons ? (
+            <LeaveReasonsButton reasons={leaveReasons} />
           ) : null
         }
       />
@@ -97,6 +103,14 @@ export default async function ReportPage({
         <ReportTableView table={data.table} empty={t.empty} />
       </Card>
       {data.note ? <p className="text-caption text-muted-foreground">{data.note}</p> : null}
+      {data.extra?.map((x) => (
+        <section key={x.title} className="space-y-3">
+          <h2 className="type-heading text-lg text-foreground">{x.title}</h2>
+          <Card className="overflow-hidden">
+            <ReportTableView table={x.table} empty={t.empty} />
+          </Card>
+        </section>
+      ))}
     </div>
   );
 }

@@ -10,10 +10,10 @@ import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { SearchSelect, type SearchSelectOption } from "@ventura/ui/search-select";
 import { SelectionBar, SelectionBarAction } from "@ventura/ui/selection-bar";
-import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { uz } from "@/lib/uz";
 import { type BulkResult, enrollStudentsAction, leaveStudentsAction } from "../groups/actions";
+import { LeaveReasonFields } from "../groups/leave-reason-fields";
 import type { StudentRow } from "./data";
 
 const t = uz.students;
@@ -230,6 +230,7 @@ function LeaveDialog({
   const [groupId, setGroupId] = React.useState("");
   const [date, setDate] = React.useState(todayLocal);
   const [reason, setReason] = React.useState("");
+  const [note, setNote] = React.useState("");
   const { error, setError, pending, submit } = useBulkSubmit(onOpenChange, onDone, t.bulkLeft);
   const [wasOpen, setWasOpen] = React.useState(false);
   if (open !== wasOpen) {
@@ -238,6 +239,7 @@ function LeaveDialog({
       setGroupId(groups.length === 1 ? groups[0]!.id : "");
       setDate(todayLocal());
       setReason("");
+      setNote("");
       setError(null);
     }
   }
@@ -258,17 +260,19 @@ function LeaveDialog({
           <Button
             variant="danger"
             disabled={pending || !groupId || !date}
-            onClick={() =>
+            onClick={() => {
+              if (!reason) return setError(uz.groups.removeReasonRequired);
               submit(() =>
                 leaveStudentsAction({
                   groupId,
                   studentIds: selected.filter((s) => s.groups.some((g) => g.id === groupId)).map((s) => s.id),
                   date,
                   reason,
+                  note,
                   title: t.bulkTitle(group?.n ?? selected.length),
                 }),
-              )
-            }
+              );
+            }}
           >
             <UserMinus /> {group ? t.bulkLeaveButton(group.n) : uz.groups.remove}
           </Button>
@@ -298,17 +302,16 @@ function LeaveDialog({
           <Label htmlFor="bulk-leave-date">{uz.groups.removeDate}</Label>
           <Input id="bulk-leave-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
-        <div>
-          <Label htmlFor="bulk-leave-reason">{uz.groups.removeReason}</Label>
-          <Textarea
-            id="bulk-leave-reason"
-            rows={3}
-            maxLength={500}
-            placeholder={uz.groups.removeReasonPlaceholder}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
+        <LeaveReasonFields
+          id="bulk-leave"
+          reason={reason}
+          onReason={(v) => {
+            setReason(v);
+            setError(null);
+          }}
+          note={note}
+          onNote={setNote}
+        />
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </div>
     </Modal>

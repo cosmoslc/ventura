@@ -10,12 +10,12 @@ import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
 import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
-import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { displayPhone, money, signedMoney } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { type LeavePreview, leavePreviewAction } from "../payments/account-actions";
 import { activateMembershipAction, enrollStudentAction, leaveMembershipAction } from "./actions";
+import { LeaveReasonFields } from "./leave-reason-fields";
 
 function todayLocal() {
   const d = new Date();
@@ -123,6 +123,7 @@ export function LeaveDialog({
   const router = useRouter();
   const [date, setDate] = React.useState(todayLocal());
   const [reason, setReason] = React.useState("");
+  const [note, setNote] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const [preview, setPreview] = React.useState<LeavePreview | null>(null);
@@ -131,6 +132,7 @@ export function LeaveDialog({
     setOpenedFor(target?.id ?? null);
     setDate(todayLocal());
     setReason("");
+    setNote("");
     setError(null);
     setPreview(null);
   }
@@ -150,8 +152,9 @@ export function LeaveDialog({
 
   function save() {
     if (!target) return;
+    if (!reason) return setError(uz.groups.removeReasonRequired);
     startTransition(async () => {
-      const res = await leaveMembershipAction({ id: target.id, date, reason });
+      const res = await leaveMembershipAction({ id: target.id, date, reason, note });
       if (!res.ok && res.pending) {
         toast({ tone: "info", title: res.error });
         onOpenChange(false);
@@ -196,17 +199,16 @@ export function LeaveDialog({
             }}
           />
         </div>
-        <div>
-          <Label htmlFor="leave-reason">{uz.groups.removeReason}</Label>
-          <Textarea
-            id="leave-reason"
-            rows={3}
-            maxLength={500}
-            placeholder={uz.groups.removeReasonPlaceholder}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
+        <LeaveReasonFields
+          id="leave"
+          reason={reason}
+          onReason={(v) => {
+            setReason(v);
+            setError(null);
+          }}
+          note={note}
+          onNote={setNote}
+        />
         {preview ? (
           <Notice tone={preview.after < 0 ? "warning" : "info"}>
             <div className="font-semibold">
