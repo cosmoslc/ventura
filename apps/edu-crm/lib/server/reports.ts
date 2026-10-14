@@ -1,6 +1,7 @@
 import "server-only";
 import { and, eq, gte, inArray, isNull, lt } from "drizzle-orm";
-import type { Permission } from "@ventura/auth/staff/policy";
+import { type Permission, canAny } from "@ventura/auth/staff/policy";
+import { hasFeature } from "@ventura/tenants";
 import type { TenantDb } from "@ventura/db";
 import {
   courses,
@@ -639,4 +640,18 @@ export const REPORTS = {
 } as const satisfies Record<string, ReportDef>;
 
 export type ReportKey = keyof typeof REPORTS;
+
+/** Guruhlar tartibi (hisobotlar sahifasi va menyu) */
+export const REPORT_GROUPS: readonly ReportDef["group"][] = ["finance", "academic", "leads", "teachers"];
+
+/** Xodimga ochiq hisobotlar: ruxsati bor va bo'limi yoqilgan */
+export async function visibleReports(
+  tenant: Parameters<typeof hasFeature>[0],
+  access: Parameters<typeof canAny>[0],
+): Promise<ReportKey[]> {
+  const keys: ReportKey[] = [];
+  for (const [key, def] of Object.entries(REPORTS) as [ReportKey, ReportDef][])
+    if (canAny(access, def.permissions) && (await hasFeature(tenant, def.feature))) keys.push(key);
+  return keys;
+}
 export const isReportKey = (k: string): k is ReportKey => Object.hasOwn(REPORTS, k);

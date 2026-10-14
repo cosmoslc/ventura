@@ -2437,6 +2437,14 @@ export const uz = {
     excel: "Excel",
     empty: "Bu davrda ma'lumot yo'q",
     noAccess: "Sizga ochiq hisobot yo'q",
+    // Menyudagi ichki guruhlar (eski tizim nomlari)
+    navAll: "Barcha hisobotlar",
+    navGroups: {
+      finance: "Moliyaviy hisobotlar",
+      academic: "O'quvchilar hisoboti",
+      leads: "Marketing va lidlar",
+      teachers: "O'qituvchi hisoboti",
+    } as Record<string, string>,
     groups: {
       finance: "Moliya",
       academic: "O'quv jarayoni",

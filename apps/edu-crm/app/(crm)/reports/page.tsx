@@ -5,14 +5,12 @@ import { hasFeature } from "@ventura/tenants";
 import { Card, CardContent } from "@ventura/ui/card";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { pagePermissions } from "@/lib/access";
-import { REPORTS, type ReportDef, type ReportKey } from "@/lib/server/reports";
+import { REPORTS, REPORT_GROUPS, type ReportDef, visibleReports } from "@/lib/server/reports";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 
 const t = uz.reports;
 export const metadata = { title: t.title };
-
-const ORDER: ReportDef["group"][] = ["finance", "academic", "leads", "teachers"];
 
 interface Item {
   href: string;
@@ -32,10 +30,13 @@ export default async function ReportsPage() {
 
   if (canAny(staff.access, ["dashboard.view", "dashboard.financial_stats", "dashboard.conversion_stats"]))
     push("finance", { href: "/", title: t.linkDashboard, hint: t.linkDashboardHint, icon: <LayoutDashboard /> });
-  for (const [key, def] of Object.entries(REPORTS) as [ReportKey, ReportDef][]) {
-    if (!canAny(staff.access, def.permissions) || !(await hasFeature(tenant, def.feature))) continue;
-    push(def.group, { href: `/reports/${key}`, title: t.titles[key]!, hint: t.hints[key]!, icon: <BarChart3 /> });
-  }
+  for (const key of await visibleReports(tenant, staff.access))
+    push(REPORTS[key].group, {
+      href: `/reports/${key}`,
+      title: t.titles[key]!,
+      hint: t.hints[key]!,
+      icon: <BarChart3 />,
+    });
   if (canAny(staff.access, pagePermissions("/attendance")) && (await hasFeature(tenant, "attendance")))
     push("academic", {
       href: "/attendance",
@@ -44,7 +45,7 @@ export default async function ReportsPage() {
       icon: <CalendarCheck />,
     });
 
-  const sections = ORDER.filter((g) => groups.get(g)?.length);
+  const sections = REPORT_GROUPS.filter((g) => groups.get(g)?.length);
   return (
     <div className="space-y-8">
       <PageHeader title={t.title} description={t.description} />
