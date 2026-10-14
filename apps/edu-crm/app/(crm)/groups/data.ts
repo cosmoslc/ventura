@@ -136,6 +136,7 @@ export interface MemberRow {
   pausedAt: string | null;
   leftAt: string | null;
   leftReason: string | null;
+  leftNote: string | null;
 }
 
 const localPhone = (p: string) => p.replace(/\D/g, "").slice(-9);
@@ -161,6 +162,7 @@ export async function groupMembers(db: TenantDb, groupId: string): Promise<{ ope
     pausedAt: m.pausedAt,
     leftAt: m.leftAt,
     leftReason: m.leftReason,
+    leftNote: m.leftNote,
     archived: !!s.archivedAt,
   }));
   return {
@@ -188,6 +190,7 @@ export interface StudentMembershipRow {
   pausedAt: string | null;
   leftAt: string | null;
   leftReason: string | null;
+  leftNote: string | null;
 }
 
 /** O'quvchining barcha a'zolik davrlari (ochiqlari oldin) */
@@ -220,6 +223,7 @@ export async function studentMemberships(db: TenantDb, studentId: string): Promi
       pausedAt: m.pausedAt,
       leftAt: m.leftAt,
       leftReason: m.leftReason,
+      leftNote: m.leftNote,
     }))
     .sort((a, b) => Number(!!a.leftAt) - Number(!!b.leftAt));
 }

@@ -3,10 +3,21 @@
 import { and, arrayOverlaps, eq, gt, inArray, isNull, lt, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { courses, groupMemberships, groupPrices, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
+import {
+  courses,
+  groupMemberships,
+  groupPrices,
+  groups,
+  rooms,
+  settings,
+  students,
+  teachers,
+} from "@ventura/db/schema/tenant";
 import { OPENING_MONTH } from "@/lib/billing";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
+import { getLeaveReasons } from "@/lib/server/leave-reasons";
+import { LEAVE_REASONS_KEY } from "@/lib/reasons";
 import { closePauses, monthStart, openPauses, promoteTrialStudent, todayTashkent } from "@/lib/server/memberships";
 import {
   bulkEnrollInput,
@@ -15,6 +26,7 @@ import {
   groupInput,
   membershipDateInput,
   membershipLeaveInput,
+  reasonListInput,
 } from "@/lib/rules";
 import { uz } from "@/lib/uz";
 
@@ -390,17 +402,22 @@ export async function leaveMembershipAction(input: unknown): Promise<ActionResul
       if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
       const row = await loadMembership(ctx, parsed.data.id);
       if (!row) return { ok: false, error: uz.common.gone };
-      const { date, reason } = parsed.data;
+      const { date, reason, note } = parsed.data;
       if (date < row.m.enrolledAt) return { ok: false, error: uz.groups.dateBeforeEnroll };
       // To'lov qaytarish va qarz tekshiruvi (eski "Tark etish" oynasi) — Moliya bilan (E3)
       await ctx.db.transaction(async (tx) => {
         if (row.m.status === "paused") await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], date);
         await tx
           .update(groupMemberships)
-          .set({ status: "left", leftAt: date, leftReason: reason || null })
+          .set({ status: "left", leftAt: date, leftReason: reason || null, leftNote: note || null })
           .where(eq(groupMemberships.id, row.m.id));
       });
-      await membershipAudit(ctx, row, "leave", { date, ...(reason ? { reason } : {}), from: row.m.status });
+      await membershipAudit(ctx, row, "leave", {
+        date,
+        ...(reason ? { reason } : {}),
+        ...(note ? { note } : {}),
+        from: row.m.status,
+      });
       refresh(row.g.id, row.s.id);
       return { ok: true };
     },
@@ -486,7 +503,7 @@ export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
     async (ctx) => {
       const parsed = bulkLeaveInput.safeParse(input);
       if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-      const { date, reason } = parsed.data;
+      const { date, reason, note } = parsed.data;
       const ids = [...new Set(parsed.data.studentIds)];
       const g = await loadGroup(ctx, parsed.data.groupId);
       if (!g) return { ok: false, error: uz.groups.groupArchived };
@@ -510,7 +527,7 @@ export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
         if (paused.length) await closePauses(tx, paused, date);
         await tx
           .update(groupMemberships)
-          .set({ status: "left", leftAt: date, leftReason: reason || null })
+          .set({ status: "left", leftAt: date, leftReason: reason || null, leftNote: note || null })
           .where(
             inArray(
               groupMemberships.id,
@@ -519,7 +536,7 @@ export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
           );
       });
       for (const r of leave) {
-        const meta = { date, ...(reason ? { reason } : {}), from: r.m.status, bulk: true };
+        const meta = { date, ...(reason ? { reason } : {}), ...(note ? { note } : {}), from: r.m.status, bulk: true };
         await ctx.audit(
           "group.leave",
           { type: "group", id: g.id },
@@ -536,4 +553,33 @@ export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
     },
     { approval: { action: "groups.leaveMany", input } },
   );
+}
+
+/* ---------- Guruhdan chiqish sabablari (ADR 0031) ---------- */
+
+/** Chiqarish oynalari uchun ro'yxat (oyna ochilganda o'qiladi) */
+export async function leaveReasonsAction(): Promise<ActionResult<{ reasons: string[] }>> {
+  return crmAction<{ reasons: string[] }>(FEATURE, ["groups.remove_student", "groups.edit"], async (ctx) => ({
+    ok: true,
+    reasons: await getLeaveReasons(ctx.db),
+  }));
+}
+
+/** Ro'yxatni saqlash — guruh sozlamasi (`groups.edit`); eski yozuvlardagi sabablar o'zgarmaydi */
+export async function saveLeaveReasonsAction(input: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "groups.edit", async ({ db, staff, audit }) => {
+    const parsed = reasonListInput.safeParse(input);
+    if (!parsed.success) return { ok: false, error: uz.common.invalid };
+    const list = [...new Set(parsed.data)];
+    await db
+      .insert(settings)
+      .values({ key: LEAVE_REASONS_KEY, value: list, updatedBy: staff.id })
+      .onConflictDoUpdate({
+        target: [settings.tenantId, settings.key],
+        set: { value: list, updatedBy: staff.id, updatedAt: new Date() },
+      });
+    await audit("settings.update", { type: "setting", id: LEAVE_REASONS_KEY }, { reasons: list });
+    revalidatePath("/reports/leaves");
+    return { ok: true };
+  });
 }

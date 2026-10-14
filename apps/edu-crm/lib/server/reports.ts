@@ -30,6 +30,7 @@ import {
   yearMonths,
 } from "@/lib/reports";
 import { uz } from "@/lib/uz";
+import { leavesReport, retentionReport, riskReport } from "./academic-reports";
 import type { BranchContext } from "./branch";
 import { loadFlows } from "./dashboard";
 import { loadAccounts } from "./finance";
@@ -42,8 +43,8 @@ import { loadAccounts } from "./finance";
 
 const t = uz.reports;
 
-/** year — faqat yil; period — yil + oy yoki barcha davr; month — yil + oy (barcha davrsiz) */
-export type PeriodMode = "year" | "period" | "month";
+/** year — faqat yil; period — yil + oy yoki barcha davr; month — yil + oy (barcha davrsiz); none — bugungi holat */
+export type PeriodMode = "year" | "period" | "month" | "none";
 
 /** Davr: yil (oy yo'q) yoki yil + oy; `months` null — barcha davr */
 export interface ReportPeriod {
@@ -56,6 +57,7 @@ export interface ReportPeriod {
 }
 
 export function reportPeriod(params: { yil?: string; oy?: string }, today: string, mode: PeriodMode): ReportPeriod {
+  if (mode === "none") return { year: null, month: null, months: null, range: null, label: t.now };
   const cy = Number(today.slice(0, 4));
   const y =
     params.yil === "all" && mode === "period" ? null : /^\d{4}$/.test(params.yil ?? "") ? Number(params.yil) : cy;
@@ -82,7 +84,7 @@ export function reportPeriod(params: { yil?: string; oy?: string }, today: strin
   return { year: y, month: m, months: [key], range: { from: `${key}-01`, to: `${next}-01` }, label: formatMonth(key) };
 }
 
-interface LoadArgs {
+export interface LoadArgs {
   db: TenantDb;
   filter: readonly string[] | null;
   period: ReportPeriod;
@@ -98,6 +100,8 @@ export interface ReportDef {
 }
 
 const FINANCE: readonly Permission[] = ["dashboard.financial_stats"];
+/** O'quv hisobotlari (E5 qarori 7) */
+const ACADEMIC: readonly Permission[] = ["dashboard.view"];
 
 const inRange = (date: string, r: ReportPeriod["range"]) => !r || (date >= r.from && date < r.to);
 
@@ -623,6 +627,15 @@ export const REPORTS = {
     load: discountsReport,
   },
   courses: { group: "finance", feature: "payments", permissions: FINANCE, periodMode: "period", load: courseRevenue },
+  leaves: { group: "academic", feature: "groups", permissions: ACADEMIC, periodMode: "period", load: leavesReport },
+  risk: { group: "academic", feature: "attendance", permissions: ACADEMIC, periodMode: "none", load: riskReport },
+  retention: {
+    group: "academic",
+    feature: "groups",
+    permissions: ACADEMIC,
+    periodMode: "period",
+    load: retentionReport,
+  },
 } as const satisfies Record<string, ReportDef>;
 
 export type ReportKey = keyof typeof REPORTS;

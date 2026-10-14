@@ -127,6 +127,13 @@
       "when": 1791972458261,
       "tag": "0017_e5a_finance_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1791973164029,
+      "tag": "0018_e5b_left_note",
+      "breakpoints": true
     }
   ]
 }

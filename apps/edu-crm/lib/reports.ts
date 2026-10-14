@@ -41,6 +41,8 @@ export interface ReportData {
   table: ReportTable;
   /** Jadval ostidagi izoh (hisob qoidasi) */
   note?: string;
+  /** Qo'shimcha jadvallar (masalan sabablar va ro'yxat) — sahifada pastda, Excel'da alohida varaq */
+  extra?: { title: string; table: ReportTable }[];
 }
 
 const sumOf = (xs: readonly number[]) => xs.reduce((s, x) => s + x, 0);

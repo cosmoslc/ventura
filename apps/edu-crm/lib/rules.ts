@@ -179,7 +179,8 @@ export const waitlistInput = z.object({
 });
 export const waitlistAssignInput = z.object({ leadIds: z.array(id).min(1).max(500), waitlistId: id.nullable() });
 export const waitlistActivateInput = z.object({ waitlistId: id, groupId: id });
-export const lostReasonsInput = z.array(z.string().trim().min(1).max(80)).min(1).max(30);
+/** Sabablar ro'yxati (lid yo'qotish, guruhdan chiqish) */
+export const reasonListInput = z.array(z.string().trim().min(1).max(80)).min(1).max(30);
 
 export const leadStagesInput = z
   .array(
@@ -244,7 +245,13 @@ export const groupInput = z
 export type GroupInput = z.input<typeof groupInput>;
 
 export const membershipDateInput = z.object({ id, date: day });
-export const membershipLeaveInput = z.object({ id, date: day, reason: z.string().trim().max(500).default("") });
+/** Sabab — ro'yxatdan (eski yozuvlar va tizim sabablari erkin matn bo'lgani uchun server faqat uzunlikni tekshiradi) */
+const leaveFields = {
+  date: day,
+  reason: z.string().trim().max(500).default(""),
+  note: z.string().trim().max(500).default(""),
+};
+export const membershipLeaveInput = z.object({ id, ...leaveFields });
 
 /** O'quvchilar ro'yxatidan bir nechtasini birga (ADR 0028); 400 tagacha — tasdiq so'rovi hajmiga sig'adi */
 export const BULK_MAX = 400;
@@ -255,10 +262,7 @@ export const bulkEnrollInput = z.object({
   /** Tasdiq so'rovi sarlavhasi uchun ("5 ta o'quvchi") */
   title: z.string().max(80).optional(),
 });
-export const bulkLeaveInput = bulkEnrollInput.extend({
-  date: day,
-  reason: z.string().trim().max(500).default(""),
-});
+export const bulkLeaveInput = bulkEnrollInput.extend(leaveFields);
 
 /* ---------- Xarajatlar va qo'shimcha daromad (ADR 0016) ---------- */
 

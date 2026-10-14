@@ -153,7 +153,11 @@ export function StudentGroupsTab({
                 <span className="font-mono text-muted-foreground">
                   {formatDate(m.enrolledAt)} → {m.leftAt ? formatDate(m.leftAt) : ""}
                 </span>
-                {m.leftReason ? <span className="w-full text-muted-foreground">{m.leftReason}</span> : null}
+                {m.leftReason || m.leftNote ? (
+                  <span className="w-full text-muted-foreground">
+                    {[m.leftReason, m.leftNote].filter(Boolean).join(" — ")}
+                  </span>
+                ) : null}
               </li>
             ))}
           </ul>

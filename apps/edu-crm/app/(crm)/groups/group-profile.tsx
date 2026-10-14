@@ -367,7 +367,16 @@ export function GroupProfile({
                       </Td>
                       <Td className="font-mono">{formatDate(m.enrolledAt)}</Td>
                       <Td className="font-mono">{m.leftAt ? formatDate(m.leftAt) : "—"}</Td>
-                      <Td className="text-muted-foreground">{m.leftReason ?? "—"}</Td>
+                      <Td className="max-w-80 text-muted-foreground">
+                        <div className="truncate" title={m.leftReason ?? undefined}>
+                          {m.leftReason ?? "—"}
+                        </div>
+                        {m.leftNote ? (
+                          <div className="truncate text-caption" title={m.leftNote}>
+                            {m.leftNote}
+                          </div>
+                        ) : null}
+                      </Td>
                     </Tr>
                   ))}
                 </TBody>
