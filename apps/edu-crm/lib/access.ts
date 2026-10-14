@@ -64,6 +64,25 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/coins": ["bonuses.manage"],
   "/sms": ["settings.sms_gateways"],
   "/reports": ["dashboard.view", "dashboard.financial_stats", "dashboard.conversion_stats"],
+  // Bugungi ishlar (ADR 0027): bloklaridan birortasini ko'ra oladigan xodimga ochiq
+  "/bugun": [
+    "leads.view",
+    "leads.create",
+    "leads.edit",
+    "leads.call_log",
+    "leads.status_change",
+    "leads.convert_to_student",
+    "leads.reassign",
+    "attendance.student_mark",
+    "attendance.student_edit_past",
+    "attendance.export",
+    "groups.attendance_view",
+    "groups.view",
+    "groups.create",
+    "groups.edit",
+    "finance.debtors_view",
+    "finance.debtors_remind",
+  ],
 };
 
 export const pagePermissions = (href: string): readonly Permission[] => PAGE_ACCESS[href] ?? [];

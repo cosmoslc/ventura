@@ -569,6 +569,23 @@ Qoidalar:
 - StatCard'dan farqi — bir qatorga 5–6 ta sig'adi; StatCard sahifa statistikasi uchun qoladi.
 - Ohang (`tone`): `neutral`, `primary`, `success`, `warning`, `danger`, `info` — faqat holat tokenlari. `colorValue` — qiymat ham ohang rangida; `highlight` — karta foni va chegarasi ohangda (balans qarzda yoki qoldiqda).
 
+### 11.35 ListCard — `list-card.tsx`
+
+- Sarlavhali qisqa ro'yxat kartasi ("Bugungi ishlar" bloklari, ADR 0027):
+  - tepada sarlavha, soni va o'ngda amal (`action`, odatda "Ochish" havolasi);
+  - ostida qatorlar;
+  - oxirida ixtiyoriy `footer` ("Yana N ta").
+- `count` 0 bo'lsa — `empty` matni markazda.
+- `ListCardRow` — qator:
+  - `title` (odatda havola);
+  - `sub` — ikkinchi qator: telefon, guruh, izoh;
+  - o'ngda `aside` va uning ostida `asideSub` (masalan sana);
+  - `tone` — `aside` rangi: `muted`, `primary`, `success`, `warning`, `danger` (faqat holat tokenlari);
+  - `children` — qator ostida.
+- `ListCardProgress` — qator ostidagi ingichka progress chizig'i (`role="progressbar"`).
+- Havolalar ilovadan beriladi — komponent Next'ga bog'lanmaydi.
+- Sahifa tepasidagi ko'rsatkichlar — `MetricCard` (11.34); ro'yxatli bloklar — `ListCard`.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.

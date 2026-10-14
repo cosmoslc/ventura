@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   History,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   type LucideIcon,
   MessageSquareText,
@@ -72,6 +73,7 @@ const ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
 const FALLBACK = { icon: Blocks, hue: "slate" };
 /** Menyu manzili → ikonka (bitta bo'limning bir nechta bandi bo'lsa, masalan Xonalar — guruhlar bo'limida) */
 const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
+  "/bugun": { icon: ListChecks, hue: "amber" },
   "/rooms": { icon: DoorOpen, hue: "teal" },
   "/positions": { icon: ShieldCheck, hue: "violet" },
   "/staff": { icon: IdCard, hue: "sky" },

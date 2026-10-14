@@ -11,6 +11,7 @@ import { resolvePeriod } from "@/lib/dashboard";
 import { getBranchContext } from "@/lib/server/branch";
 import { type DashboardData, loadDashboard } from "@/lib/server/dashboard";
 import { getTenantDb } from "@/lib/server/deps";
+import { loadLeadDashboard } from "@/lib/server/lead-stats";
 import { todayTashkent } from "@/lib/server/memberships";
 import { type Staff, requireStaff, requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -30,6 +31,7 @@ const LINK_PAGES = {
   groups: ["groups", "/groups"],
   teachers: ["teachers", "/teachers"],
   rooms: ["groups", "/rooms"],
+  leads: ["leads", "/leads"],
 } as const;
 
 const yearParam = (v: string | undefined, current: number): number | null =>
@@ -60,7 +62,18 @@ export default async function HomePage({
   );
   const branch = await getBranchContext();
   const finance = can(staff.access, "dashboard.financial_stats");
-  const data = await loadDashboard(getTenantDb(tenant), branch.filter, period, today);
+  // Lid kartalari (ADR 0027): "Konversiya va lidlar" ruxsati va Lidlar bo'limi bo'lsa
+  const conversion = can(staff.access, "dashboard.conversion_stats") && (await hasFeature(tenant, "leads"));
+  const db = getTenantDb(tenant);
+  const data = await loadDashboard(db, branch.filter, period, today);
+  const leads = conversion
+    ? await loadLeadDashboard(
+        db,
+        branch.filter,
+        period,
+        data.months.map((m) => m.month),
+      )
+    : null;
   return (
     <div className="space-y-4">
       {notice}
@@ -69,7 +82,7 @@ export default async function HomePage({
         period={period}
         generatedAt={new Date().toISOString()}
         finance={finance}
-        conversion={can(staff.access, "dashboard.conversion_stats")}
+        leads={leads}
         links={await linksFor(tenant, staff.access)}
       />
     </div>
