@@ -36,8 +36,9 @@ export default function globalSetup() {
     app,
     "--migrate-url",
     migrate,
+    // Soxta bot: format @BotFather tokeniga mos (maxfiy sozlamalar tekshiruvi), so'rovlar soxta serverga ketadi
     "--bot-token",
-    "e2e-token",
+    "1000000001:e2e-soxta-token-faqat-test-uchun",
   ]);
   pnpm(["--filter", "@ventura/scripts", "edu:e2e-seed", "--tenant", TENANT_SLUG]);
 }
