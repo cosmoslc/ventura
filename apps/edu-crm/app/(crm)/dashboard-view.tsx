@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  ArrowRight,
   ArrowUpDown,
   Banknote,
   BarChart3,
@@ -39,6 +40,7 @@ import { Sparkline } from "@ventura/ui/sparkline";
 import { TrendChart, type TrendPoint } from "@ventura/ui/trend-chart";
 import { type Period, compact, compactStr, kpiDelta, topWithOther } from "@/lib/dashboard";
 import type { DashboardData, DashboardGroup } from "@/lib/server/dashboard";
+import type { LeadDashboard } from "@/lib/server/lead-stats";
 import { formatMonth, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 
@@ -51,7 +53,16 @@ const EV_PAGE = 4;
 /** Sahifalar: havola faqat ochiq bo'lsa (bo'lim yoqilgan va ruxsat bor) */
 export type DashboardLinks = Partial<
   Record<
-    "payments" | "salaries" | "expenses" | "debtors" | "attendance" | "students" | "groups" | "teachers" | "rooms",
+    | "payments"
+    | "salaries"
+    | "expenses"
+    | "debtors"
+    | "attendance"
+    | "students"
+    | "groups"
+    | "teachers"
+    | "rooms"
+    | "leads",
     string
   >
 >;
@@ -97,7 +108,7 @@ export function DashboardView({
   period,
   generatedAt,
   finance,
-  conversion,
+  leads,
   links,
 }: {
   data: DashboardData;
@@ -105,10 +116,11 @@ export function DashboardView({
   generatedAt: string;
   /** "Moliyaviy ko'rsatkichlar" ruxsati — pul raqamlari faqat shunda keladi */
   finance: boolean;
-  /** "Konversiya va lidlar" ruxsati */
-  conversion: boolean;
+  /** Lid kartalari (ADR 0027); null — "Konversiya va lidlar" ruxsati yoki Lidlar bo'limi yo'q */
+  leads: LeadDashboard | null;
   links: DashboardLinks;
 }) {
+  const conversion = leads !== null;
   const router = useRouter();
   const pathname = usePathname();
   const now = useNow(15_000);
@@ -232,16 +244,18 @@ export function DashboardView({
           },
         ]
       : []),
-    ...(conversion
+    ...(leads
       ? [
           {
             title: t.kpiLeads,
-            value: "—",
-            note: t.notYetLeads,
+            value: money(leads.stats.count),
+            unit: t.unitCount,
+            delta: kpiDelta(leads.stats.count, leads.stats.prevCount, "up", "count"),
             icon: <UserPlus />,
             color: "var(--chart-1)",
             kind: "bar" as const,
-            spark: [],
+            spark: leads.stats.spark,
+            href: links.leads,
           },
         ]
       : []),
@@ -461,9 +475,20 @@ export function DashboardView({
       {/* 3-qator */}
       <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)_minmax(0,1.15fr)]">
         <GroupsTable rows={data.groups} finance={finance} groupsHref={links.groups} />
-        {conversion ? (
-          <Panel title={t.sourcesTitle}>
-            <Placeholder text={t.notYetLeads} />
+        {leads ? (
+          <Panel title={t.sourcesTitle} link={links.leads ? { href: links.leads, label: t.leadsLink } : undefined}>
+            <DonutChart
+              segments={topWithOther(leads.stats.sources, t.other).map(([label, value], i) => ({
+                label,
+                value,
+                color: SPEND_COLORS[i]!,
+                display: `${money(value)} ${t.unitCount}`,
+              }))}
+              center={money(leads.stats.count)}
+              unit={t.leadUnit}
+              size={120}
+              emptyText={t.noLeads}
+            />
           </Panel>
         ) : null}
         {finance ? (
@@ -485,16 +510,8 @@ export function DashboardView({
       {/* 4-qator */}
       {finance || conversion ? (
         <div className="grid gap-3 xl:grid-cols-[minmax(0,2.3fr)_minmax(0,1fr)]">
-          {finance ? <Events data={data} conversion={conversion} paymentsHref={links.payments} /> : null}
-          {conversion ? (
-            <Panel
-              title={t.conversionTitle}
-              aside={<span className="text-caption text-muted-foreground">{periodLabel(period)}</span>}
-            >
-              <div className="type-stat text-foreground">—</div>
-              <Placeholder text={t.notYetLeads} />
-            </Panel>
-          ) : null}
+          <Events data={data} finance={finance} leads={leads} paymentsHref={links.payments} leadsHref={links.leads} />
+          {leads ? <Conversion leads={leads} period={period} prevLabel={prevLabel} /> : null}
         </div>
       ) : null}
     </div>
@@ -908,17 +925,23 @@ function GroupsTable({ rows, finance, groupsHref }: { rows: DashboardGroup[]; fi
 
 function Events({
   data,
-  conversion,
+  finance,
+  leads,
   paymentsHref,
+  leadsHref,
 }: {
   data: DashboardData;
-  conversion: boolean;
+  finance: boolean;
+  leads: LeadDashboard | null;
   paymentsHref?: string;
+  leadsHref?: string;
 }) {
   const [page, setPage] = React.useState(0);
-  const pages = Math.max(1, Math.min(6, Math.ceil(data.events.length / EV_PAGE)));
+  const total = Math.max(finance ? data.events.length : 0, leads?.recent.length ?? 0);
+  const pages = Math.max(1, Math.min(6, Math.ceil(total / EV_PAGE)));
   const idx = Math.min(page, pages - 1);
   const shown = data.events.slice(idx * EV_PAGE, idx * EV_PAGE + EV_PAGE);
+  const shownLeads = leads?.recent.slice(idx * EV_PAGE, idx * EV_PAGE + EV_PAGE) ?? [];
   return (
     <Panel
       title={t.eventsTitle}
@@ -948,48 +971,131 @@ function Events({
         </div>
       }
     >
-      <div className={cn("grid flex-1 gap-6", conversion && "sm:grid-cols-2")}>
-        <div className="min-w-0">
-          <div className="mb-2 text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
-            {t.eventsPayments}
+      <div className={cn("grid flex-1 gap-6", finance && leads && "sm:grid-cols-2")}>
+        {finance ? (
+          <div className="min-w-0">
+            <div className="mb-2 text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
+              {t.eventsPayments}
+            </div>
+            {shown.length ? (
+              <ul className="divide-y divide-border-soft">
+                {shown.map((e) => (
+                  <li key={e.id} className="flex items-center gap-3 py-2 text-caption">
+                    <time className="w-14 shrink-0 text-muted-foreground tabular-nums">{shortDate(e.date)}</time>
+                    <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                      {e.name}
+                      {e.group ? <span className="text-muted-foreground"> · {e.group}</span> : null}
+                    </span>
+                    <Badge tone={e.refund ? "neutral" : "success"} title={somFull(e.amount)}>
+                      {e.refund ? "−" : "+"}
+                      {compactStr(e.amount)}
+                    </Badge>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Placeholder text={t.noPayments} />
+            )}
           </div>
-          {shown.length ? (
-            <ul className="divide-y divide-border-soft">
-              {shown.map((e) => (
-                <li key={e.id} className="flex items-center gap-3 py-2 text-caption">
-                  <time className="w-14 shrink-0 text-muted-foreground tabular-nums">{shortDate(e.date)}</time>
-                  <span className="min-w-0 flex-1 truncate font-medium text-foreground">
-                    {e.name}
-                    {e.group ? <span className="text-muted-foreground"> · {e.group}</span> : null}
-                  </span>
-                  <Badge tone={e.refund ? "neutral" : "success"} title={somFull(e.amount)}>
-                    {e.refund ? "−" : "+"}
-                    {compactStr(e.amount)}
-                  </Badge>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <Placeholder text={t.noPayments} />
-          )}
-        </div>
-        {conversion ? (
+        ) : null}
+        {leads ? (
           <div className="min-w-0">
             <div className="mb-2 text-2xs font-semibold tracking-wide text-muted-foreground uppercase">
               {t.eventsLeads}
             </div>
-            <Placeholder text={t.notYetLeads} />
+            {shownLeads.length ? (
+              <ul className="divide-y divide-border-soft">
+                {shownLeads.map((l) => (
+                  <li key={l.id} className="flex items-center gap-3 py-2 text-caption">
+                    <time className="w-14 shrink-0 text-muted-foreground tabular-nums">{shortDate(l.date)}</time>
+                    <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                      {leadsHref ? (
+                        <Link href={`${leadsHref}/${l.id}`} className="hover:text-primary-text">
+                          {l.name}
+                        </Link>
+                      ) : (
+                        l.name
+                      )}
+                      {l.source ? <span className="text-muted-foreground"> · {l.source}</span> : null}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+                      <span aria-hidden className="size-2 rounded-full" style={{ background: l.color }} />
+                      {l.stage}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <Placeholder text={t.noLeads} />
+            )}
           </div>
         ) : null}
       </div>
-      {paymentsHref ? (
+      {finance && paymentsHref ? (
         <Link
           href={paymentsHref}
           className="mt-auto text-center text-2xs text-muted-foreground hover:text-primary-text"
         >
           {t.allPayments}
         </Link>
+      ) : !finance && leadsHref ? (
+        <Link href={leadsHref} className="mt-auto text-center text-2xs text-muted-foreground hover:text-primary-text">
+          {t.allLeads}
+        </Link>
       ) : null}
+    </Panel>
+  );
+}
+
+/* ---------- Lid konversiyasi (ADR 0027) ---------- */
+
+function Conversion({ leads, period, prevLabel }: { leads: LeadDashboard; period: Period; prevLabel: string }) {
+  const s = leads.stats;
+  const diff = s.conv !== null && s.prevConv !== null ? s.conv - s.prevConv : null;
+  return (
+    <Panel
+      title={t.conversionTitle}
+      aside={<span className="text-caption text-muted-foreground">{periodLabel(period)}</span>}
+    >
+      <div className="flex items-baseline gap-2">
+        {s.prevConv !== null ? (
+          <>
+            <span className="type-stat text-muted-foreground">{s.prevConv.toFixed(1)}%</span>
+            <ArrowRight className="size-4 self-center text-muted-foreground" aria-hidden />
+          </>
+        ) : null}
+        <span
+          className={cn(
+            "type-stat",
+            diff === null || diff === 0 ? "text-foreground" : diff > 0 ? "text-(--success-fg)" : "text-(--danger-fg)",
+          )}
+        >
+          {s.conv === null ? "—" : `${s.conv.toFixed(1)}%`}
+        </span>
+      </div>
+      {diff !== null ? <p className="text-caption text-muted-foreground">{t.convDelta(prevLabel, diff)}</p> : null}
+      <dl className="space-y-1.5 text-caption">
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted-foreground">{t.convJoined}</dt>
+          <dd className="font-semibold text-foreground tabular-nums">
+            {s.converted} / {s.count}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted-foreground">{t.convLost}</dt>
+          <dd className="truncate font-semibold text-foreground">
+            {s.lostTop
+              ? `${leads.stageNames[s.lostTop.stageId] ?? "—"} · ${s.lostTop.count} ${t.unitCount} (${s.lostTop.pct.toFixed(1)}%)`
+              : "—"}
+          </dd>
+        </div>
+        <div className="flex justify-between gap-3">
+          <dt className="text-muted-foreground">{t.convPaid}</dt>
+          <dd className="font-semibold text-foreground tabular-nums">
+            {s.firstPaid} {t.unitCount}
+          </dd>
+        </div>
+      </dl>
     </Panel>
   );
 }

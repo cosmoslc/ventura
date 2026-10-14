@@ -106,7 +106,6 @@ export const uz = {
     kpiAdvanceNote: (n: number) => `${n} ta avans`,
     kpiLeads: "Yangi lidlar",
     kpiRefunds: "Qaytarishlar",
-    notYetLeads: "Lidlar bo'limi hali ishga tushmagan",
     // moliya dinamikasi
     flowTitle: "Moliya dinamikasi",
     flowCaption: "Tushum va chiqim dinamikasi",
@@ -184,6 +183,15 @@ export const uz = {
     pagePrev: "Oldingi sahifa",
     pageNext: "Keyingi sahifa",
     conversionTitle: "Lid konversiyasi",
+    // lidlar (ADR 0027)
+    leadUnit: "lid",
+    noLeads: "Lidlar yo'q",
+    allLeads: "Barcha lidlar",
+    convDelta: (prev: string, d: number) =>
+      `${prev.charAt(0).toUpperCase()}${prev.slice(1)}ga nisbatan ${d >= 0 ? "+" : "−"}${Math.abs(d).toFixed(1)} p.p.`,
+    convJoined: "Guruhga qo'shildi",
+    convLost: "Ko'p yo'qotilgan bosqich",
+    convPaid: "Birinchi to'lov qilgan",
   },
 
   common: {
@@ -2375,6 +2383,40 @@ export const uz = {
     soon: "Bo'lim tayyorlanmoqda",
     soonHint: "Bu bo'lim yoqilgan va sizga ochiq. Sahifaning o'zi keyingi bosqichda qo'shiladi.",
     toHome: "Bosh sahifaga",
+  },
+
+  // Bugungi ishlar (ADR 0027)
+  workbench: {
+    title: "Bugungi ishlar",
+    open: "Ochish",
+    more: (n: number) => `Yana ${n} ta`,
+    nothing: "Bu sahifada sizga ochiq blok yo'q.",
+    followUps: "Bog'lanish kerak",
+    followUpsEmpty: "Bugunga rejalangan qo'ng'iroq yo'q",
+    overdueCount: (n: number) => `${n} tasi kechikkan`,
+    noneOverdue: "Kechikkani yo'q",
+    overdue: (n: number) => `${n} kun kechikdi`,
+    dueToday: "Bugun",
+    firstLessons: "Birinchi darslar",
+    firstLessonsEmpty: "Bugun birinchi dars yo'q",
+    lessonStatus: { came: "Keldi", absent: "Kelmadi" } as Record<string, string>,
+    unassigned: "Mas'ulsiz yangi lidlar",
+    unassignedEmpty: "Hamma yangi lidga mas'ul biriktirilgan",
+    unassignedCount: (n: number) => `${n} ta mas'ulsiz lid`,
+    noSource: "Manbasiz",
+    absent: "Bugun kelmaganlar",
+    absentEmpty: "Bugun kelmaganlar yo'q",
+    absentStatus: { absent: "Kelmadi", excused: "Sababli" } as Record<string, string>,
+    lessonsMarked: (n: number, m: number) => `${n} ta dars, ${m} tasi belgilangan`,
+    debtors: "Qarzdorlar",
+    debtorsEmpty: "Qarzdor yo'q",
+    ending: "Tugayotgan guruhlar",
+    endingEmpty: "30 kun ichida tugaydigan guruh yo'q",
+    endingWindow: "30 kun ichida",
+    students: (n: number) => `${n} o'quvchi`,
+    daysLeft: (n: number) => `${n} kun qoldi`,
+    endsToday: "Bugun tugaydi",
+    endedAgo: (n: number) => `${n} kun o'tdi`,
   },
 
   // Tashqi ariza sahifasi (ADR 0026)

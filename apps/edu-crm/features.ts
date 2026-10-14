@@ -21,6 +21,8 @@ export const features = [
     type: "permanent",
     routes: ["/api/students"],
     nav: [
+      // Bugungi ishlar (ADR 0027) — bir nechta bo'lim bloklari; har blok o'z ruxsati va bo'limi bilan
+      { label: "Bugungi ishlar", href: "/bugun" },
       { label: "O'quvchilar", href: "/students" },
       { label: "Arxiv", href: "/archive", section: "Ofis" },
     ],
