@@ -41,6 +41,7 @@ import { Logo } from "@ventura/ui/logo";
 import { DonutChart } from "@ventura/ui/donut-chart";
 import { Gauge } from "@ventura/ui/gauge";
 import { Meter } from "@ventura/ui/meter";
+import { ListCard, ListCardProgress, ListCardRow } from "@ventura/ui/list-card";
 import { MetricCard } from "@ventura/ui/metric-card";
 import { Sparkline } from "@ventura/ui/sparkline";
 import { TrendChart } from "@ventura/ui/trend-chart";
@@ -459,6 +460,28 @@ function Cards() {
         />
         <MetricCard label="Retention" value="93%" icon={<Rocket />} tone="primary" colorValue foot="Saqlash darajasi" />
         <MetricCard label="Aktiv guruhlar" value="2" unit="ta guruh" icon={<FolderKanban />} tone="info" />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <ListCard
+          title="Bog'lanish kerak"
+          count={12}
+          action={<a href="#kartochkalar">Ochish</a>}
+          empty="Bugunga rejalangan qo'ng'iroq yo'q"
+          footer={<a href="#kartochkalar">Yana 10 ta</a>}
+        >
+          <ListCardRow
+            title={<a href="#kartochkalar">Aziz Karimov</a>}
+            sub="+998 90 123 45 67 · Ingliz tili"
+            aside="3 kun kechikdi"
+            tone="danger"
+          />
+          <ListCardRow title="Madina Yusupova" sub="+998 93 222 33 44" aside="Bugun" tone="warning" />
+        </ListCard>
+        <ListCard title="Tugayotgan guruhlar" count={1} empty="Guruh yo'q">
+          <ListCardRow title="IELTS 7.0" sub="Ingliz tili · 12 o'quvchi" aside="18 kun qoldi" asideSub="01.11.2026">
+            <ListCardProgress value={72} />
+          </ListCardRow>
+        </ListCard>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <StatCard icon={<FolderKanban />} label="Faol loyihalar" value="24" tone={1} trend={{ value: "3", up: true }} />
