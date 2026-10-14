@@ -33,6 +33,7 @@ export interface ServerCard {
   capacity: number | null;
   note: string | null;
   deployRoot: string;
+  wslDistro: string | null;
 }
 
 function toCard(s: typeof servers.$inferSelect, projectCount: number, appNames: string[]): ServerCard {
@@ -53,6 +54,7 @@ function toCard(s: typeof servers.$inferSelect, projectCount: number, appNames: 
     apps: appNames,
     capacity: s.capacity,
     note: s.note,
+    wslDistro: s.wslDistro,
     deployRoot: s.deployRoot,
   };
 }

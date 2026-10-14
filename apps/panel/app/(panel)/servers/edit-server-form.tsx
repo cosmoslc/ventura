@@ -24,6 +24,7 @@ function initial(s: ServerCard) {
     deployRoot: s.deployRoot,
     capacity: s.capacity ? String(s.capacity) : "",
     note: s.note ?? "",
+    wslDistro: s.wslDistro ?? "",
   };
 }
 
@@ -68,6 +69,7 @@ export function EditServerForm({
         deployRoot: form.deployRoot.trim(),
         capacity: form.capacity ? Number(form.capacity) : null,
         note: form.note,
+        wslDistro: form.kind === "home" ? form.wslDistro : "",
       });
       if (!res.ok) return setError(res.error);
       toast({
@@ -161,6 +163,20 @@ export function EditServerForm({
             </SelectContent>
           </Select>
         </div>
+        {form.kind === "home" ? (
+          <div className="sm:col-span-2">
+            <Label htmlFor="se-wsl">{uz.servers.wslDistro}</Label>
+            <Input
+              id="se-wsl"
+              className="font-mono"
+              placeholder="Ubuntu-24.04"
+              value={form.wslDistro}
+              maxLength={64}
+              onChange={(e) => set("wslDistro", e.target.value)}
+            />
+            <FieldHint>{uz.servers.wslDistroHint}</FieldHint>
+          </div>
+        ) : null}
         <div className="sm:col-span-2">
           <Label htmlFor="se-note">{uz.servers.note}</Label>
           <Textarea
