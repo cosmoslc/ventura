@@ -43,6 +43,8 @@ export interface ReportData {
   note?: string;
   /** Qo'shimcha jadvallar (masalan sabablar va ro'yxat) — sahifada pastda, Excel'da alohida varaq */
   extra?: { title: string; table: ReportTable }[];
+  /** Hisobot ko'rinishi uchun qo'shimcha ma'lumot (grafiklar); turi yuklovchi faylida (ADR 0034) */
+  view?: unknown;
 }
 
 const sumOf = (xs: readonly number[]) => xs.reduce((s, x) => s + x, 0);
