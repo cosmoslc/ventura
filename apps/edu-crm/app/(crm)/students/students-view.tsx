@@ -18,6 +18,7 @@ import { Avatar } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import { Checkbox } from "@ventura/ui/checkbox";
 import { FilterBar } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
@@ -36,6 +37,7 @@ import type { PickerBranch } from "../branch-picker";
 import { ExcelMenu } from "../excel/excel-menu";
 import { FieldsModal } from "../fields-modal";
 import { saveStudentFieldsAction } from "./actions";
+import { type BulkPerms, StudentsBulkBar } from "./bulk-actions";
 import type { StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
 import { StudentForm } from "./student-form";
@@ -82,6 +84,7 @@ export function StudentsView({
   fields,
   groupChoices,
   perms,
+  bulk,
 }: {
   rows: StudentRow[];
   /** null — xodim arxivni ko'ra olmaydi ("O'chirilganlar" filtri yo'q) */
@@ -92,6 +95,8 @@ export function StudentsView({
   fields: FormField[];
   groupChoices: SearchSelectOption[];
   perms: StudentPerms;
+  /** Tanlab birga bajariladigan amallar (ADR 0028) */
+  bulk: BulkPerms;
 }) {
   const router = useRouter();
   const [fieldsOpen, setFieldsOpen] = React.useState(false);
@@ -104,6 +109,7 @@ export function StudentsView({
   const [editing, setEditing] = React.useState<StudentRow | null>(null);
   const [formOpen, setFormOpen] = React.useState(false);
   const [, startTransition] = React.useTransition();
+  const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
 
   function changePageSize(n: number) {
     storePageSize(n);
@@ -138,6 +144,31 @@ export function StudentsView({
   const current = Math.min(page, pageCount);
   const visible = filtered.slice((current - 1) * pageSize, current * pageSize);
 
+  // Tanlov (ADR 0028): faqat arxivda bo'lmagan o'quvchilar, sahifalar orasida saqlanadi
+  const selectable = (!!bulk.enroll || bulk.remove) && status !== "archived";
+  const selectedRows = selectable ? rows.filter((r) => selected.has(r.id)) : [];
+  const pageSelected = visible.filter((r) => selected.has(r.id)).length;
+  const headerState: boolean | "indeterminate" =
+    pageSelected === 0 ? false : pageSelected === visible.length ? true : "indeterminate";
+  function toggle(id: string, on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }
+  function togglePage(on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const r of visible) {
+        if (on) next.add(r.id);
+        else next.delete(r.id);
+      }
+      return next;
+    });
+  }
+
   function restore(r: StudentRow) {
     startTransition(async () => {
       const res = await restoreArchivedAction({ kind: "student", id: r.id });
@@ -153,7 +184,7 @@ export function StudentsView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className={selectedRows.length ? "space-y-6 pb-20" : "space-y-6"}>
       <PageHeader
         title={uz.students.title}
         actions={
@@ -297,6 +328,15 @@ export function StudentsView({
               <Table className="min-w-[860px]">
                 <THead>
                   <tr>
+                    {selectable ? (
+                      <Th className="w-10 pr-0">
+                        <Checkbox
+                          aria-label={uz.students.selectPage}
+                          checked={headerState}
+                          onCheckedChange={(v) => togglePage(v === true)}
+                        />
+                      </Th>
+                    ) : null}
                     <Th>{uz.students.colName}</Th>
                     <Th>{uz.students.colPhone}</Th>
                     <Th>{uz.students.colGroups}</Th>
@@ -307,7 +347,16 @@ export function StudentsView({
                 </THead>
                 <TBody>
                   {visible.map((r) => (
-                    <Tr key={r.id}>
+                    <Tr key={r.id} className={selectable && selected.has(r.id) ? "bg-primary-soft" : undefined}>
+                      {selectable ? (
+                        <Td className="w-10 pr-0">
+                          <Checkbox
+                            aria-label={uz.students.selectRow(r.name)}
+                            checked={selected.has(r.id)}
+                            onCheckedChange={(v) => toggle(r.id, v === true)}
+                          />
+                        </Td>
+                      ) : null}
                       <Td>
                         {r.archivedAt ? (
                           <div className="flex items-center gap-2.5">
@@ -425,6 +474,9 @@ export function StudentsView({
           groups={groupChoices}
           onSaved={() => router.refresh()}
         />
+      ) : null}
+      {selectable ? (
+        <StudentsBulkBar selected={selectedRows} onClear={() => setSelected(new Set())} perms={bulk} />
       ) : null}
       {perms.edit ? (
         <FieldsModal

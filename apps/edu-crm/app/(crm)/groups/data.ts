@@ -313,3 +313,17 @@ export async function groupFormOptions(db: TenantDb, filter: readonly string[] |
   const visible = (b: string | null) => !b || !filter || filter.includes(b);
   return { courses: cs.filter((c) => visible(c.branchId)), teachers: ts, rooms: rs.filter((r) => visible(r.branchId)) };
 }
+
+/** Guruh tanlash ro'yxati (qidiruvli tanlov uchun): arxivda bo'lmagan guruhlar, kurs, o'qituvchi va vaqt bilan */
+export async function groupPickOptions(
+  db: TenantDb,
+  filter: readonly string[] | null,
+): Promise<{ value: string; label: string; hint: string; branchId: string }[]> {
+  const rows = await listGroups(db, filter);
+  return rows.map((g) => ({
+    value: g.id,
+    label: g.name,
+    hint: `${g.courseName} · ${g.teacherName} · ${g.startTime}`,
+    branchId: g.branchId,
+  }));
+}

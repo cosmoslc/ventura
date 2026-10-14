@@ -8,7 +8,7 @@ import { financePerms } from "../payments/perms";
 import { getTenantDb } from "@/lib/server/deps";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
-import { openGroupsByStudent } from "../groups/data";
+import { groupPickOptions, openGroupsByStudent } from "../groups/data";
 import { getStudentFields, groupChoices, listArchivedStudentRows, listStudents } from "./data";
 import { studentPerms } from "./perms";
 import { StudentsView } from "./students-view";
@@ -29,9 +29,14 @@ export default async function StudentsPage() {
   ]);
   const ids = [...base, ...archivedBase].map((s) => s.id);
   const withFinance = financePerms(staff.access).view && (await hasFeature(tenant, "payments"));
-  const [byStudent, accounts] = await Promise.all([
+  // Tanlab guruhga qo'shish va chiqarish (ADR 0028)
+  const groupsOn = await hasFeature(tenant, "groups");
+  const canEnroll = groupsOn && can(staff.access, "groups.add_student");
+  const canRemove = groupsOn && can(staff.access, "groups.remove_student");
+  const [byStudent, accounts, enrollGroups] = await Promise.all([
     openGroupsByStudent(db, ids),
     withFinance ? loadAccounts(db, ids, todayTashkent()) : Promise.resolve(null),
+    canEnroll ? groupPickOptions(db, branch.filter) : Promise.resolve(null),
   ]);
   const fill = (s: (typeof base)[number]) => ({
     ...s,
@@ -48,6 +53,7 @@ export default async function StudentsPage() {
       fields={fields}
       groupChoices={choices.filter((g) => !g.archived)}
       perms={studentPerms(staff.access)}
+      bulk={{ enroll: enrollGroups, remove: canRemove }}
     />
   );
 }

@@ -13,7 +13,9 @@ import {
   activateMembershipAction,
   archiveGroupAction,
   enrollStudentAction,
+  enrollStudentsAction,
   leaveMembershipAction,
+  leaveStudentsAction,
   pauseMembershipAction,
   saveGroupAction,
 } from "@/app/(crm)/groups/actions";
@@ -87,6 +89,8 @@ export const APPROVAL_ACTIONS = {
   "groups.activate": activateMembershipAction,
   "groups.pause": pauseMembershipAction,
   "groups.leave": leaveMembershipAction,
+  "groups.enrollMany": enrollStudentsAction,
+  "groups.leaveMany": leaveStudentsAction,
   "leads.save": saveLeadAction,
   "leads.move": moveLeadAction,
   "leads.assign": assignLeadsAction,
