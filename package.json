@@ -18,6 +18,7 @@
     "admin:unlock": "pnpm --filter @ventura/scripts admin:unlock",
     "templates:sync": "pnpm --filter @ventura/scripts templates:sync",
     "e2e": "pnpm --filter @ventura/panel e2e",
+    "e2e:edu": "pnpm --filter @ventura/edu-crm e2e",
     "worker": "pnpm --filter @ventura/worker start",
     "server:add": "pnpm --filter @ventura/scripts server:add",
     "server:check": "pnpm --filter @ventura/scripts server:check",

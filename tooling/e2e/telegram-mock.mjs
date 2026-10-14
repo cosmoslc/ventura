@@ -1,7 +1,7 @@
 import { createServer } from "node:http";
 
 /*
- * Soxta Telegram Bot API (faqat e2e). Panel yuborgan xabarlarni xotirada saqlaydi;
+ * Soxta Telegram Bot API (faqat e2e; panel va edu-crm testlari). Ilova yuborgan xabarlarni xotirada saqlaydi;
  * testlar 2FA kodini GET /messages?chat_id=... orqali o'qiydi.
  */
 

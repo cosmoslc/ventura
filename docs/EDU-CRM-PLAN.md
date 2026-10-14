@@ -139,7 +139,7 @@ Bo'lim: `leads`.
 - [x] Lid formasi sozlamalari, tashqi ariza sahifasi, lidlar Exceli — ADR 0022, 0026 (E4c)
 - [x] Bugungi ishlar (workbench) va bosh paneldagi lid kartalari — ADR 0027 (E4d)
 
-**Qabul:** lid yaratilishidan o'quvchiga aylanishigacha oqim Playwright testida o'tadi.
+**Qabul:** lid yaratilishidan o'quvchiga aylanishigacha oqim Playwright testida o'tadi — ADR 0029 (`apps/edu-crm/e2e`, CI `e2e-edu`).
 
 ### E5. Hisobotlar va tahlil
 

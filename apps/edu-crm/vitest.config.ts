@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -8,4 +8,6 @@ export default defineConfig({
       "server-only": fileURLToPath(new URL("./lib/test/server-only.ts", import.meta.url)),
     },
   },
+  // e2e/*.spec.ts — Playwright testlari (pnpm e2e), Vitest ularni ishga tushirmaydi
+  test: { exclude: [...configDefaults.exclude, "e2e/**"] },
 });

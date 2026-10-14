@@ -24,7 +24,7 @@ export default defineConfig({
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"], channel: process.env.E2E_BROWSER_CHANNEL } }],
   webServer: [
     {
-      command: "node e2e/telegram-mock.mjs",
+      command: "node ../../tooling/e2e/telegram-mock.mjs",
       url: `${TELEGRAM_URL}/health`,
       env: { TELEGRAM_PORT: String(TELEGRAM_PORT) },
       reuseExistingServer: false,
