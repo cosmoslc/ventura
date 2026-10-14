@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { addServer, deleteServer, enqueueServerJob, findServer, updateServer } from "@ventura/deploy";
+import { WSL_DISTRO, addServer, deleteServer, enqueueServerJob, findServer, updateServer } from "@ventura/deploy";
 import { SERVER_ACTIONS, servers } from "@ventura/db/schema/panel";
 import { deps, queue } from "@/lib/server/deps";
 import { requireViewer } from "@/lib/server/session";
@@ -54,6 +54,11 @@ const editSchema = newServerSchema.extend({
     .trim()
     .max(500)
     .transform((v) => v || null),
+  wslDistro: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || WSL_DISTRO.test(v), uz.servers.invalid.wslDistro)
+    .transform((v) => v || null),
 });
 
 const UPDATE_ERRORS = {
@@ -80,16 +85,16 @@ export async function updateServerAction(
 
 const jobSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("check") }),
+  z.object({ kind: z.enum(["power_on", "power_off"]) }),
   z.object({ kind: z.enum(["reload", "stop", "start"]), app: z.string().regex(/^[a-z0-9][a-z0-9-]{0,62}$/) }),
 ]);
 
 export async function serverJobAction(serverId: string, input: unknown): Promise<ServerResult> {
   const parsed = jobSchema.safeParse(input);
   if (!z.uuid().safeParse(serverId).success || !parsed.success) return { ok: false, error: uz.common.loadError };
-  // To'xtatish va ishga tushirish saytni o'chirib qo'yishi mumkin — faqat super admin
-  const viewer = await requireViewer(
-    parsed.data.kind === "stop" || parsed.data.kind === "start" ? "servers.manage" : "projects.deploy",
-  );
+  // To'xtatish, ishga tushirish, serverni yoqish va o'chirish saytni o'chirib qo'yishi mumkin — faqat super admin
+  const manage = ["stop", "start", "power_on", "power_off"].includes(parsed.data.kind);
+  const viewer = await requireViewer(manage ? "servers.manage" : "projects.deploy");
   if (!SERVER_ACTIONS.includes(parsed.data.kind)) return { ok: false, error: uz.common.loadError };
   const { db } = deps();
   const [server] = await db.select({ id: servers.id }).from(servers).where(eq(servers.id, serverId));

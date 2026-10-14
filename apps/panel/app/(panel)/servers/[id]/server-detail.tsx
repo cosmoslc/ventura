@@ -9,6 +9,8 @@ import {
   MemoryStick,
   Pencil,
   Play,
+  Power,
+  PowerOff,
   RefreshCw,
   RotateCw,
   Square,
@@ -64,6 +66,9 @@ export function ServerDetailView({
   const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [toStop, setToStop] = React.useState<string | null>(null);
+  const [powerOff, setPowerOff] = React.useState(false);
+  // Uydagi WSL server paneldan yoqiladi va o'chiriladi (ADR 0025)
+  const canPower = canManage && s.kind === "home" && !!s.wslDistro;
   const m = s.metrics;
   const neverOnline = !s.metricsAt;
 
@@ -116,6 +121,17 @@ export function ServerDetailView({
               >
                 <RefreshCw className={busy && s.lastAction?.kind === "check" ? "animate-spin" : undefined} />{" "}
                 {uz.servers.check}
+              </Button>
+            ) : null}
+            {canPower && s.state !== "online" ? (
+              <Button onClick={() => run("power_on")} disabled={pending || busy} title={uz.servers.powerOnHint}>
+                <Power className={busy && s.lastAction?.kind === "power_on" ? "animate-pulse" : undefined} />{" "}
+                {uz.servers.powerOn}
+              </Button>
+            ) : null}
+            {canPower && s.state === "online" ? (
+              <Button variant="ghost" onClick={() => setPowerOff(true)} disabled={pending || busy}>
+                <PowerOff /> {uz.servers.powerOff}
               </Button>
             ) : null}
             {canManage ? (
@@ -320,6 +336,15 @@ export function ServerDetailView({
         confirmLabel={uz.servers.stop}
         cancelLabel={uz.common.cancel}
         onConfirm={() => toStop && run("stop", toStop)}
+      />
+      <ConfirmModal
+        open={powerOff}
+        onOpenChange={setPowerOff}
+        title={uz.servers.powerOffTitle}
+        message={uz.servers.powerOffMessage(s.name, s.projects)}
+        confirmLabel={uz.servers.powerOff}
+        cancelLabel={uz.common.cancel}
+        onConfirm={() => run("power_off")}
       />
     </div>
   );

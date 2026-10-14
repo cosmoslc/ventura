@@ -449,7 +449,23 @@ export const uz = {
     connection: "Ulanish",
     hostKey: "Server kaliti izi",
     lastAction: "Oxirgi buyruq",
-    actionKind: { check: "Tekshirish", reload: "Qayta yuklash", stop: "To'xtatish", start: "Ishga tushirish" },
+    actionKind: {
+      check: "Tekshirish",
+      reload: "Qayta yuklash",
+      stop: "To'xtatish",
+      start: "Ishga tushirish",
+      power_on: "Serverni yoqish",
+      power_off: "Serverni o'chirish",
+    },
+    powerOn: "Yoqish",
+    powerOnHint: "WSL serverni yoqish: SSH, nginx, baza va ilovalar ishga tushadi",
+    powerOff: "O'chirish",
+    powerOffTitle: "Serverni o'chirish",
+    powerOffMessage: (name: string, projects: number) =>
+      `${name} o'chiriladi${projects ? ` — undagi ${projects} ta loyiha sayti ishlamay qoladi` : ""}. Qayta "Yoqish" bilan ishga tushadi.`,
+    wslDistro: "WSL distributivi",
+    wslDistroHint:
+      "Paneldan yoqish va o'chirish uchun (masalan Ubuntu-24.04). Ro'yxat: PowerShell'da wsl -l. Bo'sh — tugmalar ko'rinmaydi.",
     actionStatus: { queued: "navbatda", running: "bajarilmoqda", ok: "bajarildi", error: "xato" },
     queued: "Buyruq navbatga qo'yildi",
     queueError: "Ishchi jarayon (navbat) bilan bog'lanib bo'lmadi. `pnpm worker` ishlayotganini tekshiring.",
@@ -474,6 +490,7 @@ export const uz = {
       user: "Foydalanuvchi nomi noto'g'ri",
       deployRoot: "Papka / bilan boshlanadi: lotin harf, raqam, . _ - /",
       capacity: "Sig'im 1–1000 oralig'ida",
+      wslDistro: "Distributiv nomi: lotin harf, raqam, . _ - (64 belgigacha)",
     },
     // Tahrirlash
     edit: "Tahrirlash",

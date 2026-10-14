@@ -16,6 +16,7 @@ import { type AlertEvent, METRICS_SCRIPT, nextAlerts, parseMetrics } from "./met
 import { type Queue, SERVER_QUEUE } from "./queue";
 import { type ServerRow, checkServer, openSession } from "./servers";
 import { sh } from "./ssh";
+import { waitForPort, wslControlError, wslStart, wslStop } from "./wsl";
 
 /*
  * Serverlar monitoringi va boshqaruvi (SPEC 5 /servers, 10 ogohlantirishlar). Hammasi ishchi jarayonda:
@@ -122,7 +123,7 @@ export async function monitorServers(db: PanelDb, notify?: Notify) {
 
 const APP_NAME = /^[a-z0-9][a-z0-9-]{0,62}$/;
 
-const COMMANDS: Record<Exclude<ServerActionKind, "check">, (app: string) => string> = {
+const COMMANDS: Record<"reload" | "stop" | "start", (app: string) => string> = {
   reload: (app) => `pm2 reload ${sh(app)} --update-env`,
   stop: (app) => `pm2 stop ${sh(app)}`,
   start: (app) => `pm2 start ${sh(app)}`,
@@ -166,6 +167,36 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
     }
     const [fresh] = await db.select().from(servers).where(eq(servers.id, server.id));
     await recordProbe(db, fresh ?? server, await probeServer(db, fresh ?? server), notify);
+  } else if (data.kind === "power_on" || data.kind === "power_off") {
+    // Uydagi WSL server (ADR 0025): faqat shu Windows kompyuteridagi ishchi boshqaradi
+    const blocked = wslControlError(server);
+    if (blocked) {
+      status = "error";
+      message = blocked;
+    } else {
+      try {
+        if (data.kind === "power_on") {
+          wslStart(server);
+          if (!(await waitForPort(server.host, server.sshPort, 90_000))) {
+            status = "error";
+            message = "WSL yondi, lekin SSH 90 soniyada javob bermadi";
+          }
+        } else {
+          await wslStop(server);
+        }
+      } catch (e) {
+        status = "error";
+        message = (e as Error).message;
+      }
+    }
+    await audit.record(db, {
+      actor: data.actor,
+      action: `server.${data.kind}`,
+      target: { type: "server", id: server.id },
+      metadata: { distro: server.wslDistro, ok: status === "ok", ...(message ? { error: message } : {}) },
+    });
+    // Holat darhol yangilansin (yoqilgan bo'lsa — metrika, o'chirilgan bo'lsa — oflayn)
+    if (status === "ok") await recordProbe(db, server, await probeServer(db, server), notify);
   } else {
     const app = data.app ?? "";
     const [known] = APP_NAME.test(app)

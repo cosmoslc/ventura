@@ -150,6 +150,8 @@ export interface ServerPatch {
   deployRoot: string;
   capacity: number | null;
   note: string | null;
+  /** Uydagi WSL server distributivi (yoqish va o'chirish uchun) */
+  wslDistro: string | null;
 }
 
 export type UpdateServerResult =

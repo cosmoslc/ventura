@@ -154,7 +154,11 @@ export interface ServerAlerts {
   memory?: boolean;
 }
 
-export const SERVER_ACTIONS = ["check", "reload", "stop", "start"] as const;
+/**
+ * Server buyruqlari: `check` — tekshirish; `reload` / `stop` / `start` — ilova (PM2); `power_on` / `power_off` — uydagi
+ * WSL serverni yoqish va o'chirish (ishchi shu Windows kompyuterida ishlaganda).
+ */
+export const SERVER_ACTIONS = ["check", "reload", "stop", "start", "power_on", "power_off"] as const;
 export type ServerActionKind = (typeof SERVER_ACTIONS)[number];
 
 /** Paneldan berilgan oxirgi buyruq (fon vazifasi) va uning natijasi — sahifada ko'rsatiladi */
@@ -186,6 +190,8 @@ export const servers = pgTable(
     capacity: integer("capacity"),
     /** Adminlar uchun izoh (provayder, tarif, joylashuv) */
     note: text("note"),
+    /** Uydagi WSL server: distributiv nomi (masalan Ubuntu-24.04) — paneldan yoqish va o'chirish uchun */
+    wslDistro: text("wsl_distro"),
     status: text("status", { enum: SERVER_STATUSES }).notNull().default("new"),
     info: jsonb("info").$type<ServerInfo>().notNull().default({}),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }),

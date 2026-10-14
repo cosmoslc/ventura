@@ -26,6 +26,7 @@ export {
   type RequestResult,
 } from "./service";
 export { createSimDriver } from "./drivers/sim";
+export { WSL_DISTRO, wslControlError } from "./wsl";
 export { createSshDriver } from "./drivers/ssh";
 export { SshError, connect, fingerprint, generateKeyPair, sh, type SshSession, type SshTarget } from "./ssh";
 export {
