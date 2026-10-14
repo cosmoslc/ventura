@@ -150,6 +150,62 @@ jobs:
           path: apps/panel/test-results
           retention-days: 7
 
+  e2e-edu:
+    # edu-crm asosiy oqimi (ADR 0029): kirish + 2FA, lid → o'quvchi. Markaz bazasi faqat shu vazifa ichida.
+    name: e2e · edu-crm lid → o'quvchi
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ventura
+          POSTGRES_PASSWORD: e2e
+          POSTGRES_DB: edu_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ventura -d edu_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Faqat shu vazifa ichidagi vaqtinchalik baza; haqiqiy sirlar emas
+      E2E_EDU_DATABASE_URL: postgres://edu_e2e_app:e2e@localhost:5432/edu_e2e
+      E2E_EDU_MIGRATE_URL: postgres://ventura:e2e@localhost:5432/edu_e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Bog'liqliklar
+        run: pnpm install --frozen-lockfile
+
+      - name: Ilova roli (RLS chetlab o'tolmaydi)
+        run: psql "$E2E_EDU_MIGRATE_URL" -v ON_ERROR_STOP=1 -c "CREATE ROLE edu_e2e_app LOGIN PASSWORD 'e2e' NOSUPERUSER NOBYPASSRLS"
+
+      - name: Playwright brauzeri
+        run: pnpm --filter @ventura/edu-crm exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm --filter @ventura/edu-crm build
+
+      - name: E2E
+        run: pnpm e2e:edu
+
+      - name: Yiqilgan test izlari
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-edu-test-results
+          path: apps/edu-crm/test-results
+          retention-days: 7
+
   server-deploy:
     # Haqiqiy deploy: runner bir martalik Ubuntu mashina. setup.sh uni serverga aylantiradi, keyin panel navbati,
     # ishchi jarayon va SSH drayveri shu mashinaning o'ziga ikki loyihani joylaydi.
