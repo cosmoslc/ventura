@@ -122,7 +122,13 @@ describe.skipIf(!ADMIN_URL)("o'qituvchi reytingi (haqiqiy PostgreSQL)", () => {
       .returning();
     await db
       .insert(leadFirstLessons)
-      .values({ leadId: l!.id, groupId: g!.id, lessonDate: "2026-10-07", status: "came" });
+      .values({
+        leadId: l!.id,
+        groupId: g!.id,
+        lessonDate: "2026-10-07",
+        status: "came",
+        markedAt: new Date("2026-10-07T16:00:00+05:00"),
+      });
   }, 60_000);
 
   afterAll(async () => {
