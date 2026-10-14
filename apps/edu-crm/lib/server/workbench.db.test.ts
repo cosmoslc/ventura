@@ -13,6 +13,7 @@ import {
   payments,
   students,
   teachers,
+  users,
 } from "@ventura/db/schema/tenant";
 import { listStages } from "@/app/(crm)/leads/data";
 import { resolvePeriod } from "@/lib/dashboard";
@@ -96,6 +97,8 @@ describe.skipIf(!ADMIN_URL)("bugungi ishlar va lid kartalari (haqiqiy PostgreSQL
       { groupId: g!.id, studentId: s2!.id, status: "active", enrolledAt: "2026-10-01", activatedAt: "2026-10-01" },
     ]);
     const [cash] = await ensurePaymentMethods(db);
+    // Bekor qilingan to'lovda kim bekor qilgani shart (payments_void)
+    const [staff] = await db.insert(users).values({ name: "Kassir", email: "k@wb.local", role: "staff" }).returning();
     await db.insert(payments).values([
       // Ali to'lagan; Valining to'lovi bekor qilingan
       {
@@ -116,6 +119,7 @@ describe.skipIf(!ADMIN_URL)("bugungi ishlar va lid kartalari (haqiqiy PostgreSQL
         methodId: cash!.id,
         receiptNo: 2,
         voidedAt: new Date(),
+        voidedBy: staff!.id,
       },
     ]);
     await db.insert(attendance).values([
