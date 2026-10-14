@@ -148,6 +148,7 @@ Bo'lim: `reports`.
 - [x] Bosh sahifa ko'rsatkichlari — Bosh panel, eski tizimdagidek (ADR 0017); lid va ish haqi qismlari E3c/E4 bilan to'ladi
 - [x] Moliyaviy hisobotlar: pul oqimi (qo'shimcha daromad ham — ADR 0016), kurs daromadi, xarajatlar, chegirmalar — ADR 0030 (E5a)
 - [x] O'quv hisobotlari: davomat (ADR 0014), guruhdan chiqqanlar, xavf ostidagi o'quvchilar, saqlab qolish — ADR 0031 (E5b)
+- [x] Lid hisobotlari: CRM voronka, yo'qotilgan lidlar, manbalar samaradorligi, mavsumiy oqim — ADR 0032 (E5c)
 - [ ] Excel'ga eksport
 
 **Qabul:** har hisobot raqami tegishli ro'yxat sahifasidagi yig'indi bilan mos keladi.

@@ -33,6 +33,7 @@ import {
 import { uz } from "@/lib/uz";
 import { leavesReport, retentionReport, riskReport } from "./academic-reports";
 import type { BranchContext } from "./branch";
+import { funnelReport, lostReport, seasonalReport, sourcesReport } from "./lead-reports";
 import { loadFlows } from "./dashboard";
 import { loadAccounts } from "./finance";
 
@@ -90,6 +91,8 @@ export interface LoadArgs {
   filter: readonly string[] | null;
   period: ReportPeriod;
   today: string;
+  /** Xodimda moliyaviy ruxsat bor — pul ustunlari ko'rinadi (masalan manbalar tushumi) */
+  finance?: boolean;
 }
 
 export interface ReportDef {
@@ -103,6 +106,8 @@ export interface ReportDef {
 const FINANCE: readonly Permission[] = ["dashboard.financial_stats"];
 /** O'quv hisobotlari (E5 qarori 7) */
 const ACADEMIC: readonly Permission[] = ["dashboard.view"];
+/** Lid hisobotlari (E5 qarori 7) */
+const LEADS: readonly Permission[] = ["dashboard.conversion_stats"];
 
 const inRange = (date: string, r: ReportPeriod["range"]) => !r || (date >= r.from && date < r.to);
 
@@ -637,6 +642,10 @@ export const REPORTS = {
     periodMode: "period",
     load: retentionReport,
   },
+  funnel: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "period", load: funnelReport },
+  lost: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "period", load: lostReport },
+  sources: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "period", load: sourcesReport },
+  seasonal: { group: "leads", feature: "leads", permissions: LEADS, periodMode: "year", load: seasonalReport },
 } as const satisfies Record<string, ReportDef>;
 
 export type ReportKey = keyof typeof REPORTS;

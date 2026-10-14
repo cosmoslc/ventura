@@ -32,7 +32,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
     def.periodMode,
   );
   const branch = await getBranchContext();
-  const data = await def.load({ db: getTenantDb(tenant), filter: branch.filter, period, today });
+  const data = await def.load({
+    db: getTenantDb(tenant),
+    filter: branch.filter,
+    period,
+    today,
+    finance: canAny(staff.access, ["dashboard.financial_stats"]),
+  });
   const title = uz.reports.titles[report] ?? report;
 
   const wb = new ExcelJS.Workbook();

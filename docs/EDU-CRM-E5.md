@@ -1,6 +1,6 @@
 # E5 (Hisobotlar) — reja
 
-2026-10-14 · E5a, E5b tayyor (ADR 0030, 0031) · bo'lim: `reports` · EDU-CRM-PLAN E5
+2026-10-14 · E5a, E5b, E5c tayyor (ADR 0030, 0031, 0032) · bo'lim: `reports` · EDU-CRM-PLAN E5
 
 E3 va E4 dagidek qismlarga bo'linadi. Har qism — alohida branch, PR va ADR.
 
@@ -8,7 +8,7 @@ E3 va E4 dagidek qismlarga bo'linadi. Har qism — alohida branch, PR va ADR.
 | --- | --- | --- |
 | E5a | Bo'lim asosi (hisobotlar sahifasi, umumiy filtr qatori, Excel) va moliya: pul oqimi, reja-fakt-prognoz, xarajatlar, chegirmalar, kurs daromadi | tayyor (ADR 0030) |
 | E5b | O'quv: guruhdan chiqish sabablari (sabablar ro'yxati bilan), xavfli o'quvchilar, o'quvchini ushlab turish | tayyor (ADR 0031) |
-| E5c | Lidlar: voronka, yo'qotilgan lidlar, manbalar, mavsumiy oqim | — |
+| E5c | Lidlar: voronka, yo'qotilgan lidlar, manbalar samaradorligi, mavsumiy oqim | tayyor (ADR 0032) |
 | E5d | O'qituvchi samaradorlik reytingi | — |
 
 Bosh panel (ADR 0017, 0027) va davomat hisoboti (ADR 0014, Davomat sahifasi) allaqachon bor — hisobotlar sahifasidan
@@ -100,3 +100,4 @@ raqamlarni ko'rsatardi (`ReportsSubPages.jsx`), ya'ni ko'chiradigan haqiqiy hiso
 | 16 | Vazifalar bajarish | "Tez kunda" | Vazifalar bo'limi |
 | 17 | Operatsion ko'rsatkichlar rejasi | Pul oqimi sahifasining ikkinchi jadvali: lidlar, sinov darsi, birinchi to'lov, konversiya, o'quvchilar, ketganlar, guruhlar, o'rtacha guruh, davomat — reja / fakt / prognoz | Fakt qismi E5b/E5c hisobotlarida; reja jadvali — `finance_plans` kabi alohida || 18 | Xavf chegaralari sozlamasi | Eski "Xavf sozlamalari" oynasi | Chegaralar hozir doimiy (ADR 0031); markaz sozlamasi — `settings` kaliti |
 | 19 | Ushlab turish segmentlari va bog'lanish izohlari oynasi | Eski "O'quvchi ushlab turish" sahifasi | Baholar (1-band); izohlar hozir o'quvchi eslatmalarida |
+| 20 | Voronkada bosqichni yashirish sozlamasi | Eski "CRM funnel" sahifasidagi tanlov | Voronka hozir lid bosqichlari sozlamasidan (ADR 0032) |
