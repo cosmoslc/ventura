@@ -1,12 +1,11 @@
 import { Card } from "@ventura/ui/card";
-import { MetricCard } from "@ventura/ui/metric-card";
 import type { TeachersViewData } from "@/lib/server/teacher-reports";
 import { teacherLeaders } from "@/lib/teacher-reports";
 import { uz } from "@/lib/uz";
-import { ReportTableView, formatCell } from "../report-table";
 import { CompareChart } from "./teacher-parts/compare-chart";
 import { LeaderCard } from "./teacher-parts/leader-card";
-import { BLOCK_TITLE } from "./blocks";
+import { TeacherTable } from "./teacher-parts/teacher-table";
+import { BLOCK_TITLE, KpiRow } from "./blocks";
 import type { ReportViewProps } from "./types";
 
 const t = uz.reports.teachers;
@@ -22,18 +21,7 @@ export function TeachersView({ data }: ReportViewProps) {
   const leaders = teacherLeaders(teachers, LEADERS);
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {data.metrics.map((m) => (
-          <MetricCard
-            key={m.label}
-            label={m.label}
-            value={formatCell(m.value, m.kind)}
-            tone={m.tone ?? "neutral"}
-            colorValue={!!m.tone && m.tone !== "neutral"}
-            foot={m.foot}
-          />
-        ))}
-      </div>
+      <KpiRow metrics={data.metrics} />
 
       {teachers.length ? (
         <>
@@ -62,7 +50,11 @@ export function TeachersView({ data }: ReportViewProps) {
       <section className="space-y-3">
         <h2 className={BLOCK_TITLE}>{t.tableTitle}</h2>
         <Card className="overflow-hidden">
-          <ReportTableView table={data.table} empty={uz.reports.empty} />
+          {view ? (
+            <TeacherTable rows={teachers} total={view.total} withSalary={view.withSalary} />
+          ) : (
+            <p className="py-16 text-center text-body text-muted-foreground">{uz.reports.empty}</p>
+          )}
         </Card>
         {data.note ? <p className="text-caption text-muted-foreground">{data.note}</p> : null}
       </section>

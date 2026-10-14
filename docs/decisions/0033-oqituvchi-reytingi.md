@@ -21,7 +21,7 @@ Guruh "O'qituvchi hisoboti" (menyuda — Hisobotlar → O'qituvchi hisoboti). Ru
 | O'tilgan darslar, soat | Guruh jadvali bo'yicha (`lessonDates`, bayramlarsiz, bugungacha). Arxivlangan guruh — arxiv kunigacha. Soat — dars davomiyligidan |
 | Davomat olingan | O'tilgan darslardan davomat belgisi borlari (eski "Davomat sifati — tez kunda") |
 | O'quvchilar davomati | Belgilardan: (bor + kech) / jami belgilar — davomat hisoboti bilan bir xil |
-| Ushlab turish, chiqqan | Davr boshida guruhlarida bo'lgan faollashtirilgan o'quvchilardan davrda chiqmaganlari. Barcha davrda — barcha faollashtirilganlar |
+| Ushlab turish, chiqqan | Davr davomida guruhlarida bo'lgan faollashtirilgan o'quvchilar (davr oxirigacha faollashtirilgan, davr boshigacha chiqmagan) — ulardan davrda chiqmaganlari. Ushlab turish hisoboti bilan bir xil qoida (ADR 0031). Avval faqat davr boshidagilar olinardi — yil davomida kelganlar hisobga kirmasdi (2026-10-14 tuzatildi) |
 | Sinovdan o'tish | Davrda qo'shilganlardan faollashtirilganlari. Hali sinovda turganlar maxrajga kirmaydi |
 | Birinchi darsdan o'quvchi | Lidlarning birinchi darsiga kelganlardan o'quvchi bo'lganlari (ADR 0023) |
 | Hisoblangan maosh | Ish haqi hisobidan (ADR 0018), davrdagi o'tgan oylar yig'indisi. Faqat `dashboard.financial_stats` bilan |
