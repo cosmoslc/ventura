@@ -1,6 +1,6 @@
 "use server";
 
-import { and, arrayOverlaps, eq, gt, isNull, lt, ne } from "drizzle-orm";
+import { and, arrayOverlaps, eq, gt, inArray, isNull, lt, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { courses, groupMemberships, groupPrices, groups, rooms, students, teachers } from "@ventura/db/schema/tenant";
@@ -8,7 +8,14 @@ import { OPENING_MONTH } from "@/lib/billing";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
 import { closePauses, monthStart, openPauses, promoteTrialStudent, todayTashkent } from "@/lib/server/memberships";
-import { firstError, groupInput, membershipDateInput, membershipLeaveInput } from "@/lib/rules";
+import {
+  bulkEnrollInput,
+  bulkLeaveInput,
+  firstError,
+  groupInput,
+  membershipDateInput,
+  membershipLeaveInput,
+} from "@/lib/rules";
 import { uz } from "@/lib/uz";
 
 /*
@@ -398,5 +405,135 @@ export async function leaveMembershipAction(input: unknown): Promise<ActionResul
       return { ok: true };
     },
     { approval: { action: "groups.leave", input: input } },
+  );
+}
+
+/* ---------- Bir nechta o'quvchi birga (o'quvchilar ro'yxati, ADR 0028) ---------- */
+
+export type BulkResult = ActionResult<{ done: number; skipped: number }>;
+
+/**
+ * Tanlangan o'quvchilarni guruhga qo'shish — bitta tranzaksiyada, har biri sinovda (bittalab qo'shishdagidek).
+ * O'tkazib yuboriladi: arxivdagi, xodim filialidan tashqaridagi, guruh filialidan boshqa filialdagi va guruhda
+ * allaqachon bor o'quvchilar.
+ */
+export async function enrollStudentsAction(input: unknown): Promise<BulkResult> {
+  return crmAction<{ done: number; skipped: number }>(
+    FEATURE,
+    "groups.add_student",
+    async (ctx) => {
+      const parsed = bulkEnrollInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const ids = [...new Set(parsed.data.studentIds)];
+      const g = await loadGroup(ctx, parsed.data.groupId);
+      if (!g) return { ok: false, error: uz.groups.groupArchived };
+      const [list, open] = await Promise.all([
+        ctx.db
+          .select({ id: students.id, name: students.name, branchId: students.branchId })
+          .from(students)
+          .where(and(inArray(students.id, ids), isNull(students.archivedAt))),
+        ctx.db
+          .select({ studentId: groupMemberships.studentId })
+          .from(groupMemberships)
+          .where(
+            and(
+              eq(groupMemberships.groupId, g.id),
+              inArray(groupMemberships.studentId, ids),
+              isNull(groupMemberships.leftAt),
+            ),
+          ),
+      ]);
+      const already = new Set(open.map((m) => m.studentId));
+      const add = list.filter((s) => s.branchId === g.branchId && !already.has(s.id));
+      if (!add.length) return { ok: false, error: uz.groups.bulkNothingToAdd };
+      const today = todayTashkent();
+      const created = await ctx.db
+        .insert(groupMemberships)
+        .values(
+          add.map((s) => ({
+            groupId: g.id,
+            studentId: s.id,
+            status: "trial" as const,
+            enrolledAt: today,
+            createdBy: ctx.staff.id,
+          })),
+        )
+        .returning({ id: groupMemberships.id, studentId: groupMemberships.studentId });
+      for (const m of created) {
+        const s = add.find((x) => x.id === m.studentId)!;
+        await ctx.audit(
+          "group.enroll",
+          { type: "group", id: g.id },
+          { student: s.name, studentId: s.id, membershipId: m.id, bulk: true },
+        );
+        await ctx.audit("student.enroll", { type: "student", id: s.id }, { group: g.name, groupId: g.id, bulk: true });
+      }
+      refresh(g.id);
+      return { ok: true, done: created.length, skipped: ids.length - created.length };
+    },
+    { approval: { action: "groups.enrollMany", input } },
+  );
+}
+
+/**
+ * Tanlangan o'quvchilarni guruhdan chiqarish — bitta tranzaksiyada, bir sana va sabab bilan. Guruhda ochiq a'zoligi
+ * yo'q yoki guruhga sanadan keyin qo'shilgan o'quvchilar o'tkazib yuboriladi.
+ */
+export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
+  return crmAction<{ done: number; skipped: number }>(
+    FEATURE,
+    "groups.remove_student",
+    async (ctx) => {
+      const parsed = bulkLeaveInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+      const { date, reason } = parsed.data;
+      const ids = [...new Set(parsed.data.studentIds)];
+      const g = await loadGroup(ctx, parsed.data.groupId);
+      if (!g) return { ok: false, error: uz.groups.groupArchived };
+      const rows = await ctx.db
+        .select({ m: groupMemberships, name: students.name })
+        .from(groupMemberships)
+        .innerJoin(students, eq(students.id, groupMemberships.studentId))
+        .where(
+          and(
+            eq(groupMemberships.groupId, g.id),
+            inArray(groupMemberships.studentId, ids),
+            isNull(groupMemberships.leftAt),
+          ),
+        );
+      const leave = rows.filter((r) => date >= r.m.enrolledAt);
+      if (!leave.length) return { ok: false, error: uz.groups.bulkNothingToRemove };
+      await ctx.db.transaction(async (tx) => {
+        const paused = leave
+          .filter((r) => r.m.status === "paused")
+          .map((r) => ({ id: r.m.id, pausedAt: r.m.pausedAt }));
+        if (paused.length) await closePauses(tx, paused, date);
+        await tx
+          .update(groupMemberships)
+          .set({ status: "left", leftAt: date, leftReason: reason || null })
+          .where(
+            inArray(
+              groupMemberships.id,
+              leave.map((r) => r.m.id),
+            ),
+          );
+      });
+      for (const r of leave) {
+        const meta = { date, ...(reason ? { reason } : {}), from: r.m.status, bulk: true };
+        await ctx.audit(
+          "group.leave",
+          { type: "group", id: g.id },
+          { student: r.name, studentId: r.m.studentId, ...meta },
+        );
+        await ctx.audit(
+          "student.leave",
+          { type: "student", id: r.m.studentId },
+          { group: g.name, groupId: g.id, ...meta },
+        );
+      }
+      refresh(g.id);
+      return { ok: true, done: leave.length, skipped: ids.length - leave.length };
+    },
+    { approval: { action: "groups.leaveMany", input } },
   );
 }

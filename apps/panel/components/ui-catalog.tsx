@@ -43,6 +43,7 @@ import { Gauge } from "@ventura/ui/gauge";
 import { Meter } from "@ventura/ui/meter";
 import { ListCard, ListCardProgress, ListCardRow } from "@ventura/ui/list-card";
 import { MetricCard } from "@ventura/ui/metric-card";
+import { SelectionBar, SelectionBarAction } from "@ventura/ui/selection-bar";
 import { Sparkline } from "@ventura/ui/sparkline";
 import { TrendChart } from "@ventura/ui/trend-chart";
 import { MoneyInput } from "@ventura/ui/money-input";
@@ -444,6 +445,29 @@ function Charts() {
   );
 }
 
+/** Tanlov paneli: tugma bosilganda pastda chiqadi */
+function SelectionDemo() {
+  const [count, setCount] = React.useState(0);
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <Button variant="ghost" onClick={() => setCount((n) => n + 1)}>
+        Qator tanlash ({count})
+      </Button>
+      <SelectionBar
+        count={count}
+        label={(n) => `${n} ta tanlandi`}
+        onClear={() => setCount(0)}
+        clearLabel="Bekor qilish"
+      >
+        <SelectionBarAction icon={<Rocket />}>Guruhga qo'shish</SelectionBarAction>
+        <SelectionBarAction icon={<TriangleAlert />} tone="danger">
+          Guruhdan chiqarish
+        </SelectionBarAction>
+      </SelectionBar>
+    </div>
+  );
+}
+
 function Cards() {
   return (
     <div className="space-y-4">
@@ -461,6 +485,7 @@ function Cards() {
         <MetricCard label="Retention" value="93%" icon={<Rocket />} tone="primary" colorValue foot="Saqlash darajasi" />
         <MetricCard label="Aktiv guruhlar" value="2" unit="ta guruh" icon={<FolderKanban />} tone="info" />
       </div>
+      <SelectionDemo />
       <div className="grid gap-3 sm:grid-cols-2">
         <ListCard
           title="Bog'lanish kerak"

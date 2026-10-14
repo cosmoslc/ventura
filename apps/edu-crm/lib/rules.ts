@@ -246,6 +246,20 @@ export type GroupInput = z.input<typeof groupInput>;
 export const membershipDateInput = z.object({ id, date: day });
 export const membershipLeaveInput = z.object({ id, date: day, reason: z.string().trim().max(500).default("") });
 
+/** O'quvchilar ro'yxatidan bir nechtasini birga (ADR 0028); 400 tagacha — tasdiq so'rovi hajmiga sig'adi */
+export const BULK_MAX = 400;
+const bulkIds = z.array(id).min(1).max(BULK_MAX);
+export const bulkEnrollInput = z.object({
+  groupId: id,
+  studentIds: bulkIds,
+  /** Tasdiq so'rovi sarlavhasi uchun ("5 ta o'quvchi") */
+  title: z.string().max(80).optional(),
+});
+export const bulkLeaveInput = bulkEnrollInput.extend({
+  date: day,
+  reason: z.string().trim().max(500).default(""),
+});
+
 /* ---------- Xarajatlar va qo'shimcha daromad (ADR 0016) ---------- */
 
 const amount = (msg: string) => z.number({ error: msg }).int(msg).positive(msg).max(10_000_000_000, msg);

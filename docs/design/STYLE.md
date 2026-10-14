@@ -586,6 +586,22 @@ Qoidalar:
 - Havolalar ilovadan beriladi — komponent Next'ga bog'lanmaydi.
 - Sahifa tepasidagi ko'rsatkichlar — `MetricCard` (11.34); ro'yxatli bloklar — `ListCard`.
 
+### 11.36 SelectionBar — `selection-bar.tsx`
+
+- Jadvalda qatorlar tanlanganda pastda, o'rtada suzib chiqadigan amallar paneli (o'quvchilar ro'yxati, ADR 0028):
+  - "N ta tanlandi";
+  - amal tugmalari (`SelectionBarAction`, xavflisi `tone="danger"`);
+  - tanlovni bekor qilish (X).
+- Tanlov bo'lmasa pastga tushib yo'qoladi:
+  - animatsiya faqat `translate` va `opacity` (Tailwind v4 siljitishni `translate` xususiyati bilan beradi), `--ease-ios`, 300ms;
+  - yopilayotganda oxirgi son ko'rinib turadi;
+  - yashiringanda `inert` (`visibility` emas);
+  - `prefers-reduced-motion` — animatsiyasiz.
+- Qatlam — `--z-topbar`, modaldan past: amal oynasi ochilganda panel uning orqasida qoladi.
+- Panel ochiq paytda sahifa pastiga joy qoldiring (`pb-20`), pagination yopilib qolmasin.
+- Qatorni tanlash — `Checkbox`; sarlavhadagi checkbox sahifadagilarni tanlaydi (`"indeterminate"` — bir qismi tanlangan).
+  Tanlangan qator — `bg-primary-soft`.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
