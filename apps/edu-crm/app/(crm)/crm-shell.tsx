@@ -44,7 +44,7 @@ import {
   DropdownMenuTrigger,
 } from "@ventura/ui/dropdown-menu";
 import { cn } from "@ventura/ui/lib/utils";
-import { type NavSection, Sidebar } from "@ventura/ui/sidebar";
+import { type NavChild, type NavItem, type NavSection, Sidebar } from "@ventura/ui/sidebar";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { ProfileButton, Topbar } from "@ventura/ui/topbar";
 import { uz } from "@/lib/uz";
@@ -103,13 +103,25 @@ const itemRank = (href: string) => {
 const SECTION_ORDER = ["Asos", "Moliya", "Sotuv va aloqa", "Hisobotlar", "Ofis", "O'quv"];
 const MAIN = "Asos";
 
-function sections(groups: NavGroup[], approvals: { label: string; count: number } | null): NavSection[] {
-  const toItems = (g: NavGroup) =>
+function sections(
+  groups: NavGroup[],
+  approvals: { label: string; count: number } | null,
+  reportMenu: NavChild[],
+): NavSection[] {
+  const toItems = (g: NavGroup): NavItem[] =>
     [...g.links]
       .sort((a, b) => itemRank(a.href) - itemRank(b.href))
       .map((l) => {
         const { icon, hue } = HREF_ICONS[l.href] ?? ICONS[l.feature] ?? FALLBACK;
-        return { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
+        const item = { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
+        // Hisobotlar — ichma-ich menyu; band o'zi ochiladigan sarlavha, umumiy sahifa — birinchi bola
+        if (l.href === "/reports" && reportMenu.length)
+          return {
+            ...item,
+            id: "menu:/reports",
+            children: [{ id: "/reports", label: uz.reports.navAll }, ...reportMenu],
+          };
+        return item;
       });
   const rank = (title: string) => {
     const i = SECTION_ORDER.indexOf(title);
@@ -142,6 +154,10 @@ function sections(groups: NavGroup[], approvals: { label: string; count: number 
   ];
 }
 
+/** Sahifa bandlari (manzillar): ost menyusi bor band va guruhlar sahifa emas */
+const leaves = (n: { id: string; children?: NavChild[] }): string[] =>
+  n.children?.length ? n.children.flatMap(leaves) : [n.id];
+
 /** Joriy manzilga eng uzun mos keladigan menyu bandi (band id — uning manzili). */
 function activeFor(pathname: string, hrefs: string[]): string {
   let best = "/";
@@ -157,6 +173,7 @@ export function CrmShell({
   brand,
   nav,
   approvals,
+  reportMenu,
   branches,
   children,
 }: {
@@ -165,6 +182,8 @@ export function CrmShell({
   nav: NavGroup[];
   /** "Tasdiqlar" (direktor) yoki "So'rovlarim" (tasdiq bilan ruxsati bor xodim), kutilayotganlar soni bilan */
   approvals: { label: string; count: number } | null;
+  /** Hisobotlar ichki menyusi: guruh → xodimga ochiq hisobotlar */
+  reportMenu: NavChild[];
   /** Filial tanlovi: ko'p filialli rejimda va xodimga bittadan ortiq filial ochiq bo'lsa */
   branches: { options: PickerBranch[]; selected: string } | null;
   children: React.ReactNode;
@@ -173,8 +192,8 @@ export function CrmShell({
   const router = useRouter();
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const navSections = React.useMemo(() => sections(nav, approvals), [nav, approvals]);
-  const hrefs = React.useMemo(() => navSections.flatMap((s) => s.items.map((i) => i.id)), [navSections]);
+  const navSections = React.useMemo(() => sections(nav, approvals, reportMenu), [nav, approvals, reportMenu]);
+  const hrefs = React.useMemo(() => navSections.flatMap((s) => s.items.flatMap(leaves)), [navSections]);
   // Bosilgan band darhol aktiv ko'rinadi; sahifa serverdan kelguncha kontent xiralashadi (panel bilan bir xil)
   const [target, setTarget] = React.useState<{ id: string; from: string } | null>(null);
   const navigating = target !== null && target.from === pathname;

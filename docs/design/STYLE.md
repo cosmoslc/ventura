@@ -468,7 +468,10 @@ Qoidalar:
 - Band: 40px, radius `--r-nav`, `type-nav`, ikonka 19px (32px quti ichida), oraliq 12px; hover — fon, `nav-squish`, ikonka kattalashadi; sanoq "pill"i.
 - **Aktiv indikator:** band ostida `--nav-active-bg` gradientli "pill" va chapida 4 × 20px `--nav-bar` chiziqcha; band almashganda sirpanadi va siqiladi.
 - **Ost menyu:** chapda 1.5px chiziq, 34px bandlar, 5px nuqta; aktiv band `--sub-active-bg` / `-fg`, nuqta halqali. Ichida aktiv band bo'lgan ota band qalin.
-- **Yig'ilgan rejim:** faqat ikonkalar, `title` tooltip; ost menyuli band bosilsa o'ngga **flyout** (230px, morph) chiqadi.
+- **Ikkinchi daraja (guruh):** ost menyuda guruh bandi — nuqtasiz, chevron bilan ochiladi (masalan Hisobotlar →
+  Moliyaviy hisobotlar → Pul oqimi). Guruh sahifa emas. Ichki bandlar kichikroq chekinish bilan, uzun nom ikki
+  qatorga o'tadi. Aktiv band qaysi guruhda bo'lsa, o'sha guruh va ota band o'zi ochiladi.
+- **Yig'ilgan rejim:** faqat ikonkalar, `title` tooltip; ost menyuli band bosilsa o'ngga **flyout** (230px, morph) chiqadi; guruhlar flyout'da ajratgich va sarlavha bilan.
 - **Mobil (≤900px):** 280px drawer, orqa fon bilan; band tanlanganda yopiladi.
 - `footer`: pastda ixtiyoriy blok (masalan server holati).
 

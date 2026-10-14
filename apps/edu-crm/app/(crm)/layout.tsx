@@ -6,6 +6,7 @@ import { features } from "@/lib/manifest";
 import { pendingApprovalCount } from "@/lib/server/approvals";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
+import { REPORTS, REPORT_GROUPS, visibleReports } from "@/lib/server/reports";
 import { requireStaff, requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { CrmShell } from "./crm-shell";
@@ -27,6 +28,17 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
         count: await pendingApprovalCount(getTenantDb(tenant), staff),
       }
     : null;
+  // Hisobotlar ichki menyusi (eski tizimdagidek: Hisobotlar → guruh → hisobot)
+  const reportKeys = nav.some((g) => g.links.some((l) => l.href === "/reports"))
+    ? await visibleReports(tenant, staff.access)
+    : [];
+  const reportMenu = REPORT_GROUPS.map((g) => ({
+    id: `reports:${g}`,
+    label: uz.reports.navGroups[g]!,
+    children: reportKeys
+      .filter((k) => REPORTS[k].group === g)
+      .map((k) => ({ id: `/reports/${k}`, label: uz.reports.titles[k]! })),
+  })).filter((g) => g.children.length);
   return (
     <CrmShell
       staff={{
@@ -38,6 +50,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       brand={{ name: tenant.name, mark: brandMark(tenant) }}
       nav={nav}
       approvals={approvals}
+      reportMenu={reportMenu}
       branches={
         branch.enabled && branch.options.length > 1 ? { options: branch.options, selected: branch.selected } : null
       }
