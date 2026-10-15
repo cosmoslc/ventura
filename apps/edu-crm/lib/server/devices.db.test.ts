@@ -21,6 +21,8 @@ import { deviceOwners, listDevices, ownDevices, setDeviceBlocked } from "./devic
  * TENANT_TEST_ADMIN_URL berilmasa o'tkazib yuboriladi.
  */
 
+// Joriy sessiya — sessions.id uuid ustuni; bazada bunday sessiya yo'q (hech biri istisno qilinmaydi)
+const ACTOR_SESSION = "00000000-0000-4000-8000-000000000000";
 const ADMIN_URL = process.env.TENANT_TEST_ADMIN_URL ?? "";
 const DB = "edu_devices_test";
 const ROLE = "edu_devices_app";
@@ -121,7 +123,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
       id: row.id,
       blocked: true,
       actorId: ids.director,
-      actorSessionId: "x",
+      actorSessionId: ACTOR_SESSION,
       currentDeviceId: "dir-dev",
     });
     expect(r.ok).toBe(true);
@@ -142,7 +144,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
       id: row.id,
       blocked: false,
       actorId: ids.director,
-      actorSessionId: "x",
+      actorSessionId: ACTOR_SESSION,
       currentDeviceId: "dir-dev",
     });
     expect(un.ok).toBe(true);
@@ -161,7 +163,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
       id: staffRow!.id,
       blocked: true,
       actorId: ids.director,
-      actorSessionId: "x",
+      actorSessionId: ACTOR_SESSION,
       currentDeviceId: "dir-dev",
     });
     expect(await isDeviceBlocked(db, ids.staff, "shared-dev")).toBe(true);
@@ -171,7 +173,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
   it("direktor o'zi ishlayotgan qurilmani bloklay olmaydi; aniqlanmasa o'z qurilmalarini ham", async () => {
     await login(ids.director, "dir-dev");
     const mine = await deviceOf(ids.director, "dir-dev");
-    const self = { id: mine.id, blocked: true, actorId: ids.director, actorSessionId: "x" };
+    const self = { id: mine.id, blocked: true, actorId: ids.director, actorSessionId: ACTOR_SESSION };
     expect(await setDeviceBlocked(db, { ...self, currentDeviceId: "dir-dev" })).toMatchObject({
       ok: false,
       failure: "self",
@@ -190,7 +192,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
         id: phone.id,
         blocked: true,
         actorId: ids.director,
-        actorSessionId: "x",
+        actorSessionId: ACTOR_SESSION,
         currentDeviceId: "dir-dev",
       }),
     ).toMatchObject({ ok: true });
@@ -205,7 +207,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
       id: phone.id,
       blocked: true,
       actorId: ids.director,
-      actorSessionId: "x",
+      actorSessionId: ACTOR_SESSION,
       currentDeviceId: "dir-dev",
     });
     expect(r.endedSessions).toBe(1);
@@ -218,7 +220,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
 
   it("holat o'zgarmagan yoki yozuv yo'q bo'lsa — rad", async () => {
     const row = await deviceOf(ids.staff, "dev-s3");
-    const input = { actorId: ids.director, actorSessionId: "x", currentDeviceId: "dir-dev" };
+    const input = { actorId: ids.director, actorSessionId: ACTOR_SESSION, currentDeviceId: "dir-dev" };
     expect(await setDeviceBlocked(db, { ...input, id: row.id, blocked: true })).toMatchObject({
       failure: "unchanged",
     });
@@ -262,7 +264,7 @@ describe.skipIf(!ADMIN_URL)("qurilmalar (haqiqiy PostgreSQL)", () => {
       id: row!.id,
       blocked: true,
       actorId: ids.director,
-      actorSessionId: "x",
+      actorSessionId: ACTOR_SESSION,
       currentDeviceId: "dir-dev",
     });
     expect(r.failure).toBe("not_found");
