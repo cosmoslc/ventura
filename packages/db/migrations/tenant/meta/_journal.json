@@ -141,6 +141,13 @@
       "when": 1792053425534,
       "tag": "0019_e6_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792056788117,
+      "tag": "0020_e6_devices",
+      "breakpoints": true
     }
   ]
 }

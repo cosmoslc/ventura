@@ -483,7 +483,7 @@ export function StagesModal({
       <span className="size-3 shrink-0 rounded-full" style={{ background: s.color }} aria-hidden />
       <Input
         aria-label={t.stageName}
-        className="h-9 min-w-40 flex-1"
+        className="h-9 min-w-40 flex-1 max-[900px]:h-10"
         value={s.name}
         maxLength={60}
         onChange={(e) =>

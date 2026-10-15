@@ -1,4 +1,3 @@
-import { createHash } from "node:crypto";
 import { and, eq, sql } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import {
@@ -21,6 +20,7 @@ import {
   shouldLock,
 } from "../policy";
 import type { RequestMeta } from "../service";
+import { deviceHash, describeUserAgent } from "./devices";
 import type { StaffAuth } from "./server";
 
 /*
@@ -141,25 +141,52 @@ export async function registerStaffFailure(
 
 /* ---------- Muvaffaqiyatli kirish ---------- */
 
-const deviceHash = (deviceId: string) => createHash("sha256").update(deviceId).digest("hex");
-
-export async function onStaffLoginSuccess(deps: StaffDeps, user: StaffRow, meta: RequestMeta & { deviceId: string }) {
-  await deps.db.update(users).set({ failedAttempts: 0 }).where(eq(users.id, user.id));
+/**
+ * Kirish muvaffaqiyatli bo'ldi (parol + kod). Qurilma direktor tomonidan bloklangan bo'lsa — hech narsa yozilmaydi
+ * (kirishlar soni ham oshmaydi), `blocked: true` qaytadi va chaqiruvchi sessiyani yopib, kirishni rad etadi.
+ */
+export async function onStaffLoginSuccess(
+  deps: StaffDeps,
+  user: StaffRow,
+  meta: RequestMeta & { deviceId: string },
+): Promise<{ blocked: boolean }> {
   const hash = deviceHash(meta.deviceId);
-  const [known] = await deps.db
-    .select({ id: knownDevices.id })
+  const rows = await deps.db
+    .select({ id: knownDevices.id, blockedAt: knownDevices.blockedAt })
     .from(knownDevices)
-    .where(and(eq(knownDevices.userId, user.id), eq(knownDevices.deviceHash, hash)))
-    .limit(1);
+    .where(and(eq(knownDevices.userId, user.id), eq(knownDevices.deviceHash, hash)));
+  if (rows.some((r) => r.blockedAt)) {
+    await tenantAudit.record(deps.db, {
+      actor: staffActor(user),
+      action: "auth.login_blocked",
+      target: { type: "user", id: user.id },
+      ip: meta.ip,
+      userAgent: meta.userAgent,
+    });
+    return { blocked: true };
+  }
+  await deps.db.update(users).set({ failedAttempts: 0 }).where(eq(users.id, user.id));
+  const known = rows[0];
+  const name = describeUserAgent(meta.userAgent);
   if (known) {
     await deps.db
       .update(knownDevices)
-      .set({ lastSeenAt: new Date(), lastIp: meta.ip ?? null, userAgent: meta.userAgent ?? null })
+      .set({
+        lastSeenAt: new Date(),
+        lastIp: meta.ip ?? null,
+        userAgent: meta.userAgent ?? null,
+        deviceName: name,
+        loginCount: sql`${knownDevices.loginCount} + 1`,
+      })
       .where(eq(knownDevices.id, known.id));
   } else {
-    await deps.db
-      .insert(knownDevices)
-      .values({ userId: user.id, deviceHash: hash, lastIp: meta.ip ?? null, userAgent: meta.userAgent ?? null });
+    await deps.db.insert(knownDevices).values({
+      userId: user.id,
+      deviceHash: hash,
+      lastIp: meta.ip ?? null,
+      userAgent: meta.userAgent ?? null,
+      deviceName: name,
+    });
   }
   await tenantAudit.record(deps.db, {
     actor: staffActor(user),
@@ -176,6 +203,7 @@ export async function onStaffLoginSuccess(deps: StaffDeps, user: StaffRow, meta:
       ? `✅ <b>${escapeHtml(deps.appName)}</b>: tizimga kirildi\n${metaLines(meta)}`
       : `🆕 <b>${escapeHtml(deps.appName)}</b>: yangi qurilmadan kirildi\n${metaLines(meta)}\nBu siz bo'lmasangiz, darhol direktorga xabar bering.`,
   );
+  return { blocked: false };
 }
 
 /* ---------- Sessiya muddati (markaz sozlamasi) ---------- */

@@ -21,12 +21,14 @@ import {
   LogOut,
   type LucideIcon,
   MessageSquareText,
+  MonitorSmartphone,
   Receipt,
   ScrollText,
   Settings,
   Settings2,
   Target,
   UserCheck,
+  UserRound,
   UserRoundX,
   Users,
   UsersRound,
@@ -87,6 +89,7 @@ const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/money-audit": { icon: History, hue: "violet" },
   "/archive": { icon: Archive, hue: "slate" },
   "/activity": { icon: ScrollText, hue: "blue" },
+  "/devices": { icon: MonitorSmartphone, hue: "teal" },
 };
 
 /** Bo'lim ichidagi tartib (eski tizimdagi "Ofis" menyusi): ro'yxatda yo'qlari oxirida, manifest tartibida */
@@ -101,6 +104,7 @@ const ITEM_ORDER = [
   "/payment-settings",
   "/archive",
   "/activity",
+  "/devices",
 ];
 const itemRank = (href: string) => {
   const i = ITEM_ORDER.indexOf(href);
@@ -255,6 +259,9 @@ export function CrmShell({
               <div className="text-caption text-muted-foreground">{staff.roleLabel}</div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => go("/account")}>
+              <UserRound /> {uz.nav.profile}
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => go("/account/password")}>
               <KeyRound /> {uz.nav.password}
             </DropdownMenuItem>

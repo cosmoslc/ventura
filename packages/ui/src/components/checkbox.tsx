@@ -6,7 +6,9 @@ import { Check } from "lucide-react";
 import { cn } from "../lib/utils";
 
 const boxBase = cn(
-  "peer grid size-[18px] shrink-0 cursor-pointer place-items-center border border-input bg-input-bg outline-none",
+  "peer relative grid size-[18px] shrink-0 cursor-pointer place-items-center border border-input bg-input-bg outline-none",
+  // teginish maydoni: ko'rinmas qatlam 18px belgini 42px gacha kengaytiradi (telefonda)
+  "max-[900px]:before:absolute max-[900px]:before:-inset-3 max-[900px]:before:content-['']",
   "transition-[background,border-color,box-shadow] duration-150 hover:border-(--input-hover)",
   "focus-visible:border-(--ring-border) focus-visible:shadow-(--ring-shadow)",
   "data-[state=checked]:border-primary data-[state=checked]:bg-primary",

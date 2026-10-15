@@ -247,7 +247,7 @@ export function AttendanceTab({
                                     disabled={!editable || pending}
                                     onClick={() => save(m.studentId, s, cur?.reason ?? "")}
                                     className={cn(
-                                      "h-8 rounded-control border px-3 text-caption font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                                      "h-(--control-h-sm) rounded-control border px-3 text-caption font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
                                       cur?.status === s
                                         ? TONE[s]
                                         : "border-border-soft text-muted-foreground hover:bg-muted",
@@ -317,7 +317,7 @@ export function AttendanceTab({
                           disabled={!editable || pending}
                           onClick={() => markGuest(g.leadId, st, g.status)}
                           className={cn(
-                            "h-8 rounded-control border px-3 text-caption font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+                            "h-(--control-h-sm) rounded-control border px-3 text-caption font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60",
                             g.status === st
                               ? TONE[st === "came" ? "present" : "absent"]
                               : "border-border-soft text-muted-foreground hover:bg-muted",
@@ -414,7 +414,7 @@ function ReasonInput({
       placeholder={placeholder}
       maxLength={500}
       disabled={disabled}
-      className="h-8 max-w-sm text-caption"
+      className="h-(--control-h-sm) max-w-sm text-caption"
       aria-label={placeholder}
       onChange={(e) => setValue(e.target.value)}
       onBlur={() => onCommit(value.trim())}

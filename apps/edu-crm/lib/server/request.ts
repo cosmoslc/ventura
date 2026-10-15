@@ -37,3 +37,8 @@ export async function ensureDeviceId(): Promise<string> {
   });
   return id;
 }
+
+/** Joriy qurilma identifikatori (cookie'ni o'zgartirmaydi); kirishdan oldin yoki o'chirilgan bo'lsa — null. */
+export async function currentDeviceId(): Promise<string | null> {
+  return (await cookies()).get(DEVICE_COOKIE)?.value ?? null;
+}

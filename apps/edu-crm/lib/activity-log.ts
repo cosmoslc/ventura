@@ -373,6 +373,19 @@ const REGISTRY: Record<string, Def> = {
     () => null,
   ),
   "auth.locked": simple("auth", "hisobi xato urinishlar sababli bloklandi", undefined, () => null),
+  "auth.login_blocked": simple("auth", "bloklangan qurilmadan kirishga urindi", undefined, () => null),
+  // Qurilmalar (E6g): nishon — qurilma egasi
+  "device.block": simple("auth", "qurilmani blokladi", (i) => str(i.m.device)),
+  "device.unblock": simple("auth", "qurilmani blokdan chiqardi", (i) => str(i.m.device)),
+  "user.sessions_ended": simple(
+    "auth",
+    "boshqa seanslarini yopdi",
+    (i) => {
+      const n = num(i.m.count);
+      return n !== null ? `${n} ta` : null;
+    },
+    () => null,
+  ),
   "user.create": simple("auth", "hisob yaratildi", undefined, () => null),
   "user.telegram_linked": simple("auth", "Telegramni ulab oldi", undefined, () => null),
   "user.password_change": simple("auth", "parolini almashtirdi", undefined, () => null),

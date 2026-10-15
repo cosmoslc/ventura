@@ -371,7 +371,10 @@ export function StudentsView({
                             </span>
                           </div>
                         ) : (
-                          <Link href={`/students/${r.id}`} className="group flex items-center gap-2.5">
+                          <Link
+                            href={`/students/${r.id}`}
+                            className="group flex items-center gap-2.5 max-[900px]:min-h-10"
+                          >
                             <Avatar name={r.name} size={34} />
                             <span className="min-w-0">
                               <span className="block truncate text-body font-bold text-foreground group-hover:text-primary">

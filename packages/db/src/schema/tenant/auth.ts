@@ -166,6 +166,18 @@ export const knownDevices = pgTable(
     lastIp: text("last_ip"),
     firstSeenAt: timestamp("first_seen_at", { withTimezone: true }).notNull().defaultNow(),
     lastSeenAt: timestamp("last_seen_at", { withTimezone: true }).notNull().defaultNow(),
+    /** "Chrome · Windows" — kirishda user-agent'dan olinadi (ko'rsatish uchun); eski qatorlarda bo'sh */
+    deviceName: text("device_name"),
+    /** Shu qurilmadan muvaffaqiyatli kirishlar soni (har kirishda +1) */
+    loginCount: integer("login_count").notNull().default(1),
+    /** Direktor bloklagan: bu qurilmadan kirib ham, ochiq sessiya bilan ishlab ham bo'lmaydi (E6g, ADR 0040) */
+    blockedAt: timestamp("blocked_at", { withTimezone: true }),
+    /** Kim blokladi (xodim o'chsa ham yozuv qoladi) */
+    blockedBy: uuid("blocked_by").references(() => users.id, { onDelete: "set null" }),
   },
-  (t) => [index("known_devices_user_idx").on(t.userId, t.deviceHash), tenantPolicy("known_devices")],
+  (t) => [
+    index("known_devices_user_idx").on(t.userId, t.deviceHash),
+    check("known_devices_login_count_nonneg", sql`${t.loginCount} >= 0`),
+    tenantPolicy("known_devices"),
+  ],
 );

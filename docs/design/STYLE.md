@@ -55,10 +55,10 @@ Faqat `--primary` qo'lda beriladi. Qolganlari CSS `color-mix()` va `oklch(from �
 | `--primary` | `#3f6df6` | `#4f79f6` | Brend rangi |
 | `--primary-hover` | primary + 15% qora | primary + 8% qora | Hover, bosilgan holat |
 | `--primary-soft` | 11% primary, oq bilan | primary 15% shaffoflikda | Yumshoq fon: ikonka hover, sanoq, qidiruv halqasi |
-| `--primary-text` | `= --primary` | 70% primary, oq bilan | Urg'u matni (havola, domen) |
+| `--primary-text` | primary + 8% qora | 70% primary, oq bilan | Urg'u matni (havola, domen) |
 | `--primary-foreground` | `#ffffff` | `#ffffff` | Primary fon ustidagi matn |
 | `--focus-outline` | `= --primary` | `= --primary` | Umumiy `:focus-visible` konturi |
-| `--ring-border` | 70% primary, oq bilan | `= --primary` | Fokusdagi input chegarasi |
+| `--ring-border` | 90% primary, oq bilan | `= --primary` | Fokusdagi input chegarasi |
 | `--ring-shadow` | `0 0 0 3px` + 28% primary, oq bilan | `0 0 0 3px` + 25% primary | Fokus halqasi |
 | `--search-ring` | `0 0 0 3px var(--primary-soft)` | xuddi shu | Topbar qidiruvi fokusi |
 | `--nav-bar` | `= --primary` | `= --primary` | Sidebar aktiv bandi yonidagi chiziqcha |
@@ -73,12 +73,12 @@ Faqat `--primary` qo'lda beriladi. Qolganlari CSS `color-mix()` va `oklch(from �
 | Token | Formula | Default qiymatda |
 | --- | --- | --- |
 | `--btn-primary-bg` | 90°: L−0.05 · L−0.07, ton +15° · L−0.05, ton +30° | ko'k → indigo → binafsha |
-| `--btn-primary-bg-hover` | xuddi shu, L+0.02 / L / L+0.02 | ochroq |
-| `--nav-active-bg` (light) | 135°: primary → ton +12° | sidebar aktiv "pill" |
+| `--btn-primary-bg-hover` | xuddi shu, L−0.08 / L−0.10 / L−0.08 | to'qroq (oq matn kontrasti uchun, 3.5-bo'lim) |
+| `--nav-active-bg` (light) | 135°: L−0.02 · L−0.02, ton +12° | sidebar aktiv "pill" |
 | `--nav-active-bg` (dark) | 135°: L−0.15, ton +12° → L−0.05, ton +14° | to'qroq indigo |
-| `--avatar-bg` | 135°: primary → ton +22° | profil avatari |
+| `--avatar-bg` | 135°: L−0.04 · L−0.04, ton +22° | profil avatari |
 
-`oklch(from …)` ni qo'llamaydigan eski brauzerlarda qat'iy zaxira qiymatlar ishlaydi (`#2563eb → #4f46e5 → #7c3aed` va h.k.).
+`oklch(from …)` ni qo'llamaydigan eski brauzerlarda qat'iy zaxira qiymatlar ishlaydi (`#2563eb → #4f46e5 → #7c3aed` va h.k. (hover: `#1d4ed8 → #4338ca → #6d28d9`)).
 
 **Brend rangini almashtirish:** faqat `--primary` (light va dark) qiymatini o'zgartiring. Tekshirilgan: `#16a34a` berilganda tugma, sidebar, fokus va urg'ular yashilga o'tadi.
 
@@ -90,13 +90,13 @@ Faqat `--primary` qo'lda beriladi. Qolganlari CSS `color-mix()` va `oklch(from �
 | `--foreground` | `#1c2333` | `#f8fafc` | Asosiy matn |
 | `--card`, `--popover` | `#ffffff` | `#0f172a` | Kartochka, menyu, modal |
 | `--secondary` / `-hover` / `-foreground` | `#f1f5f9` / `#e2e8f0` / `#334155` | `#1e293b` / `#243048` / `#cbd5e1` | Ikkinchi darajali fon (ghost tugma, menyu hover) |
-| `--muted` / `--muted-foreground` | `#f8fafc` / `#64748b` | `#1e293b` / `#94a3b8` | Yumshoq fon / yordamchi matn |
+| `--muted` / `--muted-foreground` | `#f8fafc` / `#607089` | `#1e293b` / `#94a3b8` | Yumshoq fon / yordamchi matn |
 | `--accent` | `#f5f7fb` | `#1e293b` | Hover foni (radio kartochka) |
 | `--border` / `--border-soft` | `#e2e8f0` / `#edeff5` | `#1e293b` / `#1e293b` | Chegara / yengil chegara |
-| `--input` / `--input-hover` | `#e2e8f0` / `#cbd5e1` | `#334155` / `#475569` | Input chegarasi |
+| `--input` / `--input-hover` | `#7f8ca0` / `#66768c` | `#5a6a7f` / `#66758b` | Input chegarasi (3:1) va hover; `input-hover` Switch'ning o'chiq yo'li ham |
 | `--input-bg` | `= --background` | `= --background` | Input foni sahifa foni bilan bir xil |
-| `--placeholder` | `#94a3b8` | `#64748b` | Placeholder, input ikonkasi |
-| `--label-fg` | `#64748b` | `#94a3b8` | Forma yorlig'i |
+| `--placeholder` | `#8190a5` | `#64748b` | Placeholder, input ikonkasi |
+| `--label-fg` | `#607089` | `#94a3b8` | Forma yorlig'i |
 | `--table-head` / `--table-row-hover` / `--table-foot` | slate-50 (70% / 80% / 50%) | `#141e33` / `#1e293b` / `#0b1222` | Jadval |
 | `--overlay` / `--overlay-blur` | `rgb(2 6 23 / .6)` / `4px` | `rgb(2 6 23 / .8)` | Modal va mobil menyu orqa foni |
 | `--scrollbar` | `rgb(15 23 42 / .15)` | `#1e293b` | Aylantirish chizig'i |
@@ -113,9 +113,9 @@ Badge, toast, stat trendi va xato holatlarida ishlatiladi. Har biri uchun matn (
 | `info` | Jarayonda (build), ma'lumot | `#4338ca` / `#eef2ff` | `#818cf8` / `rgb(49 46 129 / .5)` |
 | `neutral` | Sinov, qoralama | `#475569` / `#f1f5f9` | `#cbd5e1` / `#1e293b` |
 
-Pul: `--money-in` (`#059669` / `#34d399`), `--money-out` (`#e11d48` / `#fb7185`).
+Pul: `--money-in` (`#047857` / `#34d399`), `--money-out` (`#d91a45` / `#fb7185`).
 
-Xavfli amal tugmasi: `--destructive` `#f43f5e`, hover `#e11d48`, matn uchun `--destructive-text` (`#e11d48` / `#fb7185`).
+Xavfli amal tugmasi: `--destructive` `#f43f5e`, hover `#e11d48`, matn uchun `--destructive-text` (`#d91a45` / `#fb7185`).
 
 ### 3.3a Grafik ranglari
 
@@ -139,24 +139,57 @@ To'rt qator validatordan birga o'tgan (qo'shni juftlar): CVD ΔE 9.1 light / 8.4
 | `--sidebar-bg` | `#ffffff` | `#0f172a` |
 | `--nav-fg` / `--nav-hover-bg` / `--nav-hover-fg` | `#3d4457` / `#f5f7fb` / `#1c2333` | `#cbd5e1` / `#1e293b` / `#ffffff` |
 | `--nav-active-fg` | `#ffffff` | `#ffffff` |
-| `--nav-section-fg` / `--nav-chevron` | `#9aa3b5` / `#a6adbd` | `#64748b` / `#64748b` |
+| `--nav-section-fg` / `--nav-chevron` | `#6a748a` / `#8c94a6` | `#7a899f` / `#64748b` |
 | `--nav-icon-color` | berilmagan — har bandning o'z rangi | `#94a3b8` (hammasi bir xil) |
 | `--nav-hue-*` (`blue`, `sky`, `violet`, `purple`, `orange`, `amber`, `green`, `emerald`, `teal`, `rose`, `pink`, `slate`) | eski CRM menyusi ranglari: `#006aff`, `#0ea5e9`, `#8b5cf6`, `#7c3aed`, `#f97316`, `#f39c12`, `#27ae60`, `#059669`, `#16a085`, `#e11d48`, `#ff6b81`, `#64748b` | ishlatilmaydi (`--nav-icon-color` ustun) |
 | `--search-bg` / hover / focus | `#f7f8fc` / `#eef1f8` / `#ffffff` | `#1e293b` / `#243048` / `#0f172a` |
 
 Stat-card ikonkalari (135° gradient, oq ikonka): 1 binafsha `#8b7bff → #6d4aff`, 2 yashil `#34d399 → #16a34a`, 3 qizil `#fb7185 → #e11d48`, 4 havorang `#38bdf8 → #0284c7`.
 
-Danger tugma gradienti: `#dc2626 → #e11d48 → #db2777`, hover `#ef4444 → #f43f5e → #ec4899`.
+Danger tugma gradienti: `#dc2626 → #e11d48 → #db2777`, hover `#b91c1c → #be123c → #be185d` (to'qroq).
 
 Log oynasi ikkala rejimda ham to'q fonda (terminal ko'rinishi):
 
 | Token | Light | Dark |
 | --- | --- | --- |
 | `--log-bg` | `#0f172a` | `#060b18` |
-| `--log-fg` / `--log-muted` | `#cbd5e1` / `#64748b` | o'sha |
+| `--log-fg` / `--log-muted` | `#cbd5e1` / `#758399` | o'sha |
 | `--log-cmd` | `--primary` ning 45% + oq | o'sha |
 | `--log-err` | `#fda4af` | o'sha |
 | `--log-border` | `#1e293b` | o'sha |
+
+### 3.5 Kontrast tekshiruvi (WCAG AA)
+
+Tekshiruv `packages/ui/src/lib/contrast.test.ts` da (`contrast.ts` — hisoblagich): `ventura.css` ni o'qiydi, `var()`, `color-mix()`, `oklch(from …)`, gradient bo'laklari va yarim shaffof fonlarni (kartochka/sahifa ustida) hisoblab, light va dark uchun juftlarni tekshiradi. Token o'zgarsa, test darrov yiqiladi. Yangi token qo'shsangiz, shu yerdagi `PAIRS` ro'yxatiga juftini qo'shing.
+
+| Guruh | Chegara | Juftlar |
+| --- | --- | --- |
+| Matn | 4.5:1 | asosiy va yordamchi matn (fon, kartochka, secondary, jadval boshi, qidiruv), yorliq, urg'u matni (primary-soft ustida ham), tugma matnlari (hover bilan), holat `-fg` o'z `-bg` ustida (kartochka va sahifa ustida), xavfli matn, pul, sidebar matnlari, log oynasi |
+| Interfeys | 3:1 | input chegarasi (`--input`, input foni sahifa foni bilan bir xil bo'lgani uchun chegara yagona belgi), Switch yo'li, fokus konturi va halqa chegarasi, placeholder, sidebar strelkasi, ikonka tugma, grafik qatorlari (`chart-1`, `chart-2`, dark'da hammasi), `primary-foreground` (belgi/raqam) primary ustida |
+| Istisno | quyi chegara | light `chart-3` va `chart-4` (3.3a): yonida yozuv bor, `>= 2.3` / `>= 2` dan pasaymasin |
+
+Chetda qolganlari (sabab bilan): o'chirilgan elementlar (WCAG talab qilmaydi); `--nav-hue-*` va stat-card ikonkalari — yonida matn yorlig'i bor bezak; `--border` / `--border-soft` kartochka chegaralari (belgi emas, kontent o'zi ajraladi); `--primary-foreground` dark'da primary ustida 3.9:1 (faqat belgi va raqam, matn tugmalari gradient token bilan 4.5+).
+
+Tuzatilgan tokenlar (eng yomon juft, light yoki dark; oldin → keyin):
+
+| Token | Qiymat (oldin → keyin) | Nisbat |
+| --- | --- | --- |
+| `--muted-foreground`, `--label-fg` (light) | `#64748b` → `#607089` | 4.34 → 4.59 (secondary ustida) |
+| `--placeholder` (light) | `#94a3b8` → `#8190a5` | 2.37 → 3.00 |
+| `--primary-text` (light) | `= primary` → primary + 8% qora | 3.88 → 4.70 (primary-soft ustida) |
+| `--input` (light / dark) | `#e2e8f0` → `#7f8ca0` / `#334155` → `#5a6a7f` | 1.14 → 3.15 / 1.72 → 3.23 |
+| `--input-hover` (light / dark) | `#cbd5e1` → `#66768c` / `#475569` → `#66758b` | 1.48 → 4.63 / 2.36 → 3.81 |
+| `--ring-border` (light) | 70% → 90% primary | 2.44 → 3.42 |
+| `--destructive-text`, `--money-out` (light) | `#e11d48` → `#d91a45` | 4.34 → 4.64 |
+| `--money-in` (light) | `#059669` → `#047857` | 3.49 → 5.07 |
+| `--nav-section-fg` (light / dark) | `#9aa3b5` → `#6a748a` / `#64748b` → `#7a899f` | 2.54 → 4.69 / 3.75 → 5.02 |
+| `--nav-chevron` (light) | `#a6adbd` → `#8c94a6` | 2.25 → 3.04 |
+| `--log-muted` | `#64748b` → `#758399` | 3.75 → 4.64 (light) |
+| `--btn-primary-bg-hover` | L+0.02 → L−0.08 (hover to'qroq) | 4.08 → 6.28 (light), 3.59 → 5.46 (dark) |
+| danger hover gradienti | `#ef4444…` → `#b91c1c…` | 3.53 → 6.04 |
+| `--nav-active-bg`, `--avatar-bg` | L−0.02 / L−0.04 | 4.44 → 4.84 / 3.89 → 4.60 (dark avatar) |
+
+Ko'zga ko'rinadigan o'zgarish: input va checkbox chegarasi endi aniq kulrang (oldin deyarli ko'rinmas edi), Switch'ning o'chiq yo'li to'qroq, tugma hover'i yorug'lashmay qorayadi. Qolganlari 5% dan kam o'zgargan. Qaytarish kerak bo'lsa, `--input` / `--input-hover` qiymatlarini oldingisiga qaytaring va testda ularning juftini istisnoga o'tkazing.
 
 ## 4. Tipografiya
 
@@ -205,14 +238,14 @@ Rol bir nechta xususiyatni birga beradi; qiymatlar tokenlarda.
 
 | Token / qiymat | O'lcham | Qayerda |
 | --- | --- | --- |
-| `--control-h` | 38px | Tugma, input, select, telefon, topbar qidiruvi, ikonka tugmasi |
-| `--control-h-sm` | 32px | Kichik tugma, jadvaldagi uch nuqta, sahifa raqamlari |
+| `--control-h` | 38px (≤900px: 44px) | Tugma, input, select, telefon, topbar qidiruvi, ikonka tugmasi |
+| `--control-h-sm` | 32px (≤900px: 40px) | Kichik tugma, jadvaldagi uch nuqta, sahifa raqamlari |
 | `--btn-px` | 16px | Matnli tugmalarning yon paddingi |
 | Input paddingi | 16px | Ikonkali inputda chap 36px; select'da o'ng 12px (strelka); topbar qidiruvida 40 / 56px |
-| Menyu bandi | 36px balandlik, 12px padding, 8px oraliq | Dropdown, select, flyout |
+| Menyu bandi | 36px (≤900px: 40px) balandlik, 12px padding, 8px oraliq | Dropdown, select, flyout |
 | `--topbar-h` | 68px (≤900px: 56px) | Topbar |
 | `--sidebar-w` / `--sidebar-collapsed-w` | 250px / 74px | Sidebar; mobil (≤900px) 280px drawer |
-| `--nav-item-h` / `--sub-item-h` | 40px / 34px | Sidebar bandi / ost bandi |
+| `--nav-item-h` / `--sub-item-h` | 40px / 34px (≤900px: 44px / 40px) | Sidebar bandi / ost bandi |
 | Kontent maydoni | 16 / 24 / 32px (`p-4 sm:p-6 lg:p-8`) | `main` |
 | Kartochka | sarlavha `20px × 16px`, kontent 20px | `CardHeader`, `CardContent` |
 | Modal | sarlavha va pastki qism `20 × 16px` (≥640px: `24 × 20px`), tana 20 / 24px | Barcha modallar |
@@ -220,6 +253,13 @@ Rol bir nechta xususiyatni birga beradi; qiymatlar tokenlarda.
 | Stat panjarasi | 1 → 2 (≥560px) → 4 ustun (≥1200px), oraliq 14px | Stat-card'lar |
 
 **Breakpoint'lar:** shell uchun 900px (sidebar drawer bo'ladi, topbar 56px); qolganlari Tailwind standarti — `sm` 640, `md` 768, `lg` 1024, `xl` 1280px.
+
+### 5.1 Mobil ko'rinish (390 va 768 px tekshiruvi)
+
+- ≤900px da `ventura.css` oxiridagi `@media` bloki boshqaruv o'lchamlarini oshiradi (yuqoridagi jadval): asosiy tugma va input 44px, kichik tugma 40px, menyu bandi 40px. Qat'iy `h-8` / `h-9` yozmang — `h-(--control-h-sm)` yoki `max-[900px]:h-10` ishlating.
+- Checkbox va radio belgisi 18px, lekin ≤900px da ko'rinmas qatlam teginish maydonini ~42px ga kengaytiradi (`checkbox.tsx`).
+- Sahifa gorizontal aylanmasligi shart; keng jadval o'z kartochkasi ichida aylanadi. Faqat ekran o'quvchi uchun jadval (`sr-only`) `<div className="sr-only"><table>…` ichida bo'ladi: jadvalning o'zi `sr-only` bo'lsa, minimal kengligi sahifani kengaytiradi.
+- Tekshirish: `apps/edu-crm/e2e/.tmp/mobile.mjs` (vaqtinchalik, git'dan tashqari): `document.scrollWidth` va `innerWidth`, kenglikdan chiqqan elementlar va 40px dan past teginish maydonlari. Jadval ichidagi matnli havolalar (ism, guruh nomi) qator balandligi hisobiga bosiladi va bu tekshiruvdan chetda.
 
 ## 6. Radius
 
@@ -615,7 +655,7 @@ Qoidalar:
 - Dropdown va select: fokus trigger'da qoladi, `aria-activedescendant`, `role="menu"` / `listbox`, `menuitem` / `option`.
 - Modal: Radix Dialog — fokus ushlanadi, Escape, `aria` sarlavha va izoh.
 - Toast: Radix Toast — `aria-live`, surib yopish.
-- Rang kontrasti (WCAG AA) hali to'liq tekshirilmagan (15-bo'lim).
+- Rang kontrasti (WCAG AA) `packages/ui/src/lib/contrast.test.ts` bilan har CI'da tekshiriladi (3.5-bo'lim).
 
 ## 13. Yangi komponent qo'shish qoidalari
 
@@ -655,6 +695,6 @@ Hammasi Saidakbar tomonidan 2026-10-10 da qabul qilingan.
 
 ## 15. Ochiq masalalar
 
-- Rang kontrastini WCAG AA bo'yicha tekshirish (ayniqsa yordamchi matn va dark badge'lar).
+- Brend rangini almashtirganda kontrast: test faqat standart `--primary` uchun; boshqa rang berilsa, `pnpm --filter @ventura/ui test` bilan qayta tekshiring.
 - Select'da harf bilan qidirish (typeahead).
 - Keyingi bosqichlar komponentlari: skeleton, tooltip, nusxalash va yashirin qiymat maydoni, sana tanlash, logo yuklash.

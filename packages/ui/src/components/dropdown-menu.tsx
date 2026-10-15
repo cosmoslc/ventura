@@ -411,7 +411,7 @@ export function DropdownMenuContent({
 
 /** Menyu bandi — dropdown, select va flyout uchun umumiy o'lcham. */
 export const menuItemClass =
-  "flex h-9 cursor-pointer items-center gap-2 rounded-menu-item px-3 text-body font-semibold outline-none select-none [&_svg]:size-4 [&_svg]:shrink-0";
+  "flex h-9 max-[900px]:h-10 cursor-pointer items-center gap-2 rounded-menu-item px-3 text-body font-semibold outline-none select-none [&_svg]:size-4 [&_svg]:shrink-0";
 
 export function DropdownMenuItem({
   className,
