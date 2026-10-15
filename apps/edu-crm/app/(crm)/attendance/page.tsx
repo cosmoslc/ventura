@@ -5,6 +5,7 @@ import { getTenantDb } from "@/lib/server/deps";
 import { monthStart, todayTashkent } from "@/lib/server/memberships";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
+import { listGroups } from "../groups/data";
 import { courseOptions } from "../students/data";
 import { AttendanceReportView } from "./report-view";
 
@@ -28,9 +29,11 @@ export default async function AttendancePage({
   let to = isDay(sp.to) ? sp.to : today;
   const invalid = from > to || (Date.parse(to) - Date.parse(from)) / 86_400_000 > MAX_DAYS;
   if (invalid) [from, to] = [monthStart(today), today];
-  const [rows, courses] = await Promise.all([
+  const canExport = can(staff.access, "attendance.export");
+  const [rows, courses, exportGroups] = await Promise.all([
     attendanceReport(db, branch.filter, { from, to, today }),
     courseOptions(db),
+    canExport ? listGroups(db, branch.filter) : null,
   ]);
   return (
     <AttendanceReportView
@@ -42,6 +45,7 @@ export default async function AttendancePage({
       rangeInvalid={invalid}
       canMarkToday={can(staff.access, "attendance.student_mark")}
       canEditPast={can(staff.access, "attendance.student_edit_past")}
+      exportGroups={exportGroups?.map((g) => ({ id: g.id, name: g.name })) ?? null}
     />
   );
 }

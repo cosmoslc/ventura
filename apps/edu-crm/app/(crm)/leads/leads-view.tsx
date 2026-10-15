@@ -52,6 +52,7 @@ import {
   StageBadge,
   StagesModal,
 } from "./lead-dialogs";
+import { useQuickOpen } from "../use-quick-open";
 import { LeadForm } from "./lead-form";
 import type { LeadPerms } from "./perms";
 import { type GroupFormData, WaitlistAssignDialog, WaitlistsPanel } from "./waitlists";
@@ -110,6 +111,7 @@ export function LeadsView({
   const [assignee, setAssignee] = React.useState(ALL);
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<LeadRow | null>(null);
+  useQuickOpen(() => openForm(null), perms.create);
   const [moving, setMoving] = React.useState<LeadRow | null>(null);
   const [assigning, setAssigning] = React.useState<{ ids: string[]; current: string | null } | null>(null);
   const [archiving, setArchiving] = React.useState<LeadRow | null>(null);

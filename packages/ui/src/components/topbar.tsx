@@ -15,6 +15,11 @@ export interface TopbarProps {
   brandMark?: React.ReactNode;
   brandSubtitle?: string;
   searchPlaceholder?: string;
+  /**
+   * Berilsa qidiruv maydoni tugmaga aylanadi (bosilganda shu chaqiriladi — buyruqlar oynasi ochiladi) va tor
+   * ekranda qidiruv ikonkasi chiqadi. Berilmasa — oddiy matn maydoni (panel ilovasi).
+   */
+  onSearchOpen?: () => void;
   /** Menyu tugmasidan keyin, qidiruvdan oldin (masalan filial tanlovi) */
   leading?: React.ReactNode;
   children?: React.ReactNode;
@@ -28,6 +33,7 @@ export function Topbar({
   brandMark,
   brandSubtitle,
   searchPlaceholder = "Qidirish…",
+  onSearchOpen,
   leading,
   children,
   className,
@@ -60,22 +66,52 @@ export function Topbar({
           <Menu />
         </Button>
         {leading}
-        <label className="group relative hidden sm:block">
-          <span className="sr-only">Qidirish</span>
-          <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-placeholder transition-colors group-focus-within:text-primary-text" />
-          <input
-            type="search"
-            placeholder={searchPlaceholder}
-            className={cn(
-              "h-(--control-h) w-56 rounded-control border border-border-soft bg-(--search-bg) pr-14 pl-10 text-sm text-foreground outline-none lg:w-72",
-              "placeholder:text-placeholder transition-[background,border-color,box-shadow] duration-200",
-              "hover:bg-(--search-hover-bg) focus:border-(--ring-border) focus:bg-(--search-focus-bg) focus:shadow-(--search-ring)",
-            )}
-          />
-          <kbd className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md border border-border bg-(--kbd-bg) px-1.5 py-0.5 font-mono text-2xs text-muted-foreground">
-            Ctrl K
-          </kbd>
-        </label>
+        {onSearchOpen ? (
+          <>
+            <button
+              type="button"
+              onClick={onSearchOpen}
+              aria-label={searchPlaceholder}
+              aria-keyshortcuts="Control+K Meta+K"
+              className={cn(
+                "group relative hidden h-(--control-h) w-56 cursor-pointer items-center rounded-control border border-border-soft bg-(--search-bg) pr-14 pl-10 text-left text-sm text-placeholder lg:w-72 sm:flex",
+                "transition-[background,border-color,box-shadow] duration-200 hover:bg-(--search-hover-bg) focus-visible:border-(--ring-border) focus-visible:shadow-(--search-ring)",
+              )}
+            >
+              <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-placeholder" />
+              <span className="truncate">{searchPlaceholder}</span>
+              <kbd className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md border border-border bg-(--kbd-bg) px-1.5 py-0.5 font-mono text-2xs text-muted-foreground">
+                Ctrl K
+              </kbd>
+            </button>
+            <Button
+              variant="icon"
+              size="icon"
+              onClick={onSearchOpen}
+              aria-label={searchPlaceholder}
+              className="sm:hidden"
+            >
+              <Search />
+            </Button>
+          </>
+        ) : (
+          <label className="group relative hidden sm:block">
+            <span className="sr-only">Qidirish</span>
+            <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-placeholder transition-colors group-focus-within:text-primary-text" />
+            <input
+              type="search"
+              placeholder={searchPlaceholder}
+              className={cn(
+                "h-(--control-h) w-56 rounded-control border border-border-soft bg-(--search-bg) pr-14 pl-10 text-sm text-foreground outline-none lg:w-72",
+                "placeholder:text-placeholder transition-[background,border-color,box-shadow] duration-200",
+                "hover:bg-(--search-hover-bg) focus:border-(--ring-border) focus:bg-(--search-focus-bg) focus:shadow-(--search-ring)",
+              )}
+            />
+            <kbd className="pointer-events-none absolute top-1/2 right-2.5 -translate-y-1/2 rounded-md border border-border bg-(--kbd-bg) px-1.5 py-0.5 font-mono text-2xs text-muted-foreground">
+              Ctrl K
+            </kbd>
+          </label>
+        )}
         <div className="ml-auto flex items-center gap-2">{children}</div>
       </div>
     </header>

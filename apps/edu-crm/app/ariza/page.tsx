@@ -4,11 +4,14 @@ import { cn } from "@ventura/ui/lib/utils";
 import { hasFeature } from "@ventura/tenants";
 import { TenantLogo } from "@/components/brand";
 import { makeStamp } from "@/lib/apply-stamp";
+import { centerContacts } from "@/lib/center-settings";
 import { applyPageData, getApplyForm } from "@/lib/server/apply";
+import { getCenterSettings } from "@/lib/server/center";
 import { tenantDeps } from "@/lib/server/deps";
 import { requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { ApplyForm } from "./apply-form";
+import { ApplyContacts } from "./contacts";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: uz.apply.pageTitle, robots: { index: false } };
@@ -25,6 +28,8 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
   const embed = (await searchParams).embed === "1";
   const form = await getApplyForm(deps.db);
   const data = form.enabled ? await applyPageData(deps.db, form) : null;
+  // Aloqa faqat alohida sahifada; saytdagi iframe'da saytning o'z aloqasi bor
+  const contacts = embed ? null : centerContacts(await getCenterSettings(deps.db));
 
   const body = (
     <Card className={cn(embed && "border-0 bg-transparent shadow-none")}>
@@ -68,6 +73,7 @@ export default async function ApplyPage({ searchParams }: { searchParams: Promis
           <TenantLogo tenant={tenant} />
         </div>
         {body}
+        {contacts ? <ApplyContacts contacts={contacts} /> : null}
         <p className="mt-6 text-center text-caption text-muted-foreground">{uz.poweredBy}</p>
       </div>
     </div>

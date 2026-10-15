@@ -34,6 +34,7 @@ import { uz } from "@/lib/uz";
 import type { ReportRow } from "@/lib/server/attendance-report";
 import { markAttendanceAction } from "../groups/attendance-actions";
 import { logContactAction } from "./actions";
+import { JournalExport } from "./journal-export";
 
 const t = uz.attendance.report;
 const KPIS: { filter: Exclude<ReportFilter, "all">; label: string; icon: React.ReactNode; tone: 1 | 2 | 3 | 4 }[] = [
@@ -57,6 +58,7 @@ export function AttendanceReportView({
   rangeInvalid,
   canMarkToday,
   canEditPast,
+  exportGroups,
 }: {
   rows: ReportRow[];
   courses: { id: string; name: string }[];
@@ -66,6 +68,8 @@ export function AttendanceReportView({
   rangeInvalid: boolean;
   canMarkToday: boolean;
   canEditPast: boolean;
+  /** Jurnalni Excelga yuklash mumkin bo'lgan guruhlar; null — ruxsat yo'q */
+  exportGroups: { id: string; name: string }[] | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -183,6 +187,7 @@ export function AttendanceReportView({
         </Button>
         <FilterEnd>
           <span className="text-caption text-muted-foreground">{t.count(visible.length, base.length)}</span>
+          {exportGroups ? <JournalExport groups={exportGroups} month={today.slice(0, 7)} /> : null}
         </FilterEnd>
       </FilterBar>
 

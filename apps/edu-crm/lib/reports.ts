@@ -77,7 +77,14 @@ export interface CashflowLabels {
  * Yil bo'yicha 12 oy: kirim (to'lovlar, qo'shimcha daromad), chiqim (xarajat toifalari — yillik summasi bo'yicha
  * kamayish tartibida, ish haqi, avans, qaytarishlar), sof oqim va yig'ma qoldiq. Hali kelmagan oylar — bo'sh.
  */
-export function cashflowTable(flows: readonly DayFlow[], year: number, today: string, l: CashflowLabels): ReportTable {
+export function cashflowTable(
+  flows: readonly DayFlow[],
+  year: number,
+  today: string,
+  l: CashflowLabels,
+  /** Boshlang'ich qoldiq bilan hisoblangan yig'ma qoldiq (E6j); berilmasa — yil boshidan */
+  balance?: readonly (number | null)[],
+): ReportTable {
   const months = yearMonths(year);
   const thisMonth = today.slice(0, 7);
   const future = (m: string) => m > thisMonth;
@@ -103,7 +110,7 @@ export function cashflowTable(flows: readonly DayFlow[], year: number, today: st
   const outflowTotal = add(...catRows.map((r) => r.values), salary, advance, refund);
   const net = months.map((m, i) => (future(m) ? null : incomeTotal[i]! - outflowTotal[i]!));
   let running = 0;
-  const cumulative = net.map((v) => (v === null ? null : (running += v)));
+  const cumulative = balance ? [...balance] : net.map((v) => (v === null ? null : (running += v)));
 
   const columns: ReportColumn[] = [
     { key: "label", label: l.label, kind: "text" },

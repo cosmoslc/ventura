@@ -1,4 +1,4 @@
-import { parseReasonList } from "./reasons";
+import { DEFAULT_LOST_REASONS, LOST_REASONS_KEY, parseReasonList } from "./reasons";
 
 /*
  * Lidlar (E4a, ADR 0022): standart bosqichlar, manbalar va bosqichlar ro'yxati qoidalari. Bosqichlar markaz
@@ -37,18 +37,7 @@ export const LEAD_SOURCES = [
   "Boshqa",
 ] as const;
 
-export const LOST_REASONS_KEY = "leads.lost_reasons";
-
-/** Lid yo'qotilganda tanlanadigan sabablar (eski tizimdagi "Liddan o'chirilganda" sabablari) */
-export const DEFAULT_LOST_REASONS = [
-  "Narxi qimmat",
-  "Vaqti to'g'ri kelmadi",
-  "Boshqa markazni tanladi",
-  "Javob bermadi",
-  "Qiziqishi yo'qoldi",
-  "Manzil uzoq",
-  "Boshqa",
-];
+export { DEFAULT_LOST_REASONS, LOST_REASONS_KEY };
 
 /** Bazadagi qiymat: 1–30 ta, takrorsiz, bo'sh emas; buzilgan bo'lsa standart ro'yxat */
 export const parseLostReasons = (value: unknown): string[] => parseReasonList(value, DEFAULT_LOST_REASONS);

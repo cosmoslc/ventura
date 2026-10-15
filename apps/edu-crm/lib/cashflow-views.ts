@@ -29,7 +29,13 @@ export interface MonthFlow {
 }
 
 /** Yil bo'yicha 12 oy: kirim, chiqim, sof oqim va yig'ma qoldiq (hisob `cashflowTable` bilan bir xil) */
-export function monthlyFlows(flows: readonly DayFlow[], year: number, today: string): MonthFlow[] {
+export function monthlyFlows(
+  flows: readonly DayFlow[],
+  year: number,
+  today: string,
+  /** Boshlang'ich qoldiq bilan hisoblangan yig'ma qoldiq (E6j) */
+  balance?: readonly (number | null)[],
+): MonthFlow[] {
   const thisMonth = today.slice(0, 7);
   let running = 0;
   return Array.from({ length: 12 }, (_, i) => {
@@ -39,7 +45,7 @@ export function monthlyFlows(flows: readonly DayFlow[], year: number, today: str
     const income = sumOf(inMonth.filter((f) => f.kind === "pay" || f.kind === "income").map((f) => f.amount));
     const outflow = sumOf(inMonth.filter((f) => OUTFLOW_KINDS.includes(f.kind)).map((f) => f.amount));
     running += income - outflow;
-    return { month, income, outflow, net: income - outflow, cumulative: running };
+    return { month, income, outflow, net: income - outflow, cumulative: balance ? (balance[i] ?? null) : running };
   });
 }
 

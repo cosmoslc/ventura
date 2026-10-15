@@ -12,9 +12,11 @@ import {
   users,
 } from "@ventura/db/schema/tenant";
 import { formatDate, formatMonth, money } from "@/lib/format";
+import { approvalRequestDraft } from "@/lib/notifications";
 import { uz } from "@/lib/uz";
 import type { ApprovalKey } from "./approval-registry";
 import { type BranchContext, resolveBranch } from "./branch";
+import { directorIds, notify } from "./notify";
 import type { Staff } from "./session";
 
 /*
@@ -109,6 +111,8 @@ export async function createApprovalRequest(
       payload: JSON.parse(json) as unknown,
     })
     .returning({ id: approvalRequests.id });
+  // Direktorlarga bildirishnoma (E6d)
+  await notify(db, await directorIds(db), approvalRequestDraft(opts.staff.name ?? "", title), opts.staff.id);
   return { id: row!.id, title };
 }
 

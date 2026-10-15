@@ -16,3 +16,4 @@ export * from "./expenses";
 export * from "./payroll";
 export * from "./approvals";
 export * from "./leads";
+export * from "./notifications";

@@ -39,6 +39,7 @@ import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { STAGE_COLORS, type StageDraft, stagesError } from "@/lib/leads";
 import { uz } from "@/lib/uz";
+import { ReasonField, useReasonState } from "../reason-field";
 import { ReasonsModal } from "../reasons-modal";
 import {
   archiveLeadAction,
@@ -230,6 +231,9 @@ export function ArchiveDialog({
 }) {
   const { run, pending } = useRun();
   const [reason, setReason] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  // Sabab markaz ro'yxatidan tanlanadi (ADR 0035); yoqgich o'chiq bo'lsa — ixtiyoriy matn
+  const reasonState = useReasonState("lead_archive");
   return (
     <Modal
       open={lead !== null}
@@ -245,33 +249,38 @@ export function ArchiveDialog({
           <Button
             variant="danger"
             disabled={pending}
-            onClick={() =>
-              lead &&
+            onClick={() => {
+              if (!lead) return;
+              if (reasonState.active && !reason.trim()) return setError(uz.reasons.required);
               run(
                 () => archiveLeadAction({ id: lead.id, reason }),
                 t.archived,
                 () => {
                   setReason("");
+                  setError(null);
                   onClose();
                   onArchived?.();
                 },
-              )
-            }
+              );
+            }}
           >
             <Archive /> {t.archive}
           </Button>
         </>
       }
     >
-      <Label htmlFor="lead-archive-reason">{t.archiveReason}</Label>
-      <Textarea
+      <ReasonField
         id="lead-archive-reason"
-        rows={3}
-        maxLength={500}
-        placeholder={t.archiveReasonPlaceholder}
+        category="lead_archive"
         value={reason}
-        onChange={(e) => setReason(e.target.value)}
+        onChange={(v) => {
+          setReason(v);
+          setError(null);
+        }}
+        label={t.archiveReason}
+        placeholder={t.archiveReasonPlaceholder}
       />
+      {error ? <FieldHint error>{error}</FieldHint> : null}
     </Modal>
   );
 }

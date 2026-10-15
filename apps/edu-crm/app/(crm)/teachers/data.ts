@@ -32,7 +32,7 @@ export interface TeacherRow {
   startTime: string | null;
   endTime: string | null;
   note: string | null;
-  /** Guruhlar bo'limi (E1d) bilan to'ladi; hozircha 0 */
+  /** Biriktirilgan guruhlar soni (support qatorlarida 0 — guruhga emas, o'qituvchiga biriktiriladi) */
   groups: number;
   students: number;
   /** Joriy oy retention sanoqlari (profildagi bilan bir xil hisob, ADR 0021) */

@@ -38,6 +38,8 @@ import {
   waitlistAssignInput,
   waitlistInput,
 } from "@/lib/rules";
+import { assignedDraft } from "@/lib/notifications";
+import { notify } from "@/lib/server/notify";
 import { uz } from "@/lib/uz";
 import { convertLeads } from "./convert";
 import { getLeadFields, listStages, staffOptions } from "./data";
@@ -155,6 +157,9 @@ export async function saveLeadAction(input: unknown): Promise<ActionResult<{ id:
             : existing[k] === values[k];
         const changed = (Object.keys(values) as (keyof typeof values)[]).filter((k) => !same(k));
         await ctx.audit("lead.update", { type: "lead", id: existing.id }, { name: v.name, fields: changed });
+        // Mas'ul almashgan bo'lsa — yangi mas'ulga bildirishnoma (E6d)
+        if (v.assignedTo && v.assignedTo !== existing.assignedTo)
+          await notify(ctx.db, [v.assignedTo], assignedDraft([{ id: existing.id, name: v.name }]), ctx.staff.id);
         refresh(existing.id);
         return { ok: true, id: existing.id };
       }
@@ -176,6 +181,7 @@ export async function saveLeadAction(input: unknown): Promise<ActionResult<{ id:
         return row!.id;
       });
       await ctx.audit("lead.create", { type: "lead", id }, { name: v.name, phone: formatPhone(phone), branchId });
+      if (v.assignedTo) await notify(ctx.db, [v.assignedTo], assignedDraft([{ id, name: v.name }]), ctx.staff.id);
       refresh();
       return { ok: true, id };
     },
@@ -237,6 +243,17 @@ export async function assignLeadsAction(input: unknown): Promise<ActionResult<{ 
       const { ids, userId } = parsed.data;
       if (!(await checkAssignee(ctx, userId))) return { ok: false, error: uz.common.gone };
       const branchIds = ctx.branch.options.map((b) => b.id);
+      // Allaqachon shu xodimda bo'lganlarga bildirishnoma yuborilmaydi
+      const already = userId
+        ? new Set(
+            (
+              await ctx.db
+                .select({ id: leads.id })
+                .from(leads)
+                .where(and(inArray(leads.id, ids), eq(leads.assignedTo, userId)))
+            ).map((r) => r.id),
+          )
+        : new Set<string>();
       const rows = await ctx.db
         .update(leads)
         .set({ assignedTo: userId })
@@ -246,6 +263,9 @@ export async function assignLeadsAction(input: unknown): Promise<ActionResult<{ 
       const [u] = userId ? await ctx.db.select({ name: users.name }).from(users).where(eq(users.id, userId)) : [null];
       for (const r of rows)
         await ctx.audit("lead.assign", { type: "lead", id: r.id }, { name: r.name, to: u?.name ?? null });
+      // Yangi mas'ulga bildirishnoma (E6d)
+      const fresh = rows.filter((r) => !already.has(r.id));
+      if (userId && fresh.length) await notify(ctx.db, [userId], assignedDraft(fresh), ctx.staff.id);
       refresh();
       return { ok: true, count: rows.length };
     },

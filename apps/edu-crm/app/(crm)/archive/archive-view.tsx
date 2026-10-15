@@ -1,6 +1,17 @@
 "use client";
 
-import { Archive, BookOpen, GraduationCap, Layers, RotateCcw, Search, Trash2, UserPlus, Users } from "lucide-react";
+import {
+  Archive,
+  BookOpen,
+  GraduationCap,
+  IdCard,
+  Layers,
+  RotateCcw,
+  Search,
+  Trash2,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Avatar } from "@ventura/ui/avatar";
@@ -20,14 +31,15 @@ import type { PickerBranch } from "../branch-picker";
 import { purgeStudentAction, restoreArchivedAction } from "./actions";
 import type { ArchiveData } from "./data";
 
-type Tab = "students" | "groups" | "courses" | "teachers" | "leads";
-type Kind = "student" | "group" | "course" | "teacher" | "lead";
+type Tab = "students" | "groups" | "courses" | "teachers" | "leads" | "staff";
+type Kind = "student" | "group" | "course" | "teacher" | "lead" | "staff";
 const KIND: Record<Tab, Kind> = {
   students: "student",
   groups: "group",
   courses: "course",
   teachers: "teacher",
   leads: "lead",
+  staff: "staff",
 };
 
 function dateTime(iso: string) {
@@ -65,12 +77,14 @@ export function ArchiveView({
   const teachersList = data.teachers.filter((t) => hit(t.name, [t.phone]));
   const groupsList = data.groups.filter((g) => hit(g.name, []));
   const leadsList = data.leads.filter((l) => hit(l.name, [l.phone]));
+  const staffList = data.staff.filter((s) => hit(s.name, [s.phone]));
   const count = {
     students: studentsList.length,
     groups: groupsList.length,
     courses: coursesList.length,
     teachers: teachersList.length,
     leads: leadsList.length,
+    staff: staffList.length,
   }[tab];
   const items =
     tab === "courses" ? coursesList : tab === "groups" ? groupsList : tab === "leads" ? leadsList : teachersList;
@@ -91,9 +105,9 @@ export function ArchiveView({
     router.refresh();
   }
 
-  const actions = (id: string, name: string, purge: boolean) => (
+  const actions = (id: string, name: string, purge: boolean, restorable = true) => (
     <div className="flex justify-end gap-1.5">
-      {canRestore ? (
+      {canRestore && restorable ? (
         <Button size="sm" variant="ghost" onClick={() => setConfirm({ kind: "restore", id, name })}>
           <RotateCcw /> {uz.archive.restore}
         </Button>
@@ -131,6 +145,11 @@ export function ArchiveView({
           <TabsTrigger value="teachers">
             <Users /> {uz.archive.tabTeachers} <Badge tone="neutral">{data.teachers.length}</Badge>
           </TabsTrigger>
+          {data.staff.length ? (
+            <TabsTrigger value="staff">
+              <IdCard /> {uz.archive.tabStaff} <Badge tone="neutral">{data.staff.length}</Badge>
+            </TabsTrigger>
+          ) : null}
           {data.leads.length ? (
             <TabsTrigger value="leads">
               <UserPlus /> {uz.archive.tabLeads} <Badge tone="neutral">{data.leads.length}</Badge>
@@ -202,6 +221,46 @@ export function ArchiveView({
                         ) : null}
                       </Td>
                       <Td className="text-right">{actions(s.id, s.name, true)}</Td>
+                    </Tr>
+                  ))}
+                </TBody>
+              </Table>
+            ) : tab === "staff" ? (
+              <Table className="min-w-[860px]">
+                <THead>
+                  <tr>
+                    <Th>{uz.archive.colStaff}</Th>
+                    <Th>{uz.archive.colPhones}</Th>
+                    <Th>{uz.archive.colBranch}</Th>
+                    <Th>{uz.archive.colDeleted}</Th>
+                    <Th className="text-right">{uz.common.actions}</Th>
+                  </tr>
+                </THead>
+                <TBody>
+                  {staffList.map((s) => (
+                    <Tr key={s.id}>
+                      <Td>
+                        <div className="flex items-center gap-2.5">
+                          <Avatar name={s.name} size={32} />
+                          <div className="min-w-0">
+                            <div className="truncate text-body font-bold text-foreground">{s.name}</div>
+                            {s.positions.length ? (
+                              <div className="truncate text-caption text-muted-foreground">
+                                {s.positions.join(", ")}
+                              </div>
+                            ) : null}
+                          </div>
+                        </div>
+                      </Td>
+                      <Td className="font-mono">{displayPhone(s.phone) ?? "—"}</Td>
+                      <Td>{s.branchIds.map(branchName).join(", ") || "—"}</Td>
+                      <Td>
+                        <div className="font-mono">{dateTime(s.archivedAt)}</div>
+                        {s.archivedByName ? (
+                          <div className="text-caption text-muted-foreground">{uz.archive.by(s.archivedByName)}</div>
+                        ) : null}
+                      </Td>
+                      <Td className="text-right">{actions(s.id, s.name, false, s.manageable)}</Td>
                     </Tr>
                   ))}
                 </TBody>

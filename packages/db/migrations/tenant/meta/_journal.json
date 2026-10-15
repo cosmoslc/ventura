@@ -134,6 +134,13 @@
       "when": 1791973164029,
       "tag": "0018_e5b_left_note",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792053425534,
+      "tag": "0019_e6_notifications",
+      "breakpoints": true
     }
   ]
 }

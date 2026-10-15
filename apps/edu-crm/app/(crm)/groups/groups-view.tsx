@@ -9,15 +9,13 @@ import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { FilterBar, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { Meter } from "@ventura/ui/meter";
-import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
-import { toast } from "@ventura/ui/toast";
 import { money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import { ExcelMenu } from "../excel/excel-menu";
-import { archiveGroupAction } from "./actions";
+import { ArchiveGroupModal } from "./archive-group-modal";
 import type { GroupRow } from "./data";
 import { type CourseOption, GroupForm, type RoomOption, type TeacherOption } from "./group-form";
 
@@ -88,13 +86,6 @@ export function GroupsView({
   function openForm(g: GroupRow | null) {
     setEditing(g);
     setFormOpen(true);
-  }
-
-  async function archive(g: GroupRow) {
-    const res = await archiveGroupAction(g.id);
-    if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
-    toast({ tone: "success", title: uz.groups.archived, description: g.name });
-    router.refresh();
   }
 
   const missing = !courses.length ? "courses" : !teachers.length ? "teachers" : null;
@@ -279,15 +270,7 @@ export function GroupsView({
         />
       ) : null}
 
-      <ConfirmModal
-        open={toArchive !== null}
-        onOpenChange={(o) => !o && setToArchive(null)}
-        title={uz.groups.archiveTitle}
-        message={toArchive ? uz.groups.archiveMessage(toArchive.name) : ""}
-        confirmLabel={uz.common.confirmDelete}
-        cancelLabel={uz.common.cancel}
-        onConfirm={() => toArchive && void archive(toArchive)}
-      />
+      <ArchiveGroupModal group={toArchive} onClose={() => setToArchive(null)} onArchived={() => router.refresh()} />
     </div>
   );
 }

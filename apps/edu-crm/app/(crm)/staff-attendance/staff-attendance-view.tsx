@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCheck, CircleCheck, Clock, UserX, Users, X } from "lucide-react";
+import { CheckCheck, CircleCheck, Clock, FileSpreadsheet, UserX, Users, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -16,7 +16,8 @@ import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
-import { rankEmployees } from "@/lib/employee-ranking";
+import { type RankRow, rankEmployees } from "@/lib/employee-ranking";
+import { monthRange } from "@/lib/lessons";
 import { uz } from "@/lib/uz";
 import { markEmployeeAction, markEmployeesPresentAction } from "./actions";
 import type { Employee, EmployeeMark, EmployeeRecord } from "./data";
@@ -39,6 +40,9 @@ export function StaffAttendanceView({
   employees,
   day,
   history,
+  monthRecords,
+  month,
+  initialTab,
   date,
   today,
   canMark,
@@ -46,13 +50,18 @@ export function StaffAttendanceView({
   employees: Employee[];
   day: EmployeeRecord[];
   history: EmployeeRecord[];
+  /** Tanlangan oyning belgilari (oylik hisobot) */
+  monthRecords: EmployeeRecord[];
+  /** "YYYY-MM" */
+  month: string;
+  initialTab: "day" | "ranking" | "month";
   date: string;
   today: string;
   canMark: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [tab, setTab] = React.useState<"day" | "ranking">("day");
+  const [tab, setTab] = React.useState<"day" | "ranking" | "month">(initialTab);
   const [period, setPeriod] = React.useState("7");
   const [query, setQuery] = React.useState("");
   const [pending, startTransition] = React.useTransition();
@@ -68,6 +77,17 @@ export function StaffAttendanceView({
     history,
     addDays(today, -(Number(period) - 1)),
     today,
+  ).filter((r) => {
+    const e = byKey.get(r.key)!;
+    return !q || e.name.toLowerCase().includes(q) || e.role.toLowerCase().includes(q);
+  });
+
+  const [monthFrom, monthTo] = monthRange(month);
+  const monthly = rankEmployees(
+    employees.map((e) => e.key),
+    monthRecords,
+    monthFrom,
+    monthTo,
   ).filter((r) => {
     const e = byKey.get(r.key)!;
     return !q || e.name.toLowerCase().includes(q) || e.role.toLowerCase().includes(q);
@@ -101,10 +121,11 @@ export function StaffAttendanceView({
     <div className="space-y-6">
       <PageHeader title={t.title} description={t.description} />
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as "day" | "ranking")}>
+      <Tabs value={tab} onValueChange={(v) => setTab(v as "day" | "ranking" | "month")}>
         <TabsList>
           <TabsTrigger value="day">{t.tabDay}</TabsTrigger>
           <TabsTrigger value="ranking">{t.tabRanking}</TabsTrigger>
+          <TabsTrigger value="month">{t.tabMonth}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -183,7 +204,7 @@ export function StaffAttendanceView({
             )}
           </Card>
         </>
-      ) : (
+      ) : tab === "ranking" ? (
         <>
           <FilterBar standalone>
             <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
@@ -194,58 +215,87 @@ export function StaffAttendanceView({
               options={["7", "30"].map((p) => ({ value: p, label: t.periods[p] }))}
             />
           </FilterBar>
-
-          <Card className="overflow-hidden">
-            <p className="px-4 pt-3 text-caption text-muted-foreground">{t.rankingHint}</p>
-            {ranking.length ? (
-              <TableWrap className="rounded-none border-0">
-                <Table>
-                  <THead>
-                    <Tr>
-                      <Th className="w-12 text-center">{t.colRank}</Th>
-                      <Th>{t.colEmployee}</Th>
-                      <Th className="text-center">{t.colPresent}</Th>
-                      <Th className="text-center">{t.colLate}</Th>
-                      <Th className="text-center">{t.colAbsent}</Th>
-                      <Th className="text-center">{t.colRecords}</Th>
-                      <Th className="w-48">{t.colRate}</Th>
-                    </Tr>
-                  </THead>
-                  <TBody>
-                    {ranking.map((r, i) => {
-                      const e = byKey.get(r.key)!;
-                      return (
-                        <Tr key={r.key}>
-                          <Td className="text-center text-muted-foreground">{i + 1}</Td>
-                          <Td>
-                            <div className="font-medium">{e.name}</div>
-                            <div className="text-caption text-muted-foreground">{e.role}</div>
-                          </Td>
-                          <Td className="text-center">{r.present}</Td>
-                          <Td className="text-center">{r.late}</Td>
-                          <Td className="text-center">{r.absent}</Td>
-                          <Td className="text-center">{r.records}</Td>
-                          <Td>
-                            {r.rate === null ? (
-                              <span className="text-muted-foreground">{t.noRecords}</span>
-                            ) : (
-                              // Meter yuqori qiymatni "xavf" deb bo'yaydi — bu yerda teskari, shuning uchun chegaralar o'chirilgan
-                              <Meter label="" value={r.rate / 100} warnAt={2} dangerAt={2} />
-                            )}
-                          </Td>
-                        </Tr>
-                      );
-                    })}
-                  </TBody>
-                </Table>
-              </TableWrap>
-            ) : (
-              <EmptyState icon={<Users />} title={t.empty} description={t.emptyHint} />
-            )}
-          </Card>
+          <RankingTable rows={ranking} byKey={byKey} />
+        </>
+      ) : (
+        <>
+          <FilterBar standalone>
+            <FilterSearch placeholder={t.search} value={query} onChange={(e) => setQuery(e.target.value)} />
+            <Input
+              type="month"
+              aria-label={t.month}
+              title={t.month}
+              className="w-full sm:w-44"
+              value={month}
+              max={today.slice(0, 7)}
+              onChange={(e) => e.target.value && router.push(`${pathname}?oy=${e.target.value}`, { scroll: false })}
+            />
+            <FilterEnd>
+              <Button variant="ghost" asChild>
+                <a href={`/staff-attendance/excel?oy=${month}`} download>
+                  <FileSpreadsheet /> {t.excel}
+                </a>
+              </Button>
+            </FilterEnd>
+          </FilterBar>
+          <RankingTable rows={monthly} byKey={byKey} />
         </>
       )}
     </div>
+  );
+}
+
+/** Xodimlar davomati jadvali (reyting va oylik hisobot uchun umumiy): kelgan, kech, kelmagan, belgilangan kun va foiz */
+function RankingTable({ rows, byKey }: { rows: RankRow[]; byKey: Map<string, Employee> }) {
+  return (
+    <Card className="overflow-hidden">
+      <p className="px-4 pt-3 text-caption text-muted-foreground">{t.rankingHint}</p>
+      {rows.length ? (
+        <TableWrap className="rounded-none border-0">
+          <Table>
+            <THead>
+              <Tr>
+                <Th className="w-12 text-center">{t.colRank}</Th>
+                <Th>{t.colEmployee}</Th>
+                <Th className="text-center">{t.colPresent}</Th>
+                <Th className="text-center">{t.colLate}</Th>
+                <Th className="text-center">{t.colAbsent}</Th>
+                <Th className="text-center">{t.colRecords}</Th>
+                <Th className="w-48">{t.colRate}</Th>
+              </Tr>
+            </THead>
+            <TBody>
+              {rows.map((r, i) => {
+                const e = byKey.get(r.key)!;
+                return (
+                  <Tr key={r.key}>
+                    <Td className="text-center text-muted-foreground">{i + 1}</Td>
+                    <Td>
+                      <div className="font-medium">{e.name}</div>
+                      <div className="text-caption text-muted-foreground">{e.role}</div>
+                    </Td>
+                    <Td className="text-center">{r.present}</Td>
+                    <Td className="text-center">{r.late}</Td>
+                    <Td className="text-center">{r.absent}</Td>
+                    <Td className="text-center">{r.records}</Td>
+                    <Td>
+                      {r.rate === null ? (
+                        <span className="text-muted-foreground">{t.noRecords}</span>
+                      ) : (
+                        // Meter yuqori qiymatni "xavf" deb bo'yaydi — bu yerda teskari, shuning uchun chegaralar o'chirilgan
+                        <Meter label="" value={r.rate / 100} warnAt={2} dangerAt={2} />
+                      )}
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </TBody>
+          </Table>
+        </TableWrap>
+      ) : (
+        <EmptyState icon={<Users />} title={t.empty} description={t.emptyHint} />
+      )}
+    </Card>
   );
 }
 

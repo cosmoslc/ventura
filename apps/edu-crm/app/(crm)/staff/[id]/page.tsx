@@ -31,6 +31,7 @@ export default async function StaffMemberPage({ params }: { params: Promise<{ id
       branches={branch.options}
       selectedBranch={branch.selected}
       fields={fields}
+      canViewLog={can(staff.access, "settings.logs")}
       perms={{
         create: can(staff.access, "staff.create"),
         edit: can(staff.access, "staff.edit"),

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, asc, count, countDistinct, eq, inArray, isNull, ne } from "drizzle-orm";
 import { inScope } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
 import {
@@ -7,6 +7,7 @@ import {
   branches,
   courses,
   expenses,
+  groupMemberships,
   groups,
   positions,
   rooms,
@@ -49,7 +50,7 @@ export interface BranchRow {
   managers: BranchStaff[];
   /** Filialga biriktirilgan xodimlar (direktordan tashqari) */
   staffCount: number;
-  /** Faol o'quvchilar va guruhlar — o'quvchi va guruh jadvallari bilan (E1c, E1d); hozircha yo'q */
+  /** Faol o'quvchilar (ochiq guruhi bor, bosh paneldagi bilan bir xil qoida) va faol guruhlar */
   activeStudents: number;
   groups: number;
 }
@@ -83,6 +84,30 @@ export async function listBranches(db: TenantDb, staff: Staff): Promise<BranchRo
       .orderBy(asc(users.name)),
     positionNames(db),
   ]);
+  const ids = rows.map((r) => r.id);
+  const [studentCounts, groupCounts] = await Promise.all([
+    // Bosh paneldagi "faol o'quvchi" bilan bir xil: arxivlanmagan, holati faol/qaytgan va ochiq guruhi bor
+    db
+      .select({ branchId: students.branchId, n: countDistinct(students.id) })
+      .from(students)
+      .innerJoin(groupMemberships, and(eq(groupMemberships.studentId, students.id), isNull(groupMemberships.leftAt)))
+      .innerJoin(groups, and(eq(groups.id, groupMemberships.groupId), isNull(groups.archivedAt)))
+      .where(
+        and(
+          inArray(students.branchId, ids),
+          isNull(students.archivedAt),
+          inArray(students.status, ["active", "returned"]),
+        ),
+      )
+      .groupBy(students.branchId),
+    db
+      .select({ branchId: groups.branchId, n: count() })
+      .from(groups)
+      .where(and(inArray(groups.branchId, ids), isNull(groups.archivedAt)))
+      .groupBy(groups.branchId),
+  ]);
+  const studentsOf = new Map(studentCounts.map((r) => [r.branchId, r.n]));
+  const groupsOf = new Map(groupCounts.map((r) => [r.branchId, r.n]));
   return rows.map((b) => {
     const staffRows = links.filter((l) => l.branchId === b.id && l.role !== "director");
     return {
@@ -99,8 +124,8 @@ export async function listBranches(db: TenantDb, staff: Staff): Promise<BranchRo
         branchIds: [b.id],
       })),
       staffCount: staffRows.length,
-      activeStudents: 0,
-      groups: 0,
+      activeStudents: studentsOf.get(b.id) ?? 0,
+      groups: groupsOf.get(b.id) ?? 0,
     };
   });
 }

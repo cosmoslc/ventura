@@ -13,7 +13,6 @@ export interface CourseGroup {
   days: string[];
   time: string | null;
   students: number;
-  paid: number;
 }
 
 export interface CourseRow {
@@ -61,8 +60,6 @@ export async function listCourses(db: TenantDb, branch: BranchContext): Promise<
         days: g.days,
         time: `${g.startTime} - ${g.endTime}`,
         students: g.studentIds.length,
-        // To'lovlar — Moliya bilan (E3)
-        paid: 0,
       })),
       students: new Set(mine.flatMap((g) => g.studentIds)).size,
       // Sinovdagi va muzlatilganlar to'lamaydi: faqat faol a'zolar × guruh narxi (to'liq oy; ulushli hisob — E3)
