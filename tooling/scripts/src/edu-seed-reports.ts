@@ -1122,7 +1122,7 @@ for (const m of memList) {
   }
   const months = monthsBetween(startMonth, endMonth);
   months.forEach((month, idx) => {
-    const { amount, full } = monthCharge(m, month);
+    const { amount } = monthCharge(m, month);
     if (amount <= 0) return;
     const isCur = month === CUR_MONTH;
     const isLast = idx === months.length - 1;
