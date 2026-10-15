@@ -16,31 +16,31 @@
   --primary-hover: color-mix(in oklab, var(--primary), black 15%);
   --primary-soft: color-mix(in oklab, var(--primary) 11%, white);
   --primary-foreground: #ffffff;
-  --primary-text: var(--primary);
+  --primary-text: color-mix(in oklab, var(--primary), black 8%);
   --secondary: #f1f5f9;
   --secondary-hover: #e2e8f0;
   --secondary-foreground: #334155;
   --muted: #f8fafc;
-  --muted-foreground: #64748b;
+  --muted-foreground: #607089;
   --accent: #f5f7fb;
   --accent-foreground: #1c2333;
   --border: #e2e8f0;
   --border-soft: #edeff5;
-  --input: #e2e8f0;
+  --input: #7f8ca0;
   --input-bg: var(--background); /* input foni = sahifa foni */
-  --input-hover: #cbd5e1;
-  --placeholder: #94a3b8;
+  --input-hover: #66768c;
+  --placeholder: #8190a5;
   --destructive: #f43f5e;
   --destructive-hover: #e11d48;
   --destructive-foreground: #ffffff;
-  --destructive-text: #e11d48;
+  --destructive-text: #d91a45;
   --table-head: #f8fafcb3;
   --table-row-hover: #f8fafccc;
   --table-foot: #f8fafc80;
   /* Log oynasi: ikkala rejimda ham to'q fon (terminal ko'rinishi); buyruq rangi --primary dan */
   --log-bg: #0f172a;
   --log-fg: #cbd5e1;
-  --log-muted: #64748b;
+  --log-muted: #758399;
   --log-cmd: color-mix(in oklab, var(--primary) 45%, white);
   --log-err: #fda4af;
   --log-border: #1e293b;
@@ -49,7 +49,7 @@
   --scrollbar: rgb(15 23 42 / 0.15);
   /* Asosiy rangdan hosil bo'ladiganlar var(--primary...) orqali — mijoz rangi almashsa, ular ham almashadi */
   --focus-outline: var(--primary);
-  --ring-border: color-mix(in oklab, var(--primary) 70%, white);
+  --ring-border: color-mix(in oklab, var(--primary) 90%, white);
   /* Halqalar bir xil qalinlikda: fokus, xato, qidiruv — 3px */
   --ring-shadow: 0 0 0 3px color-mix(in oklab, var(--primary) 28%, white);
   --error-ring: 0 0 0 3px var(--danger-bg);
@@ -80,8 +80,8 @@
   --neutral-fg: #475569;
   --neutral-bg: #f1f5f9;
   --neutral-border: #e2e8f0;
-  --money-in: #059669;
-  --money-out: #e11d48;
+  --money-in: #047857;
+  --money-out: #d91a45;
 
   /* Shell */
   /* Shaffof fon + blur: orqadagi kontent xira ko'rinadi (Saidakbar qarori, 2026-10-10) */
@@ -94,13 +94,13 @@
   --nav-fg: #3d4457;
   --nav-hover-bg: #f5f7fb;
   --nav-hover-fg: #1c2333;
-  --nav-active-bg: linear-gradient(135deg, var(--primary), #5b63f2);
+  --nav-active-bg: linear-gradient(135deg, #3b66ec, #575fe8);
   --nav-active-fg: #ffffff;
   --nav-active-shadow: 0 8px 20px -4px color-mix(in srgb, var(--primary) 45%, transparent);
   --nav-bar: var(--primary);
   --nav-parent-active-fg: #1e293b;
-  --nav-section-fg: #9aa3b5;
-  --nav-chevron: #a6adbd;
+  --nav-section-fg: #6a748a;
+  --nav-chevron: #8c94a6;
   --nav-hover-anim: nav-squish;
   /* --nav-icon-color atayin berilmagan: light'da har bandning o'z rangi */
   /* Bandlar ikonkasi uchun palitra (eski CRM menyusi ranglari): item.color = "var(--nav-hue-…)" */
@@ -127,7 +127,7 @@
 
   /* Tugmalar */
   --btn-primary-bg: linear-gradient(90deg, #2563eb, #4f46e5, #7c3aed);
-  --btn-primary-bg-hover: linear-gradient(90deg, #3b82f6, #6366f1, #8b5cf6);
+  --btn-primary-bg-hover: linear-gradient(90deg, #1d4ed8, #4338ca, #6d28d9);
   --btn-primary-fg: #ffffff;
   --btn-primary-fg-hover: #ffffff;
   --btn-primary-shadow:
@@ -136,7 +136,7 @@
   --btn-hover-y: 0px;
   /* Danger — primary kabi chapdan o'ngga gradient: red-600 → rose-600 → pink-600 */
   --btn-danger-bg: linear-gradient(90deg, #dc2626, #e11d48, #db2777);
-  --btn-danger-bg-hover: linear-gradient(90deg, #ef4444, #f43f5e, #ec4899);
+  --btn-danger-bg-hover: linear-gradient(90deg, #b91c1c, #be123c, #be185d);
   --btn-danger-shadow: 0 4px 6px -1px rgb(225 29 72 / 0.2), 0 2px 4px -2px rgb(225 29 72 / 0.2);
   --btn-ghost-bg: #f1f5f9;
   --btn-ghost-bg-hover: #e2e8f0;
@@ -158,7 +158,7 @@
   --logo-fg: var(--primary);
   --logo-border: #edeff5;
   --logo-shadow: 0 2px 8px rgb(0 0 0 / 0.05);
-  --avatar-bg: linear-gradient(135deg, var(--primary), #5f3ef0);
+  --avatar-bg: linear-gradient(135deg, #3b66ec, #5b3ae6);
   --avatar-fg: #ffffff;
   --profile-hover-bg: #f4f6fb;
 
@@ -224,7 +224,7 @@
   --label-weight: 500;
   --label-tracking: 0;
   --label-transform: none;
-  --label-fg: #64748b;
+  --label-fg: #607089;
   --eyebrow-font: var(--font-body);
   --eyebrow-size: 10.5px;
   --eyebrow-weight: 700;
@@ -274,8 +274,8 @@
   --accent-foreground: #f8fafc;
   --border: #1e293b;
   --border-soft: #1e293b;
-  --input: #334155;
-  --input-hover: #475569;
+  --input: #5a6a7f;
+  --input-hover: #66758b;
   --placeholder: #64748b;
   --destructive: #f43f5e;
   --destructive-hover: #e11d48;
@@ -328,7 +328,7 @@
   --nav-active-bg: linear-gradient(135deg, #4338ca, #6366f1);
   --nav-active-shadow: 0 8px 20px -4px color-mix(in srgb, var(--primary) 40%, transparent);
   --nav-parent-active-fg: #f1f5f9;
-  --nav-section-fg: #64748b;
+  --nav-section-fg: #7a899f;
   --nav-chevron: #64748b;
   --nav-icon-color: #94a3b8;
 
@@ -380,12 +380,20 @@
     );
     --btn-primary-bg-hover: linear-gradient(
       90deg,
-      oklch(from var(--primary) calc(l + 0.02) c h),
-      oklch(from var(--primary) calc(l + 0) c calc(h + 15)),
-      oklch(from var(--primary) calc(l + 0.02) c calc(h + 30))
+      oklch(from var(--primary) calc(l - 0.08) c h),
+      oklch(from var(--primary) calc(l - 0.1) c calc(h + 15)),
+      oklch(from var(--primary) calc(l - 0.08) c calc(h + 30))
     );
-    --nav-active-bg: linear-gradient(135deg, var(--primary), oklch(from var(--primary) l c calc(h + 12)));
-    --avatar-bg: linear-gradient(135deg, var(--primary), oklch(from var(--primary) l c calc(h + 22)));
+    --nav-active-bg: linear-gradient(
+      135deg,
+      oklch(from var(--primary) calc(l - 0.02) c h),
+      oklch(from var(--primary) calc(l - 0.02) c calc(h + 12))
+    );
+    --avatar-bg: linear-gradient(
+      135deg,
+      oklch(from var(--primary) calc(l - 0.04) c h),
+      oklch(from var(--primary) calc(l - 0.04) c calc(h + 22))
+    );
   }
   [data-brand="ventura"].dark {
     --nav-active-bg: linear-gradient(
@@ -393,5 +401,18 @@
       oklch(from var(--primary) calc(l - 0.15) c calc(h + 12)),
       oklch(from var(--primary) calc(l - 0.05) c calc(h + 14))
     );
+  }
+}
+
+/*
+ * Telefon va planshet (<= 900px, sidebar breakpoint bilan bir xil): teginish maydoni kamida 40px.
+ * Boshqaruv elementlari 44px, kichik tugmalar (jadval qatori, sahifa raqami) 40px, menyu bandlari 40px+.
+ */
+@media (max-width: 900px) {
+  [data-brand="ventura"] {
+    --control-h: 44px;
+    --control-h-sm: 40px;
+    --nav-item-h: 44px;
+    --sub-item-h: 40px;
   }
 }

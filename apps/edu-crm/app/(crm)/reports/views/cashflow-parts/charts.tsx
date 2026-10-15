@@ -219,25 +219,27 @@ export function NetChart({ months, height = 200 }: { months: readonly MonthFlow[
           </div>
         ) : null}
       </div>
-      <table className="sr-only">
-        <caption>{t.netCaption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t.netCaption}</th>
-            <th scope="col">{t.net}</th>
-            <th scope="col">{t.cumulative}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {months.map((m) => (
-            <tr key={m.month}>
-              <th scope="row">{monthName(m.month)}</th>
-              <td>{m.net === null ? "—" : signed(m.net)}</td>
-              <td>{m.cumulative === null ? "—" : signed(m.cumulative)}</td>
+      <div className="sr-only">
+        <table>
+          <caption>{t.netCaption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">{t.netCaption}</th>
+              <th scope="col">{t.net}</th>
+              <th scope="col">{t.cumulative}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {months.map((m) => (
+              <tr key={m.month}>
+                <th scope="row">{monthName(m.month)}</th>
+                <td>{m.net === null ? "—" : signed(m.net)}</td>
+                <td>{m.cumulative === null ? "—" : signed(m.cumulative)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

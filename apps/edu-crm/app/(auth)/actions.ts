@@ -17,6 +17,7 @@ import {
   findStaffById,
   findStaffByPhone,
   getStaffSessionPolicy,
+  isDeviceBlocked,
   notifyStaff,
   onStaffLoginSuccess,
   registerStaffFailure,
@@ -75,7 +76,9 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
   if (user?.lockedAt || user?.archivedAt) return { error: uz.auth.locked };
 
   const meta = await requestMeta();
-  await ensureDeviceId();
+  const deviceId = await ensureDeviceId();
+  // Bloklangan qurilmadan parol ham so'ralmaydi (E6g)
+  if (user && (await isDeviceBlocked(deps.db, user.id, deviceId))) return { error: uz.auth.deviceBlocked };
   const policy = await getStaffSessionPolicy(deps.db);
 
   let result: unknown;
@@ -143,7 +146,12 @@ export async function verifyCodeAction(_prev: FormState, form: FormData): Promis
   }
 
   store.delete(PENDING_COOKIE);
-  await onStaffLoginSuccess(deps, user, { ...meta, deviceId: await ensureDeviceId() });
+  const { blocked } = await onStaffLoginSuccess(deps, user, { ...meta, deviceId: await ensureDeviceId() });
+  if (blocked) {
+    // Kod to'g'ri, lekin qurilma bloklangan: shu so'rov ochgan sessiya yopiladi
+    await auth.api.signOut({ headers: await headers() }).catch(() => {});
+    return { error: uz.auth.deviceBlocked };
+  }
   return { next: "/" };
 }
 

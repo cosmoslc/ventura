@@ -365,7 +365,7 @@ export function DashboardView({
               value={period.year === null ? ALL : String(period.year)}
               onValueChange={(v) => setPeriod({ yil: v })}
             >
-              <SelectTrigger className="h-8 w-32" aria-label={t.year}>
+              <SelectTrigger className="h-(--control-h-sm) w-32" aria-label={t.year}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -381,7 +381,7 @@ export function DashboardView({
               value={period.month === null ? ALL : String(period.month)}
               onValueChange={(v) => setPeriod({ oy: v })}
             >
-              <SelectTrigger className="h-8 w-36" aria-label={t.month}>
+              <SelectTrigger className="h-(--control-h-sm) w-36" aria-label={t.month}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -718,7 +718,7 @@ function FlowCard({ data, period }: { data: DashboardData; period: Period }) {
     [t.statPlan, limit],
   ];
 
-  const seg = "h-7 rounded-btn px-2.5 text-caption font-semibold transition-colors";
+  const seg = "h-7 rounded-btn px-2.5 max-[900px]:h-10 text-caption font-semibold transition-colors";
   return (
     <Panel
       title={t.flowTitle}

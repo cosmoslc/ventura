@@ -168,7 +168,7 @@ export function SearchSelect({
                   }}
                   placeholder={searchPlaceholder}
                   aria-controls={listId}
-                  className={cn(controlClass, "h-9 pl-9")}
+                  className={cn(controlClass, "h-9 pl-9 max-[900px]:h-10")}
                 />
               </div>
             ) : null}
@@ -190,7 +190,7 @@ export function SearchSelect({
                       onClick={() => pick(o.value)}
                       className={cn(
                         menuItemClass,
-                        "h-auto min-h-9 py-1.5 pr-8 relative",
+                        "h-auto min-h-9 max-[900px]:min-h-10 py-1.5 pr-8 relative",
                         i === active && "bg-accent",
                         on && "text-primary-text",
                       )}

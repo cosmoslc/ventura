@@ -48,10 +48,13 @@ export interface ActionOptions {
   approval?: { action: ApprovalKey; input: unknown };
 }
 
-/** Natija turi aniq beriladi (`crmAction<{ id: string }>`), berilmasa — qo'shimcha maydonsiz. */
+/**
+ * Natija turi aniq beriladi (`crmAction<{ id: string }>`), berilmasa — qo'shimcha maydonsiz.
+ * `permission = null` — ruxsat kerak emas, faqat to'liq kirgan xodim (o'z profili ustidagi amallar, E6g).
+ */
 export async function crmAction<T extends object = object>(
   feature: string,
-  permission: Permission | readonly Permission[],
+  permission: Permission | readonly Permission[] | null,
   run: (ctx: ActionCtx) => Promise<ActionResult<NoInfer<T>>>,
   options: ActionOptions = {},
 ): Promise<ActionResult<T>> {
@@ -92,8 +95,10 @@ export async function crmAction<T extends object = object>(
     return { ok: false, error: uz.approvals.sent(request.title), pending: true };
   }
 
-  const needed: readonly Permission[] = typeof permission === "string" ? [permission] : permission;
-  const gate = await requireAny(needed);
-  if (gate) return gate;
+  if (permission !== null) {
+    const needed: readonly Permission[] = typeof permission === "string" ? [permission] : permission;
+    const gate = await requireAny(needed);
+    if (gate) return gate;
+  }
   return run({ tenant, staff, db, branch, audit, requireAny });
 }

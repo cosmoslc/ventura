@@ -220,33 +220,35 @@ export function LineChart({
           </div>
         ) : null}
       </div>
-      <table className="sr-only">
-        <caption>{caption}</caption>
-        <thead>
-          <tr>
-            <th scope="col">Vaqt</th>
-            {series.map((s) => (
-              <th key={s.key} scope="col">
-                {s.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {times.map((t, i) =>
-            i % Math.max(1, Math.round(n / 24)) === 0 || i === n - 1 ? (
-              <tr key={t}>
-                <th scope="row">{formatTime(t)}</th>
-                {series.map((s) => (
-                  <td key={s.key}>
-                    {s.values[i] === null || s.values[i] === undefined ? "—" : formatValue(s.values[i]!)}
-                  </td>
-                ))}
-              </tr>
-            ) : null,
-          )}
-        </tbody>
-      </table>
+      <div className="sr-only">
+        <table>
+          <caption>{caption}</caption>
+          <thead>
+            <tr>
+              <th scope="col">Vaqt</th>
+              {series.map((s) => (
+                <th key={s.key} scope="col">
+                  {s.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {times.map((t, i) =>
+              i % Math.max(1, Math.round(n / 24)) === 0 || i === n - 1 ? (
+                <tr key={t}>
+                  <th scope="row">{formatTime(t)}</th>
+                  {series.map((s) => (
+                    <td key={s.key}>
+                      {s.values[i] === null || s.values[i] === undefined ? "—" : formatValue(s.values[i]!)}
+                    </td>
+                  ))}
+                </tr>
+              ) : null,
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

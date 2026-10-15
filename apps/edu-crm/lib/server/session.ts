@@ -13,6 +13,7 @@ import {
   canAny,
   ensurePositions,
   getStaffSessionPolicy,
+  isDeviceBlocked,
   staffBranchIds,
   staffPermissionLists,
   staffPositions,
@@ -20,7 +21,7 @@ import {
 import { type Tenant, hasFeature } from "@ventura/tenants";
 import { pagePermissions } from "@/lib/access";
 import { type TenantDeps, tenantDeps } from "./deps";
-import { requestOrigin } from "./request";
+import { currentDeviceId, requestOrigin } from "./request";
 import { currentTenant } from "./tenant";
 
 /** Joriy mijoz; domen hech kimga ulanmagan bo'lsa — 404. */
@@ -79,6 +80,11 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     return null;
   }
   if (u.archivedAt) {
+    await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
+    return null;
+  }
+  // Direktor bu qurilmani bloklagan bo'lsa (E6g): ochiq sessiya ham ishlamaydi
+  if (await isDeviceBlocked(deps.db, u.id, await currentDeviceId())) {
     await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
     return null;
   }

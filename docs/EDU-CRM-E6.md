@@ -1,6 +1,10 @@
 # E6 (Sozlamalar va yakun) — bo'shliqlar ro'yxati va reja
 
-2026-10-15 · bosqich E6 · reja: [EDU-CRM-PLAN.md](EDU-CRM-PLAN.md) (E6 bo'limi va 8-bo'lim) · oldingi qism: [EDU-CRM-E5.md](EDU-CRM-E5.md)
+2026-10-15 · bosqich E6 — **yakunlandi** (ADR 0035–0041) · reja: [EDU-CRM-PLAN.md](EDU-CRM-PLAN.md) (E6 bo'limi va 8-bo'lim) · oldingi qism: [EDU-CRM-E5.md](EDU-CRM-E5.md)
+
+**Natija (2026-10-15).** §3 dagi paketlar bajarildi: E6a–E6h, E6i (filial sonlari; filiallarni solishtirish hisoboti
+keyinga), E6j, E6k, E6l. Jadvaldagi `qisman` va `yo'q` qatorlari shu paketlar bilan yopildi; qolganlari §4 "olinmaydi"
+ro'yxatida va docs/EDU-CRM-E5.md dagi keyinga qoldirilgan hisobotlar ro'yxatida.
 
 Bu hujjat E6 boshlanishidan oldin tuzilgan. Eski CRM'ning har admin ko'rinishi (`view`) yangi `apps/edu-crm` bilan
 solishtirilgan. Qabul sharti (EDU-CRM-PLAN E6): har ko'rinish yo yangi tizimda bor, yo "olinmaydi" ro'yxatida sababi
