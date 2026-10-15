@@ -21,11 +21,19 @@ export function monthBounds(month: string, today: string): { start: string; end:
  * foizda. Oy boshida a'zolik bo'lmasa — null (hisoblab bo'lmaydi).
  */
 export function retentionRate(spans: readonly MembershipSpan[], month: string, today: string): number | null {
+  const { base, kept } = retentionCounts(spans, month, today);
+  return base ? Math.round((kept / base) * 100) : null;
+}
+
+/** Retention sanoqlari: oy boshidagi a'zoliklar va ulardan qolganlar (bir nechta o'qituvchini yig'ish uchun) */
+export function retentionCounts(
+  spans: readonly MembershipSpan[],
+  month: string,
+  today: string,
+): { base: number; kept: number } {
   const { start, end } = monthBounds(month, today);
   const atStart = spans.filter((s) => s.enrolledAt < start && (s.leftAt === null || s.leftAt >= start));
-  if (!atStart.length) return null;
-  const kept = atStart.filter((s) => s.leftAt === null || s.leftAt > end).length;
-  return Math.round((kept / atStart.length) * 100);
+  return { base: atStart.length, kept: atStart.filter((s) => s.leftAt === null || s.leftAt > end).length };
 }
 
 /** Davomat — kelgan va kechikkanlar barcha belgilarga nisbatan (bosh paneldagidek), foizda; belgi bo'lmasa null */

@@ -35,6 +35,11 @@ export interface TeacherRow {
   /** Guruhlar bo'limi (E1d) bilan to'ladi; hozircha 0 */
   groups: number;
   students: number;
+  /** Joriy oy retention sanoqlari (profildagi bilan bir xil hisob, ADR 0021) */
+  retentionBase: number;
+  retentionKept: number;
+  /** Joriy oy hisoblangan ulushi (ish haqi hisobidan); ish haqini ko'rish ruxsati bo'lmasa — null */
+  share: number | null;
 }
 
 /** Biriktirilgan ustoz nomi uchun (bo'shatilgan bo'lsa ham) */
@@ -67,6 +72,9 @@ function toRow(t: typeof teachers.$inferSelect): TeacherRow {
     note: t.note,
     groups: 0,
     students: 0,
+    retentionBase: 0,
+    retentionKept: 0,
+    share: null,
   };
 }
 
@@ -84,6 +92,19 @@ export async function listTeachers(db: TenantDb, filter: readonly string[] | nul
     )
     .orderBy(asc(teachers.createdAt), asc(teachers.name));
   return rows.map(toRow);
+}
+
+/** Har o'qituvchi guruhlaridagi a'zolik davrlari (arxivdagi guruhlar ham) — ro'yxatdagi retention uchun */
+export async function teacherSpans(
+  db: TenantDb,
+): Promise<Map<string, { enrolledAt: string; leftAt: string | null }[]>> {
+  const rows = await db
+    .select({ teacherId: groups.teacherId, enrolledAt: groupMemberships.enrolledAt, leftAt: groupMemberships.leftAt })
+    .from(groupMemberships)
+    .innerJoin(groups, eq(groups.id, groupMemberships.groupId));
+  const map = new Map<string, { enrolledAt: string; leftAt: string | null }[]>();
+  for (const r of rows) map.set(r.teacherId, [...(map.get(r.teacherId) ?? []), r]);
+  return map;
 }
 
 export async function teacherRefs(db: TenantDb, ids: string[]): Promise<TeacherRef[]> {
