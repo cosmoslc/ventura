@@ -18,6 +18,7 @@ import { uz } from "@/lib/uz";
 import { restoreEntryAction } from "./actions";
 import type { PaymentRow, StudentGroupOption } from "./data";
 import { EditEntryDialog, VoidDialog } from "./finance-dialogs";
+import { useQuickOpen } from "../use-quick-open";
 import { type MethodOption, PaymentDialog, type PickStudent } from "./payment-dialog";
 import type { FinancePerms } from "./perms";
 
@@ -55,6 +56,7 @@ export function PaymentsView({
   const [group, setGroup] = React.useState(ALL);
   const [query, setQuery] = React.useState("");
   const [payOpen, setPayOpen] = React.useState(false);
+  useQuickOpen(() => setPayOpen(true), perms.create);
   const [voiding, setVoiding] = React.useState<PaymentRow | null>(null);
   const [editing, setEditing] = React.useState<PaymentRow | null>(null);
   const [, startTransition] = React.useTransition();

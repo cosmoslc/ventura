@@ -16,6 +16,7 @@ import { uz } from "@/lib/uz";
 import type { FinanceSettings } from "@/lib/server/finance";
 import { saveFinanceSettingsAction, savePaymentMethodAction } from "../payments/actions";
 import type { MethodOption } from "../payments/payment-dialog";
+import { ReceiptCard } from "./receipt-card";
 
 const t = uz.financeSettings;
 
@@ -24,11 +25,14 @@ export function PaymentSettingsView({
   settings,
   canMethods,
   canBilling,
+  receipt,
 }: {
   methods: MethodOption[];
   settings: FinanceSettings;
   canMethods: boolean;
   canBilling: boolean;
+  /** Chek sozlamalari kartasi (E6b) uchun ma'lumot */
+  receipt: React.ComponentProps<typeof ReceiptCard>;
 }) {
   return (
     <div className="space-y-6">
@@ -37,6 +41,7 @@ export function PaymentSettingsView({
         <MethodsCard methods={methods} canEdit={canMethods} />
         <BillingCard settings={settings} canEdit={canBilling} />
       </div>
+      <ReceiptCard {...receipt} />
     </div>
   );
 }

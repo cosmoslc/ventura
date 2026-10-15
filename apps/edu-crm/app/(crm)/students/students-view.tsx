@@ -40,6 +40,7 @@ import { saveStudentFieldsAction } from "./actions";
 import { type BulkPerms, StudentsBulkBar } from "./bulk-actions";
 import type { StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
+import { useQuickOpen } from "../use-quick-open";
 import { StudentForm } from "./student-form";
 
 const PAGE_SIZES = [25, 50, 100, 200] as const;
@@ -108,6 +109,7 @@ export function StudentsView({
   const pageSize = React.useSyncExternalStore(subscribePageSize, storedPageSize, () => 50);
   const [editing, setEditing] = React.useState<StudentRow | null>(null);
   const [formOpen, setFormOpen] = React.useState(false);
+  useQuickOpen(() => openForm(null), perms.create);
   const [, startTransition] = React.useTransition();
   const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
 

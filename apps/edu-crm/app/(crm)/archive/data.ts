@@ -1,8 +1,10 @@
 import "server-only";
 import { and, desc, inArray, isNotNull, isNull, or } from "drizzle-orm";
+import type { StaffAccess } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
 import { courses, leads, teachers, users } from "@ventura/db/schema/tenant";
 import { archivedGroups } from "../groups/data";
+import { type ArchivedStaffRow, archivedStaff } from "../staff/data";
 import { type ArchivedStudentRow, archivedStudents } from "../students/data";
 
 export interface ArchivedItem {
@@ -20,6 +22,8 @@ export interface ArchiveData {
   groups: ArchivedItem[];
   /** O'chirilgan lidlar (E4b); bo'lim o'chiq bo'lsa — bo'sh */
   leads: ArchivedItem[];
+  /** Bo'shatilgan xodimlar (E6e); ko'rish huquqi bo'lmasa — bo'sh */
+  staff: ArchivedStaffRow[];
 }
 
 const localPhone = (p: string) => p.replace(/\D/g, "").slice(-9);
@@ -29,8 +33,10 @@ export async function archiveData(
   db: TenantDb,
   filter: readonly string[] | null,
   withLeads = false,
+  /** Xodimlar tabini ko'ra oladigan xodim; yo'q bo'lsa tab bo'sh */
+  staffViewer: { access: StaffAccess } | null = null,
 ): Promise<ArchiveData> {
-  const [st, cs, ts, gs, ls] = await Promise.all([
+  const [st, cs, ts, gs, ls, sf] = await Promise.all([
     archivedStudents(db, filter),
     db
       .select()
@@ -55,12 +61,14 @@ export async function archiveData(
           .where(and(isNotNull(leads.archivedAt), filter ? inArray(leads.branchId, [...filter]) : undefined))
           .orderBy(desc(leads.archivedAt))
       : Promise.resolve([]),
+    staffViewer ? archivedStaff(db, staffViewer, filter) : Promise.resolve([]),
   ]);
   const actorIds = [...new Set(st.flatMap((s) => (s.archivedBy ? [s.archivedBy] : [])))];
   const actors = actorIds.length
     ? await db.select({ id: users.id, name: users.name }).from(users).where(inArray(users.id, actorIds))
     : [];
   return {
+    staff: sf,
     students: st.map((s) => ({ ...s, archivedByName: actors.find((a) => a.id === s.archivedBy)?.name ?? null })),
     courses: cs.map((c) => ({
       id: c.id,

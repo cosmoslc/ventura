@@ -22,6 +22,8 @@ import {
   type LucideIcon,
   MessageSquareText,
   Receipt,
+  ScrollText,
+  Settings,
   Settings2,
   Target,
   UserCheck,
@@ -50,6 +52,8 @@ import { ProfileButton, Topbar } from "@ventura/ui/topbar";
 import { uz } from "@/lib/uz";
 import { signOutAction } from "../(auth)/actions";
 import { BranchPicker, type PickerBranch } from "./branch-picker";
+import { NotificationBell } from "./notifications/notification-bell";
+import { type QuickAction, SearchPalette } from "./search/search-palette";
 
 /** Bo'lim kaliti → menyu ikonkasi va rangi (light rejim; dark'da --nav-icon-color). Manifestda yo'q bo'lsa — umumiy. */
 const ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
@@ -78,9 +82,11 @@ const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/positions": { icon: ShieldCheck, hue: "violet" },
   "/staff": { icon: IdCard, hue: "sky" },
   "/staff-attendance": { icon: UserCheck, hue: "teal" },
+  "/settings": { icon: Settings, hue: "blue" },
   "/payment-settings": { icon: Settings2, hue: "amber" },
   "/money-audit": { icon: History, hue: "violet" },
   "/archive": { icon: Archive, hue: "slate" },
+  "/activity": { icon: ScrollText, hue: "blue" },
 };
 
 /** Bo'lim ichidagi tartib (eski tizimdagi "Ofis" menyusi): ro'yxatda yo'qlari oxirida, manifest tartibida */
@@ -91,8 +97,10 @@ const ITEM_ORDER = [
   "/staff-attendance",
   "/rooms",
   "/holidays",
+  "/settings",
   "/payment-settings",
   "/archive",
+  "/activity",
 ];
 const itemRank = (href: string) => {
   const i = ITEM_ORDER.indexOf(href);
@@ -175,6 +183,8 @@ export function CrmShell({
   approvals,
   reportMenu,
   branches,
+  unreadNotifications,
+  quickActions,
   children,
 }: {
   staff: { name: string; roleLabel: string };
@@ -186,12 +196,17 @@ export function CrmShell({
   reportMenu: NavChild[];
   /** Filial tanlovi: ko'p filialli rejimda va xodimga bittadan ortiq filial ochiq bo'lsa */
   branches: { options: PickerBranch[]; selected: string } | null;
+  /** Qo'ng'iroqdagi o'qilmagan bildirishnomalar soni (E6d) */
+  unreadNotifications: number;
+  /** Qidiruv oynasidagi tezkor amallar: xodimga ruxsat etilganlari (E6h) */
+  quickActions: QuickAction[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [searchOpen, setSearchOpen] = React.useState(false);
   const navSections = React.useMemo(() => sections(nav, approvals, reportMenu), [nav, approvals, reportMenu]);
   const hrefs = React.useMemo(() => navSections.flatMap((s) => s.items.flatMap(leaves)), [navSections]);
   // Bosilgan band darhol aktiv ko'rinadi; sahifa serverdan kelguncha kontent xiralashadi (panel bilan bir xil)
@@ -224,8 +239,11 @@ export function CrmShell({
         brandName={brand.name}
         brandMark={brand.mark}
         brandSubtitle={uz.app.subtitle}
+        searchPlaceholder={uz.search.open}
+        onSearchOpen={() => setSearchOpen(true)}
         leading={branches ? <BranchPicker options={branches.options} selected={branches.selected} /> : null}
       >
+        <NotificationBell initial={unreadNotifications} />
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -247,6 +265,7 @@ export function CrmShell({
           </DropdownMenuContent>
         </DropdownMenu>
       </Topbar>
+      <SearchPalette open={searchOpen} onOpenChange={setSearchOpen} quick={quickActions} />
 
       <div className="flex">
         <Sidebar

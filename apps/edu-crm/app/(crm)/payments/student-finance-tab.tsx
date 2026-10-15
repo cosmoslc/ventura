@@ -1,6 +1,6 @@
 "use client";
 
-import { Coins, Pencil, Printer, RotateCcw, Scale, Trash2, Wallet } from "lucide-react";
+import { Pencil, Printer, RotateCcw, Scale, Trash2, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -29,14 +29,14 @@ const KIND_TONE = { payment: "success", refund: "danger", discount: "info", corr
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
 
 /**
- * Profil tablari ustidagi doimiy kartalar: balans, coin va o'tgan oydan qarz (eski tizimdagi uchta ko'rsatkich).
- * Coin tizimi birinchi versiyaga kirmaydi (EDU-CRM-PLAN, 10-qaror) — karta joyida turadi, qiymati 0.
+ * Profil tablari ustidagi doimiy kartalar: balans va o'tgan oydan qarz. Coin kartasi yo'q — coin tizimi
+ * birinchi versiyaga kirmaydi (EDU-CRM-PLAN, 10-qaror); tizim qo'shilganda karta qaytadi.
  */
 export function StudentMoneyCards({ summary, currentMonth }: { summary: LedgerSummary; currentMonth: string }) {
   const past = pastDebt(summary, currentMonth);
   const shown = past.months.slice(0, 2).map(formatMonth).join(", ");
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2">
       <StatCard
         icon={<Wallet />}
         tone={summary.balance < 0 ? 3 : 2}
@@ -44,7 +44,6 @@ export function StudentMoneyCards({ summary, currentMonth }: { summary: LedgerSu
         value={`${signedMoney(summary.balance)} ${uz.common.som}`}
         hint={summary.balance < 0 ? t.debt : summary.balance > 0 ? t.credit : t.balanceHint}
       />
-      <StatCard icon={<Coins />} tone={1} label={uz.students.cardCoins} value="0" hint={uz.students.cardCoinsHint} />
       <StatCard
         icon={<Scale />}
         tone={past.amount > 0 ? 3 : 2}

@@ -2,6 +2,7 @@ import "server-only";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { branches, courses, leadEvents, leadNotes, leadStages, leads, settings } from "@ventura/db/schema/tenant";
+import { formatPhone } from "@ventura/auth/policy";
 import { tenantAudit } from "@ventura/security";
 import { listStages } from "@/app/(crm)/leads/data";
 import { APPLY_FORM_KEY, APPLY_SOURCE, type ApplyForm, DEFAULT_APPLY_FORM, parseApplyForm } from "@/lib/apply-form";
@@ -13,6 +14,8 @@ import {
   missingRequired,
   parseFormFields,
 } from "@/lib/form-fields";
+import { applyDraft } from "@/lib/notifications";
+import { notify, staffWithPermission } from "./notify";
 
 /*
  * Tashqi ariza (E4c, ADR 0026): sahifa uchun ma'lumot va arizani yozish. Xodim yo'q — bazaga mijoz ulanishi bilan
@@ -112,7 +115,7 @@ export async function submitApplication(
 
   // Shu telefonli ochiq lid — yangi lid emas, izoh
   const [open] = await db
-    .select({ id: leads.id })
+    .select({ id: leads.id, branchId: leads.branchId, assignedTo: leads.assignedTo })
     .from(leads)
     .innerJoin(leadStages, eq(leadStages.id, leads.stageId))
     .where(and(eq(leads.phone, phone), isNull(leads.archivedAt), eq(leadStages.kind, "open")))
@@ -137,6 +140,9 @@ export async function submitApplication(
       ...meta,
       metadata: { repeat: true },
     });
+    // Mas'ul bor bo'lsa — o'sha, aks holda filial xodimlari (E6d)
+    const who = open.assignedTo ? [open.assignedTo] : await staffWithPermission(db, ["leads.view"], open.branchId);
+    await notify(db, who, applyDraft({ id: open.id, name: app.name, phone: formatPhone(phone) }, true));
     return { ok: true, leadId: open.id, repeat: true };
   }
 
@@ -172,5 +178,8 @@ export async function submitApplication(
     ...meta,
     metadata: { name: app.name, branchId },
   });
+  // Filial xodimlariga (leads.view) va direktorlarga bildirishnoma (E6d)
+  const who = await staffWithPermission(db, ["leads.view"], branchId);
+  await notify(db, who, applyDraft({ id: leadId, name: app.name, phone: formatPhone(phone) }, false));
   return { ok: true, leadId, repeat: false };
 }

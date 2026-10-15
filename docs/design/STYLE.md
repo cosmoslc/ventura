@@ -458,7 +458,9 @@ Qoidalar:
 - 68px (≤900px: 56px), yopishqoq, fon `--topbar-bg` + `blur(14px)`, pastda chegara.
 - Chapda brend bloki — sidebar kengligida (250 / 74px), o'ngida chegara: `Logo`.
 - So'ng menyu tugmasi (`icon`), ixtiyoriy `leading` bloki (masalan edu-crm filial tanlovi), qidiruv (38px, kenglik 224px, ≥1024px: 288px, o'ngda `Ctrl K`), o'ng guruh (oraliq 8px): bildirishnoma, `ThemeToggle`, profil.
-- Parametrlar: `brandName`, `brandMark`, `brandSubtitle`, `searchPlaceholder`, `leading`, `collapsed`, `onToggleSidebar`.
+- Parametrlar: `brandName`, `brandMark`, `brandSubtitle`, `searchPlaceholder`, `onSearchOpen`, `leading`, `collapsed`, `onToggleSidebar`.
+- `onSearchOpen` berilsa qidiruv maydoni tugmaga aylanadi (bosilsa shu chaqiriladi, ≥640px) va tor ekranda qidiruv ikonka tugmasi chiqadi; berilmasa — oddiy matn maydoni (panel).
+- `CommandPalette` (`command-palette.tsx`, Ctrl K): tepada markazlashgan oyna (≤40rem, `--z-modal`), maydon + guruhlangan natijalar; ↑ ↓ tanlash, Enter ochish, Esc yopish; tanlangan band `bg-secondary`. Ilova ma'lumotni (`groups`) va `onSelect` ni beradi.
 - `ProfileButton`: 36px avatar (`--avatar-bg`), ism 13px / 700, rol 11px, strelka; hover'da `--profile-hover-bg`.
 
 ### 11.20 Sidebar — `sidebar.tsx`

@@ -363,7 +363,6 @@ export function TeachersView({
                       <Th>{uz.teachers.colStudents}</Th>
                       <Th>{uz.teachers.colSalary}</Th>
                       <Th>{uz.teachers.colRetention}</Th>
-                      <Th>{uz.teachers.colRating}</Th>
                       <Th className="text-right">{uz.common.actions}</Th>
                     </tr>
                   </THead>
@@ -392,7 +391,6 @@ export function TeachersView({
                             ? `${Math.round((t.retentionKept / t.retentionBase) * 100)}%`
                             : uz.teachers.noData}
                         </Td>
-                        <Td className="text-muted-foreground">{uz.teachers.noData}</Td>
                         <Td className="text-right">{menu(t)}</Td>
                       </Tr>
                     ))}
@@ -407,7 +405,6 @@ export function TeachersView({
                       <Th>{uz.teachers.colDays}</Th>
                       <Th>{uz.teachers.colHours}</Th>
                       <Th>{uz.teachers.colSalary}</Th>
-                      <Th>{uz.teachers.colRating}</Th>
                       <Th className="text-right">{uz.common.actions}</Th>
                     </tr>
                   </THead>
@@ -443,7 +440,6 @@ export function TeachersView({
                           )}
                         </Td>
                         <Td className="font-semibold text-foreground">{salaryLabel(t)}</Td>
-                        <Td className="text-muted-foreground">{uz.teachers.noData}</Td>
                         <Td className="text-right">{menu(t)}</Td>
                       </Tr>
                     ))}

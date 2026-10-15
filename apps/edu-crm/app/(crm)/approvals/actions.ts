@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { approvalRequests } from "@ventura/db/schema/tenant";
 import { tenantAudit } from "@ventura/security";
+import { approvalDecidedDraft } from "@/lib/notifications";
 import type { ActionResult } from "@/lib/server/action";
 import { APPROVAL_ACTIONS, isApprovalKey } from "@/lib/server/approval-registry";
 import { getTenantDb } from "@/lib/server/deps";
+import { notify } from "@/lib/server/notify";
 import { requestMeta } from "@/lib/server/request";
 import { getStaff } from "@/lib/server/session";
 import { currentTenant } from "@/lib/server/tenant";
@@ -81,6 +83,8 @@ export async function approveRequestAction(id: unknown): Promise<ActionResult<{ 
   }
   if (!result.ok) return reopen(result.error);
   await c.audit("approval.approve", claimed.id, { action: claimed.action, title: claimed.title });
+  // So'rov egasiga bildirishnoma (E6d)
+  await notify(c.db, [claimed.requestedBy], approvalDecidedDraft(true, claimed.title, c.staff.name), c.staff.id);
   refresh();
   return { ok: true, title: claimed.title };
 }
@@ -100,9 +104,20 @@ export async function rejectRequestAction(input: unknown): Promise<ActionResult>
       decisionNote: parsed.data.note || null,
     })
     .where(and(eq(approvalRequests.id, parsed.data.id), eq(approvalRequests.status, "pending")))
-    .returning({ id: approvalRequests.id, action: approvalRequests.action });
+    .returning({
+      id: approvalRequests.id,
+      action: approvalRequests.action,
+      title: approvalRequests.title,
+      requestedBy: approvalRequests.requestedBy,
+    });
   if (!row) return { ok: false, error: t.notPending };
   await c.audit("approval.reject", row.id, { action: row.action, note: parsed.data.note || null });
+  await notify(
+    c.db,
+    [row.requestedBy],
+    approvalDecidedDraft(false, row.title, c.staff.name, parsed.data.note),
+    c.staff.id,
+  );
   refresh();
   return { ok: true };
 }

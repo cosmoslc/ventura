@@ -11,7 +11,8 @@ import {
   planMonths,
   shortMonth,
 } from "@/lib/cashflow-views";
-import { money } from "@/lib/format";
+import { formatDate, money } from "@/lib/format";
+import { cumulativeBalance, openingSummary } from "@/lib/opening-balance";
 import {
   type ReportData,
   type ReportRow,
@@ -26,6 +27,7 @@ import { uz } from "@/lib/uz";
 import type { BranchContext } from "./branch";
 import { loadFlows } from "./dashboard";
 import { chargesOf } from "./finance-reports";
+import { balanceStreams, getOpeningBalances } from "./opening-balance";
 import type { LoadArgs } from "./reports";
 
 /*
@@ -46,12 +48,13 @@ export interface CashflowViewData {
 }
 
 export async function cashflow({ db, filter, period, today }: LoadArgs): Promise<ReportData> {
-  const flows = await loadFlows(db, filter);
+  const [flows, openings] = await Promise.all([loadFlows(db, filter), getOpeningBalances(db)]);
   const year = period.year ?? Number(today.slice(0, 4));
-  const table = cashflowTable(flows, year, today, {
-    ...t.cashflow,
-    months: uz.months.map(shortMonth),
-  });
+  // Boshlang'ich qoldiq (E6j): yig'ma qoldiq shundan boshlanadi; qoldiq kiritilmagan bo'lsa — yil boshidan
+  const streams = await balanceStreams(db, filter, openings, flows);
+  const balance = streams.length ? cumulativeBalance(streams, year, today) : undefined;
+  const opening = openingSummary(openings, filter ?? Object.keys(openings));
+  const table = cashflowTable(flows, year, today, { ...t.cashflow, months: uz.months.map(shortMonth) }, balance);
   const total = (label: string) => {
     const row = table.rows.find((r) => r.cells.label === label);
     return (row?.cells.total as number | null) ?? 0;
@@ -77,10 +80,12 @@ export async function cashflow({ db, filter, period, today }: LoadArgs): Promise
       },
     ],
     table,
-    note: t.cashflow.note,
+    note: opening
+      ? `${t.cashflow.note} ${t.cashflow.opening.note(money(opening.amount), formatDate(opening.date), opening.count)}`
+      : t.cashflow.note,
     view: {
       year,
-      months: monthlyFlows(flows, year, today),
+      months: monthlyFlows(flows, year, today, balance),
       breakdown: outflowBreakdown(flows, year, today, t.cashflow),
     } satisfies CashflowViewData,
   };

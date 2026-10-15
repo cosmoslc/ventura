@@ -18,7 +18,9 @@ import { Notice } from "@ventura/ui/notice";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
+import { statusReasonCategory, studentArchiveCategory } from "@/lib/reasons";
 import { uz } from "@/lib/uz";
+import { ReasonField, useReasonState } from "../reason-field";
 import type { PickerBranch } from "../branch-picker";
 import { archiveStudentAction, setStudentStatusAction, transferStudentAction } from "./actions";
 import type { StudentRow } from "./data";
@@ -77,11 +79,16 @@ function StatusModal({
     }
   }
 
+  // Muzlatish va qaytarishda sabab markaz ro'yxatidan tanlanadi (ADR 0035)
+  const reasonCategory = status === student.status ? null : statusReasonCategory(status);
+  const reasonState = useReasonState(reasonCategory);
+
   // Muzlatishga va undan chiqarishga students.freeze kerak
   const allowed = (s: StudentStatus) =>
     s === student.status || (s === "paused" || student.status === "paused" ? perms.freeze : perms.edit);
 
   function save() {
+    if (reasonState.active && !reason.trim()) return setError(uz.reasons.required);
     startTransition(async () => {
       const res = await setStudentStatusAction({ id: student.id, status, reason });
       if (!res.ok && res.pending) {
@@ -116,7 +123,14 @@ function StatusModal({
       <div className="space-y-4">
         <div>
           <Label>{uz.students.statusLabel}</Label>
-          <Select value={status} onValueChange={(v) => setStatus(v as StudentStatus)}>
+          <Select
+            value={status}
+            onValueChange={(v) => {
+              setStatus(v as StudentStatus);
+              setReason(v === student.status ? (student.statusNote ?? "") : "");
+              setError(null);
+            }}
+          >
             <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
@@ -129,17 +143,17 @@ function StatusModal({
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label htmlFor="status-reason">{uz.students.statusReason}</Label>
-          <Textarea
-            id="status-reason"
-            rows={3}
-            maxLength={500}
-            placeholder={uz.students.statusReasonPlaceholder}
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-          />
-        </div>
+        <ReasonField
+          id="status-reason"
+          category={reasonCategory}
+          value={reason}
+          onChange={(v) => {
+            setReason(v);
+            setError(null);
+          }}
+          label={uz.students.statusReason}
+          placeholder={uz.students.statusReasonPlaceholder}
+        />
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </div>
     </Modal>
@@ -160,9 +174,13 @@ function ArchiveModal({
 }) {
   const router = useRouter();
   const [reason, setReason] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
+  // Sinovdagi va faol o'quvchi uchun sabablar alohida (ADR 0035)
+  const reasonState = useReasonState(studentArchiveCategory(student.status));
 
   function archive() {
+    if (reasonState.active && !reason.trim()) return setError(uz.reasons.required);
     startTransition(async () => {
       const res = await archiveStudentAction({ id: student.id, reason });
       if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
@@ -192,15 +210,18 @@ function ArchiveModal({
         </>
       }
     >
-      <Label htmlFor="archive-reason">{uz.students.archiveReason}</Label>
-      <Textarea
+      <ReasonField
         id="archive-reason"
-        rows={3}
-        maxLength={500}
-        placeholder={uz.students.archiveReasonPlaceholder}
+        category={studentArchiveCategory(student.status)}
         value={reason}
-        onChange={(e) => setReason(e.target.value)}
+        onChange={(v) => {
+          setReason(v);
+          setError(null);
+        }}
+        label={uz.students.archiveReason}
+        placeholder={uz.students.archiveReasonPlaceholder}
       />
+      {error ? <FieldHint error>{error}</FieldHint> : null}
     </Modal>
   );
 }

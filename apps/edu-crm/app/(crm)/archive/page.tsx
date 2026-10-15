@@ -12,7 +12,13 @@ export const metadata = { title: uz.archive.title };
 export default async function ArchivePage() {
   const { tenant, staff } = await requirePage("students", "/archive");
   const branch = await getBranchContext();
-  const data = await archiveData(getTenantDb(tenant), branch.filter, await hasFeature(tenant, "leads"));
+  const canStaff = can(staff.access, "staff.delete");
+  const data = await archiveData(
+    getTenantDb(tenant),
+    branch.filter,
+    await hasFeature(tenant, "leads"),
+    canStaff ? staff : null,
+  );
   return (
     <ArchiveView
       data={data}

@@ -3,17 +3,24 @@
 import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { courses, groups, leadStages, leads, students, teachers } from "@ventura/db/schema/tenant";
+import { notifyDirectors } from "@ventura/auth/staff";
+import { can } from "@ventura/auth/staff/policy";
+import { courses, groups, leadStages, leads, students, teachers, users } from "@ventura/db/schema/tenant";
+import { escapeHtml } from "@ventura/integrations";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
+import { tenantDeps } from "@/lib/server/deps";
 import { uz } from "@/lib/uz";
+import { archivedStaff } from "../staff/data";
 
 /*
  * Arxiv (eski tizimdagi "Arxiv & Chiqindilar qutisi"): tiklash — archive.restore, butunlay o'chirish —
  * archive.permanent_delete (faqat o'quvchi; bog'liq yozuvi bo'lsa baza rad etadi). Filial cheklovi amal qiladi.
+ * Xodimni tiklash (E6e) qo'shimcha "Xodimni bo'shatish" (staff.delete) ruxsatini talab qiladi — bo'shatish bilan bir xil;
+ * lavozim va filiallar saqlangan, shuning uchun faqat arxiv belgisi olinadi (telefon baza bo'yicha yagona, band bo'lmaydi).
  */
 
 const FEATURE = "students";
-const input = z.object({ kind: z.enum(["student", "course", "teacher", "group", "lead"]), id: z.uuid() });
+const input = z.object({ kind: z.enum(["student", "course", "teacher", "group", "lead", "staff"]), id: z.uuid() });
 
 /** Umumiy (filialsiz) kurs hammaga ochiq, qolganlari — xodimning filiallarida */
 const inScope = (ctx: ActionCtx, branchId: string | null) =>
@@ -92,6 +99,22 @@ export async function restoreArchivedAction(raw: unknown): Promise<ActionResult>
       if (!c || !t) return { ok: false, error: uz.archive.groupDepsArchived };
       await db.update(groups).set({ archivedAt: null }).where(eq(groups.id, id));
       await audit("group.restore", { type: "group", id }, { name: g.name });
+    } else if (kind === "staff") {
+      if (!can(ctx.staff.access, "staff.delete")) return { ok: false, error: uz.common.forbidden };
+      const scope = ctx.staff.scope === "all" ? null : ctx.staff.scope;
+      const row = (await archivedStaff(db, ctx.staff, scope)).find((r) => r.id === id);
+      if (!row) return { ok: false, error: uz.common.gone };
+      if (!row.manageable) return { ok: false, error: uz.common.forbidden };
+      await db.update(users).set({ archivedAt: null }).where(eq(users.id, id));
+      await audit("staff.restore", { type: "user", id }, { name: row.name });
+      const deps = tenantDeps(ctx.tenant);
+      if (deps) {
+        await notifyDirectors(
+          deps,
+          `♻️ <b>Xodim tiklandi</b>: ${escapeHtml(row.name)}\nKim: ${escapeHtml(ctx.staff.name)}`,
+        );
+      }
+      revalidatePath("/staff");
     } else {
       const [t] = await db
         .select()

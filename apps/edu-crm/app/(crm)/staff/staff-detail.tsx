@@ -25,6 +25,7 @@ export function StaffDetail({
   selectedBranch,
   fields,
   perms,
+  canViewLog = false,
 }: {
   row: StaffRow;
   positions: PositionOption[];
@@ -32,6 +33,8 @@ export function StaffDetail({
   selectedBranch: string;
   fields: FormField[];
   perms: StaffPerms;
+  /** "Tizim harakatlari jurnali" ruxsati: xodimning faoliyatiga havola */
+  canViewLog?: boolean;
 }) {
   const router = useRouter();
   const [formOpen, setFormOpen] = React.useState(false);
@@ -71,6 +74,11 @@ export function StaffDetail({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {canViewLog ? (
+            <Button variant="ghost" asChild>
+              <Link href={`/activity?actor=${row.id}`}>{uz.activityLog.staffLink}</Link>
+            </Button>
+          ) : null}
           {canEdit ? (
             <Button variant="ghost" onClick={() => setFormOpen(true)}>
               <Pencil /> {uz.staff.edit}

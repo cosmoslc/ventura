@@ -217,31 +217,42 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
   );
 }
 
-export async function archiveGroupAction(id: unknown): Promise<ActionResult> {
+export async function archiveGroupAction(input: unknown): Promise<ActionResult> {
   return crmAction(
     FEATURE,
     "groups.delete",
     async (ctx) => {
-      const parsed = uuid.safeParse(id);
+      // Eski tasdiq so'rovlarida kirish faqat id (matn); yangisida — { id, reason } (ADR 0035)
+      const parsed = z
+        .union([
+          uuid.transform((id) => ({ id, reason: "" })),
+          z.object({ id: uuid, reason: z.string().trim().max(500).default("") }),
+        ])
+        .safeParse(input);
       if (!parsed.success) return { ok: false, error: uz.common.invalid };
-      const g = await loadGroup(ctx, parsed.data);
+      const { reason } = parsed.data;
+      const g = await loadGroup(ctx, parsed.data.id);
       if (!g) return { ok: false, error: uz.common.gone };
       // Guruh arxivga o'tadi, a'zoliklar shu kun bilan yopiladi; to'lov va davomat tarixi saqlanadi
       const closed = await ctx.db.transaction(async (tx) => {
         await tx.update(groups).set({ archivedAt: new Date() }).where(eq(groups.id, g.id));
         const r = await tx
           .update(groupMemberships)
-          .set({ status: "left", leftAt: todayTashkent(), leftReason: uz.groups.archivedGroupReason })
+          .set({ status: "left", leftAt: todayTashkent(), leftReason: reason || uz.groups.archivedGroupReason })
           .where(and(eq(groupMemberships.groupId, g.id), isNull(groupMemberships.leftAt)))
           .returning({ id: groupMemberships.id });
         return r.length;
       });
-      await ctx.audit("group.archive", { type: "group", id: g.id }, { name: g.name, closedMemberships: closed });
+      await ctx.audit(
+        "group.archive",
+        { type: "group", id: g.id },
+        { name: g.name, closedMemberships: closed, ...(reason ? { reason } : {}) },
+      );
       refresh(g.id);
       revalidatePath("/archive");
       return { ok: true };
     },
-    { approval: { action: "groups.archive", input: id } },
+    { approval: { action: "groups.archive", input } },
   );
 }
 

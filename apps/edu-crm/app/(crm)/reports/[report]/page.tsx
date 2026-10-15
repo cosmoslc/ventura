@@ -9,10 +9,12 @@ import { getTenantDb } from "@/lib/server/deps";
 import { getLeaveReasons } from "@/lib/server/leave-reasons";
 import { todayTashkent } from "@/lib/server/memberships";
 import { PLAN_EDIT, planEditorRows } from "@/lib/server/cashflow-reports";
+import { getOpeningBalances } from "@/lib/server/opening-balance";
 import { REPORTS, isReportKey, reportPeriod } from "@/lib/server/reports";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { LeaveReasonsButton } from "../leave-reasons-button";
+import { OpeningBalanceEditor } from "../opening-balance-editor";
 import { PlanEditor } from "../plan-editor";
 import { ReportFilters } from "../report-filters";
 import { REPORT_VIEWS } from "../views";
@@ -56,6 +58,11 @@ export default async function ReportPage({
     report === "plan" && period.year !== null && canAny(staff.access, PLAN_EDIT)
       ? await planEditorRows(getTenantDb(tenant), branch, period.year)
       : null;
+  // Boshlang'ich qoldiq (E6j): hisobotni ko'radigan xodim kiritadi
+  const openings =
+    report === "cashflow" && canAny(staff.access, PLAN_EDIT) && branch.options.length
+      ? await getOpeningBalances(getTenantDb(tenant))
+      : null;
   const leaveReasons =
     report === "leaves" && can(staff.access, "groups.edit") ? await getLeaveReasons(getTenantDb(tenant)) : null;
 
@@ -80,6 +87,8 @@ export default async function ReportPage({
         actions={
           editor && period.year !== null ? (
             <PlanEditor year={period.year} rows={editor} branches={branch.options} selectedBranch={branch.selected} />
+          ) : openings ? (
+            <OpeningBalanceEditor branches={branch.options} openings={openings} today={today} />
           ) : leaveReasons ? (
             <LeaveReasonsButton reasons={leaveReasons} />
           ) : null

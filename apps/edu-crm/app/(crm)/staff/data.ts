@@ -1,8 +1,16 @@
 import "server-only";
-import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, ne } from "drizzle-orm";
 import type { BranchScope, StaffAccess } from "@ventura/auth/staff/policy";
 import type { TenantDb } from "@ventura/db";
-import { type SalaryType, positions, settings, userBranches, userPositions, users } from "@ventura/db/schema/tenant";
+import {
+  type SalaryType,
+  auditEvents,
+  positions,
+  settings,
+  userBranches,
+  userPositions,
+  users,
+} from "@ventura/db/schema/tenant";
 import { DEFAULT_STAFF_FIELDS, STAFF_FIELDS_KEY, type FormField, parseFormFields } from "@/lib/form-fields";
 
 export interface StaffPosition {
@@ -127,6 +135,75 @@ export async function listStaff(
         mustChangePassword: u.mustChangePassword,
         self: u.id === viewer.id,
         manageable: withinAccess(viewer.access, [...permissions]),
+      };
+    })
+    .filter((r) => staffVisible(filter, r.branchIds));
+}
+
+export interface ArchivedStaffRow {
+  id: string;
+  name: string;
+  /** 9 ta mahalliy raqam */
+  phone: string;
+  positions: string[];
+  branchIds: string[];
+  archivedAt: string;
+  /** Bo'shatgan xodim (jurnaldagi oxirgi `staff.archive` yozuvidan) */
+  archivedByName: string | null;
+  /** Joriy xodim tiklay oladimi (o'zidan kuchliroq ruxsatli xodimni emas) */
+  manageable: boolean;
+}
+
+/** Bo'shatilgan xodimlar (arxiv tabi); direktorlar yo'q. `filter` — filial tanlovi, listStaff bilan bir xil qoida */
+export async function archivedStaff(
+  db: TenantDb,
+  viewer: { access: StaffAccess },
+  filter: readonly string[] | null,
+): Promise<ArchivedStaffRow[]> {
+  const rows = await db
+    .select()
+    .from(users)
+    .where(and(ne(users.role, "director"), isNotNull(users.archivedAt)))
+    .orderBy(desc(users.archivedAt));
+  if (!rows.length) return [];
+  const ids = rows.map((u) => u.id);
+  const [pos, br, who] = await Promise.all([
+    db
+      .select({
+        userId: userPositions.userId,
+        name: positions.name,
+        permissions: positions.permissions,
+      })
+      .from(userPositions)
+      .innerJoin(positions, eq(positions.id, userPositions.positionId))
+      .where(inArray(userPositions.userId, ids))
+      .orderBy(asc(positions.createdAt)),
+    db
+      .select({ userId: userBranches.userId, branchId: userBranches.branchId })
+      .from(userBranches)
+      .where(inArray(userBranches.userId, ids)),
+    db
+      .select({ targetId: auditEvents.targetId, actorName: auditEvents.actorName })
+      .from(auditEvents)
+      .where(and(eq(auditEvents.action, "staff.archive"), inArray(auditEvents.targetId, ids)))
+      .orderBy(asc(auditEvents.seq)),
+  ]);
+  return rows
+    .map((u): ArchivedStaffRow => {
+      const mine = pos.filter((p) => p.userId === u.id);
+      return {
+        id: u.id,
+        name: u.name,
+        phone: localPhone(u.phoneNumber),
+        positions: mine.map((p) => p.name),
+        branchIds: br.filter((b) => b.userId === u.id).map((b) => b.branchId),
+        archivedAt: u.archivedAt!.toISOString(),
+        // Eng oxirgi bo'shatish yozuvi (qayta tiklanib yana bo'shatilgan bo'lishi mumkin)
+        archivedByName: who.filter((w) => w.targetId === u.id).at(-1)?.actorName ?? null,
+        manageable: withinAccess(
+          viewer.access,
+          mine.flatMap((p) => p.permissions),
+        ),
       };
     })
     .filter((r) => staffVisible(filter, r.branchIds));

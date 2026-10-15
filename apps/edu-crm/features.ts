@@ -25,6 +25,9 @@ export const features = [
       { label: "Bugungi ishlar", href: "/bugun" },
       { label: "O'quvchilar", href: "/students" },
       { label: "Arxiv", href: "/archive", section: "Ofis" },
+      { label: "Faoliyat jurnali", href: "/activity", section: "Ofis" },
+      { label: "Sabablar", href: "/reasons", section: "Ofis" },
+      { label: "Markaz sozlamalari", href: "/settings", section: "Ofis" },
     ],
   },
   {
