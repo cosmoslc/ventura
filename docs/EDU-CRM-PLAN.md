@@ -156,11 +156,11 @@ Bo'lim: `reports`.
 
 ### E6. Sozlamalar va yakun
 
-- [ ] Xodimlar hisoblari va rollari, markaz sozlamalari
-- [ ] Bildirishnomalar, faoliyat jurnali, arxiv va tiklash
-- [ ] Rang kontrasti va mobil ko'rinish tekshiruvi
+- [x] Xodimlar hisoblari va rollari, markaz sozlamalari — sabablar (ADR 0035), markaz va chek sozlamalari (ADR 0036), qurilmalar va profil (ADR 0040)
+- [x] Bildirishnomalar, faoliyat jurnali, arxiv va tiklash — ADR 0037, 0039; qidiruv (ADR 0039); boshlang'ich qoldiq, davomat eksporti (ADR 0038)
+- [x] Rang kontrasti va mobil ko'rinish tekshiruvi — ADR 0041 (kontrast testi CI'da)
 
-**Qabul:** eski admin qismidagi har ko'rinish yo yangi tizimda bor, yo "olinmaydi" ro'yxatiga sabab bilan yozilgan (7-bo'lim).
+**Qabul:** eski admin qismidagi har ko'rinish yo yangi tizimda bor, yo "olinmaydi" ro'yxatiga sabab bilan yozilgan (7-bo'lim). Bajarildi: docs/EDU-CRM-E6.md — 102 ko'rinish, har biri yo bor, yo "olinmaydi" ro'yxatida sababi bilan.
 
 ## 6. Ventura bosqichlari bilan bog'liqligi
 
