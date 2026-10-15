@@ -133,11 +133,16 @@ export function TeachersView({
   const current = Math.min(page, pageCount);
   const visible = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
-  // Guruhlar (E1d) va to'lovlar (E3) hali yo'q: ko'rsatkichlar faqat haqiqiy ma'lumotdan
+  // Ko'rsatkichlar faqat haqiqiy ma'lumotdan
   const withGroups = mains.filter((t) => t.groups > 0).length;
   const totalStudents = mains.reduce((s, t) => s + t.students, 0);
   const totalGroups = mains.reduce((s, t) => s + t.groups, 0);
   const period = periodLabel();
+  // Joriy oy: ulush — ish haqi hisobidan (ruxsat bo'lmasa null), retention — barcha o'qituvchilar sanoqlaridan
+  const canShare = mains.some((t) => t.share !== null);
+  const totalShare = mains.reduce((s, t) => s + (t.share ?? 0), 0);
+  const retBase = mains.reduce((s, t) => s + t.retentionBase, 0);
+  const retKept = mains.reduce((s, t) => s + t.retentionKept, 0);
 
   function openForm(kind: Tab, editing: TeacherRow | null) {
     setForm({ open: true, kind, editing });
@@ -264,7 +269,7 @@ export function TeachersView({
             tone={2}
             icon={<Wallet />}
             label={uz.teachers.statShare}
-            value={`${money(0)} ${uz.common.som}`}
+            value={canShare ? `${money(totalShare)} ${uz.common.som}` : uz.teachers.noData}
             hint={<div>{uz.teachers.shareFor(period)}</div>}
           />
           <StatCard
@@ -278,7 +283,7 @@ export function TeachersView({
             tone={4}
             icon={<TrendingUp />}
             label={uz.teachers.statRetention}
-            value={uz.teachers.noData}
+            value={retBase ? `${Math.round((retKept / retBase) * 100)}%` : uz.teachers.noData}
             hint={<div>{uz.teachers.retentionFor(period)}</div>}
           />
         </div>
@@ -382,7 +387,11 @@ export function TeachersView({
                             {uz.teachers.salaryTypeName[t.salaryType]}
                           </div>
                         </Td>
-                        <Td className="text-muted-foreground">{uz.teachers.noData}</Td>
+                        <Td className={t.retentionBase ? "font-semibold text-foreground" : "text-muted-foreground"}>
+                          {t.retentionBase
+                            ? `${Math.round((t.retentionKept / t.retentionBase) * 100)}%`
+                            : uz.teachers.noData}
+                        </Td>
                         <Td className="text-muted-foreground">{uz.teachers.noData}</Td>
                         <Td className="text-right">{menu(t)}</Td>
                       </Tr>

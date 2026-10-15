@@ -8,9 +8,13 @@ import {
   cohorts,
   daysBetween,
   leaveSummary,
+  leaveTrend,
+  monthlyRetention,
+  riskBreakdown,
   riskOf,
+  tenureBuckets,
 } from "@/lib/academic-reports";
-import { formatDate, formatMonth } from "@/lib/format";
+import { displayPhone, formatDate, formatMonth } from "@/lib/format";
 import type { ReportData, ReportRow } from "@/lib/reports";
 import { uz } from "@/lib/uz";
 import { attendanceReport } from "./attendance-report";
@@ -24,10 +28,96 @@ import type { LoadArgs } from "./reports";
 
 const t = uz.reports;
 const pctLabel = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
+const monthShort = (month: string) => uz.monthsShort[Number(month.slice(5, 7)) - 1]!;
+
+/* ---------- Ko'rinish ma'lumoti (ADR 0034): grafiklar va ro'yxatlar; jadval va Excel — yuqoridagi `table/extra` ---------- */
+
+export interface LeavesViewData {
+  reasons: {
+    reason: string;
+    count: number;
+    share: number;
+    trial: number;
+    avgDays: number | null;
+    rate: number | null;
+    /** Sabab ko'rsatilmagan */
+    none: boolean;
+  }[];
+  groups: { groupId: string; name: string; teacher: string; count: number; share: number }[];
+  /** Kunlar (bitta oy) yoki oylar; `label` o'q ostida, `tip` oynada */
+  trend: { key: string; label: string; tip: string; count: number }[];
+  tenure: { key: string; trial: number; active: number }[];
+  list: {
+    id: string;
+    studentId: string;
+    student: string;
+    groupId: string;
+    group: string;
+    teacher: string;
+    course: string;
+    enrolled: string;
+    left: string;
+    days: number;
+    trial: boolean;
+    reason: string;
+    /** Sabab ko'rsatilmagan */
+    none: boolean;
+    note: string | null;
+    rate: number | null;
+  }[];
+}
+
+export interface RiskViewData {
+  /** Xavfli o'quvchilar soni (har biri bir marta) */
+  students: number;
+  levels: { level: "critical" | "high" | "medium"; count: number }[];
+  factors: { factor: "consecutive" | "missed" | "uncontacted" | "debt"; count: number }[];
+  groups: { groupId: string; name: string; teacher: string; count: number }[];
+  list: {
+    key: string;
+    studentId: string;
+    student: string;
+    phone: string | null;
+    groupId: string;
+    group: string;
+    teacher: string;
+    level: "critical" | "high" | "medium";
+    score: number;
+    consecutive: number;
+    monthMissed: number;
+    rate: number | null;
+    /** Oxirgi qoldirilgan dars sanasi (formatlangan) */
+    lastMissed: string | null;
+    factors: ("consecutive" | "missed" | "uncontacted" | "debt")[];
+  }[];
+}
+
+export interface RetentionViewData {
+  courses: { name: string; base: number; churned: number; churnRate: number }[];
+  reasons: { reason: string; count: number; share: number; none: boolean }[];
+  /** Oxirgi 12 oy; baza bo'lmagan oylar kirmaydi */
+  trend: { month: string; label: string; tip: string; base: number; churned: number; rate: number }[];
+  cohorts: { month: string; label: string; size: number; cells: (number | null)[] }[];
+  /** Davrda ketganlar: eng so'nggilari birinchi */
+  list: {
+    studentId: string;
+    student: string;
+    course: string;
+    joined: string;
+    left: string;
+    days: number;
+    reason: string;
+    none: boolean;
+  }[];
+  /** Ro'yxatda jami nechta (ro'yxat qirqilgan bo'lishi mumkin) */
+  listTotal: number;
+}
+
+const LIST_LIMIT = 60;
 
 /* ---------- Guruhdan chiqish sabablari ---------- */
 
-export async function leavesReport({ db, filter, period }: LoadArgs): Promise<ReportData> {
+export async function leavesReport({ db, filter, period, today }: LoadArgs): Promise<ReportData> {
   const k = t.leaves;
   const rows = await db
     .select({
@@ -88,7 +178,57 @@ export async function leavesReport({ db, filter, period }: LoadArgs): Promise<Re
     (a, b) => b.leftAt!.localeCompare(a.leftAt!) || a.studentName.localeCompare(b.studentName),
   );
 
+  const trend = leaveTrend(
+    rows.map((r) => r.leftAt!),
+    period.range,
+    period.month === null,
+    today,
+  ).map((b) => ({
+    key: b.key,
+    label: b.key.length === 10 ? String(Number(b.key.slice(8))) : monthShort(b.key),
+    tip: b.key.length === 10 ? formatDate(b.key) : formatMonth(b.key),
+    count: b.count,
+  }));
+  const view: LeavesViewData = {
+    reasons: sum.byReason.map((r) => ({
+      reason: r.reason,
+      count: r.count,
+      share: r.share,
+      trial: r.trial,
+      avgDays: r.avgDays === null ? null : Math.round(r.avgDays),
+      rate: r.rate,
+      none: r.reason === k.noReason,
+    })),
+    groups: sum.byGroup.map((g) => ({
+      groupId: g.groupId,
+      name: groupInfo.get(g.groupId)?.name ?? "—",
+      teacher: groupInfo.get(g.groupId)?.teacher ?? "—",
+      count: g.count,
+      share: g.share,
+    })),
+    trend,
+    tenure: tenureBuckets(records.map((r) => ({ days: daysBetween(r.enrolledAt, r.leftAt), trial: r.trial }))),
+    list: sorted.map((r) => ({
+      id: r.id,
+      studentId: r.studentId,
+      student: r.studentName,
+      groupId: r.groupId,
+      group: r.groupName,
+      teacher: r.teacherName,
+      course: r.courseName,
+      enrolled: formatDate(r.enrolledAt),
+      left: formatDate(r.leftAt!),
+      days: daysBetween(r.enrolledAt, r.leftAt!),
+      trial: r.activatedAt === null,
+      reason: r.reason?.trim() || k.noReason,
+      none: !r.reason?.trim(),
+      note: r.note,
+      rate: r.marked ? (r.attended / r.marked) * 100 : null,
+    })),
+  };
+
   return {
+    view,
     metrics: [
       { label: k.total, value: sum.total, kind: "number", tone: "danger" },
       { label: k.students, value: sum.students, kind: "number" },
@@ -244,7 +384,40 @@ export async function riskReport({ db, filter, today }: LoadArgs): Promise<Repor
   const activeStudents = new Set(current.map((r) => r.studentId)).size;
   const atRisk = students(() => true);
 
+  const breakdown = riskBreakdown(
+    rows.map((r) => ({ studentId: r.studentId, groupId: r.groupId, level: r.risk.level, factors: r.risk.factors })),
+  );
+  const groupInfo = new Map(rows.map((r) => [r.groupId, { name: r.groupName, teacher: r.teacherName }]));
+  const view: RiskViewData = {
+    students: breakdown.students,
+    levels: breakdown.levels,
+    factors: breakdown.factors,
+    groups: breakdown.groups.map((g) => ({
+      groupId: g.groupId,
+      name: groupInfo.get(g.groupId)?.name ?? "—",
+      teacher: groupInfo.get(g.groupId)?.teacher ?? "—",
+      count: g.count,
+    })),
+    list: rows.map((r) => ({
+      key: r.key,
+      studentId: r.studentId,
+      student: r.name,
+      phone: displayPhone(r.phone),
+      groupId: r.groupId,
+      group: r.groupName,
+      teacher: r.teacherName,
+      level: r.risk.level,
+      score: r.risk.score,
+      consecutive: r.consecutive,
+      monthMissed: r.missedThisMonth,
+      rate: r.rate,
+      lastMissed: r.lastMissed ? formatDate(r.lastMissed.date) : null,
+      factors: r.risk.factors,
+    })),
+  };
+
   return {
+    view,
     metrics: [
       {
         label: k.total,
@@ -300,6 +473,7 @@ export async function retentionReport({ db, filter, period, today }: LoadArgs): 
   const rows = await db
     .select({
       studentId: groupMemberships.studentId,
+      studentName: students.name,
       enrolledAt: groupMemberships.enrolledAt,
       activatedAt: groupMemberships.activatedAt,
       leftAt: groupMemberships.leftAt,
@@ -354,7 +528,51 @@ export async function retentionReport({ db, filter, period, today }: LoadArgs): 
   const cohortRows = cohorts(spans, today);
   const n = cohortRows.length;
 
+  const names = new Map(rows.map((r) => [r.studentId, r.studentName]));
+  const churnedList = [...stats.churned].sort((a, b) => (b.lastLeft ?? "").localeCompare(a.lastLeft ?? ""));
+  const view: RetentionViewData = {
+    courses: [...byCourse]
+      .map(([id, c]) => ({
+        name: courseName.get(id) ?? k.noCourse,
+        base: c.base,
+        churned: c.churned,
+        churnRate: c.base ? (c.churned / c.base) * 100 : 0,
+      }))
+      .sort((a, b) => b.churned - a.churned || b.churnRate - a.churnRate || b.base - a.base),
+    reasons: [...reasons]
+      .sort((a, b) => b[1] - a[1])
+      .map(([reason, count]) => ({
+        reason,
+        count,
+        share: (count / stats.churned.length) * 100,
+        none: reason === k.noReason,
+      })),
+    trend: monthlyRetention(spans, today)
+      .filter((p) => p.rate !== null)
+      .map((p) => ({
+        month: p.month,
+        label: monthShort(p.month),
+        tip: formatMonth(p.month),
+        base: p.base,
+        churned: p.churned,
+        rate: p.rate!,
+      })),
+    cohorts: cohortRows.map((c) => ({ month: c.month, label: formatMonth(c.month), size: c.size, cells: c.cells })),
+    list: churnedList.slice(0, LIST_LIMIT).map((s) => ({
+      studentId: s.studentId,
+      student: names.get(s.studentId) ?? "—",
+      course: courseName.get(s.courseId ?? "") ?? k.noCourse,
+      joined: formatDate(s.firstJoin),
+      left: formatDate(s.lastLeft!),
+      days: daysBetween(s.firstJoin, s.lastLeft!),
+      reason: s.lastReason?.trim() || k.noReason,
+      none: !s.lastReason?.trim(),
+    })),
+    listTotal: churnedList.length,
+  };
+
   return {
+    view,
     metrics: [
       {
         label: k.rate,

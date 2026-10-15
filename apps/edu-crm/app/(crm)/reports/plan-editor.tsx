@@ -144,7 +144,7 @@ export function PlanEditor({
             </div>
             {months.map((m, i) => (
               <div key={m} className="grid grid-cols-[4.5rem_repeat(3,minmax(0,1fr))] items-center gap-2">
-                <span className="px-1 text-body font-semibold text-foreground">{uz.months[i]!.slice(0, 3)}</span>
+                <span className="px-1 text-body font-semibold text-foreground">{uz.monthsShort[i]}</span>
                 {FINANCE_PLAN_LINES.map((line) => (
                   <MoneyInput
                     key={line}

@@ -153,12 +153,13 @@ describe.skipIf(!ADMIN_URL)("o'qituvchi reytingi (haqiqiy PostgreSQL)", () => {
       lessons: 6,
       hours: 9,
       left: 1,
-      retention: 50,
       trialConv: 50,
       firstConv: 100,
       attendance: 75,
     });
     expect(r.table.rows[0]!.cells.markedRate).toBeCloseTo(33.33, 1);
+    // Ushlab turish: davrda guruhda bo'lgan faollar (A, B, oktyabrda faollashtirilgan D) — 3 tadan B chiqdi
+    expect(r.table.rows[0]!.cells.retention).toBeCloseTo(66.67, 1);
     expect(r.table.columns.some((c) => c.key === "salary")).toBe(true);
   });
 

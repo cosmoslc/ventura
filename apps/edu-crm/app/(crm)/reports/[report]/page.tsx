@@ -3,20 +3,19 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { can, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
-import { Card } from "@ventura/ui/card";
-import { MetricCard } from "@ventura/ui/metric-card";
 import { PageHeader } from "@ventura/ui/page-header";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { getLeaveReasons } from "@/lib/server/leave-reasons";
 import { todayTashkent } from "@/lib/server/memberships";
-import { PLAN_EDIT, REPORTS, isReportKey, planEditorRows, reportPeriod } from "@/lib/server/reports";
+import { PLAN_EDIT, planEditorRows } from "@/lib/server/cashflow-reports";
+import { REPORTS, isReportKey, reportPeriod } from "@/lib/server/reports";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { LeaveReasonsButton } from "../leave-reasons-button";
 import { PlanEditor } from "../plan-editor";
 import { ReportFilters } from "../report-filters";
-import { ReportTableView, formatCell } from "../report-table";
+import { REPORT_VIEWS } from "../views";
 
 const t = uz.reports;
 
@@ -44,13 +43,9 @@ export default async function ReportPage({
   const today = todayTashkent();
   const period = reportPeriod(sp, today, def.periodMode);
   const branch = await getBranchContext();
-  const data = await def.load({
-    db: getTenantDb(tenant),
-    filter: branch.filter,
-    period,
-    today,
-    finance: canAny(staff.access, ["dashboard.financial_stats"]),
-  });
+  const finance = canAny(staff.access, ["dashboard.financial_stats"]);
+  const data = await def.load({ db: getTenantDb(tenant), filter: branch.filter, period, today, finance });
+  const View = REPORT_VIEWS[report];
   const cy = Number(today.slice(0, 4));
   const years = Array.from({ length: 6 }, (_, i) => cy - i);
   const q = new URLSearchParams();
@@ -91,32 +86,7 @@ export default async function ReportPage({
         }
       />
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {data.metrics.map((m) => (
-          <MetricCard
-            key={m.label}
-            label={m.label}
-            value={formatCell(m.value, m.kind)}
-            unit={m.kind === "money" && m.value !== null ? uz.common.som : undefined}
-            tone={m.tone ?? "neutral"}
-            colorValue={!!m.tone && m.tone !== "neutral"}
-            foot={m.foot}
-          />
-        ))}
-      </div>
-
-      <Card className="overflow-hidden">
-        <ReportTableView table={data.table} empty={t.empty} />
-      </Card>
-      {data.note ? <p className="text-caption text-muted-foreground">{data.note}</p> : null}
-      {data.extra?.map((x) => (
-        <section key={x.title} className="space-y-3">
-          <h2 className="type-heading text-lg text-foreground">{x.title}</h2>
-          <Card className="overflow-hidden">
-            <ReportTableView table={x.table} empty={t.empty} />
-          </Card>
-        </section>
-      ))}
+      <View data={data} period={period} today={today} finance={finance} />
     </div>
   );
 }

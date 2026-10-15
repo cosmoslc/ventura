@@ -23,6 +23,47 @@ import type { LoadArgs } from "./reports";
  */
 
 const t = uz.reports.teachers;
+
+/** Ko'rinish uchun qo'shimcha ma'lumot (ADR 0034): reyting tartibidagi o'qituvchilar, jami qatorsiz */
+export interface TeacherViewRow {
+  id: string;
+  name: string;
+  groups: number;
+  students: number;
+  lessons: number;
+  hours: number;
+  markedRate: number | null;
+  attendance: number | null;
+  retention: number | null;
+  left: number;
+  trialConv: number | null;
+  firstConv: number | null;
+  /** Moliyaviy ruxsatsiz — null */
+  salary: number | null;
+}
+
+export interface TeachersViewData {
+  teachers: TeacherViewRow[];
+  total: TeacherViewRow;
+  withSalary: boolean;
+}
+
+const viewRow = (r: TeacherRow, withSalary: boolean): TeacherViewRow => ({
+  id: r.teacherId,
+  name: r.name,
+  groups: r.groups,
+  students: r.students,
+  lessons: r.lessons,
+  hours: Math.round(r.hours),
+  markedRate: r.markedRate,
+  attendance: r.attendance,
+  retention: r.retention,
+  left: r.left,
+  trialConv: r.trialConv,
+  firstConv: r.firstConv,
+  salary: withSalary ? r.salary : null,
+});
+
 const EPOCH = "2000-01-01";
 
 const dayBefore = (d: string) => {
@@ -154,10 +195,9 @@ export async function teachersReport({ db, filter, period, today, finance }: Loa
     const c = of(g.teacherId, g.teacherName);
     if (!g.archivedAt && m.leftAt === null && (m.status === "trial" || m.status === "active"))
       c.studentSet.add(m.studentId);
-    // Ushlab turish: davr boshida guruhda bo'lgan faollashtirilganlar (barcha davrda — barcha faollashtirilganlar)
-    const inBase = period.range
-      ? m.activatedAt !== null && m.activatedAt <= from && (m.leftAt === null || m.leftAt >= from)
-      : m.activatedAt !== null;
+    // Ushlab turish: davr davomida guruhda bo'lgan faollashtirilganlar — davr oxirigacha faollashtirilgan va davr
+    // boshigacha chiqmagan (ushlab turish hisoboti bilan bir xil qoida, ADR 0031)
+    const inBase = m.activatedAt !== null && m.activatedAt < toEx && (m.leftAt === null || m.leftAt >= from);
     if (inBase) {
       c.base++;
       if (m.leftAt !== null && m.leftAt < toEx) c.left++;
@@ -237,6 +277,11 @@ function build(rows: TeacherRow[], total: TeacherRow, withSalary: boolean): Repo
       ],
     },
     note: withSalary ? `${t.footnote} ${t.salaryNote}` : t.footnote,
+    view: {
+      teachers: rows.map((r) => viewRow(r, withSalary)),
+      total: viewRow(total, withSalary),
+      withSalary,
+    } satisfies TeachersViewData,
   };
 }
 
