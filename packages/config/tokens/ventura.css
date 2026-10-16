@@ -155,7 +155,11 @@
 
   /* Brend bloki */
   /* Logotip plitkasi: primary gradient, belgi oq (docs/design/brand, B varianti) */
-  --logo-bg: linear-gradient(145deg, color-mix(in oklab, var(--primary), white 16%), color-mix(in oklab, var(--primary), black 22%));
+  --logo-bg: linear-gradient(
+    145deg,
+    color-mix(in oklab, var(--primary), white 16%),
+    color-mix(in oklab, var(--primary), black 22%)
+  );
   --logo-fg: #ffffff;
   --logo-border: color-mix(in oklab, var(--primary), white 30%);
   --logo-shadow: 0 4px 12px color-mix(in oklab, var(--primary) 28%, transparent);
@@ -354,7 +358,11 @@
   --icon-btn-hover-border: var(--primary-hover);
   --icon-btn-hover-fg: #ffffff;
 
-  --logo-bg: linear-gradient(145deg, color-mix(in oklab, var(--primary), white 16%), color-mix(in oklab, var(--primary), black 22%));
+  --logo-bg: linear-gradient(
+    145deg,
+    color-mix(in oklab, var(--primary), white 16%),
+    color-mix(in oklab, var(--primary), black 22%)
+  );
   --logo-fg: #ffffff;
   --logo-border: color-mix(in oklab, var(--primary), white 20%);
   --profile-hover-bg: #1e293b;
