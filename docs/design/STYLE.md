@@ -519,7 +519,7 @@ Qoidalar:
 
 ### 11.21 Logo, Avatar, ThemeToggle
 
-- `Logo`: 40px quti (radius `--r-btn`, `--logo-bg` / `-fg` / `-border` / `-shadow`), ichida belgi — ikki qavatli pastga strelka (`LogoMark`) yoki `mark` (masalan `<img>`); yonida `name` (`type-brand`) va `subtitle` (`type-eyebrow`). Standart nom — "Ventura".
+- `Logo`: 40px quti (radius `--r-btn`, `--logo-bg` / `-fg` / `-border` / `-shadow`), ichida belgi — "ikki chevron" (`LogoMark`: katta V ichida kichik V, oq; plitka — primary gradient, `docs/design/brand/variants/b-chevron-*`) yoki `mark` (masalan `<img>`); yonida `name` (`type-brand`) va `subtitle` (`type-eyebrow`). Standart nom — "Ventura".
 - `Avatar`: bosh harflar (o'lcham × 0.38, 700), radius `--r-avatar`; `variant="brand"` — `--avatar-bg`, `variant="auto"` — ismga qarab 6 juft gradientdan biri.
 - `ThemeToggle`: `icon` tugma, Oy / Quyosh ikonkasi.
 
