@@ -1,14 +1,22 @@
 import * as React from "react";
 import { cn } from "../lib/utils";
 
-/** Ventura belgisi: ikki qavatli pastga qaragan strelka. */
+/** Ventura belgisi: katta V ichida kichik V — "ikki chevron" (docs/design/brand, B varianti). */
 export function LogoMark({ className, ...props }: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 40 40" fill="none" aria-hidden className={className} {...props}>
       <path
-        d="M11 12l9 9 9-9M11 20l9 9 9-9"
+        d="M6.25 8.75 20 31.25 33.75 8.75"
         stroke="currentColor"
-        strokeWidth={3}
+        strokeWidth={4.7}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M15 8.75 20 16.9 25 8.75"
+        stroke="currentColor"
+        strokeOpacity={0.55}
+        strokeWidth={3.4}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
