@@ -16,7 +16,9 @@ import { uz } from "@/lib/uz";
  */
 
 export async function GET(req: Request, { params }: { params: Promise<{ report: string }> }) {
-  const { report } = await params;
+  const { report: asked } = await params;
+  // Eski "Reja, fakt va prognoz" Excel havolasi Pul oqimiga o'tadi (ADR 0045)
+  const report = asked === "plan" ? "cashflow" : asked;
   if (!isReportKey(report)) notFound();
   const def = REPORTS[report];
   const tenant = await requireTenant();
@@ -38,6 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
     period,
     today,
     finance: canAny(staff.access, ["dashboard.financial_stats"]),
+    query: Object.fromEntries(url.searchParams),
   });
   const title = uz.reports.titles[report] ?? report;
 
@@ -66,6 +69,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
       col.width = j === 0 ? 32 : c.kind === "text" ? 28 : 16;
       if (c.kind === "money" || c.kind === "number") col.numFmt = "#,##0";
       if (c.kind === "percent") col.numFmt = "0.0%";
+      if (c.kind === "decimal") col.numFmt = "0.0";
     });
     if ("note" in sheet && sheet.note) {
       ws.addRow([]);

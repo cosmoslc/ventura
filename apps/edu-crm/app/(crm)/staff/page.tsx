@@ -22,7 +22,6 @@ export default async function StaffPage() {
       rows={rows}
       positions={positions}
       branches={branch.options}
-      selectedBranch={branch.selected}
       fields={fields}
       perms={{
         create: can(staff.access, "staff.create"),

@@ -5,6 +5,7 @@ import {
   Briefcase,
   Coins,
   Hash,
+  MoreHorizontal,
   Pencil,
   PiggyBank,
   Plus,
@@ -17,15 +18,14 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
-import { Card } from "@ventura/ui/card";
 import { Checkbox, ChoiceField } from "@ventura/ui/checkbox";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@ventura/ui/dropdown-menu";
 import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Pagination } from "@ventura/ui/pagination";
 import { StatCard } from "@ventura/ui/stat-card";
-import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import type { PersonOption } from "@/lib/server/expenses";
@@ -34,16 +34,39 @@ import { displayPhone, formatDate, formatMonth, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { VoidRecordDialog } from "../expenses/void-dialog";
 import type { MethodOption } from "../payments/payment-dialog";
+import { NUM, type PeopleColumn, PeopleTable } from "../people-table";
 import { restoreSalaryEntryAction, voidSalaryEntryAction } from "./actions";
 import type { SalaryEntryRow } from "./data";
+import { type ProfileLinks, personHref, remainingState, signedAmount, sumBalances } from "./helpers";
 import { type SalaryFormState, SalaryForm, type SalaryPerms } from "./salary-form";
 
 const t = uz.salaries;
 const ALL = "all";
 const PAGE_SIZE = 50;
 const KINDS = ["salary", "advance", "bonus", "penalty"] as const;
-const KIND_TONE = { salary: "success", advance: "info", bonus: "warning", penalty: "danger" } as const;
 const som = (n: number) => `${money(n)} ${uz.common.som}`;
+const dash = <span className="text-muted-foreground">—</span>;
+const REMAINING_CLASS = {
+  due: "text-(--danger-fg)",
+  over: "text-(--warning-fg)",
+  settled: "text-(--success-fg)",
+} as const;
+
+/** Ism ostidagi qator: lavozim · telefon (telefon mono) */
+function personSub(role: string, phone: string) {
+  const shown = displayPhone(phone);
+  return (
+    <>
+      {role}
+      {shown ? (
+        <>
+          {" · "}
+          <span className="font-mono">{shown}</span>
+        </>
+      ) : null}
+    </>
+  );
+}
 const roleLabel = (r: "teacher" | "support" | "staff") =>
   r === "teacher" ? t.roleTeacher : r === "support" ? t.roleSupport : t.roleStaff;
 
@@ -59,6 +82,7 @@ export function SalariesView({
   people,
   methods,
   perms,
+  links,
 }: {
   tab: "list" | "calc";
   from: string;
@@ -71,6 +95,8 @@ export function SalariesView({
   people: PersonOption[];
   methods: MethodOption[];
   perms: SalaryPerms;
+  /** Qaysi profillarni ochish mumkin (o'qituvchilar / xodimlar sahifasi ruxsati) */
+  links: ProfileLinks;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -103,8 +129,12 @@ export function SalariesView({
       />
       <Tabs value={tab} onValueChange={changeTab}>
         <TabsList>
-          <TabsTrigger value="list">{t.tabs.list}</TabsTrigger>
-          <TabsTrigger value="calc">{t.tabs.calc}</TabsTrigger>
+          <TabsTrigger value="list">
+            {t.tabs.list} <Badge tone="neutral">{entries.filter((e) => !e.voided).length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="calc">
+            {t.tabs.calc} <Badge tone="neutral">{payroll.rows.length}</Badge>
+          </TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -115,6 +145,7 @@ export function SalariesView({
           to={to}
           rangeInvalid={rangeInvalid}
           perms={perms}
+          links={links}
           onRange={navigate}
           onEdit={(e) => setForm({ editing: e, person: e.person, month: e.month, amount: e.amount })}
         />
@@ -123,6 +154,7 @@ export function SalariesView({
           payroll={payroll}
           months={months}
           canPay={canWrite}
+          links={links}
           onMonth={(m) => navigate({ month: m })}
           onPay={(r) =>
             setForm({
@@ -159,6 +191,7 @@ function ListTab({
   to,
   rangeInvalid,
   perms,
+  links,
   onRange,
   onEdit,
 }: {
@@ -167,6 +200,7 @@ function ListTab({
   to: string;
   rangeInvalid: boolean;
   perms: SalaryPerms;
+  links: ProfileLinks;
   onRange: (next: { from?: string; to?: string }) => void;
   onEdit: (e: SalaryEntryRow) => void;
 }) {
@@ -208,6 +242,97 @@ function ListTab({
     });
   }
 
+  const menu = (e: SalaryEntryRow) =>
+    can(e.kind) ? (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="subtle"
+            size="icon-sm"
+            title={uz.common.actions}
+            aria-label={`${e.personName} — ${uz.common.actions}`}
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-52">
+          {e.voided ? (
+            <DropdownMenuItem onSelect={() => restore(e)}>
+              <RotateCcw /> {t.restore}
+            </DropdownMenuItem>
+          ) : (
+            <>
+              <DropdownMenuItem onSelect={() => onEdit(e)}>
+                <Pencil /> {uz.common.edit}
+              </DropdownMenuItem>
+              <DropdownMenuItem danger onSelect={() => setVoiding(e)}>
+                <Trash2 /> {t.void}
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ) : null;
+  const columns: PeopleColumn<SalaryEntryRow>[] = [
+    {
+      key: "date",
+      header: t.colDate,
+      className: "whitespace-nowrap tabular-nums",
+      cell: (e) => formatDate(e.date),
+    },
+    {
+      key: "kind",
+      header: t.colKind,
+      cell: (e) => (
+        <>
+          <div className="font-semibold text-foreground">{t.kinds[e.kind]}</div>
+          <div className="text-caption text-muted-foreground">{formatMonth(e.month)}</div>
+          {e.voided ? (
+            <div className="text-caption text-(--danger-fg)">
+              {t.voided}
+              {e.voided.reason ? `: ${e.voided.reason}` : ""}
+            </div>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      key: "amount",
+      header: t.colAmount,
+      align: "right",
+      className: cn(NUM, "text-body font-bold"),
+      cell: (e) => (
+        <span
+          className={cn(e.kind === "penalty" ? "text-(--danger-fg)" : "text-foreground", e.voided && "line-through")}
+        >
+          {e.kind === "penalty" ? "−" : ""}
+          {money(e.amount)}
+        </span>
+      ),
+    },
+    {
+      key: "method",
+      header: t.colMethod,
+      cell: (e) => (
+        <>
+          <div className="text-foreground">{e.methodName ?? dash}</div>
+          {e.createdByName ? (
+            <div className="text-caption text-muted-foreground" title={t.colCreatedBy}>
+              {e.createdByName}
+            </div>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      key: "note",
+      header: t.colNote,
+      className: "max-w-56 truncate text-muted-foreground",
+      cell: (e) => <span title={e.note ?? undefined}>{e.note ?? "—"}</span>,
+    },
+    { key: "actions", header: uz.common.actions, align: "right", cell: menu },
+  ];
+
   return (
     <div className="space-y-6">
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
@@ -240,117 +365,31 @@ function ListTab({
         </FilterEnd>
       </FilterBar>
 
-      <Card className="overflow-hidden">
-        {shown.length ? (
-          <>
-            <TableWrap className="rounded-none border-0">
-              <Table>
-                <THead>
-                  <Tr>
-                    <Th>{t.colPerson}</Th>
-                    <Th>{t.colDate}</Th>
-                    <Th>{t.colKind}</Th>
-                    <Th>{t.colMonth}</Th>
-                    <Th className="text-right">{t.colAmount}</Th>
-                    <Th>{t.colMethod}</Th>
-                    <Th>{t.colNote}</Th>
-                    <Th>{t.colCreatedBy}</Th>
-                    <Th className="text-right">{uz.common.actions}</Th>
-                  </Tr>
-                </THead>
-                <TBody>
-                  {shown.map((e) => (
-                    <Tr key={e.id} className={cn(e.voided && "opacity-60")}>
-                      <Td>
-                        <div className="font-medium text-foreground">{e.personName}</div>
-                        <div className="text-caption text-muted-foreground">
-                          {roleLabel(e.role)}
-                          {e.personPhone ? ` · ${displayPhone(e.personPhone)}` : ""}
-                        </div>
-                      </Td>
-                      <Td className="whitespace-nowrap">{formatDate(e.date)}</Td>
-                      <Td>
-                        <Badge tone={KIND_TONE[e.kind]}>{t.kinds[e.kind]}</Badge>
-                        {e.voided ? (
-                          <div className="mt-1 text-caption text-(--danger-fg)">
-                            {t.voided}: {e.voided.reason}
-                          </div>
-                        ) : null}
-                      </Td>
-                      <Td className="whitespace-nowrap text-muted-foreground">{formatMonth(e.month)}</Td>
-                      <Td
-                        className={cn(
-                          "text-right font-semibold whitespace-nowrap",
-                          e.kind === "penalty" ? "text-(--danger-fg)" : "text-foreground",
-                          e.voided && "line-through",
-                        )}
-                      >
-                        {e.kind === "penalty" ? "−" : ""}
-                        {money(e.amount)}
-                      </Td>
-                      <Td className="text-muted-foreground">{e.methodName ?? "—"}</Td>
-                      <Td className="max-w-56 truncate text-caption text-muted-foreground" title={e.note ?? undefined}>
-                        {e.note ?? "—"}
-                      </Td>
-                      <Td className="text-caption text-muted-foreground">{e.createdByName ?? "—"}</Td>
-                      <Td>
-                        {can(e.kind) ? (
-                          <div className="flex justify-end gap-1">
-                            {e.voided ? (
-                              <Button
-                                variant="icon"
-                                size="icon"
-                                aria-label={t.restore}
-                                title={t.restore}
-                                onClick={() => restore(e)}
-                              >
-                                <RotateCcw />
-                              </Button>
-                            ) : (
-                              <>
-                                <Button
-                                  variant="icon"
-                                  size="icon"
-                                  aria-label={uz.common.edit}
-                                  title={uz.common.edit}
-                                  onClick={() => onEdit(e)}
-                                >
-                                  <Pencil />
-                                </Button>
-                                <Button
-                                  variant="icon"
-                                  size="icon"
-                                  className="text-destructive-text"
-                                  aria-label={t.void}
-                                  title={t.void}
-                                  onClick={() => setVoiding(e)}
-                                >
-                                  <Trash2 />
-                                </Button>
-                              </>
-                            )}
-                          </div>
-                        ) : null}
-                      </Td>
-                    </Tr>
-                  ))}
-                </TBody>
-              </Table>
-            </TableWrap>
-            {pageCount > 1 ? (
-              <Pagination
-                page={current}
-                pageCount={pageCount}
-                total={visible.length}
-                pageSize={PAGE_SIZE}
-                onPageChange={setPage}
-              />
-            ) : null}
-          </>
-        ) : (
-          <EmptyState icon={<Wallet />} title={t.empty} description={t.emptyHint} />
-        )}
-      </Card>
+      <PeopleTable
+        rows={shown}
+        rowKey={(e) => e.id}
+        person={(e) => ({
+          name: e.personName,
+          href: personHref(e.person, links),
+          sub: personSub(roleLabel(e.role), e.personPhone),
+        })}
+        personHeader={t.colPerson}
+        columns={columns}
+        rowClassName={(e) => (e.voided ? "opacity-60" : undefined)}
+        minWidth={1000}
+        footer={
+          pageCount > 1 ? (
+            <Pagination
+              page={current}
+              pageCount={pageCount}
+              total={visible.length}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+            />
+          ) : null
+        }
+        empty={<EmptyState icon={<Wallet />} title={t.empty} description={t.emptyHint} />}
+      />
 
       <VoidRecordDialog
         target={
@@ -373,12 +412,14 @@ function CalcTab({
   payroll,
   months,
   canPay,
+  links,
   onMonth,
   onPay,
 }: {
   payroll: Payroll;
   months: string[];
   canPay: boolean;
+  links: ProfileLinks;
   onMonth: (m: string) => void;
   onPay: (r: PayrollRow) => void;
 }) {
@@ -392,6 +433,91 @@ function CalcTab({
     return !q || r.name.toLowerCase().includes(q) || (!!digits && r.phone.includes(digits));
   });
   const { revenue, share, center } = payroll.totals;
+
+  const sums = sumBalances(rows.map((r) => r.balance));
+  const adjusted = (n: number) => {
+    const text = signedAmount(n, money);
+    return text ? <span className={n > 0 ? "text-(--success-fg)" : "text-(--danger-fg)"}>{text}</span> : dash;
+  };
+  const remaining = (n: number) => (
+    <span className={REMAINING_CLASS[remainingState(n)]} title={n < 0 ? t.overpaid : undefined}>
+      {n < 0 ? "−" : ""}
+      {money(Math.abs(n))}
+    </span>
+  );
+  const columns: PeopleColumn<PayrollRow>[] = [
+    {
+      key: "type",
+      header: t.colType,
+      className: "whitespace-nowrap",
+      cell: (r) => (
+        <>
+          <div className="font-semibold text-foreground">{typeLabel(r)}</div>
+          {r.kind === "user" && r.salaryType === "kpi" ? (
+            <div className="text-caption text-muted-foreground">
+              {t.kpiDetail(r.accrual.newStudents, r.accrual.oneMonthStudents)}
+            </div>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      key: "accrued",
+      header: t.colAccrued,
+      align: "right",
+      className: cn(NUM, "font-semibold text-foreground"),
+      cell: (r) => money(r.balance.accrued),
+    },
+    {
+      key: "adjust",
+      header: t.colBonus,
+      align: "right",
+      className: NUM,
+      cell: (r) => adjusted(r.balance.bonus - r.balance.penalty),
+    },
+    {
+      key: "advance",
+      header: t.colAdvance,
+      align: "right",
+      className: NUM,
+      cell: (r) => (r.balance.advance ? money(r.balance.advance) : dash),
+    },
+    {
+      key: "paid",
+      header: t.colPaid,
+      align: "right",
+      className: NUM,
+      cell: (r) => (r.balance.paid ? money(r.balance.paid) : dash),
+    },
+    {
+      key: "remaining",
+      header: t.colRemaining,
+      align: "right",
+      className: cn(NUM, "font-bold"),
+      cell: (r) => remaining(r.balance.remaining),
+    },
+    ...(canPay
+      ? [
+          {
+            key: "pay",
+            header: uz.common.actions,
+            align: "right" as const,
+            cell: (r: PayrollRow) => (
+              <Button size="sm" variant="ghost" onClick={() => onPay(r)}>
+                {t.pay}
+              </Button>
+            ),
+          },
+        ]
+      : []),
+  ];
+  const totalCells = {
+    accrued: money(sums.accrued),
+    adjust: adjusted(sums.adjust),
+    advance: sums.advance ? money(sums.advance) : dash,
+    paid: sums.paid ? money(sums.paid) : dash,
+    remaining: remaining(sums.remaining),
+  };
 
   return (
     <div className="space-y-6">
@@ -428,86 +554,20 @@ function CalcTab({
         />
       </FilterBar>
 
-      <Card className="overflow-hidden">
-        {rows.length ? (
-          <TableWrap className="rounded-none border-0">
-            <Table>
-              <THead>
-                <Tr>
-                  <Th>{t.colPerson}</Th>
-                  <Th>{t.colRole}</Th>
-                  <Th>{t.colType}</Th>
-                  <Th className="text-right">{t.colAccrued}</Th>
-                  <Th className="text-right">{t.colBonus}</Th>
-                  <Th className="text-right">{t.colAdvance}</Th>
-                  <Th className="text-right">{t.colPaid}</Th>
-                  <Th className="text-right">{t.colRemaining}</Th>
-                  {canPay ? <Th className="text-right">{uz.common.actions}</Th> : null}
-                </Tr>
-              </THead>
-              <TBody>
-                {rows.map((r) => {
-                  const b = r.balance;
-                  const adj = b.bonus - b.penalty;
-                  return (
-                    <Tr key={`${r.kind}:${r.id}`}>
-                      <Td>
-                        <div className="font-medium text-foreground">{r.name}</div>
-                        {r.phone ? (
-                          <div className="text-caption text-muted-foreground">{displayPhone(r.phone)}</div>
-                        ) : null}
-                      </Td>
-                      <Td className="text-muted-foreground">{roleLabel(r.kind === "teacher" ? r.role : "staff")}</Td>
-                      <Td>
-                        <div className="text-caption text-foreground">{typeLabel(r)}</div>
-                        {r.kind === "user" && r.salaryType === "kpi" ? (
-                          <div className="text-caption text-muted-foreground">
-                            {t.kpiDetail(r.accrual.newStudents, r.accrual.oneMonthStudents)}
-                          </div>
-                        ) : null}
-                      </Td>
-                      <Td className="text-right font-semibold whitespace-nowrap">{money(b.accrued)}</Td>
-                      <Td
-                        className={cn(
-                          "text-right whitespace-nowrap",
-                          adj > 0 ? "text-(--success-fg)" : adj < 0 ? "text-(--danger-fg)" : "text-muted-foreground",
-                        )}
-                      >
-                        {adj ? `${adj > 0 ? "+" : "−"}${money(Math.abs(adj))}` : "—"}
-                      </Td>
-                      <Td className="text-right whitespace-nowrap text-muted-foreground">{money(b.advance)}</Td>
-                      <Td className="text-right whitespace-nowrap">{money(b.paid)}</Td>
-                      <Td
-                        className={cn(
-                          "text-right font-bold whitespace-nowrap",
-                          b.remaining > 0
-                            ? "text-(--danger-fg)"
-                            : b.remaining < 0
-                              ? "text-(--warning-fg)"
-                              : "text-(--success-fg)",
-                        )}
-                        title={b.remaining < 0 ? t.overpaid : undefined}
-                      >
-                        {b.remaining < 0 ? "−" : ""}
-                        {money(Math.abs(b.remaining))}
-                      </Td>
-                      {canPay ? (
-                        <Td className="text-right">
-                          <Button size="sm" variant="ghost" onClick={() => onPay(r)}>
-                            {t.pay}
-                          </Button>
-                        </Td>
-                      ) : null}
-                    </Tr>
-                  );
-                })}
-              </TBody>
-            </Table>
-          </TableWrap>
-        ) : (
-          <EmptyState icon={<Wallet />} title={t.calcEmpty} />
-        )}
-      </Card>
+      <PeopleTable
+        rows={rows}
+        rowKey={(r) => `${r.kind}:${r.id}`}
+        person={(r) => ({
+          name: r.name,
+          href: personHref(`${r.kind === "teacher" ? "teacher" : "user"}:${r.id}`, links, payroll.month),
+          sub: personSub(roleLabel(r.kind === "teacher" ? r.role : "staff"), r.phone),
+        })}
+        personHeader={t.colPerson}
+        columns={columns}
+        total={rows.length > 1 ? { label: t.totalRow, cells: totalCells } : undefined}
+        minWidth={980}
+        empty={<EmptyState icon={<Wallet />} title={t.calcEmpty} />}
+      />
     </div>
   );
 }

@@ -103,6 +103,11 @@ export const teacherInput = z.object({
     .default(0),
   perStudentSalary: money,
   fixedSalary: money,
+  /** Belgilangan oylik shu sanadan (bo'sh — avtomatik, ADR 0043) */
+  salaryStartDate: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2})?$/, uz.groups.dateInvalid)
+    .default(""),
   workingDays: z
     .array(z.enum(["mon", "tue", "wed", "thu", "fri", "sat", "sun"]))
     .max(7)
@@ -239,6 +244,12 @@ export const groupInput = z
       .nullable()
       .default(null),
     teacherSalaryAmount: z.number().int().min(0).max(1_000_000_000).nullable().default(null),
+    /** Guruhdagi belgilangan summa shu sanadan (null — guruh boshlangan sana, ADR 0043) */
+    teacherSalaryFrom: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, uz.groups.dateInvalid)
+      .nullable()
+      .default(null),
     note: z.string().trim().max(1000).default(""),
   })
   .refine((v) => v.endTime > v.startTime, { message: uz.groups.timeOrder, path: ["endTime"] });

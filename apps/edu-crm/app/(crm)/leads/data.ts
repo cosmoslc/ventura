@@ -21,7 +21,17 @@ import {
   users,
 } from "@ventura/db/schema/tenant";
 import { DEFAULT_LEAD_FIELDS, type FormField, LEAD_FIELDS_KEY, parseFormFields } from "@/lib/form-fields";
-import { DEFAULT_LEAD_STAGES, DEFAULT_LOST_REASONS, LOST_REASONS_KEY, parseLostReasons } from "@/lib/leads";
+import {
+  DEFAULT_LEAD_STAGES,
+  DEFAULT_LOST_REASONS,
+  FIRST_LESSON_WINDOW_DAYS,
+  LOST_REASONS_KEY,
+  addDays,
+  firstLessonDays,
+  parseLostReasons,
+} from "@/lib/leads";
+import { todayTashkent } from "@/lib/server/memberships";
+import { holidayRanges } from "../holidays/data";
 import { listGroups } from "../groups/data";
 
 export interface StageRow {
@@ -229,16 +239,32 @@ export async function getLeadFields(db: TenantDb): Promise<FormField[]> {
 
 export interface LeadGroupOption extends SearchSelectOption {
   branchId: string;
+  /** Birinchi dars uchun yaqin dars kunlari ("YYYY-MM-DD"): guruh jadvali va dam olish kunlaridan */
+  lessonDays: string[];
+  /** Dars vaqti, "HH:MM–HH:MM" */
+  time: string;
 }
 
-/** Birinchi dars va o'quvchiga aylantirish uchun guruhlar (arxivda bo'lmagan, xodimning filiallarida) */
-export async function leadGroupOptions(db: TenantDb, filter: readonly string[] | null): Promise<LeadGroupOption[]> {
-  const rows = await listGroups(db, filter);
+/**
+ * Birinchi dars va o'quvchiga aylantirish uchun guruhlar (arxivda bo'lmagan, xodimning filiallarida). Har guruhga
+ * bugundan boshlab 3 haftalik dars kunlari ham beriladi — birinchi dars sanasi shulardan tanlanadi.
+ */
+export async function leadGroupOptions(
+  db: TenantDb,
+  filter: readonly string[] | null,
+  today: string = todayTashkent(),
+): Promise<LeadGroupOption[]> {
+  const [rows, holidays] = await Promise.all([
+    listGroups(db, filter),
+    holidayRanges(db, today, addDays(today, FIRST_LESSON_WINDOW_DAYS)),
+  ]);
   return rows.map((g) => ({
     value: g.id,
     label: g.name,
     hint: `${g.courseName} · ${g.teacherName} · ${g.startTime}`,
     branchId: g.branchId,
+    lessonDays: firstLessonDays(g, today, holidays),
+    time: `${g.startTime}–${g.endTime}`,
   }));
 }
 

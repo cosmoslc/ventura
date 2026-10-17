@@ -1,6 +1,16 @@
 import { uz } from "./uz";
 import type { DayFlow } from "./dashboard";
-import { type ForecastInput, type PlanCell, percent, planTable } from "./reports";
+import {
+  type ForecastInput,
+  type PlanCell,
+  type PlanKey,
+  type ReportColumn,
+  type ReportRow,
+  type ReportTable,
+  percent,
+  planTable,
+  sumCells,
+} from "./reports";
 
 /*
  * Pul oqimi va reja hisobotlari ko'rinishi uchun toza funksiyalar (grafiklar, ulushlar). Raqamlar jadval bilan bir
@@ -113,13 +123,16 @@ export interface PlanMonth {
   month: string;
   income: PlanCell;
   outflow: PlanCell;
+  net: PlanCell;
+  /** Har qator (to'lovlar, qo'shimcha daromad, ish haqi, xarajat, qaytarish) */
+  lines: Record<PlanKey, PlanCell>;
 }
 
-/** Har oy uchun jami kirim va jami chiqim (reja, fakt, prognoz) — oyma-oy grafik uchun */
+/** Har oy uchun qatorlar, jami kirim, jami chiqim va sof oqim (reja, fakt, prognoz) — oyma-oy jadval va grafik uchun */
 export function planMonths(months: readonly string[], input: ForecastInput): PlanMonth[] {
   return months.map((month) => {
     const t = planTable([month], input);
-    return { month, income: t.income, outflow: t.outflow };
+    return { month, income: t.income, outflow: t.outflow, net: t.net, lines: t.lines };
   });
 }
 
@@ -169,3 +182,123 @@ export function barShare(cell: PlanCell, scale: number): BarShare {
 
 /** Prognoz faktdan farq qiladimi (kutilayotgan qism bor) — bo'lmasa prognoz alohida yozilmaydi */
 export const hasForecastGap = (cell: PlanCell) => Math.round(cell.forecast) !== Math.round(cell.fact ?? 0);
+
+/* ---------- Birlashgan jadval: 12 oy × reja, fakt, prognoz (eski tizimdagi Pul oqimi jadvali) ---------- */
+
+export type GridKey =
+  "payments" | "income" | "incomeTotal" | "salary" | "expenses" | "refunds" | "outflowTotal" | "net" | "balance";
+
+export interface GridRow {
+  key: GridKey;
+  kind: "line" | "total" | "balance";
+  /** Chiqim: rejadan oshish yomon */
+  lowerIsBetter: boolean;
+  /** Reja katagi shu qatorda to'g'ridan-to'g'ri kiritiladi (finance_plans); xarajat rejasi — toifalar bo'yicha */
+  editable: boolean;
+  /** Oyma-oy (har oy uchun bitta) */
+  cells: PlanCell[];
+  /** Yillik jami */
+  total: PlanCell;
+}
+
+/** Reja katagi kiritiladigan qatorlar */
+export const EDITABLE_PLAN_KEYS: readonly GridKey[] = ["payments", "income", "salary"];
+
+/**
+ * Jadval qatorlari: to'lovlar, qo'shimcha daromad, jami kirim, ish haqi, xarajatlar, qaytarishlar, jami chiqim,
+ * sof oqim va yig'ma qoldiq. Hammasi `planMonths` (ya'ni `planTable`) dan — yillik jami `planTable(butun yil)` bilan bir xil.
+ */
+export function gridRows(months: readonly PlanMonth[], balance: readonly (number | null)[]): GridRow[] {
+  const line = (key: GridKey, pick: (m: PlanMonth) => PlanCell, kind: GridRow["kind"], lowerIsBetter: boolean) => {
+    const cells = months.map(pick);
+    return { key, kind, lowerIsBetter, editable: EDITABLE_PLAN_KEYS.includes(key), cells, total: sumCells(cells) };
+  };
+  const last = [...balance].reverse().find((v) => v !== null) ?? null;
+  const balanceCells = months.map((_, i): PlanCell => ({ plan: null, fact: balance[i] ?? null, forecast: 0 }));
+  return [
+    line("payments", (m) => m.lines.payments, "line", false),
+    line("income", (m) => m.lines.income, "line", false),
+    line("incomeTotal", (m) => m.income, "total", false),
+    line("salary", (m) => m.lines.salary, "line", true),
+    line("expenses", (m) => m.lines.expenses, "line", true),
+    line("refunds", (m) => m.lines.refunds, "line", true),
+    line("outflowTotal", (m) => m.outflow, "total", true),
+    line("net", (m) => m.net, "total", false),
+    {
+      key: "balance",
+      kind: "balance",
+      lowerIsBetter: false,
+      editable: false,
+      cells: balanceCells,
+      total: { plan: null, fact: last, forecast: 0 },
+    },
+  ];
+}
+
+export type PlanTone = "success" | "warning" | "danger";
+
+/**
+ * Qiymat (fakt yoki prognoz) rejaga nisbatan: kirimda 100% va undan ko'p — yaxshi, 90–99% — ogohlantirish,
+ * undan kam — yomon. Chiqimda teskari: reja doirasida — yaxshi, 10% gacha oshsa — ogohlantirish. Reja yo'q — null.
+ */
+export function planTone(plan: number | null, value: number | null, lowerIsBetter: boolean): PlanTone | null {
+  if (!plan || plan <= 0 || value === null) return null;
+  const pc = (value / plan) * 100;
+  if (lowerIsBetter) return pc <= 100 ? "success" : pc <= 110 ? "warning" : "danger";
+  return pc >= 100 ? "success" : pc >= 90 ? "warning" : "danger";
+}
+
+/** Prognoz ustuni oyda ko'rsatiladimi: faqat joriy va kelgusi oylarda (o'tgan oyda prognoz — fakt) */
+export const showMonthForecast = (month: string, today: string) => month >= today.slice(0, 7);
+
+export interface GridLabels {
+  label: string;
+  plan: string;
+  fact: string;
+  forecast: string;
+  total: string;
+  rows: Record<GridKey, string>;
+  /** Oy qisqa nomlari (12 ta) */
+  months: readonly string[];
+}
+
+/**
+ * Excel uchun yassi jadval: qator — ko'rsatkich, ustunlar — har oy uchun reja, fakt, prognoz va yillik jami.
+ * Prognoz faqat joriy va kelgusi oylarda (sahifadagi bilan bir xil).
+ */
+export function gridTable(
+  rows: readonly GridRow[],
+  months: readonly string[],
+  today: string,
+  l: GridLabels,
+): ReportTable {
+  const columns: ReportColumn[] = [
+    { key: "label", label: l.label, kind: "text" },
+    ...months.flatMap((m, i) =>
+      (["plan", "fact", "forecast"] as const).map((k) => ({
+        key: `${m}:${k}`,
+        label: `${l.months[i]} · ${l[k]}`,
+        kind: "money" as const,
+      })),
+    ),
+    ...(["plan", "fact", "forecast"] as const).map((k) => ({
+      key: `total:${k}`,
+      label: `${l.total} · ${l[k]}`,
+      kind: "money" as const,
+    })),
+  ];
+  return {
+    columns,
+    rows: rows.map((r): ReportRow => {
+      const cells: Record<string, number | string | null> = { label: l.rows[r.key] };
+      const put = (prefix: string, c: PlanCell, forecast: boolean) => {
+        cells[`${prefix}:plan`] = c.plan;
+        cells[`${prefix}:fact`] = c.fact;
+        cells[`${prefix}:forecast`] = forecast ? Math.round(c.forecast) : null;
+      };
+      months.forEach((m, i) => put(m, r.cells[i]!, r.kind !== "balance" && showMonthForecast(m, today)));
+      put("total", r.total, r.kind !== "balance" && hasForecastGap(r.total));
+      return { kind: r.kind === "total" ? "total" : "row", cells };
+    }),
+  };
+}

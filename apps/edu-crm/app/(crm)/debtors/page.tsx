@@ -1,3 +1,4 @@
+import { canAny } from "@ventura/auth/staff/policy";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { ensurePaymentMethods, getFinanceSettings } from "@/lib/server/finance";
@@ -23,6 +24,7 @@ export default async function DebtorsPage() {
       dueDay={fs.dueDay}
       methods={methods}
       canPay={financePerms(staff.access).create}
+      canNote={canAny(staff.access, ["finance.debtors_remind", "students.edit"])}
       maxDiscountPercent={fs.maxDiscountPercent}
     />
   );

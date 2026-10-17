@@ -1,6 +1,5 @@
 import type { ReportKey } from "@/lib/server/reports";
 import { CashflowView } from "./cashflow";
-import { PlanView } from "./plan";
 import { ExpensesView } from "./expenses";
 import { DiscountsView } from "./discounts";
 import { CoursesView } from "./courses";
@@ -17,7 +16,6 @@ import type { ReportViewProps } from "./types";
 /** Hisobot → ko'rinish (ADR 0034). Har hisobot o'z faylida; bu ro'yxat o'zgarmaydi. */
 export const REPORT_VIEWS: Record<ReportKey, (props: ReportViewProps) => React.ReactNode> = {
   cashflow: CashflowView,
-  plan: PlanView,
   expenses: ExpensesView,
   discounts: DiscountsView,
   courses: CoursesView,

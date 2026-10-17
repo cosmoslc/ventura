@@ -61,6 +61,23 @@ describe("sabab turlari", () => {
     expect(reasonOptions(c, "lost").active).toBe(true);
   });
 
+  it("faol o'quvchini o'chirishda Sabablar sahifasidagi ro'yxat chiqadi (har holatda)", () => {
+    const saved = ["Narxi qimmat", "Sabab X"];
+    const c = buildReasonsConfig({ [REASON_CATEGORIES.student_active.key]: saved });
+    for (const status of ["active", "paused", "left", "returned", "graduated"]) {
+      const o = reasonOptions(c, studentArchiveCategory(status));
+      expect(o).toEqual({ active: true, options: saved });
+    }
+    // sinovdagi o'quvchi — o'z ro'yxati, faol ro'yxatga aralashmaydi
+    expect(reasonOptions(c, studentArchiveCategory("trial")).options).toEqual([
+      ...REASON_CATEGORIES.student_trial.defaults,
+    ]);
+    // sozlamada hali saqlanmagan bo'lsa — standart ro'yxat, dropdown bo'sh qolmaydi
+    const d = reasonOptions(buildReasonsConfig({}), studentArchiveCategory("active"));
+    expect(d.active).toBe(true);
+    expect(d.options).toEqual([...REASON_CATEGORIES.student_active.defaults]);
+  });
+
   it("amalga mos tur tanlanadi", () => {
     expect(studentArchiveCategory("trial")).toBe("student_trial");
     expect(studentArchiveCategory("active")).toBe("student_active");

@@ -4,7 +4,11 @@ import {
   bestSource,
   biggestDrop,
   countShare,
+  funnelKpis,
   funnelSteps,
+  matchesFunnelFilter,
+  parseHiddenStages,
+  visibleIndexes,
   monthAdvice,
   seasonMonths,
   sourceRows,
@@ -32,8 +36,59 @@ describe("CRM voronka", () => {
 
   it("eng katta tushish — oldingi pog'onaga nisbatan", () => {
     // 6→4 (33%), 4→3 (25%), 3→2 (33.3%) — birinchisi tanlanadi
-    expect(biggestDrop(steps)).toEqual({ index: 1, rate: (2 / 6) * 100 });
+    expect(biggestDrop(steps)).toEqual({ index: 1, from: 0, rate: (2 / 6) * 100 });
     expect(biggestDrop(funnelSteps([lead(3, "won")], 3))).toBeNull();
+  });
+
+  it("yashirilgan bosqich o'tkazib yuboriladi: o'tish va tushish ko'rinadigan oldingi pog'onaga nisbatan", () => {
+    const visible = visibleIndexes(3, new Set([1]));
+    expect(visible).toEqual([0, 2, 3]);
+    const hidden = funnelSteps(leads, 3, visible);
+    expect(hidden.map((s) => [s.index, s.count])).toEqual([
+      [0, 6],
+      [2, 3],
+      [3, 2],
+    ]);
+    expect(hidden[1]).toMatchObject({ conv: 50, drop: 3 });
+    expect(biggestDrop(hidden)).toEqual({ index: 2, from: 0, rate: 50 });
+    // Oxirgi pog'ona hech qachon yashirilmaydi
+    expect(visibleIndexes(2, new Set([0, 1, 2]))).toEqual([2]);
+  });
+
+  it("ko'rsatkichlar tanlangan pog'ona bo'yicha: yetmaganlar, ulardan yo'qotilganlar, o'tmaganlar", () => {
+    // 2-pog'ona: 3 ta yetgan → 3 ta yetmagan, ulardan 1 tasi (reached 0, lost) shu yerda yo'qotilgan
+    expect(funnelKpis(leads, steps, 2)).toEqual({
+      total: 6,
+      won: 2,
+      conversion: (2 / 6) * 100,
+      notReached: 3,
+      lostBefore: 1,
+      notPassed: 1,
+    });
+    // Tanlanmasa (oxirgi pog'ona): 4 ta o'quvchi bo'lmagan, ulardan 2 tasi yo'qotilgan
+    expect(funnelKpis(leads, steps, 3)).toMatchObject({ notReached: 4, lostBefore: 2, notPassed: 1 });
+    expect(funnelKpis([], funnelSteps([], 3), 3)).toMatchObject({ total: 0, conversion: null, notReached: 0 });
+  });
+
+  it("yashirin bosqichlar sozlamasi: buzilgan qiymat — hech biri yashirilmagan", () => {
+    expect(parseHiddenStages(["a", "a", 5, "", "b"])).toEqual(["a", "b"]);
+    expect(parseHiddenStages("x")).toEqual([]);
+    expect(parseHiddenStages(null)).toEqual([]);
+  });
+
+  it("ro'yxat filtri: bosqich, mas'ul (yoki biriktirilmagan) va ism / telefon qidiruvi", () => {
+    const l = { name: "Aziza Karimova", phone: "901234567", staffId: "u1", reached: 1 };
+    const all = { q: "", staff: null, reached: null };
+    expect(matchesFunnelFilter(l, all)).toBe(true);
+    expect(matchesFunnelFilter(l, { ...all, reached: 1 })).toBe(true);
+    expect(matchesFunnelFilter(l, { ...all, reached: 2 })).toBe(false);
+    expect(matchesFunnelFilter(l, { ...all, staff: "u1" })).toBe(true);
+    expect(matchesFunnelFilter(l, { ...all, staff: "u2" })).toBe(false);
+    expect(matchesFunnelFilter(l, { ...all, staff: "none" })).toBe(false);
+    expect(matchesFunnelFilter({ ...l, staffId: null }, { ...all, staff: "none" })).toBe(true);
+    expect(matchesFunnelFilter(l, { ...all, q: "karim" })).toBe(true);
+    expect(matchesFunnelFilter(l, { ...all, q: "+998 90 123" })).toBe(true);
+    expect(matchesFunnelFilter(l, { ...all, q: "xyz" })).toBe(false);
   });
 
   it("bosqichda o'rtacha turish — faqat tugallangan turishlar", () => {

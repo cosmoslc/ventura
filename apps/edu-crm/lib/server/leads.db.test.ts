@@ -79,10 +79,10 @@ describe.skipIf(!ADMIN_URL)("lidlar (haqiqiy PostgreSQL)", () => {
 
   it("standart bosqichlar bir marta yaratiladi — bir vaqtda kelgan so'rovlarda ham", async () => {
     const [x, y, z] = await Promise.all([listStages(db), listStages(db), listStages(db)]);
-    expect(x.map((s) => s.kind)).toEqual(["open", "open", "open", "won", "lost"]);
+    expect(x.map((s) => s.kind)).toEqual(["open", "open", "open", "open", "won", "lost"]);
     expect(y).toEqual(x);
     expect(z).toEqual(x);
-    expect(await db.select().from(leadStages)).toHaveLength(5);
+    expect(await db.select().from(leadStages)).toHaveLength(6);
   });
 
   it("ro'yxat filial bo'yicha va arxivsiz; tarix va izohlar", async () => {
@@ -195,7 +195,7 @@ describe.skipIf(!ADMIN_URL)("lidlar (haqiqiy PostgreSQL)", () => {
     expect(await other.select().from(leadFirstLessons)).toEqual([]);
     expect(await other.select().from(leadWaitlists)).toEqual([]);
     // Beta o'z standart bosqichlarini oladi, alfaga tegmaydi
-    expect(await listStages(other)).toHaveLength(5);
-    expect(await db.select().from(leadStages)).toHaveLength(5);
+    expect(await listStages(other)).toHaveLength(6);
+    expect(await db.select().from(leadStages)).toHaveLength(6);
   });
 });

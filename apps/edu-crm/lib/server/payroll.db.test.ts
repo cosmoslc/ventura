@@ -16,7 +16,7 @@ import {
   users,
 } from "@ventura/db/schema/tenant";
 import { ensurePaymentMethods } from "./finance";
-import { loadPayroll } from "./payroll";
+import { loadPayroll, loadTeacherPayroll } from "./payroll";
 
 /*
  * Ish haqi haqiqiy PostgreSQL'da (ADR 0018): o'qituvchi foizi guruhga shu oy tushgan puldan (qaytarish ayiriladi,
@@ -214,6 +214,115 @@ describe.skipIf(!ADMIN_URL)("ish haqi (haqiqiy PostgreSQL)", () => {
         month: "2026-10",
         date: "2026-10-10",
         methodId: ids.cash,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("profil ro'yxati: har to'lovdan ulush, yig'indi hisobdagi bilan bir xil", async () => {
+    const r = (await loadTeacherPayroll(db, ids.teacher, "2026-10", TODAY))!;
+    // Faqat shu oy to'lovlari (sentabr kirmaydi); yangisi (qaytarish) tepada
+    expect(r.shares[0]!.date).toBe("2026-10-06");
+    expect(r.shares.map((x) => [x.studentName, x.amount!, x.pay] as const).sort((x, y) => x[1] - y[1])).toEqual([
+      ["Ali", -50_000, -20_000],
+      ["Vali", 150_000, 120_000],
+      ["Ali", 300_000, 120_000],
+    ]);
+    expect(r.shares.reduce((sum, x) => sum + x.pay, 0)).toBe(r.row.accrual.total);
+    expect(r.shares.every((x) => x.kind === "payment" && x.salaryType === "percent" && x.value === 40)).toBe(true);
+  });
+
+  it("belgilangan oylik ish boshlagan sanadan: oldingi oylar 0, birinchi oy kunlarga mutanosib", async () => {
+    const [b] = await db.select().from(branches);
+    const [c] = await db.select().from(courses);
+    // Aniq sana berilgan: 16-oktabrdan (oktabrda 16/31 kun)
+    const [explicit] = await db
+      .insert(teachers)
+      .values({
+        branchId: b!.id,
+        name: "Yordamchi A",
+        phone: "+998901110001",
+        kind: "support",
+        salaryType: "fixed",
+        fixedSalary: 3_100_000,
+        salaryStartDate: "2026-10-16",
+      })
+      .returning();
+    // Sana yo'q: tizimga 10-sentabrda qo'shilgan, lekin guruhi 20-avgustda boshlangan — shu sanadan
+    const [auto] = await db
+      .insert(teachers)
+      .values({
+        branchId: b!.id,
+        name: "Yordamchi B",
+        phone: "+998901110002",
+        salaryType: "fixed",
+        fixedSalary: 3_100_000,
+        createdAt: new Date("2026-09-10T08:00:00Z"),
+      })
+      .returning();
+    // Guruhdagi belgilangan summa: aniq sana yo'q — guruh boshlangan sanadan (20-avgust)
+    const [fg] = await db
+      .insert(groups)
+      .values({
+        branchId: b!.id,
+        courseId: c!.id,
+        teacherId: auto!.id,
+        name: "Fiks guruh",
+        price: 300_000,
+        days: ["tue", "thu"],
+        startTime: "10:00",
+        endTime: "11:30",
+        startDate: "2026-08-20",
+        teacherSalaryType: "fixed",
+        teacherSalaryAmount: 620_000,
+      })
+      .returning();
+    const pay = async (id: string, month: string) => {
+      const p = await loadPayroll(db, null, month, TODAY);
+      return p.rows.find((x) => x.id === id && x.kind === "teacher")!.accrual;
+    };
+    expect((await pay(explicit!.id, "2026-09")).total).toBe(0);
+    expect((await pay(explicit!.id, "2026-10")).base).toBe(1_600_000);
+    expect((await pay(explicit!.id, "2026-11")).base).toBe(3_100_000);
+    // Avgust: 12/31 kun — o'z oyligi 1 200 000, guruh summasi 240 000
+    expect(await pay(auto!.id, "2026-07")).toMatchObject({ base: 0, total: 0 });
+    expect(await pay(auto!.id, "2026-08")).toMatchObject({ base: 1_200_000, total: 1_440_000 });
+    expect(await pay(auto!.id, "2026-09")).toMatchObject({ base: 3_100_000, total: 3_720_000 });
+    const prof = (await loadTeacherPayroll(db, auto!.id, "2026-08", TODAY))!;
+    expect(prof.shares.map((x) => [x.kind, x.pay, x.proration])).toEqual([
+      ["own", 1_200_000, { days: 12, total: 31 }],
+      ["group", 240_000, { days: 12, total: 31 }],
+    ]);
+    // Boshqa testlarga tegmasin
+    await db.delete(groups).where(eq(groups.id, fg!.id));
+    await db.delete(teachers).where(eq(teachers.id, explicit!.id));
+    await db.delete(teachers).where(eq(teachers.id, auto!.id));
+  });
+
+  it("baza himoyasi: ish boshlagan sana faqat belgilangan oylikda", async () => {
+    const [b] = await db.select().from(branches);
+    const [c] = await db.select().from(courses);
+    await expect(
+      db.insert(teachers).values({
+        branchId: b!.id,
+        name: "Xato",
+        phone: "+998901110009",
+        salaryType: "percent",
+        salaryStartDate: "2026-10-01",
+      }),
+    ).rejects.toThrow();
+    await expect(
+      db.insert(groups).values({
+        branchId: b!.id,
+        courseId: c!.id,
+        teacherId: ids.teacher,
+        name: "Xato guruh",
+        days: ["mon"],
+        startTime: "10:00",
+        endTime: "11:00",
+        startDate: "2026-10-01",
+        teacherSalaryType: "percent",
+        teacherSalaryPercent: 10,
+        teacherSalaryFrom: "2026-10-01",
       }),
     ).rejects.toThrow();
   });

@@ -28,6 +28,8 @@ export interface TeacherRow {
   revenueSharePercent: number;
   perStudentSalary: number;
   fixedSalary: number;
+  /** Belgilangan oylik shu sanadan; null — avtomatik */
+  salaryStartDate: string | null;
   workingDays: Weekday[];
   startTime: string | null;
   endTime: string | null;
@@ -66,6 +68,7 @@ function toRow(t: typeof teachers.$inferSelect): TeacherRow {
     revenueSharePercent: t.revenueSharePercent,
     perStudentSalary: t.perStudentSalary,
     fixedSalary: t.fixedSalary,
+    salaryStartDate: t.salaryStartDate,
     workingDays: t.workingDays.filter(isWeekday),
     startTime: t.startTime,
     endTime: t.endTime,

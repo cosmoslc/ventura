@@ -72,6 +72,8 @@ export async function saveTeacherAction(input: unknown): Promise<ActionResult<{ 
       revenueSharePercent: !support && v.salaryType === "percent" ? v.revenueSharePercent : 0,
       perStudentSalary: !support && v.salaryType === "per_student" ? v.perStudentSalary : 0,
       fixedSalary: support || v.salaryType === "fixed" ? v.fixedSalary : 0,
+      // Ish boshlagan sana faqat belgilangan oylikda; bo'sh — avtomatik (ADR 0043)
+      salaryStartDate: support || v.salaryType === "fixed" ? v.salaryStartDate || null : null,
       workingDays: support ? v.workingDays : [],
       startTime: support ? v.startTime || null : null,
       endTime: support ? v.endTime || null : null,
@@ -88,6 +90,7 @@ export async function saveTeacherAction(input: unknown): Promise<ActionResult<{ 
           kind: v.kind,
           ...(existing.branchId !== branchId ? { branchId } : {}),
           ...(existing.salaryType !== values.salaryType ? { salaryType: values.salaryType } : {}),
+          ...(existing.salaryStartDate !== values.salaryStartDate ? { salaryStartDate: values.salaryStartDate } : {}),
         },
       );
       revalidatePath(PATH);

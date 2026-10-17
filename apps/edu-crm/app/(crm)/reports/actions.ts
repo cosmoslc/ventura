@@ -54,7 +54,7 @@ export async function saveFinancePlansAction(input: unknown): Promise<ActionResu
 
     if (changes.length) {
       await ctx.audit("finance_plan.update", { type: "branch", id: branchId }, { year: v.year, changes });
-      revalidatePath("/reports/plan");
+      revalidatePath("/reports/cashflow");
     }
     return { ok: true, changed: changes.length };
   });

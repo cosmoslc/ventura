@@ -51,6 +51,8 @@ export const groups = pgTable(
     teacherSalaryType: text("teacher_salary_type", { enum: TEACHER_SALARY_TYPES }),
     teacherSalaryPercent: integer("teacher_salary_percent"),
     teacherSalaryAmount: bigint("teacher_salary_amount", { mode: "number" }),
+    /** Guruhdagi belgilangan summa shu sanadan hisoblanadi (birinchi oy kunlarga mutanosib); null — guruh boshlangan sana (ADR 0043) */
+    teacherSalaryFrom: date("teacher_salary_from", { mode: "string" }),
     note: text("note"),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
@@ -87,6 +89,7 @@ export const groups = pgTable(
       "groups_salary_override",
       sql`(${t.teacherSalaryPercent} is null or ${t.teacherSalaryPercent} between 0 and 100) and (${t.teacherSalaryAmount} is null or ${t.teacherSalaryAmount} >= 0)`,
     ),
+    check("groups_salary_from_fixed", sql`${t.teacherSalaryFrom} is null or ${t.teacherSalaryType} = 'fixed'`),
     tenantPolicy("groups"),
   ],
 );

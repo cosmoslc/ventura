@@ -6,7 +6,7 @@ import { formatMonth } from "@/lib/format";
 import { type ReportData, yearMonths } from "@/lib/reports";
 import { uz } from "@/lib/uz";
 import { leavesReport, retentionReport, riskReport } from "./academic-reports";
-import { cashflow, cashflowPlan } from "./cashflow-reports";
+import { cashflow } from "./cashflow-reports";
 import { courseRevenue, discountsReport, expenseAnalysis } from "./finance-reports";
 import { funnelReport, lostReport, seasonalReport, sourcesReport } from "./lead-reports";
 import { teachersReport } from "./teacher-reports";
@@ -67,6 +67,10 @@ export interface LoadArgs {
   today: string;
   /** Xodimda moliyaviy ruxsat bor — pul ustunlari ko'rinadi (masalan manbalar tushumi) */
   finance?: boolean;
+  /** Manzildagi hisobotga xos filtrlar (masalan voronkada kurs, manba, xodim, bosqich, qidiruv) */
+  query?: Record<string, string | undefined>;
+  /** Xodim hisobot sozlamasini o'zgartira oladi (voronkada bosqichlarni yashirish — `leads.edit`) */
+  manage?: boolean;
 }
 
 export interface ReportDef {
@@ -87,7 +91,6 @@ const LEADS: readonly Permission[] = ["dashboard.conversion_stats"];
 
 export const REPORTS = {
   cashflow: { group: "finance", feature: "payments", permissions: FINANCE, periodMode: "year", load: cashflow },
-  plan: { group: "finance", feature: "payments", permissions: FINANCE, periodMode: "month", load: cashflowPlan },
   expenses: {
     group: "finance",
     feature: "expenses",

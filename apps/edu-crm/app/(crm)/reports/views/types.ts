@@ -12,4 +12,15 @@ export interface ReportViewProps {
   today: string;
   /** Xodimda moliyaviy ruxsat bor */
   finance: boolean;
+  /** Manzildagi hisobotga xos filtrlar (voronkada kurs, manba, xodim, bosqich, qidiruv) */
+  query?: Record<string, string>;
+  /** Ro'yxat sahifalariga havolalar (pul oqimi jadvali) */
+  access?: ReportAccess;
+}
+
+/** Hisobot ko'rinishidagi havolalar uchun: xodim qaysi ro'yxat sahifalarini ocha oladi */
+export interface ReportAccess {
+  payments: boolean;
+  income: boolean;
+  expenses: boolean;
 }

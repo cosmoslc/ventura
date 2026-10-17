@@ -29,7 +29,7 @@ import { EmptyState } from "@ventura/ui/page-header";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
-import type { Payroll, TeacherPayrollRow } from "@/lib/server/payroll";
+import type { Payroll, ShareRow, TeacherPayrollRow } from "@/lib/server/payroll";
 import { displayPhone, formatDate, formatMonth, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
@@ -52,6 +52,7 @@ const MEMBER_TONE = { trial: "info", active: "success", paused: "warning", left:
 export interface TeacherSalaryData {
   row: TeacherPayrollRow;
   groupNames: Record<string, string>;
+  shares: ShareRow[];
   entries: SalaryEntryRow[];
   methods: MethodOption[];
   perms: SalaryPerms;
@@ -125,7 +126,7 @@ export function TeacherProfile({
       }
     : null;
   const visibleEntries = salary?.entries.filter((e) => !e.voided).length ?? 0;
-  const shareCount = salary ? salary.row.accrual.groups.filter((g) => g.pay !== 0 || g.revenue !== 0).length : 0;
+  const shareCount = salary?.shares.length ?? 0;
 
   async function archive() {
     const res = await archiveTeacherAction(t.id);
@@ -347,7 +348,9 @@ export function TeacherProfile({
               />
             </>
           ) : null}
-          {tab === "shares" && salary ? <TeacherShares row={salary.row} groupNames={salary.groupNames} /> : null}
+          {tab === "shares" && salary ? (
+            <TeacherShares row={salary.row} groupNames={salary.groupNames} shares={salary.shares} />
+          ) : null}
           {tab === "groups" ? <GroupsTab groups={groups} /> : null}
           {tab === "students" ? <StudentsTab students={overview.students} /> : null}
           {tab === "supports" && !support ? <SupportsTab supports={supports} /> : null}

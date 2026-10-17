@@ -1,7 +1,6 @@
 "use client";
 
 import { Banknote, CalendarCheck, Pencil, Plus, Printer, RotateCcw, Trash2, Undo2, Wallet } from "lucide-react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -11,13 +10,13 @@ import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/fi
 import { cn } from "@ventura/ui/lib/utils";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
-import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatDate, formatMonth, money, signedMoney } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { restoreEntryAction } from "./actions";
 import type { PaymentRow, StudentGroupOption } from "./data";
 import { EditEntryDialog, VoidDialog } from "./finance-dialogs";
+import { GroupBoxHeader, MoreRows, StudentsTable } from "../student-table";
 import { useQuickOpen } from "../use-quick-open";
 import { type MethodOption, PaymentDialog, type PickStudent } from "./payment-dialog";
 import type { FinancePerms } from "./perms";
@@ -25,6 +24,8 @@ import type { FinancePerms } from "./perms";
 const t = uz.payments;
 const ALL = "all";
 const KIND_TONE = { payment: "success", refund: "danger", discount: "info", correction: "neutral" } as const;
+/** Har bir guruh qutisida dastlab ko'rinadigan qatorlar */
+const BOX_ROWS = 15;
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
 
 export function PaymentsView({
@@ -59,6 +60,7 @@ export function PaymentsView({
   useQuickOpen(() => setPayOpen(true), perms.create);
   const [voiding, setVoiding] = React.useState<PaymentRow | null>(null);
   const [editing, setEditing] = React.useState<PaymentRow | null>(null);
+  const [limits, setLimits] = React.useState<Record<string, number>>({});
   const [, startTransition] = React.useTransition();
 
   const live = rows.filter((r) => !r.voided);
@@ -80,6 +82,19 @@ export function PaymentsView({
       (!!digits && (r.studentPhone.includes(digits) || String(r.receiptNo ?? "").includes(digits)))
     );
   });
+
+  // Guruhlar bo'yicha qutilar (nomi bo'yicha, guruhsizlar oxirida); qatorlar sana bo'yicha yangisi birinchi
+  const boxes = [
+    ...visible
+      .reduce((map, r) => {
+        const key = r.groupId ?? "none";
+        const box = map.get(key) ?? { key, id: r.groupId, name: r.groupName ?? "", rows: [] as PaymentRow[], net: 0 };
+        box.rows.push(r);
+        box.net += r.cash;
+        return map.set(key, box);
+      }, new Map<string, { key: string; id: string | null; name: string; rows: PaymentRow[]; net: number }>())
+      .values(),
+  ].sort((a, b) => (a.id === null ? 1 : b.id === null ? -1 : a.name.localeCompare(b.name)));
 
   const setMonth = (m: string) => router.push(`${pathname}?month=${m}`, { scroll: false });
 
@@ -164,68 +179,109 @@ export function PaymentsView({
         </FilterEnd>
       </FilterBar>
 
-      <Card className="overflow-hidden">
-        {visible.length ? (
-          <TableWrap className="rounded-none border-0">
-            <Table>
-              <THead>
-                <Tr>
-                  <Th>{t.colReceipt}</Th>
-                  <Th>{t.colDate}</Th>
-                  <Th>{t.colStudent}</Th>
-                  <Th>{t.colGroup}</Th>
-                  <Th>{t.colMethod}</Th>
-                  <Th className="text-right">{t.colAmount}</Th>
-                  <Th>{t.colStaff}</Th>
-                  <Th className="text-right">{uz.common.actions}</Th>
-                </Tr>
-              </THead>
-              <TBody>
-                {visible.map((r) => (
-                  <Tr key={r.id} className={cn(r.voided && "opacity-60")}>
-                    <Td className="font-mono text-caption">{r.receiptNo ?? "—"}</Td>
-                    <Td className="whitespace-nowrap">{formatDate(r.date)}</Td>
-                    <Td>
-                      <Link
-                        href={`/students/${r.studentId}`}
-                        className="font-medium text-foreground hover:text-primary"
+      {boxes.length ? (
+        <div className="space-y-5">
+          {boxes.map((box) => {
+            const limit = limits[box.key] ?? BOX_ROWS;
+            return (
+              <StudentsTable
+                key={box.key}
+                rows={box.rows.slice(0, limit)}
+                rowKey={(r) => r.id}
+                student={(r) => ({
+                  name: r.studentName,
+                  href: `/students/${r.studentId}`,
+                  sub: displayPhone(r.studentPhone),
+                })}
+                studentHeader={t.colStudent}
+                minWidth={900}
+                rowClassName={(r) => (r.voided ? "opacity-60" : undefined)}
+                header={
+                  <GroupBoxHeader
+                    title={box.id ? box.name : t.boxNoGroup}
+                    href={box.id ? `/groups/${box.id}` : undefined}
+                    sub={[box.id ? null : t.boxNoGroupHint, t.boxCount(box.rows.length)].filter(Boolean).join(" · ")}
+                    aside={
+                      <span className="text-(--success-fg)">
+                        {money(box.net)} {uz.common.som}
+                      </span>
+                    }
+                  />
+                }
+                columns={[
+                  {
+                    key: "receipt",
+                    headClassName: "w-20",
+                    header: t.colReceipt,
+                    className: "font-mono text-caption",
+                    cell: (r) => r.receiptNo ?? "—",
+                  },
+                  {
+                    key: "date",
+                    headClassName: "w-28",
+                    header: t.colDate,
+                    className: "whitespace-nowrap",
+                    cell: (r) => formatDate(r.date),
+                  },
+                  {
+                    key: "month",
+                    headClassName: "w-36",
+                    header: t.colMonth,
+                    className: "whitespace-nowrap",
+                    cell: (r) => (r.month ? formatMonth(r.month) : <span className="text-muted-foreground">—</span>),
+                  },
+                  {
+                    key: "method",
+                    headClassName: "w-36",
+                    header: t.colMethod,
+                    cell: (r) => (
+                      <>
+                        <Badge tone={KIND_TONE[r.kind]}>{t.kinds[r.kind]}</Badge>
+                        {r.methodName ? (
+                          <div className="mt-1 text-caption text-muted-foreground">{r.methodName}</div>
+                        ) : null}
+                        {r.voided ? (
+                          <div className="mt-1 text-caption text-(--danger-fg)">
+                            {t.voided}: {r.voided.reason}
+                          </div>
+                        ) : null}
+                      </>
+                    ),
+                  },
+                  {
+                    key: "amount",
+                    headClassName: "w-32",
+                    header: t.colAmount,
+                    align: "right",
+                    className: "font-semibold whitespace-nowrap",
+                    cell: (r) => (
+                      <span
+                        className={cn(
+                          r.cash > 0
+                            ? "text-(--success-fg)"
+                            : r.cash < 0
+                              ? "text-(--danger-fg)"
+                              : "text-muted-foreground",
+                          r.voided && "line-through",
+                        )}
                       >
-                        {r.studentName}
-                      </Link>
-                      <div className="text-caption text-muted-foreground">{displayPhone(r.studentPhone)}</div>
-                    </Td>
-                    <Td>
-                      {r.groupName ?? t.noGroup}
-                      {r.month ? (
-                        <div className="text-caption text-muted-foreground">{formatMonth(r.month)}</div>
-                      ) : null}
-                    </Td>
-                    <Td>
-                      <Badge tone={KIND_TONE[r.kind]}>{t.kinds[r.kind]}</Badge>
-                      {r.methodName ? (
-                        <div className="mt-1 text-caption text-muted-foreground">{r.methodName}</div>
-                      ) : null}
-                      {r.voided ? (
-                        <div className="mt-1 text-caption text-(--danger-fg)">
-                          {t.voided}: {r.voided.reason}
-                        </div>
-                      ) : null}
-                    </Td>
-                    <Td
-                      className={cn(
-                        "text-right font-semibold whitespace-nowrap",
-                        r.cash > 0
-                          ? "text-(--success-fg)"
-                          : r.cash < 0
-                            ? "text-(--danger-fg)"
-                            : "text-muted-foreground",
-                        r.voided && "line-through",
-                      )}
-                    >
-                      {signedMoney(effect(r))}
-                    </Td>
-                    <Td className="text-caption text-muted-foreground">{r.createdByName ?? "—"}</Td>
-                    <Td>
+                        {signedMoney(effect(r))}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "staff",
+                    headClassName: "w-32",
+                    header: t.colStaff,
+                    className: "text-caption text-muted-foreground",
+                    cell: (r) => r.createdByName ?? "—",
+                  },
+                  {
+                    key: "actions",
+                    headClassName: "w-36",
+                    header: uz.common.actions,
+                    align: "right",
+                    cell: (r) => (
                       <div className="flex justify-end gap-1">
                         {r.kind === "payment" && perms.receipt && !r.voided ? (
                           <Button variant="icon" size="icon" aria-label={t.receipt} asChild>
@@ -250,16 +306,26 @@ export function PaymentsView({
                           </Button>
                         ) : null}
                       </div>
-                    </Td>
-                  </Tr>
-                ))}
-              </TBody>
-            </Table>
-          </TableWrap>
-        ) : (
+                    ),
+                  },
+                ]}
+                footer={
+                  box.rows.length > limit ? (
+                    <MoreRows onClick={() => setLimits((l) => ({ ...l, [box.key]: limit + BOX_ROWS }))}>
+                      {t.showMore(Math.min(BOX_ROWS, box.rows.length - limit))}
+                    </MoreRows>
+                  ) : null
+                }
+                empty={null}
+              />
+            );
+          })}
+        </div>
+      ) : (
+        <Card className="overflow-hidden">
           <EmptyState icon={<Wallet />} title={t.empty} description={t.emptyHint} />
-        )}
-      </Card>
+        </Card>
+      )}
 
       <PaymentDialog
         open={payOpen}

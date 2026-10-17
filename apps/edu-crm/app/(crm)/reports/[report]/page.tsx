@@ -4,20 +4,23 @@ import { notFound, redirect } from "next/navigation";
 import { can, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
 import { PageHeader } from "@ventura/ui/page-header";
+import { pagePermissions } from "@/lib/access";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { getLeaveReasons } from "@/lib/server/leave-reasons";
 import { todayTashkent } from "@/lib/server/memberships";
 import { PLAN_EDIT, planEditorRows } from "@/lib/server/cashflow-reports";
+import type { FunnelViewData } from "@/lib/server/lead-reports";
 import { getOpeningBalances } from "@/lib/server/opening-balance";
 import { REPORTS, isReportKey, reportPeriod } from "@/lib/server/reports";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { LeaveReasonsButton } from "../leave-reasons-button";
 import { OpeningBalanceEditor } from "../opening-balance-editor";
-import { PlanEditor } from "../plan-editor";
+import { PlanEditButton, PlanEditProvider } from "../plan-editor";
 import { ReportFilters } from "../report-filters";
 import { REPORT_VIEWS } from "../views";
+import { FunnelFilters } from "../views/lead-parts/funnel-filters";
 
 const t = uz.reports;
 
@@ -32,9 +35,14 @@ export default async function ReportPage({
   searchParams,
 }: {
   params: Promise<{ report: string }>;
-  searchParams: Promise<{ yil?: string; oy?: string }>;
+  searchParams: Promise<{ yil?: string; oy?: string; [filter: string]: string | string[] | undefined }>;
 }) {
   const { report } = await params;
+  // Eski "Reja, fakt va prognoz" havolasi: u endi Pul oqimi sahifasining ichida (ADR 0045)
+  if (report === "plan") {
+    const old = await searchParams;
+    redirect(/^\d{4}$/.test(String(old.yil ?? "")) ? `/reports/cashflow?yil=${String(old.yil)}` : "/reports/cashflow");
+  }
   if (!isReportKey(report)) notFound();
   const def = REPORTS[report];
   const { tenant, staff } = await requirePage("reports", "/reports");
@@ -46,7 +54,18 @@ export default async function ReportPage({
   const period = reportPeriod(sp, today, def.periodMode);
   const branch = await getBranchContext();
   const finance = canAny(staff.access, ["dashboard.financial_stats"]);
-  const data = await def.load({ db: getTenantDb(tenant), filter: branch.filter, period, today, finance });
+  // Hisobotga xos filtrlar (voronkada kurs, manba, xodim, bosqich, qidiruv) — manzildan, Excel ham shuni oladi
+  const query: Record<string, string> = {};
+  for (const [k, v] of Object.entries(sp)) if (typeof v === "string" && v) query[k] = v;
+  const data = await def.load({
+    db: getTenantDb(tenant),
+    filter: branch.filter,
+    period,
+    today,
+    finance,
+    query,
+    manage: can(staff.access, "leads.edit"),
+  });
   const View = REPORT_VIEWS[report];
   const cy = Number(today.slice(0, 4));
   const years = Array.from({ length: 6 }, (_, i) => cy - i);
@@ -54,8 +73,10 @@ export default async function ReportPage({
   if (def.periodMode !== "none") q.set("yil", period.year === null ? "all" : String(period.year));
   if (def.periodMode !== "year" && def.periodMode !== "none")
     q.set("oy", period.month === null ? "all" : String(period.month));
+  for (const [k, v] of Object.entries(query)) if (k !== "yil" && k !== "oy") q.set(k, v);
+  // Reja kataklari: Pul oqimi jadvalidagi "Reja" ustunlari shu oyna orqali kiritiladi
   const editor =
-    report === "plan" && period.year !== null && canAny(staff.access, PLAN_EDIT)
+    report === "cashflow" && period.year !== null && canAny(staff.access, PLAN_EDIT)
       ? await planEditorRows(getTenantDb(tenant), branch, period.year)
       : null;
   // Boshlang'ich qoldiq (E6j): hisobotni ko'radigan xodim kiritadi
@@ -63,10 +84,20 @@ export default async function ReportPage({
     report === "cashflow" && canAny(staff.access, PLAN_EDIT) && branch.options.length
       ? await getOpeningBalances(getTenantDb(tenant))
       : null;
+  // Pul oqimi jadvalidagi fakt kataklari tegishli ro'yxatga olib boradi (xodimga ochiq bo'lsagina)
+  const expensesOn = report === "cashflow" && (await hasFeature(tenant, "expenses"));
+  const access =
+    report === "cashflow"
+      ? {
+          payments: canAny(staff.access, pagePermissions("/payments")),
+          income: expensesOn && canAny(staff.access, pagePermissions("/additional-income")),
+          expenses: expensesOn && canAny(staff.access, pagePermissions("/expenses")),
+        }
+      : undefined;
   const leaveReasons =
     report === "leaves" && can(staff.access, "groups.edit") ? await getLeaveReasons(getTenantDb(tenant)) : null;
 
-  return (
+  const page = (
     <div className="space-y-6">
       <div>
         <Link
@@ -84,18 +115,27 @@ export default async function ReportPage({
         month={period.month}
         years={years}
         excelHref={`/reports/excel/${report}?${q.toString()}`}
+        filters={report === "funnel" ? <FunnelFilters filters={(data.view as FunnelViewData).filters} /> : null}
         actions={
-          editor && period.year !== null ? (
-            <PlanEditor year={period.year} rows={editor} branches={branch.options} selectedBranch={branch.selected} />
-          ) : openings ? (
-            <OpeningBalanceEditor branches={branch.options} openings={openings} today={today} />
+          editor || openings ? (
+            <>
+              {editor ? <PlanEditButton /> : null}
+              {openings ? <OpeningBalanceEditor branches={branch.options} openings={openings} today={today} /> : null}
+            </>
           ) : leaveReasons ? (
             <LeaveReasonsButton reasons={leaveReasons} />
           ) : null
         }
       />
 
-      <View data={data} period={period} today={today} finance={finance} />
+      <View data={data} period={period} today={today} finance={finance} query={query} access={access} />
     </div>
+  );
+  return editor && period.year !== null ? (
+    <PlanEditProvider year={period.year} rows={editor} branches={branch.options} selectedBranch={branch.selected}>
+      {page}
+    </PlanEditProvider>
+  ) : (
+    page
   );
 }

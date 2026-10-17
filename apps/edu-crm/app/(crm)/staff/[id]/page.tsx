@@ -29,7 +29,6 @@ export default async function StaffMemberPage({ params }: { params: Promise<{ id
       row={row}
       positions={positions}
       branches={branch.options}
-      selectedBranch={branch.selected}
       fields={fields}
       canViewLog={can(staff.access, "settings.logs")}
       perms={{

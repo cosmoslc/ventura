@@ -16,16 +16,21 @@ import {
   type GroupCash,
   type ManagerAccrual,
   type PayrollGroup,
+  type Proration,
   type SalaryBalance,
   type SalaryType,
   type StudentMonth,
   type TeacherAccrual,
   type TeacherRule,
+  groupShares,
+  groupTerms,
   managerAccrual,
   salaryBalance,
   teacherAccrual,
+  teacherFixedFrom,
 } from "@/lib/payroll";
 import { loadAccounts } from "./finance";
+import { tashkentDate } from "./memberships";
 
 /*
  * Oylik ish haqi hisobi ma'lumoti (ADR 0018): bazadan kirishlarni yig'ib, lib/payroll.ts dagi toza funksiyalarga
@@ -87,6 +92,13 @@ async function movesFor(db: TenantDb, month: string) {
 
 /* ---------- O'qituvchilar ---------- */
 
+/** Profil ro'yxati uchun: o'qituvchining guruhlari (qoidasi bilan), shu oy to'lovlari va o'quvchi hisoblari */
+interface TeacherCtx {
+  groups: { rule: TeacherRule; group: PayrollGroup }[];
+  cash: GroupCash[];
+  months: StudentMonth[];
+}
+
 async function teacherRows(
   db: TenantDb,
   filter: readonly string[] | null,
@@ -95,7 +107,7 @@ async function teacherRows(
   moves: Awaited<ReturnType<typeof movesFor>>,
   /** Faqat shu o'qituvchi (profil uchun; bo'shatilgani ham) */
   onlyId?: string,
-): Promise<TeacherPayrollRow[]> {
+): Promise<{ rows: TeacherPayrollRow[]; ctx: TeacherCtx }> {
   const list = await db
     .select()
     .from(teachers)
@@ -105,7 +117,7 @@ async function teacherRows(
         : and(isNull(teachers.archivedAt), filter ? inArray(teachers.branchId, [...filter]) : undefined),
     )
     .orderBy(asc(teachers.name));
-  if (!list.length) return [];
+  if (!list.length) return { rows: [], ctx: { groups: [], cash: [], months: [] } };
   const groupRows = await db
     .select()
     .from(groups)
@@ -120,10 +132,12 @@ async function teacherRows(
     ? await Promise.all([
         db
           .select({
+            id: payments.id,
             studentId: payments.studentId,
             groupId: payments.groupId,
             kind: payments.kind,
             amount: payments.amount,
+            date: payments.date,
           })
           .from(payments)
           .where(
@@ -141,6 +155,8 @@ async function teacherRows(
       ])
     : [[], []];
   const cash: GroupCash[] = cashRows.map((c) => ({
+    id: c.id,
+    date: c.date,
     studentId: c.studentId,
     groupId: c.groupId!,
     amount: c.kind === "refund" ? -c.amount : c.amount,
@@ -168,22 +184,30 @@ async function teacherRows(
     }
   }
 
-  return list.map((t) => {
-    const own: PayrollGroup[] = groupRows
-      .filter((g) => g.teacherId === t.id)
-      .map((g) => ({
-        id: g.id,
-        salaryType: g.teacherSalaryType,
-        percent: g.teacherSalaryPercent,
-        amount: g.teacherSalaryAmount,
-      }));
-    const rule = {
+  const payGroups = new Map<string, { rule: TeacherRule; group: PayrollGroup }>();
+  const rows = list.map((t) => {
+    const mine = groupRows.filter((g) => g.teacherId === t.id);
+    const own: PayrollGroup[] = mine.map((g) => ({
+      id: g.id,
+      salaryType: g.teacherSalaryType,
+      percent: g.teacherSalaryPercent,
+      amount: g.teacherSalaryAmount,
+      // Belgilangan summa ish boshlagan sanadan; aniq sana yo'q bo'lsa guruh boshlangan kundan (ADR 0043)
+      fixedFrom: g.teacherSalaryFrom ?? g.startDate,
+    }));
+    const rule: TeacherRule = {
       salaryType: t.salaryType,
       percent: t.revenueSharePercent,
       perStudent: t.perStudentSalary,
       fixed: t.fixedSalary,
+      fixedFrom: teacherFixedFrom(
+        t.salaryStartDate,
+        tashkentDate(t.createdAt),
+        mine.map((g) => g.startDate),
+      ),
     };
-    const accrual = teacherAccrual(rule, own, months, cash);
+    for (const g of own) payGroups.set(g.id, { rule, group: g });
+    const accrual = teacherAccrual(rule, own, months, cash, month);
     return {
       kind: "teacher" as const,
       id: t.id,
@@ -197,6 +221,7 @@ async function teacherRows(
       balance: salaryBalance(accrual.total, moves.get(`teacher:${t.id}`) ?? []),
     };
   });
+  return { rows, ctx: { groups: [...payGroups.values()], cash, months } };
 }
 
 /* ---------- Xodimlar (menejer KPI) ---------- */
@@ -292,7 +317,7 @@ export async function loadPayroll(
   today: string,
 ): Promise<Payroll> {
   const moves = await movesFor(db, month);
-  const [t, s] = await Promise.all([
+  const [{ rows: t }, s] = await Promise.all([
     teacherRows(db, filter, month, today, moves),
     staffRows(db, filter, month, today, moves),
   ]);
@@ -301,14 +326,99 @@ export async function loadPayroll(
   return { month, rows: [...t, ...s], totals: { revenue, share, center: revenue - share } };
 }
 
-/** Bitta o'qituvchining oy hisobi (profildagi "Maosh" bo'limi) va guruh nomlari */
+/**
+ * O'qituvchi profilidagi "To'lovlardan hisoblangan tushum" qatori (eski tizimdagidek): guruhga shu oy tushgan har
+ * to'lov va undan ulush; belgilangan oyliklar alohida qator. Qatorlar yig'indisi — Ish haqi hisobidagi "hisoblangan".
+ */
+export interface ShareRow {
+  key: string;
+  kind: "payment" | "own" | "group";
+  studentId: string | null;
+  studentName: string | null;
+  groupId: string | null;
+  salaryType: SalaryType;
+  /** Foiz — %, har o'quvchi — stavka, belgilangan — summa */
+  value: number;
+  /** To'lov summasi (qaytarish — manfiy) */
+  amount: number | null;
+  pay: number;
+  date: string | null;
+  /** Belgilangan oylik qaysi sanadan hisoblanadi (faqat own/group) */
+  from: string | null;
+  proration: Proration | null;
+}
+
+/** Bitta o'qituvchining oy hisobi (profildagi "Maosh" bo'limi), guruh nomlari va to'lovlardan ulush qatorlari */
 export async function loadTeacherPayroll(db: TenantDb, teacherId: string, month: string, today: string) {
   const moves = await movesFor(db, month);
-  const [row] = await teacherRows(db, null, month, today, moves, teacherId);
+  const {
+    rows: [row],
+    ctx,
+  } = await teacherRows(db, null, month, today, moves, teacherId);
   if (!row) return null;
   const ids = row.accrual.groups.map((g) => g.groupId);
   const names = ids.length
     ? await db.select({ id: groups.id, name: groups.name }).from(groups).where(inArray(groups.id, ids))
     : [];
-  return { row, groupNames: Object.fromEntries(names.map((g) => [g.id, g.name])) as Record<string, string> };
+  const groupNames = Object.fromEntries(names.map((g) => [g.id, g.name])) as Record<string, string>;
+  const studentIds = [...new Set(ctx.cash.map((c) => c.studentId))];
+  const studentRows = studentIds.length
+    ? await db.select({ id: students.id, name: students.name }).from(students).where(inArray(students.id, studentIds))
+    : [];
+  const studentNames = new Map(studentRows.map((s) => [s.id, s.name]));
+
+  const shares: ShareRow[] = [];
+  for (const { rule, group } of ctx.groups) {
+    const terms = groupTerms(rule, group);
+    for (const l of groupShares(rule, group, ctx.months, ctx.cash)) {
+      shares.push({
+        key: l.cash.id ?? `${group.id}:${shares.length}`,
+        kind: "payment",
+        studentId: l.cash.studentId,
+        studentName: studentNames.get(l.cash.studentId) ?? null,
+        groupId: group.id,
+        salaryType: terms.type,
+        value: terms.value,
+        amount: l.cash.amount,
+        pay: l.pay,
+        date: l.cash.date ?? null,
+        from: null,
+        proration: null,
+      });
+    }
+  }
+  // Yangi to'lovlar tepada (eski tizimdagidek)
+  shares.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  if (row.accrual.base || row.accrual.baseProration)
+    shares.push({
+      key: "own",
+      kind: "own",
+      studentId: null,
+      studentName: null,
+      groupId: null,
+      salaryType: "fixed",
+      value: row.rule.fixed,
+      amount: null,
+      pay: row.accrual.base,
+      date: null,
+      from: row.rule.fixedFrom ?? null,
+      proration: row.accrual.baseProration ?? null,
+    });
+  for (const g of row.accrual.groups)
+    if (g.salaryType === "fixed" && g.pay)
+      shares.push({
+        key: `group:${g.groupId}`,
+        kind: "group",
+        studentId: null,
+        studentName: null,
+        groupId: g.groupId,
+        salaryType: "fixed",
+        value: ctx.groups.find((x) => x.group.id === g.groupId)?.group.amount ?? 0,
+        amount: null,
+        pay: g.pay,
+        date: null,
+        from: ctx.groups.find((x) => x.group.id === g.groupId)?.group.fixedFrom ?? null,
+        proration: g.proration ?? null,
+      });
+  return { row, groupNames, shares };
 }

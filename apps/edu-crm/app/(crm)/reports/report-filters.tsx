@@ -21,6 +21,7 @@ export function ReportFilters({
   years,
   excelHref,
   actions,
+  filters,
 }: {
   mode: "year" | "period" | "month" | "none";
   year: number | null;
@@ -29,6 +30,8 @@ export function ReportFilters({
   excelHref: string;
   /** Hisobotga xos tugma (masalan rejani kiritish) — Excel yonida */
   actions?: React.ReactNode;
+  /** Hisobotga xos filtrlar (masalan voronkada kurs va manba) — yil va oydan keyin */
+  filters?: React.ReactNode;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -64,6 +67,7 @@ export function ReportFilters({
           ]}
         />
       ) : null}
+      {filters}
       <FilterEnd>
         {actions}
         <Button variant="ghost" asChild>
