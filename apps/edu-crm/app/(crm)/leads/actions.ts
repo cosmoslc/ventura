@@ -42,7 +42,7 @@ import { assignedDraft } from "@/lib/notifications";
 import { notify } from "@/lib/server/notify";
 import { uz } from "@/lib/uz";
 import { convertLeads } from "./convert";
-import { holidayRanges } from "../holidays/data";
+import { holidayRanges } from "../(settings)/holidays/data";
 import { getLeadFields, listStages, staffOptions } from "./data";
 
 /*

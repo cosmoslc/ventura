@@ -2,7 +2,7 @@ import "server-only";
 import { and, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { attendance, groupMemberships, studentNotes, students } from "@ventura/db/schema/tenant";
-import { holidayRanges } from "@/app/(crm)/holidays/data";
+import { holidayRanges } from "@/app/(crm)/(settings)/holidays/data";
 import { listGroups } from "@/app/(crm)/groups/data";
 import { type ReportMark, type ReportStats, studentStats } from "@/lib/attendance-report";
 import { type MemberPeriod, lessonDates } from "@/lib/lessons";

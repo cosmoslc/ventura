@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Ventura: landing sahifasini asosiy domenga chiqarish (uydagi server, ADR 0051).
+# Ventura: landing sahifasini asosiy domenga chiqarish (uydagi server, ADR 0049).
 # Root nomidan, landing yangilanganda qayta ishga tushiriladi (xavfsiz):
 #
 #   sudo bash tooling/landing/publish.sh --domain ventura.uz --file docs/design/landing/ventura-landing.html

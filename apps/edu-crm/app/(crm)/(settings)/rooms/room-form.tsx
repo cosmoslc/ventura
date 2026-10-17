@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@ventura/ui/toast";
 import { firstError, roomInput } from "@/lib/rules";
 import { uz } from "@/lib/uz";
-import type { PickerBranch } from "../branch-picker";
+import type { PickerBranch } from "../../branch-picker";
 import { saveRoomAction } from "./actions";
 import type { RoomRow } from "./data";
 

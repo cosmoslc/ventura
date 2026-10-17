@@ -4,12 +4,19 @@ export const uz = {
     subtitle: "O'quv markaz tizimi",
   },
 
+  settingsNav: {
+    title: "Sozlamalar",
+    subtitle: "Markaz, o'quv jarayoni, moliya va hisob sozlamalari",
+    search: "Sozlama qidirish...",
+    empty: "Mos sozlama topilmadi",
+  },
   nav: {
     main: "Asosiy",
     home: "Bosh sahifa",
     logout: "Chiqish",
     password: "Parolni almashtirish",
     profile: "Profil",
+    settings: "Sozlamalar",
   },
 
   auth: {

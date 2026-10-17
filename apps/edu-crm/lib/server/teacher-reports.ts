@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, gte, inArray, lte } from "drizzle-orm";
 import { attendance, groupMemberships, groups, leadFirstLessons, leads, teachers } from "@ventura/db/schema/tenant";
-import { holidayRanges } from "@/app/(crm)/holidays/data";
+import { holidayRanges } from "@/app/(crm)/(settings)/holidays/data";
 import { lessonDates } from "@/lib/lessons";
 import type { ReportData, ReportRow } from "@/lib/reports";
 import {

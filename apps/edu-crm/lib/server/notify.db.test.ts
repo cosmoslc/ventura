@@ -6,7 +6,7 @@ import { migrateTenantDb } from "@ventura/db/migrate";
 import { branches, notifications, positions, userBranches, userPositions, users } from "@ventura/db/schema/tenant";
 import { parseApplyForm } from "@/lib/apply-form";
 import { applyDraft, approvalRequestDraft } from "@/lib/notifications";
-import { listNotifications, markAllRead, markRead, unreadCount } from "@/app/(crm)/notifications/data";
+import { listNotifications, markAllRead, markRead, unreadCount } from "@/app/(crm)/(settings)/notifications/data";
 import { submitApplication } from "./apply";
 import { directorIds, notify, staffWithPermission } from "./notify";
 import { globalSearch } from "./search";

@@ -14,7 +14,7 @@ import { StatCard } from "@ventura/ui/stat-card";
 import { toast } from "@ventura/ui/toast";
 import { money } from "@/lib/format";
 import { uz } from "@/lib/uz";
-import type { PickerBranch } from "../branch-picker";
+import type { PickerBranch } from "../../branch-picker";
 import { archiveCourseAction } from "./actions";
 import { CourseForm } from "./course-form";
 import type { CourseRow } from "./data";

@@ -13,7 +13,7 @@ import {
   settings,
   studentDiscounts,
 } from "@ventura/db/schema/tenant";
-import { holidayRanges } from "@/app/(crm)/holidays/data";
+import { holidayRanges } from "@/app/(crm)/(settings)/holidays/data";
 import {
   type BillingGroup,
   type BillingMembership,

@@ -14,8 +14,8 @@ import { Switch } from "@ventura/ui/switch";
 import { toast } from "@ventura/ui/toast";
 import { uz } from "@/lib/uz";
 import type { FinanceSettings } from "@/lib/server/finance";
-import { saveFinanceSettingsAction, savePaymentMethodAction } from "../payments/actions";
-import type { MethodOption } from "../payments/payment-dialog";
+import { saveFinanceSettingsAction, savePaymentMethodAction } from "../../payments/actions";
+import type { MethodOption } from "../../payments/payment-dialog";
 import { ReceiptCard } from "./receipt-card";
 
 const t = uz.financeSettings;

@@ -18,7 +18,7 @@ import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { formatDate } from "@/lib/format";
 import { uz } from "@/lib/uz";
-import type { PickerBranch } from "../branch-picker";
+import type { PickerBranch } from "../../branch-picker";
 import { deleteHolidayAction, saveHolidayAction } from "./actions";
 import type { HolidayRow } from "./data";
 

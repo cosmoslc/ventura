@@ -3,7 +3,7 @@ import { and, asc, inArray, isNull, or } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { courses } from "@ventura/db/schema/tenant";
 import type { BranchContext } from "@/lib/server/branch";
-import { listGroups } from "../groups/data";
+import { listGroups } from "../../groups/data";
 
 export interface CourseGroup {
   id: string;
