@@ -342,6 +342,12 @@ jobs:
           curl -fsS -H "Host: demo-a.ventura.uz" http://127.0.0.1/login | grep -q -- "--primary:#059669"
           # Kirmagan foydalanuvchi /login ga, o'z domeni bilan
           curl -sS -o /dev/null -w "%{redirect_url}" -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "://demo-a.ventura.uz/login"
+          # Cloudflare Tunnel orqasida: 127.0.0.1 dan kelgan https belgisi va mijoz IP'si ilovaga yetadi (ADR 0049)
+          curl -sS -o /dev/null -w "%{redirect_url}" -H "Host: demo-a.ventura.uz" -H "X-Forwarded-Proto: https" -H "CF-Connecting-IP: 203.0.113.7" http://127.0.0.1/ | grep -q "^https://demo-a.ventura.uz/login"
+          curl -sS -o /dev/null -w "%{redirect_url}" -H "Host: demo-a.ventura.uz" http://127.0.0.1/ | grep -q "^http://demo-a.ventura.uz/login"
+          # Noma'lum domen — 404 (Ubuntu'ning standart sahifasi emas)
+          test "$(curl -sS -o /dev/null -w "%{http_code}" -H "Host: yoq-loyiha.ventura.uz" http://127.0.0.1/)" = "404"
+          sudo grep -q 'X-Forwarded-Proto \$ventura_proto' /etc/nginx/conf.d/ventura-demo-a.conf
 
       - name: Ikkinchi mijoz o'sha ilovaga ulanadi (qayta build qilinmaydi)
         run: |

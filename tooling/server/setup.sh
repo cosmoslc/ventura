@@ -116,6 +116,32 @@ systemctl enable ssh >/dev/null 2>&1 || true
 systemctl restart ssh.socket 2>/dev/null || true
 systemctl restart ssh
 
+say "nginx: proksi sarlavhalari (Cloudflare Tunnel orqasida ham)"
+# Tunnel (cloudflared) shu kompyuterdan 127.0.0.1 orqali ulanadi: faqat undan kelgan Cloudflare sarlavhalariga
+# ishoniladi. To'g'ridan-to'g'ri kelgan so'rovda mijoz yuborgan qiymat e'tiborga olinmaydi.
+cat > /etc/nginx/conf.d/00-ventura-proxy.conf <<'CONF'
+# Ventura boshqaradi — qo'lda o'zgartirmang (tooling/server/setup.sh)
+map "$remote_addr|$http_x_forwarded_proto" $ventura_proto {
+    "~^(127\.0\.0\.1|::1)\|https$" https;
+    default $scheme;
+}
+map "$remote_addr|$http_cf_connecting_ip" $ventura_client_ip {
+    "~^(127\.0\.0\.1|::1)\|(?<cf>[0-9A-Fa-f:.]+)$" $cf;
+    default $remote_addr;
+}
+CONF
+# Noma'lum domen (masalan hali deploy qilinmagan <slug>.ventura.uz) — 404; Ubuntu'ning standart sahifasi ko'rsatilmaydi
+cat > /etc/nginx/conf.d/00-ventura-default.conf <<'CONF'
+# Ventura boshqaradi — qo'lda o'zgartirmang (tooling/server/setup.sh)
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 404;
+}
+CONF
+rm -f /etc/nginx/sites-enabled/default
+
 say "nginx yordamchisi (ventura-site)"
 cat > /usr/local/sbin/ventura-site <<'HELPER'
 #!/usr/bin/env bash
@@ -159,9 +185,9 @@ server {
         proxy_pass http://127.0.0.1:$port;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Real-IP \$ventura_client_ip;
+        proxy_set_header X-Forwarded-For \$ventura_client_ip;
+        proxy_set_header X-Forwarded-Proto \$ventura_proto;
         proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_read_timeout 60s;
@@ -241,7 +267,17 @@ chmod 0440 "${SUDOERS}.tmp"
 mv "${SUDOERS}.tmp" "$SUDOERS"
 
 systemctl enable --now nginx >/dev/null 2>&1 || true
+# Oldingi versiyada yozilgan saytlar ham yangi sarlavhalarga o'tkaziladi (keyingi deploy'ni kutmasdan)
+for f in /etc/nginx/conf.d/ventura-*.conf; do
+  [[ -f "$f" ]] || continue
+  sed -i \
+    -e 's/proxy_set_header X-Real-IP \$remote_addr;/proxy_set_header X-Real-IP $ventura_client_ip;/' \
+    -e 's/proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;/proxy_set_header X-Forwarded-For $ventura_client_ip;/' \
+    -e 's/proxy_set_header X-Forwarded-Proto \$scheme;/proxy_set_header X-Forwarded-Proto $ventura_proto;/' \
+    "$f"
+done
 nginx -t
+systemctl reload nginx 2>/dev/null || true
 
 say "PM2 tizim xizmati"
 env PATH="$PATH" pm2 startup systemd -u "$DEPLOY_USER" --hp "$DEPLOY_HOME" >/dev/null
