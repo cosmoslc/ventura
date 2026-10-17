@@ -118,6 +118,11 @@ export const groupMemberships = pgTable(
     leftReason: text("left_reason"),
     /** Chiqarishdagi izoh (sabab ro'yxatdan tanlanadi, izoh — erkin matn; ADR 0031) */
     leftNote: text("left_note"),
+    /**
+     * Qarz bilan chiqarish kutilmoqda: shu sanadan muzlatilgan, guruhdagi qarz to'lanishi bilan shu sana bilan
+     * chiqadi (sabab va izoh `left_reason` / `left_note` da)
+     */
+    leavePendingAt: date("leave_pending_at", { mode: "string" }),
     createdBy: uuid("created_by"),
     ...timestamps,
   },
@@ -147,6 +152,10 @@ export const groupMemberships = pgTable(
     check("group_memberships_left_note_len", sql`${t.leftNote} is null or length(${t.leftNote}) <= 500`),
     check("group_memberships_left_consistent", sql`(${t.status} = 'left') = (${t.leftAt} is not null)`),
     check("group_memberships_activated", sql`${t.status} <> 'active' or ${t.activatedAt} is not null`),
+    check(
+      "group_memberships_leave_pending",
+      sql`${t.leavePendingAt} is null or (${t.status} = 'paused' and ${t.leftAt} is null)`,
+    ),
     tenantPolicy("group_memberships"),
   ],
 );

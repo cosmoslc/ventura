@@ -144,6 +144,8 @@ export interface MemberRow {
   leftAt: string | null;
   leftReason: string | null;
   leftNote: string | null;
+  /** Qarz bilan chiqarish kutilmoqda (ADR 0050): shu sana bilan chiqadi */
+  leavePendingAt: string | null;
 }
 
 const localPhone = (p: string) => p.replace(/\D/g, "").slice(-9);
@@ -170,6 +172,7 @@ export async function groupMembers(db: TenantDb, groupId: string): Promise<{ ope
     leftAt: m.leftAt,
     leftReason: m.leftReason,
     leftNote: m.leftNote,
+    leavePendingAt: m.leavePendingAt,
     archived: !!s.archivedAt,
   }));
   return {
@@ -198,6 +201,8 @@ export interface StudentMembershipRow {
   leftAt: string | null;
   leftReason: string | null;
   leftNote: string | null;
+  /** Qarz bilan chiqarish kutilmoqda (ADR 0050): shu sana bilan chiqadi */
+  leavePendingAt: string | null;
 }
 
 /** O'quvchining barcha a'zolik davrlari (ochiqlari oldin) */
@@ -231,6 +236,7 @@ export async function studentMemberships(db: TenantDb, studentId: string): Promi
       leftAt: m.leftAt,
       leftReason: m.leftReason,
       leftNote: m.leftNote,
+      leavePendingAt: m.leavePendingAt,
     }))
     .sort((a, b) => Number(!!a.leftAt) - Number(!!b.leftAt));
 }

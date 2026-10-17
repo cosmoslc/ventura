@@ -11,7 +11,7 @@ import type { MonthCharge } from "./billing";
  * Natija har doim balans bilan mos: yopilmagan oylar yig'indisi + boshqa qarz = max(0, −balans).
  */
 
-export type EntryKind = "payment" | "refund" | "discount" | "correction";
+export type EntryKind = "payment" | "refund" | "discount" | "correction" | "writeoff";
 
 export interface LedgerEntry {
   id: string;
@@ -29,6 +29,7 @@ export function signed(e: Pick<LedgerEntry, "kind" | "amount">): number {
   switch (e.kind) {
     case "payment":
     case "discount":
+    case "writeoff":
       return e.amount;
     case "refund":
       return -e.amount;
@@ -37,7 +38,7 @@ export function signed(e: Pick<LedgerEntry, "kind" | "amount">): number {
   }
 }
 
-/** Naqd pul harakati (kassa): to'lov +, qaytarish −; chegirma va tuzatish — pul emas */
+/** Naqd pul harakati (kassa): to'lov +, qaytarish −; chegirma, tuzatish va kechilgan qarz — pul emas */
 export function cash(e: Pick<LedgerEntry, "kind" | "amount">): number {
   return e.kind === "payment" ? e.amount : e.kind === "refund" ? -e.amount : 0;
 }
@@ -177,4 +178,14 @@ export function overdueDays(oldestUnpaid: string | null, dueDay: number, today: 
   const due = `${oldestUnpaid}-${String(dueDay).padStart(2, "0")}`;
   if (today <= due) return 0;
   return Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${due}T00:00:00Z`)) / 86_400_000);
+}
+
+/**
+ * Guruh bo'yicha haqiqiy qarz (guruhdan chiqarish, ADR 0050): shu guruh oylarining yopilmagan qismi, lekin umumiy
+ * qarzdan ko'p emas (boshqa guruhdagi ortiqcha pul avval shu qarzni yopgan bo'ladi).
+ */
+export function groupDebt(summary: Pick<LedgerSummary, "balance" | "groups">, groupId: string): number {
+  const g = summary.groups.find((x) => x.groupId === groupId);
+  const due = g ? g.months.reduce((s, m) => s + m.due, 0) : 0;
+  return Math.max(0, Math.min(due, -summary.balance));
 }

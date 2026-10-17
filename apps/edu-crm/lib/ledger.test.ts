@@ -3,6 +3,7 @@ import type { MonthCharge } from "./billing";
 import {
   type LedgerEntry,
   cash,
+  groupDebt,
   overdueDays,
   pastDebt,
   signed,
@@ -241,5 +242,36 @@ describe("o'tgan oydan qarz (profil kartasi)", () => {
       [entry("payment", 300_000, "A")],
     );
     expect(pastDebt(s, "2026-10")).toEqual({ amount: 0, months: [] });
+  });
+});
+
+describe("kechilgan qarz (ADR 0050)", () => {
+  it("balansni yopadi, lekin naqd pul emas", () => {
+    expect(signed({ kind: "writeoff", amount: 120_000 })).toBe(120_000);
+    expect(cash({ kind: "writeoff", amount: 120_000 })).toBe(0);
+    const s = summarize(
+      [charge("A", "2026-10", 300_000)],
+      [entry("payment", 180_000, "A", "2026-10"), entry("writeoff", 120_000, "A")],
+    );
+    expect(s).toMatchObject({ balance: 0, debt: 0 });
+  });
+
+  it("guruh qarzi — shu guruh oylarining yopilmagan qismi", () => {
+    const s = summarize(
+      [charge("A", "2026-10", 300_000), charge("B", "2026-10", 200_000)],
+      [entry("payment", 200_000, "B", "2026-10"), entry("payment", 100_000, "A", "2026-10")],
+    );
+    expect(groupDebt(s, "A")).toBe(200_000);
+    expect(groupDebt(s, "B")).toBe(0);
+    expect(groupDebt(s, "X")).toBe(0);
+  });
+
+  it("boshqa guruhdagi ortiqcha pul avval qarzni yopadi: umumiy qarzdan ko'p kechilmaydi", () => {
+    const s = summarize(
+      [charge("A", "2026-10", 300_000), charge("B", "2026-10", 200_000)],
+      [entry("payment", 450_000, "B", "2026-10")],
+    );
+    expect(s.balance).toBe(-50_000);
+    expect(groupDebt(s, "A")).toBe(50_000);
   });
 });

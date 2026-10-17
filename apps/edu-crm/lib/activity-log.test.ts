@@ -56,8 +56,14 @@ function usedActions() {
 
 // Shablonli kalitlar va ular qabul qiladigan qiymatlar (kodda: excel/actions.ts, groups/actions.ts)
 const TEMPLATES: Record<string, string[]> = {
-  "group.${action}": ["group.activate", "group.pause", "group.unpause", "group.leave"],
-  "student.${action}": ["student.activate", "student.pause", "student.unpause", "student.leave"],
+  "group.${action}": ["group.activate", "group.pause", "group.unpause", "group.leave", "group.leave_pending"],
+  "student.${action}": [
+    "student.activate",
+    "student.pause",
+    "student.unpause",
+    "student.leave",
+    "student.leave_pending",
+  ],
   "import.${table}": ["import.students", "import.groups", "import.teachers", "import.leads"],
   "${c.type}.create": ["student.create", "group.create", "teacher.create", "lead.create"],
 };

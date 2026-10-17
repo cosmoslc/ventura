@@ -18,6 +18,8 @@ import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/actio
 import { resolveBranch } from "@/lib/server/branch";
 import { getLeaveReasons } from "@/lib/server/leave-reasons";
 import { LEAVE_REASONS_KEY } from "@/lib/reasons";
+import { money } from "@/lib/format";
+import { type LeaveOutcome, applyLeave } from "@/lib/server/leave-debt";
 import { closePauses, monthStart, openPauses, promoteTrialStudent, todayTashkent } from "@/lib/server/memberships";
 import {
   bulkEnrollInput,
@@ -241,7 +243,12 @@ export async function archiveGroupAction(input: unknown): Promise<ActionResult> 
         await tx.update(groups).set({ archivedAt: new Date() }).where(eq(groups.id, g.id));
         const r = await tx
           .update(groupMemberships)
-          .set({ status: "left", leftAt: todayTashkent(), leftReason: reason || uz.groups.archivedGroupReason })
+          .set({
+            status: "left",
+            leftAt: todayTashkent(),
+            leftReason: reason || uz.groups.archivedGroupReason,
+            leavePendingAt: null,
+          })
           .where(and(eq(groupMemberships.groupId, g.id), isNull(groupMemberships.leftAt)))
           .returning({ id: groupMemberships.id });
         return r.length;
@@ -393,13 +400,23 @@ export async function pauseMembershipAction(input: unknown): Promise<ActionResul
         // Faollashtirilgan bo'lsa faolga, sinovdan muzlatilgan bo'lsa sinovga qaytadi (asl sana saqlanadi)
         await ctx.db.transaction(async (tx) => {
           await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], today);
+          // Qarz bilan chiqarish kutilayotgan bo'lsa — bekor qilinadi (o'quvchi guruhda qoladi)
           await tx
             .update(groupMemberships)
-            .set({ status: row.m.activatedAt ? "active" : "trial", pausedAt: null })
+            .set({
+              status: row.m.activatedAt ? "active" : "trial",
+              pausedAt: null,
+              ...(row.m.leavePendingAt ? { leavePendingAt: null, leftReason: null, leftNote: null } : {}),
+            })
             .where(eq(groupMemberships.id, row.m.id));
         });
       }
-      await membershipAudit(ctx, row, parsed.data.pause ? "pause" : "unpause", {});
+      await membershipAudit(
+        ctx,
+        row,
+        parsed.data.pause ? "pause" : "unpause",
+        !parsed.data.pause && row.m.leavePendingAt ? { cancelledLeave: row.m.leavePendingAt } : {},
+      );
       refresh(row.g.id, row.s.id);
       return { ok: true };
     },
@@ -416,27 +433,62 @@ export async function leaveMembershipAction(input: unknown): Promise<ActionResul
       if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
       const row = await loadMembership(ctx, parsed.data.id);
       if (!row) return { ok: false, error: uz.common.gone };
-      const { date, reason, note } = parsed.data;
+      const { date, reason, note, mode } = parsed.data;
       if (date < row.m.enrolledAt) return { ok: false, error: uz.groups.dateBeforeEnroll };
-      // To'lov qaytarish va qarz tekshiruvi (eski "Tark etish" oynasi) — Moliya bilan (E3)
-      await ctx.db.transaction(async (tx) => {
-        if (row.m.status === "paused") await closePauses(tx, [{ id: row.m.id, pausedAt: row.m.pausedAt }], date);
-        await tx
-          .update(groupMemberships)
-          .set({ status: "left", leftAt: date, leftReason: reason || null, leftNote: note || null })
-          .where(eq(groupMemberships.id, row.m.id));
-      });
-      await membershipAudit(ctx, row, "leave", {
-        date,
-        ...(reason ? { reason } : {}),
-        ...(note ? { note } : {}),
-        from: row.m.status,
-      });
+      // Qarzdan kechish — pul amali: balansni tahrirlash ruxsati (yoki direktor tasdig'i) kerak
+      if (mode === "forgive") {
+        const gate = await ctx.requireAny(["students.balance_edit"]);
+        if (gate) return gate;
+      }
+      const today = todayTashkent();
+      const outcome = await ctx.db.transaction((tx) =>
+        applyLeave(tx, row.m, { date, reason, note, mode }, today, ctx.staff.id),
+      );
+      if (outcome.kind === "debt") return { ok: false, error: uz.groups.leaveHasDebt(money(outcome.debt)) };
+      await auditLeave(ctx, { g: row.g, s: row.s }, row.m.status, { date, reason, note }, outcome);
       refresh(row.g.id, row.s.id);
       return { ok: true };
     },
     { approval: { action: "groups.leave", input: input } },
   );
+}
+
+/* ---------- Guruhdan chiqarish: qarz bilan / qarzdan kechib (ADR 0050) ---------- */
+
+async function auditLeave(
+  ctx: ActionCtx,
+  who: { g: { id: string; name: string }; s: { id: string; name: string } },
+  from: string,
+  v: { date: string; reason: string; note: string },
+  outcome: Exclude<LeaveOutcome, { kind: "debt" }>,
+  extra: Record<string, unknown> = {},
+) {
+  const meta = {
+    date: v.date,
+    ...(v.reason ? { reason: v.reason } : {}),
+    ...(v.note ? { note: v.note } : {}),
+    from,
+    ...(outcome.kind === "left" ? {} : { debt: outcome.debt }),
+    ...extra,
+  };
+  const action = outcome.kind === "pending" ? "leave_pending" : "leave";
+  await ctx.audit(
+    `group.${action}`,
+    { type: "group", id: who.g.id },
+    { student: who.s.name, studentId: who.s.id, ...meta, ...(outcome.kind === "forgiven" ? { forgiven: true } : {}) },
+  );
+  await ctx.audit(
+    `student.${action}`,
+    { type: "student", id: who.s.id },
+    { group: who.g.name, groupId: who.g.id, ...meta, ...(outcome.kind === "forgiven" ? { forgiven: true } : {}) },
+  );
+  if (outcome.kind === "forgiven") {
+    await ctx.audit(
+      "payment.writeoff",
+      { type: "student", id: who.s.id },
+      { paymentId: outcome.writeoffId, amount: outcome.debt, groupId: who.g.id, date: v.date },
+    );
+  }
 }
 
 /* ---------- Bir nechta o'quvchi birga (o'quvchilar ro'yxati, ADR 0028) ---------- */
@@ -517,7 +569,7 @@ export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
     async (ctx) => {
       const parsed = bulkLeaveInput.safeParse(input);
       if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
-      const { date, reason, note } = parsed.data;
+      const { date, reason, note, mode } = parsed.data;
       const ids = [...new Set(parsed.data.studentIds)];
       const g = await loadGroup(ctx, parsed.data.groupId);
       if (!g) return { ok: false, error: uz.groups.groupArchived };
@@ -534,36 +586,29 @@ export async function leaveStudentsAction(input: unknown): Promise<BulkResult> {
         );
       const leave = rows.filter((r) => date >= r.m.enrolledAt);
       if (!leave.length) return { ok: false, error: uz.groups.bulkNothingToRemove };
-      await ctx.db.transaction(async (tx) => {
-        const paused = leave
-          .filter((r) => r.m.status === "paused")
-          .map((r) => ({ id: r.m.id, pausedAt: r.m.pausedAt }));
-        if (paused.length) await closePauses(tx, paused, date);
-        await tx
-          .update(groupMemberships)
-          .set({ status: "left", leftAt: date, leftReason: reason || null, leftNote: note || null })
-          .where(
-            inArray(
-              groupMemberships.id,
-              leave.map((r) => r.m.id),
-            ),
-          );
+      if (mode === "forgive") {
+        const gate = await ctx.requireAny(["students.balance_edit"]);
+        if (gate) return gate;
+      }
+      const today = todayTashkent();
+      // Hammasi bitta tranzaksiyada; `auto` rejimda qarzi borlar o'tkazib yuboriladi
+      const outcomes = await ctx.db.transaction(async (tx) => {
+        const list: { r: (typeof leave)[number]; outcome: LeaveOutcome }[] = [];
+        for (const r of leave) {
+          list.push({ r, outcome: await applyLeave(tx, r.m, { date, reason, note, mode }, today, ctx.staff.id) });
+        }
+        return list;
       });
-      for (const r of leave) {
-        const meta = { date, ...(reason ? { reason } : {}), ...(note ? { note } : {}), from: r.m.status, bulk: true };
-        await ctx.audit(
-          "group.leave",
-          { type: "group", id: g.id },
-          { student: r.name, studentId: r.m.studentId, ...meta },
-        );
-        await ctx.audit(
-          "student.leave",
-          { type: "student", id: r.m.studentId },
-          { group: g.name, groupId: g.id, ...meta },
-        );
+      let done = 0;
+      for (const { r, outcome } of outcomes) {
+        if (outcome.kind === "debt") continue;
+        done++;
+        const who = { g, s: { id: r.m.studentId, name: r.name } };
+        await auditLeave(ctx, who, r.m.status, { date, reason, note }, outcome, { bulk: true });
       }
       refresh(g.id);
-      return { ok: true, done: leave.length, skipped: ids.length - leave.length };
+      if (!done) return { ok: false, error: uz.groups.bulkAllHaveDebt };
+      return { ok: true, done, skipped: ids.length - done };
     },
     { approval: { action: "groups.leaveMany", input } },
   );

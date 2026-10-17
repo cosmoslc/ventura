@@ -57,6 +57,7 @@ export function StudentGroupsTab({
     studentName,
     groupName: m.groupName,
     enrolledAt: m.enrolledAt,
+    pendingLeave: m.leavePendingAt ? { date: m.leavePendingAt, reason: m.leftReason, note: m.leftNote } : null,
   });
 
   function pause(m: StudentMembershipRow, on: boolean) {
@@ -103,7 +104,7 @@ export function StudentGroupsTab({
                   </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
-                  <MembershipBadge status={m.status} activatedAt={m.activatedAt} />
+                  <MembershipBadge status={m.status} activatedAt={m.activatedAt} leavePendingAt={m.leavePendingAt} />
                   <MembershipMenu
                     m={m}
                     perms={perms}
@@ -229,7 +230,7 @@ function MembershipMenu({
           <>
             {activate || freeze ? <DropdownMenuSeparator /> : null}
             <DropdownMenuItem danger onSelect={onLeave}>
-              <LogOut /> {uz.groups.remove}
+              <LogOut /> {m.leavePendingAt ? uz.groups.forgivePending : uz.groups.remove}
             </DropdownMenuItem>
           </>
         ) : null}

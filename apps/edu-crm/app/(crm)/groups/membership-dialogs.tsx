@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Avatar } from "@ventura/ui/avatar";
 import { Button } from "@ventura/ui/button";
+import { RadioCard, RadioGroup } from "@ventura/ui/checkbox";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
 import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { toast } from "@ventura/ui/toast";
-import { displayPhone, money, signedMoney } from "@/lib/format";
+import { displayPhone, formatDate, money, signedMoney } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { type LeavePreview, leavePreviewAction } from "../payments/account-actions";
 import { activateMembershipAction, enrollStudentAction, leaveMembershipAction, leaveStudentsAction } from "./actions";
@@ -28,7 +29,11 @@ export interface MembershipTarget {
   studentName: string;
   groupName: string;
   enrolledAt: string;
+  /** "Qarz bilan chiqarish" kutilmoqda (ADR 0050): oyna sana va sababni o'zgartirmaydi, faqat qarzdan kechadi */
+  pendingLeave?: { date: string; reason: string | null; note: string | null } | null;
 }
+
+type DebtMode = "pending" | "forgive";
 
 /** Sinovdagi a'zolikni faollashtirish — sana bilan (to'lov shu kundan, E3) */
 export function ActivateDialog({
@@ -127,15 +132,20 @@ export function LeaveDialog({
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const [preview, setPreview] = React.useState<LeavePreview | null>(null);
+  const [mode, setMode] = React.useState<DebtMode>("pending");
   const [openedFor, setOpenedFor] = React.useState<string | null>(null);
+  const waiting = target?.pendingLeave ?? null;
   if ((target?.id ?? null) !== openedFor) {
     setOpenedFor(target?.id ?? null);
-    setDate(todayLocal());
-    setReason("");
-    setNote("");
+    setDate(waiting?.date ?? todayLocal());
+    setReason(waiting?.reason ?? "");
+    setNote(waiting?.note ?? "");
+    setMode(waiting ? "forgive" : "pending");
     setError(null);
     setPreview(null);
   }
+  const debt = preview?.groupDebt ?? 0;
+  const debtText = `${money(debt)} ${uz.common.som}`;
 
   // Moliya: shu sana bilan chiqarilsa balans qanday bo'ladi (oy hisobi chiqqan kungacha qayta hisoblanadi)
   const targetId = target?.id ?? null;
@@ -154,14 +164,19 @@ export function LeaveDialog({
     if (!target) return;
     if (!reason) return setError(uz.groups.removeReasonRequired);
     startTransition(async () => {
-      const res = await leaveMembershipAction({ id: target.id, date, reason, note });
+      const chosen = debt > 0 ? mode : "auto";
+      const res = await leaveMembershipAction({ id: target.id, date, reason, note, mode: chosen });
       if (!res.ok && res.pending) {
         toast({ tone: "info", title: res.error });
         onOpenChange(false);
         return;
       }
       if (!res.ok) return setError(res.error);
-      toast({ tone: "success", title: uz.groups.removed, description: `${target.studentName} · ${target.groupName}` });
+      toast({
+        tone: "success",
+        title: chosen === "pending" ? uz.groups.leavePendingDone : uz.groups.removed,
+        description: `${target.studentName} · ${target.groupName}`,
+      });
       onOpenChange(false);
       router.refresh();
     });
@@ -180,12 +195,17 @@ export function LeaveDialog({
             {uz.common.cancel}
           </Button>
           <Button variant="danger" onClick={save} disabled={pending || !date}>
-            {uz.groups.remove}
+            {debt > 0
+              ? mode === "pending"
+                ? uz.groups.leavePendingButton
+                : uz.groups.leaveForgiveButton
+              : uz.groups.remove}
           </Button>
         </>
       }
     >
       <div className="space-y-4">
+        {waiting ? <Notice tone="warning">{uz.groups.pendingNotice(formatDate(waiting.date), debtText)}</Notice> : null}
         <div>
           <Label htmlFor="leave-date">{uz.groups.removeDate}</Label>
           <Input
@@ -193,6 +213,7 @@ export function LeaveDialog({
             type="date"
             value={date}
             min={target?.enrolledAt}
+            disabled={waiting !== null}
             onChange={(e) => {
               setDate(e.target.value);
               setError(null);
@@ -217,6 +238,28 @@ export function LeaveDialog({
             {preview.after > 0 ? <div>{uz.groups.leaveCredit(`${money(preview.after)} ${uz.common.som}`)}</div> : null}
             {preview.after < 0 ? <div>{uz.groups.leaveDebt(`${money(-preview.after)} ${uz.common.som}`)}</div> : null}
           </Notice>
+        ) : null}
+        {debt > 0 && !waiting ? (
+          <div>
+            <Label>{uz.groups.debtChoice}</Label>
+            <RadioGroup
+              value={mode}
+              onValueChange={(v) => setMode(v as DebtMode)}
+              aria-label={uz.groups.debtChoice}
+              className="gap-2"
+            >
+              <RadioCard
+                value="pending"
+                title={uz.groups.leavePendingTitle}
+                description={uz.groups.leavePendingHint(debtText)}
+              />
+              <RadioCard
+                value="forgive"
+                title={uz.groups.leaveForgiveTitle}
+                description={uz.groups.leaveForgiveHint(debtText)}
+              />
+            </RadioGroup>
+          </div>
         ) : null}
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </div>
@@ -374,6 +417,7 @@ export function BulkLeaveDialog({
   const [date, setDate] = React.useState(todayLocal());
   const [reason, setReason] = React.useState("");
   const [note, setNote] = React.useState("");
+  const [debtMode, setDebtMode] = React.useState<"auto" | DebtMode>("auto");
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   const [wasOpen, setWasOpen] = React.useState(false);
@@ -383,6 +427,7 @@ export function BulkLeaveDialog({
       setDate(todayLocal());
       setReason("");
       setNote("");
+      setDebtMode("auto");
       setError(null);
     }
   }
@@ -397,6 +442,7 @@ export function BulkLeaveDialog({
         date,
         reason,
         note,
+        mode: debtMode,
         title: uz.students.bulkTitle(n),
       });
       if (!res.ok && res.pending) {
@@ -450,6 +496,27 @@ export function BulkLeaveDialog({
           note={note}
           onNote={setNote}
         />
+        <div>
+          <Label>{uz.groups.bulkDebtMode}</Label>
+          <RadioGroup
+            value={debtMode}
+            onValueChange={(v) => setDebtMode(v as "auto" | DebtMode)}
+            aria-label={uz.groups.bulkDebtMode}
+            className="gap-2"
+          >
+            <RadioCard value="auto" title={uz.groups.bulkDebtSkip} description={uz.groups.bulkDebtSkipHint} />
+            <RadioCard
+              value="pending"
+              title={uz.groups.leavePendingTitle}
+              description={uz.groups.bulkDebtPendingHint}
+            />
+            <RadioCard
+              value="forgive"
+              title={uz.groups.leaveForgiveTitle}
+              description={uz.groups.bulkDebtForgiveHint}
+            />
+          </RadioGroup>
+        </div>
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </div>
     </Modal>

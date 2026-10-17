@@ -23,7 +23,13 @@ import type { FinancePerms } from "./perms";
 
 const t = uz.payments;
 const ALL = "all";
-const KIND_TONE = { payment: "success", refund: "danger", discount: "info", correction: "neutral" } as const;
+const KIND_TONE = {
+  payment: "success",
+  refund: "danger",
+  discount: "info",
+  correction: "neutral",
+  writeoff: "neutral",
+} as const;
 /** Har bir guruh qutisida dastlab ko'rinadigan qatorlar */
 const BOX_ROWS = 15;
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
@@ -290,12 +296,13 @@ export function PaymentsView({
                             </a>
                           </Button>
                         ) : null}
-                        {!r.voided && r.kind !== "correction" && perms.edit ? (
+                        {!r.voided && r.kind !== "correction" && r.kind !== "writeoff" && perms.edit ? (
                           <Button variant="icon" size="icon" aria-label={uz.common.edit} onClick={() => setEditing(r)}>
                             <Pencil />
                           </Button>
                         ) : null}
-                        {!r.voided && (r.kind === "correction" ? perms.correct : perms.void) ? (
+                        {!r.voided &&
+                        (r.kind === "correction" || r.kind === "writeoff" ? perms.correct : perms.void) ? (
                           <Button variant="icon" size="icon" aria-label={t.void} onClick={() => setVoiding(r)}>
                             <Trash2 />
                           </Button>

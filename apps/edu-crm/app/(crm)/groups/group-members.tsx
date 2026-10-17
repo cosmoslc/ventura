@@ -124,6 +124,7 @@ export function MembersTab({
     studentName: m.name,
     groupName: g.name,
     enrolledAt: m.enrolledAt,
+    pendingLeave: m.leavePendingAt ? { date: m.leavePendingAt, reason: m.leftReason, note: m.leftNote } : null,
   });
 
   function pause(m: Row, on: boolean) {
@@ -238,7 +239,7 @@ export function MembersTab({
             cell: (m) => (
               <>
                 <Badge tone={TONE[m.status]} dot>
-                  {uz.groups.membership[m.status]}
+                  {m.leavePendingAt ? uz.groups.pendingLeave : uz.groups.membership[m.status]}
                 </Badge>
                 {m.status === "active" && m.activatedAt ? (
                   <div className="mt-1 text-caption text-muted-foreground">
@@ -362,7 +363,7 @@ export function MembersTab({
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem danger onSelect={() => onLeave(target(m))}>
-                            <LogOut /> {uz.groups.remove}
+                            <LogOut /> {m.leavePendingAt ? uz.groups.forgivePending : uz.groups.remove}
                           </DropdownMenuItem>
                         </>
                       ) : null}

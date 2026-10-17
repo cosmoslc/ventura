@@ -23,7 +23,13 @@ import type { FinancePerms } from "./perms";
 const t = uz.finance;
 const p = uz.payments;
 const STATUS_TONE = { paid: "success", partial: "warning", unpaid: "danger", free: "neutral" } as const;
-const KIND_TONE = { payment: "success", refund: "danger", discount: "info", correction: "neutral" } as const;
+const KIND_TONE = {
+  payment: "success",
+  refund: "danger",
+  discount: "info",
+  correction: "neutral",
+  writeoff: "neutral",
+} as const;
 
 /** Yozuvning hisobga ta'siri (ishorali) */
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
@@ -239,12 +245,13 @@ export function StudentFinanceTab({
                             </a>
                           </Button>
                         ) : null}
-                        {!e.voided && e.kind !== "correction" && perms.edit ? (
+                        {!e.voided && e.kind !== "correction" && e.kind !== "writeoff" && perms.edit ? (
                           <Button variant="icon" size="icon" aria-label={uz.common.edit} onClick={() => setEditing(e)}>
                             <Pencil />
                           </Button>
                         ) : null}
-                        {!e.voided && (e.kind === "correction" ? perms.correct : perms.void) ? (
+                        {!e.voided &&
+                        (e.kind === "correction" || e.kind === "writeoff" ? perms.correct : perms.void) ? (
                           <Button variant="icon" size="icon" aria-label={p.void} onClick={() => setVoiding(e)}>
                             <Trash2 />
                           </Button>

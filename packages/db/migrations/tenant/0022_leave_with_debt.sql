@@ -1,0 +1,3 @@
+ALTER TABLE "group_memberships" ADD COLUMN "leave_pending_at" date;--> statement-breakpoint
+ALTER TABLE "group_memberships" ADD CONSTRAINT "group_memberships_leave_pending" CHECK ("group_memberships"."leave_pending_at" is null or ("group_memberships"."status" = 'paused' and "group_memberships"."left_at" is null));--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_kind" CHECK ("payments"."kind" in ('payment', 'refund', 'discount', 'correction', 'writeoff'));

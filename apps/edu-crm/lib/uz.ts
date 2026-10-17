@@ -1161,6 +1161,30 @@ export const uz = {
     alreadyMember: "O'quvchi bu guruhda allaqachon bor",
     bulkNothingToAdd: "Tanlanganlarning hammasi bu guruhda bor yoki boshqa filialda — qo'shiladigan o'quvchi yo'q.",
     bulkNothingToRemove: "Tanlanganlardan bu guruhda (shu sanada) o'qiyotgani yo'q.",
+    // qarzi bor o'quvchini chiqarish (ADR 0050)
+    leaveHasDebt: (debt: string) =>
+      `Shu guruh bo'yicha ${debt} so'm qarz bor: "Qarz bilan" yoki "Qarzdan kechib" chiqarishni tanlang`,
+    bulkAllHaveDebt: 'Tanlanganlarning hammasida qarz bor: "Qarzi borlar" uchun variant tanlang',
+    forgiveNote: "Guruhdan chiqarishda qarzdan kechildi",
+    debtChoice: "Qarzi bor — qanday chiqariladi?",
+    leavePendingTitle: "Qarz bilan chiqarish",
+    leavePendingHint: (debt: string) =>
+      `${debt} to'languncha muzlatiladi, yangi hisob yozilmaydi. Qarz yopilishi bilan shu sana bilan guruhdan avtomatik chiqadi.`,
+    leaveForgiveTitle: "Qarzdan kechib chiqarish",
+    leaveForgiveHint: (debt: string) =>
+      `${debt} kechiladi va o'quvchi hisobida "Kechilgan qarz" bo'lib saqlanadi. Darhol chiqadi, kassaga ta'sir qilmaydi.`,
+    leavePendingButton: "Qarz to'languncha muzlatish",
+    leaveForgiveButton: "Qarzdan kechib chiqarish",
+    leavePendingDone: "Qarz to'languncha muzlatildi",
+    pendingLeave: "Qarz to'languncha",
+    pendingNotice: (date: string, debt: string) =>
+      `${date} dan qarz to'languncha muzlatilgan (qolgan qarz: ${debt}). To'langach guruhdan avtomatik chiqadi.`,
+    forgivePending: "Qarzdan kechish",
+    bulkDebtMode: "Qarzi borlar",
+    bulkDebtSkip: "Guruhda qoldirish",
+    bulkDebtSkipHint: "Qarzi bor o'quvchilar chiqarilmaydi",
+    bulkDebtPendingHint: "Qarz to'languncha muzlatiladi, to'langach avtomatik chiqadi",
+    bulkDebtForgiveHint: 'Qarz kechiladi ("Kechilgan qarz" bo\'lib saqlanadi) va darhol chiqadi',
     dateInvalid: "Sana noto'g'ri",
     dateBeforeEnroll: "Sana guruhga qo'shilgan kundan oldin bo'lishi mumkin emas",
     groupArchived: "Guruh arxivda",
@@ -1473,6 +1497,7 @@ export const uz = {
       refund: "Qaytarish",
       discount: "Chegirma",
       correction: "Tuzatish",
+      writeoff: "Kechilgan qarz",
     } as Record<string, string>,
     search: "O'quvchi, telefon, guruh yoki chek raqami...",
     monthFilter: "Oy",

@@ -33,12 +33,23 @@ type Tab = "students" | "left" | "attendance";
 const TONE = { trial: "info", active: "success", paused: "warning", left: "neutral" } as const;
 
 /** O'quvchi profilidagi "Guruhlar" tabida ishlatiladi */
-export function MembershipBadge({ status, activatedAt }: { status: MemberRow["status"]; activatedAt: string | null }) {
+export function MembershipBadge({
+  status,
+  activatedAt,
+  leavePendingAt,
+}: {
+  status: MemberRow["status"];
+  activatedAt: string | null;
+  /** Qarz bilan chiqarish kutilmoqda (ADR 0050) */
+  leavePendingAt?: string | null;
+}) {
   return (
     <Badge tone={TONE[status]} dot>
-      {status === "active" && activatedAt
-        ? uz.groups.activeSince(formatDate(activatedAt))
-        : uz.groups.membership[status]}
+      {leavePendingAt
+        ? uz.groups.pendingLeave
+        : status === "active" && activatedAt
+          ? uz.groups.activeSince(formatDate(activatedAt))
+          : uz.groups.membership[status]}
     </Badge>
   );
 }
