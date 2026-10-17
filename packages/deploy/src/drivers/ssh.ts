@@ -46,6 +46,8 @@ const DB_PASSWORD_RE = /^[A-Za-z0-9_-]{24,128}$/;
 const PROVISION_SCRIPT = "scripts/provision.ts";
 const FIRST_PORT = 4100;
 const KEEP_RELEASES = 5;
+/** Yiqilgan buyruqdan qizil bo'lib ko'rsatiladigan stderr qatorlari soni */
+const ERR_TAIL = 20;
 const MINUTE = 60_000;
 
 export interface SshDriverDeps {
@@ -121,17 +123,29 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   let plan: Plan | null = null;
 
   /**
-   * Buyruqni bajaradi: o'zi `cmd`, natijasi `out` / `err` bo'lib logga tushadi. Nol bo'lmagan kod — xato.
+   * Buyruqni bajaradi: o'zi `cmd`, natijasi logga tushadi. Nol bo'lmagan kod — xato.
+   * Ko'p dasturlar (pnpm, PM2, next) oddiy xabarni ham stderr'ga yozadi: ular bajarilish paytida oddiy qator bo'lib
+   * chiqadi, buyruq yiqilgandagina stderr'ning oxirgi qatorlari qizil (`err`) bo'lib takrorlanadi.
    * `input` — stdin (sirlar shu yo'l bilan beriladi; logga yozilmaydi).
    */
   async function remote(log: StepLog, command: string, timeoutMs = 2 * MINUTE, input?: string): Promise<string> {
     log(command, "cmd");
+    const stderr: string[] = [];
     const result = await plan!.session.exec(`bash -lc ${sh(command)}`, {
       timeoutMs,
       input,
-      onLine: (line, stream) => log(line, stream === "err" ? "err" : "out"),
+      onLine: (line, stream) => {
+        if (stream === "err") {
+          stderr.push(line);
+          if (stderr.length > ERR_TAIL) stderr.shift();
+        }
+        log(line, "out");
+      },
     });
-    if (result.code !== 0) throw new StepError(`Buyruq ${result.code} kodi bilan tugadi`, result.code);
+    if (result.code !== 0) {
+      for (const line of stderr) log(line, "err");
+      throw new StepError(`Buyruq ${result.code} kodi bilan tugadi`, result.code);
+    }
     return result.stdout.trim();
   }
 
@@ -380,9 +394,11 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
 
   async function health(log: StepLog) {
     const p = plan!;
+    // Ilova ishga tushguncha jim kutiladi; hammasi o'tmasa oxirgi urinish xatoni ko'rsatadi
+    const probe = `-H ${sh(`Host: ${p.hosts[0]}`)} ${sh(`http://127.0.0.1:${p.port}/health`)}`;
     const out = await remote(
       log,
-      `curl -fsS --retry 20 --retry-delay 1 --retry-connrefused --max-time 5 -H ${sh(`Host: ${p.hosts[0]}`)} ${sh(`http://127.0.0.1:${p.port}/health`)}`,
+      `curl -fs --retry 20 --retry-delay 1 --retry-connrefused --max-time 5 ${probe} || curl -fsS --max-time 5 ${probe}`,
       MINUTE,
     );
     let body: { ok?: boolean; tenant?: string | null; commit?: string | null; configured?: boolean };
@@ -403,9 +419,10 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `sudo -n /usr/local/sbin/ventura-site set ${sh(p.slug)} ${sh(p.port)} ${sh(p.hosts.join(","))}`);
     // nginx qayta yuklanishi bir zumda emas, shuning uchun bir necha marta uriniladi
     for (const host of p.hosts) {
+      const probe = `-o /dev/null -H ${sh(`Host: ${host}`)} http://127.0.0.1/health`;
       await remote(
         log,
-        `curl -fsS -o /dev/null --retry 15 --retry-delay 1 --retry-all-errors --max-time 5 -H ${sh(`Host: ${host}`)} http://127.0.0.1/health`,
+        `curl -fs --retry 15 --retry-delay 1 --retry-all-errors --max-time 5 ${probe} || curl -fsS --max-time 5 ${probe}`,
         MINUTE,
       );
     }

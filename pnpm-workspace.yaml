@@ -2,3 +2,8 @@ packages:
   - "apps/*"
   - "packages/*"
   - "tooling/*"
+
+# Bu paketlar tayyor binar bilan keladi: o'rnatish skriptlari ataylab ishlatilmaydi (deploy logida ogohlantirish chiqmasin)
+ignoredBuiltDependencies:
+  - esbuild
+  - unrs-resolver
