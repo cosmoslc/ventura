@@ -6,7 +6,7 @@ import type { DayFlow } from "./dashboard";
  * Sahifa ham, Excel ham shu jadvaldan chiziladi: ekrandagi raqam faylda ham aynan shu.
  */
 
-export type CellKind = "text" | "money" | "number" | "percent";
+export type CellKind = "text" | "money" | "number" | "decimal" | "percent";
 export type Cell = string | number | null;
 
 export interface ReportColumn {

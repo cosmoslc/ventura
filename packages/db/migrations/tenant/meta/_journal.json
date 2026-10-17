@@ -148,6 +148,13 @@
       "when": 1792056788117,
       "tag": "0020_e6_devices",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1792167822920,
+      "tag": "0021_fixed_salary_start",
+      "breakpoints": true
     }
   ]
 }

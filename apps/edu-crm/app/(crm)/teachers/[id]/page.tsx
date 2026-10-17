@@ -63,6 +63,7 @@ export default async function TeacherPage({
     ? {
         row: pay.row,
         groupNames: pay.groupNames,
+        shares: pay.shares,
         entries,
         methods,
         perms: {

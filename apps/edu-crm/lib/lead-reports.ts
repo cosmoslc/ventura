@@ -20,42 +20,112 @@ export interface FunnelLead {
 }
 
 export interface FunnelStep {
-  /** Pog'ona: ochiq bosqich yoki oxirgi — o'quvchi bo'lganlar */
+  /** Pog'ona: ochiq bosqich (tartib raqami) yoki oxirgi — o'quvchi bo'lganlar */
   index: number;
   count: number;
   /** Jami lidlarga nisbatan, % */
   share: number | null;
-  /** Oldingi pog'onadan o'tganlar, %; birinchi pog'ona — 100 */
+  /** Ko'rinadigan oldingi pog'onadan o'tganlar, %; birinchi pog'ona — 100 */
   conv: number | null;
-  /** Oldingi pog'onada qolib ketganlar */
+  /** Oldingi (ko'rinadigan) pog'onada qolib ketganlar */
   drop: number;
 }
 
-/** Har pog'onaga yetganlar (pog'ona ≥ i); oxirgi pog'ona — o'quvchi bo'lganlar */
-export function funnelSteps(leads: readonly FunnelLead[], openStages: number): FunnelStep[] {
-  const counts = Array.from({ length: openStages + 1 }, (_, i) => leads.filter((l) => l.reached >= i).length);
-  return counts.map((count, i) => {
-    const prev = i ? counts[i - 1]! : count;
+/** Voronkada ko'rinadigan pog'onalar: yashirilmagan ochiq bosqichlar va har doim oxirgi (o'quvchi bo'lganlar) */
+export function visibleIndexes(openStages: number, hidden: ReadonlySet<number> = new Set()): number[] {
+  return Array.from({ length: openStages + 1 }, (_, i) => i).filter((i) => i === openStages || !hidden.has(i));
+}
+
+/**
+ * Har pog'onaga yetganlar (pog'ona ≥ i); oxirgi pog'ona — o'quvchi bo'lganlar. `visible` — ko'rsatiladigan pog'onalar
+ * (yashirilgan bosqich o'tkazib yuboriladi: o'tish va tushish ko'rinadigan oldingi pog'onaga nisbatan).
+ */
+export function funnelSteps(
+  leads: readonly FunnelLead[],
+  openStages: number,
+  visible: readonly number[] = visibleIndexes(openStages),
+): FunnelStep[] {
+  const counts = visible.map((i) => leads.filter((l) => l.reached >= i).length);
+  return visible.map((index, p) => {
+    const count = counts[p]!;
+    const prev = p ? counts[p - 1]! : count;
     return {
-      index: i,
+      index,
       count,
       share: pct(count, leads.length),
-      conv: i ? pct(count, prev) : leads.length ? 100 : null,
+      conv: p ? pct(count, prev) : leads.length ? 100 : null,
       drop: Math.max(0, prev - count),
     };
   });
 }
 
-/** Eng katta tushish: oldingi pog'onaga nisbatan eng ko'p yo'qotilgan pog'ona */
-export function biggestDrop(steps: readonly FunnelStep[]): { index: number; rate: number } | null {
-  let best: { index: number; rate: number } | null = null;
-  for (const s of steps.slice(1)) {
-    const prev = steps[s.index - 1]!.count;
-    if (!prev || !s.drop) continue;
-    const rate = (s.drop / prev) * 100;
-    if (!best || rate > best.rate) best = { index: s.index, rate };
+/** Eng katta tushish: ko'rinadigan oldingi pog'onaga nisbatan eng ko'p yo'qotilgan pog'ona (`from` — oldingi pog'ona) */
+export function biggestDrop(steps: readonly FunnelStep[]): { index: number; from: number; rate: number } | null {
+  let best: { index: number; from: number; rate: number } | null = null;
+  for (let p = 1; p < steps.length; p++) {
+    const s = steps[p]!;
+    const prev = steps[p - 1]!;
+    if (!prev.count || !s.drop) continue;
+    const rate = (s.drop / prev.count) * 100;
+    if (!best || rate > best.rate) best = { index: s.index, from: prev.index, rate };
   }
   return best;
+}
+
+export interface FunnelKpis {
+  total: number;
+  won: number;
+  /** O'quvchi bo'lganlar ulushi, % */
+  conversion: number | null;
+  /** Tanlangan pog'onaga yetmaganlar */
+  notReached: number;
+  /** Ulardan shu pog'onagacha yo'qotilganlari (qolgani hali jarayonda) */
+  lostBefore: number;
+  /** Ko'rinadigan oldingi pog'onadan shu pog'onaga o'tmaganlar */
+  notPassed: number;
+}
+
+/** Voronka ko'rsatkichlari `focus` pog'onasi bo'yicha (tanlanmagan bo'lsa — oxirgisi, ya'ni o'quvchi bo'lish) */
+export function funnelKpis(leads: readonly FunnelLead[], steps: readonly FunnelStep[], focusIndex: number): FunnelKpis {
+  const p = Math.max(
+    0,
+    steps.findIndex((s) => s.index === focusIndex),
+  );
+  const focus = steps[p];
+  const won = leads.filter((l) => l.kind === "won").length;
+  return {
+    total: leads.length,
+    won,
+    conversion: pct(won, leads.length),
+    notReached: focus ? leads.length - focus.count : 0,
+    lostBefore: focus ? leads.filter((l) => l.kind === "lost" && l.reached < focus.index).length : 0,
+    notPassed: focus ? focus.drop : 0,
+  };
+}
+
+/* ---------- Voronkada ko'rinadigan bosqichlar (sozlama) ---------- */
+
+/** Sozlamalar kaliti: voronkada yashirilgan ochiq bosqichlar (id lar ro'yxati); yo'q bo'lsa hammasi ko'rinadi */
+export const FUNNEL_HIDDEN_KEY = "leads.funnel_hidden";
+
+/** Bazadagi qiymat: faqat id satrlari, takrorsiz; buzilgan bo'lsa — hech biri yashirilmagan */
+export function parseHiddenStages(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return [...new Set(value.filter((v): v is string => typeof v === "string" && v.length > 0 && v.length <= 64))];
+}
+
+/** Voronka ro'yxati bo'yicha filtrlar: qidiruv (ism yoki telefon raqami), mas'ul va bosqich */
+export function matchesFunnelFilter(
+  lead: { name: string; phone: string; staffId: string | null; reached: number },
+  f: { q: string; staff: string | null; reached: number | null },
+): boolean {
+  if (f.reached !== null && lead.reached !== f.reached) return false;
+  if (f.staff !== null && (f.staff === "none" ? lead.staffId !== null : lead.staffId !== f.staff)) return false;
+  const q = f.q.trim().toLowerCase();
+  if (!q) return true;
+  // Telefon 9 ta mahalliy raqam; qidiruvdagi +998 olib tashlanadi
+  const digits = q.replace(/\D/g, "").replace(/^998/, "");
+  return lead.name.toLowerCase().includes(q) || (digits.length > 0 && lead.phone.replace(/\D/g, "").includes(digits));
 }
 
 export interface StageEvent {

@@ -1,48 +1,30 @@
 "use client";
 
-import {
-  ArrowLeft,
-  CalendarDays,
-  CalendarCheck,
-  Clock,
-  DoorOpen,
-  LogOut,
-  Pause,
-  Pencil,
-  Play,
-  Plus,
-  Search,
-  UserPlus,
-  UserRound,
-  Users,
-  Banknote,
-  CircleDollarSign,
-  Scale,
-} from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
-import { Input } from "@ventura/ui/input";
-import { EmptyState } from "@ventura/ui/page-header";
-import { StatCard } from "@ventura/ui/stat-card";
-import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
+import { cn } from "@ventura/ui/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
-import { formatDate, formatMonth, money } from "@/lib/format";
 import type { SearchSelectOption } from "@ventura/ui/search-select";
+import { formatDate, money } from "@/lib/format";
 import type { FormField } from "@/lib/form-fields";
+import { collectedPercent, groupEndDate, lessonMinutes } from "@/lib/group-profile";
 import { uz } from "@/lib/uz";
-import type { GroupFinance } from "../payments/data";
 import type { GroupAttendance } from "@/lib/server/attendance";
 import type { PickerBranch } from "../branch-picker";
+import { type MethodOption, PaymentDialog } from "../payments/payment-dialog";
 import { StudentForm } from "../students/student-form";
-import { enrollStudentAction, pauseMembershipAction } from "./actions";
+import { enrollStudentAction } from "./actions";
+import { ArchiveGroupModal } from "./archive-group-modal";
 import { AttendanceTab } from "./attendance-tab";
-import type { GroupRow, MemberRow } from "./data";
+import type { GroupProfileStats, GroupRow, MemberRow } from "./data";
 import { type CourseOption, GroupForm, type RoomOption, type TeacherOption } from "./group-form";
+import { LeftTab, MembersTab } from "./group-members";
 import { daysLabel, type GroupPerms } from "./groups-view";
 import { ActivateDialog, EnrollDialog, LeaveDialog, type MembershipTarget, phoneLabel } from "./membership-dialogs";
 
@@ -50,6 +32,7 @@ type Tab = "students" | "left" | "attendance";
 
 const TONE = { trial: "info", active: "success", paused: "warning", left: "neutral" } as const;
 
+/** O'quvchi profilidagi "Guruhlar" tabida ishlatiladi */
 export function MembershipBadge({ status, activatedAt }: { status: MemberRow["status"]; activatedAt: string | null }) {
   return (
     <Badge tone={TONE[status]} dot>
@@ -60,14 +43,43 @@ export function MembershipBadge({ status, activatedAt }: { status: MemberRow["st
   );
 }
 
-const minutesBetween = (a: string, b: string) => {
-  const m = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
-  return m(b) - m(a);
-};
+/** Yorliq + qiymat + bitta xira qator: sarlavha kartasidagi bitta ma'lumot */
+function Fact({
+  label,
+  hint,
+  tone,
+  big,
+  className,
+  children,
+}: {
+  label: string;
+  hint?: React.ReactNode;
+  tone?: "danger";
+  big?: boolean;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <dt className="truncate text-caption font-semibold text-muted-foreground">{label}</dt>
+      <dd
+        className={cn(
+          "mt-1 truncate font-semibold text-foreground",
+          big ? "type-stat leading-tight" : "text-body",
+          tone === "danger" && "text-(--danger-fg)",
+        )}
+      >
+        {children}
+      </dd>
+      {hint ? <div className="mt-0.5 text-caption break-words text-muted-foreground">{hint}</div> : null}
+    </div>
+  );
+}
 
 export function GroupProfile({
   group: g,
   members,
+  stats,
   candidates,
   courses,
   teachers,
@@ -82,10 +94,12 @@ export function GroupProfile({
   canMarkToday,
   canEditPast,
   initialTab,
-  finance,
+  payment,
 }: {
   group: GroupRow;
   members: { open: MemberRow[]; left: MemberRow[] };
+  /** A'zolar bo'yicha pul va davomat; `finance` null — moliya bo'limi o'chiq yoki ruxsat yo'q */
+  stats: GroupProfileStats;
   candidates: { id: string; name: string; phone: string; branchId: string }[];
   courses: CourseOption[];
   teachers: TeacherOption[];
@@ -97,53 +111,46 @@ export function GroupProfile({
   perms: GroupPerms;
   canCreateStudent: boolean;
   /** null — Davomat bo'limi o'chirilgan */
-  /** Shu oy moliyasi; null — moliya bo'limi o'chiq yoki ruxsat yo'q */
-  finance: GroupFinance | null;
   attendance: GroupAttendance | null;
   today: string;
   canMarkToday: boolean;
   canEditPast: boolean;
   initialTab: Tab;
+  /** To'lov qabul qilish oynasi uchun; null — to'lov yozish ruxsati yoki bo'limi yo'q */
+  payment: { methods: MethodOption[]; maxDiscountPercent: number } | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>(initialTab);
-  const [query, setQuery] = React.useState("");
   const [formOpen, setFormOpen] = React.useState(false);
   const [addOpen, setAddOpen] = React.useState(false);
   const [newOpen, setNewOpen] = React.useState(false);
+  const [archiveOpen, setArchiveOpen] = React.useState(false);
   const [activate, setActivate] = React.useState<MembershipTarget | null>(null);
   const [leave, setLeave] = React.useState<MembershipTarget | null>(null);
-  const [pending, startTransition] = React.useTransition();
+  const [pay, setPay] = React.useState<{ open: boolean; student?: { id: string; name: string } }>({ open: false });
 
+  const t = uz.groupProfile;
+  const { finance } = stats;
   const count = members.open.length;
   const cap = g.roomCapacity;
-  const q = query.trim().toLowerCase();
-  const digits = q.replace(/\D/g, "");
-  const visible = members.open.filter(
-    (m) => !q || m.name.toLowerCase().includes(q) || (!!digits && m.phone.includes(digits)),
-  );
   const memberIds = new Set(members.open.map((m) => m.studentId));
   const options = candidates
     .filter((c) => c.branchId === g.branchId && !memberIds.has(c.id))
     .map((c) => ({ id: c.id, title: c.name, subtitle: phoneLabel(c.phone) }));
-  const target = (m: MemberRow): MembershipTarget => ({
-    id: m.id,
-    studentName: m.name,
-    groupName: g.name,
-    enrolledAt: m.enrolledAt,
-  });
 
-  function pause(m: MemberRow, on: boolean) {
-    startTransition(async () => {
-      const res = await pauseMembershipAction({ id: m.id, pause: on });
-      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
-      toast({ tone: "success", title: on ? uz.groups.frozen : uz.groups.unfrozen, description: m.name });
-      router.refresh();
-    });
-  }
+  // Guruh davomati (so'nggi kunlar): a'zolar yig'indisidan, har belgilangan dars teng vaznda
+  const attTotals = Object.values(stats.members).reduce(
+    (s, m) => ({ came: s.came + (m.attendance?.came ?? 0), marked: s.marked + (m.attendance?.marked ?? 0) }),
+    { came: 0, marked: 0 },
+  );
+  const groupRate = attTotals.marked ? Math.round((attTotals.came / attTotals.marked) * 100) : null;
+  const debtors = Object.values(stats.members).filter((m) => (m.money?.due ?? 0) > 0).length;
+  const fill = cap ? count / cap : null;
+  const canArchive = perms.delete;
 
   return (
     <div className="space-y-6">
+      {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button variant="icon" size="icon" asChild title={uz.groups.back} aria-label={uz.groups.back}>
@@ -153,241 +160,154 @@ export function GroupProfile({
           </Button>
           <span className="size-3 shrink-0 rounded-full" style={{ background: g.color }} aria-hidden />
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="type-heading text-title text-foreground">{g.name}</h1>
-              <Badge tone="neutral">{g.courseName}</Badge>
-            </div>
-            <div className="text-caption text-muted-foreground">{uz.groups.subtitle}</div>
+            <h1 className="type-heading text-title break-words text-foreground">{g.name}</h1>
+            <div className="text-caption text-muted-foreground">{g.courseName}</div>
           </div>
         </div>
-        {perms.edit || perms.changeTeacher ? (
-          <Button variant="ghost" onClick={() => setFormOpen(true)}>
-            <Pencil /> {uz.groups.formEdit}
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          {payment ? (
+            <Button onClick={() => setPay({ open: true })}>
+              <Wallet /> {t.payTitle}
+            </Button>
+          ) : null}
+          {perms.edit || perms.changeTeacher ? (
+            <Button variant="ghost" onClick={() => setFormOpen(true)}>
+              <Pencil /> {uz.groups.formEdit}
+            </Button>
+          ) : null}
+          {canArchive ? (
+            <Button
+              variant="icon"
+              size="icon"
+              className="text-destructive-text"
+              title={t.archiveTooltip}
+              aria-label={t.archiveTooltip}
+              onClick={() => setArchiveOpen(true)}
+            >
+              <Trash2 />
+            </Button>
+          ) : null}
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <Link href={`/teachers/${g.teacherId}`} className="block">
-          <StatCard tone={1} icon={<UserRound />} label={uz.groups.teacherCard} value={g.teacherName} />
-        </Link>
-        <StatCard
-          tone={2}
-          icon={<DoorOpen />}
-          label={uz.groups.roomCard}
-          value={g.roomName ?? uz.groups.noRoom}
-          hint={<div>{cap !== null ? uz.groups.capacity(cap) : uz.groups.noCapacity}</div>}
-        />
-        <StatCard
-          tone={3}
-          icon={<Clock />}
-          label={uz.groups.timeCard}
-          value={`${g.startTime} - ${g.endTime}`}
-          hint={<div>{uz.groups.minutes(minutesBetween(g.startTime, g.endTime))}</div>}
-        />
-        <StatCard
-          tone={4}
-          icon={<CalendarDays />}
-          label={uz.groups.daysCard}
-          value={daysLabel(g.days)}
-          hint={<div>{uz.groups.perWeek(g.days.length)}</div>}
-        />
-        <StatCard
-          tone={1}
-          icon={<Users />}
-          label={uz.groups.studentsCard}
-          value={cap !== null ? `${count} / ${cap}` : String(count)}
-          hint={<div>{uz.groups.membersHint(g.members.active, g.members.paused)}</div>}
-        />
-        <StatCard tone={2} icon={<CalendarCheck />} label={uz.groups.startedCard} value={formatDate(g.startDate)} />
-        {finance ? (
-          <>
-            <StatCard
-              tone={3}
-              icon={<Scale />}
-              label={uz.groups.financeCharged(formatMonth(finance.month))}
-              value={`${money(finance.charged)} ${uz.common.som}`}
-            />
-            <StatCard
-              tone={2}
-              icon={<Banknote />}
-              label={uz.groups.financeCollected(formatMonth(finance.month))}
-              value={`${money(finance.collected)} ${uz.common.som}`}
-            />
-            <StatCard
-              tone={4}
-              icon={<CircleDollarSign />}
-              label={uz.groups.financeDue}
-              value={`${money(finance.due)} ${uz.common.som}`}
-            />
-          </>
-        ) : null}
-      </div>
+      {/* Ma'lumot va ko'rsatkichlar — bitta karta */}
+      <Card className="space-y-5 p-5">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 xl:grid-cols-6">
+          <Fact label={uz.groups.teacherCard}>
+            <Link href={`/teachers/${g.teacherId}`} className="hover:text-primary" title={g.teacherName}>
+              {g.teacherName}
+            </Link>
+          </Fact>
+          <Fact label={uz.groups.roomCard}>{g.roomName ?? uz.groups.noRoom}</Fact>
+          <Fact label={uz.groups.daysCard} hint={uz.groups.perWeek(g.days.length)}>
+            {daysLabel(g.days)}
+          </Fact>
+          <Fact label={uz.groups.timeCard} hint={uz.groups.minutes(lessonMinutes(g.startTime, g.endTime))}>
+            <span className="font-mono">
+              {g.startTime} – {g.endTime}
+            </span>
+          </Fact>
+          <Fact label={t.period} hint={t.months(g.durationMonths)} className="col-span-2 sm:col-span-1">
+            <span className="font-mono">
+              {t.periodValue(formatDate(g.startDate), formatDate(groupEndDate(g.startDate, g.durationMonths)))}
+            </span>
+          </Fact>
+          <Fact label={t.price}>{t.priceValue(money(g.price))}</Fact>
+        </dl>
 
-      <Card className="space-y-4 p-5">
-        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-          <TabsList>
-            <TabsTrigger value="students">{uz.groups.tabStudents(count)}</TabsTrigger>
-            <TabsTrigger value="left">
-              {uz.groups.tabHistory} {members.left.length ? <Badge tone="neutral">{members.left.length}</Badge> : null}
-            </TabsTrigger>
-            {attendance ? (
-              <TabsTrigger value="attendance">{uz.attendance.tab(attendance.dates.length)}</TabsTrigger>
-            ) : null}
-          </TabsList>
-        </Tabs>
-
-        {tab === "students" ? (
-          <>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="min-w-0 flex-1 sm:max-w-sm">
-                <Input
-                  icon={<Search />}
-                  placeholder={uz.groups.studentSearch}
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border-soft pt-5 sm:grid-cols-4">
+          <div className="min-w-0">
+            <dt className="truncate text-caption font-semibold text-muted-foreground">{t.kpiStudents}</dt>
+            <dd className="type-stat mt-1 leading-tight font-semibold text-foreground">
+              {cap !== null ? `${count} / ${cap}` : count}
+            </dd>
+            {fill !== null ? (
+              <div
+                role="meter"
+                aria-label={t.kpiStudents}
+                aria-valuemin={0}
+                aria-valuemax={cap ?? 0}
+                aria-valuenow={count}
+                className="mt-1.5 h-1.5 overflow-hidden rounded-full"
+                style={{ background: "color-mix(in oklab, var(--primary) 16%, transparent)" }}
+              >
+                <div
+                  className="h-full rounded-full transition-[width] duration-500 ease-ios"
+                  style={{
+                    width: `${Math.min(100, Math.round(fill * 100))}%`,
+                    background: fill > 1 ? "var(--danger-fg)" : fill >= 0.9 ? "var(--warning-fg)" : "var(--primary)",
+                  }}
                 />
               </div>
-              {perms.addStudent ? (
-                <div className="ml-auto flex gap-2">
-                  <Button variant="ghost" onClick={() => setAddOpen(true)}>
-                    <UserPlus /> {uz.groups.addExisting}
-                  </Button>
-                  {canCreateStudent ? (
-                    <Button onClick={() => setNewOpen(true)}>
-                      <Plus /> {uz.groups.addNew}
-                    </Button>
-                  ) : null}
-                </div>
-              ) : null}
+            ) : null}
+            <div className="mt-1 text-caption break-words text-muted-foreground">
+              {t.breakdown(g.members.active, g.members.trial, g.members.paused)}
             </div>
-            {visible.length ? (
-              <TableWrap>
-                <Table className="min-w-[820px]">
-                  <THead>
-                    <tr>
-                      <Th>{uz.groups.colStudent}</Th>
-                      <Th>{uz.groups.colPhone}</Th>
-                      <Th>{uz.groups.colGender}</Th>
-                      <Th>{uz.groups.colSince}</Th>
-                      <Th className="text-right">{uz.groups.colAction}</Th>
-                    </tr>
-                  </THead>
-                  <TBody>
-                    {visible.map((m) => (
-                      <Tr key={m.id}>
-                        <Td>
-                          <Link
-                            href={`/students/${m.studentId}`}
-                            className="text-body font-bold text-foreground hover:text-primary"
-                          >
-                            {m.name}
-                          </Link>
-                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                            <MembershipBadge status={m.status} activatedAt={m.activatedAt} />
-                            {m.parentName ? (
-                              <span className="text-caption text-muted-foreground">· {m.parentName}</span>
-                            ) : null}
-                          </div>
-                        </Td>
-                        <Td className="font-mono">{phoneLabel(m.phone)}</Td>
-                        <Td>
-                          {m.gender === "female"
-                            ? uz.students.female
-                            : m.gender === "male"
-                              ? uz.students.male
-                              : uz.students.noData}
-                        </Td>
-                        <Td className="font-mono">{formatDate(m.enrolledAt)}</Td>
-                        <Td>
-                          <div className="flex justify-end gap-1.5">
-                            {m.status === "trial" && perms.addStudent ? (
-                              <Button size="sm" onClick={() => setActivate(target(m))}>
-                                <Play /> {uz.groups.activate}
-                              </Button>
-                            ) : null}
-                            {perms.freeze && m.status !== "trial" ? (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                disabled={pending}
-                                onClick={() => pause(m, m.status !== "paused")}
-                              >
-                                {m.status === "paused" ? <Play /> : <Pause />}
-                                {m.status === "paused" ? uz.groups.unfreeze : uz.groups.freeze}
-                              </Button>
-                            ) : null}
-                            {perms.removeStudent ? (
-                              <Button
-                                variant="icon"
-                                size="icon-sm"
-                                className="text-destructive-text"
-                                title={uz.groups.remove}
-                                aria-label={`${m.name} — ${uz.groups.remove}`}
-                                onClick={() => setLeave(target(m))}
-                              >
-                                <LogOut />
-                              </Button>
-                            ) : null}
-                          </div>
-                        </Td>
-                      </Tr>
-                    ))}
-                  </TBody>
-                </Table>
-              </TableWrap>
-            ) : (
-              <EmptyState icon={<Users />} title={uz.groups.noStudents} description={uz.groups.noStudentsHint} />
-            )}
-          </>
-        ) : null}
+          </div>
+          {finance ? (
+            <>
+              <Fact
+                big
+                label={t.kpiCollected}
+                hint={t.kpiCollectedHint(money(finance.charged), collectedPercent(finance.charged, finance.collected))}
+              >
+                {money(finance.collected)}
+                <span className="ml-1 text-caption font-normal text-muted-foreground">{uz.common.som}</span>
+              </Fact>
+              <Fact big label={t.kpiDue} tone={finance.due > 0 ? "danger" : undefined} hint={t.kpiDueHint(debtors)}>
+                {money(finance.due)}
+                <span className="ml-1 text-caption font-normal text-muted-foreground">{uz.common.som}</span>
+              </Fact>
+            </>
+          ) : null}
+          {attendance && groupRate !== null ? (
+            <Fact big label={t.kpiAttendance} hint={t.kpiAttendanceHint(30)}>
+              {uz.attendance.rate(groupRate)}
+            </Fact>
+          ) : null}
+        </dl>
 
-        {tab === "left" ? (
-          members.left.length ? (
-            <TableWrap>
-              <Table className="min-w-[720px]">
-                <THead>
-                  <tr>
-                    <Th>{uz.groups.colStudent}</Th>
-                    <Th>{uz.groups.colSince}</Th>
-                    <Th>{uz.groups.colLeft}</Th>
-                    <Th>{uz.groups.colReason}</Th>
-                  </tr>
-                </THead>
-                <TBody>
-                  {members.left.map((m) => (
-                    <Tr key={m.id}>
-                      <Td>
-                        <Link
-                          href={`/students/${m.studentId}`}
-                          className="text-body font-bold text-foreground hover:text-primary"
-                        >
-                          {m.name}
-                        </Link>
-                      </Td>
-                      <Td className="font-mono">{formatDate(m.enrolledAt)}</Td>
-                      <Td className="font-mono">{m.leftAt ? formatDate(m.leftAt) : "—"}</Td>
-                      <Td className="max-w-80 text-muted-foreground">
-                        <div className="truncate" title={m.leftReason ?? undefined}>
-                          {m.leftReason ?? "—"}
-                        </div>
-                        {m.leftNote ? (
-                          <div className="truncate text-caption" title={m.leftNote}>
-                            {m.leftNote}
-                          </div>
-                        ) : null}
-                      </Td>
-                    </Tr>
-                  ))}
-                </TBody>
-              </Table>
-            </TableWrap>
-          ) : (
-            <EmptyState icon={<LogOut />} title={uz.groups.noLeft} />
-          )
+        {g.note ? (
+          <div className="border-t border-border-soft pt-4">
+            <div className="text-caption font-semibold text-muted-foreground">{t.note}</div>
+            <p className="mt-1 text-body whitespace-pre-line text-foreground">{g.note}</p>
+          </div>
         ) : null}
+      </Card>
 
-        {tab === "attendance" && attendance ? (
+      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+        <TabsList>
+          <TabsTrigger value="students">
+            {t.tabMembers} <TabCount n={count} />
+          </TabsTrigger>
+          <TabsTrigger value="left">
+            {t.tabLeft} <TabCount n={members.left.length} />
+          </TabsTrigger>
+          {attendance ? <TabsTrigger value="attendance">{t.tabAttendance}</TabsTrigger> : null}
+        </TabsList>
+      </Tabs>
+
+      {tab === "students" ? (
+        <MembersTab
+          group={g}
+          members={members.open}
+          stats={stats}
+          attendanceOn={attendance !== null}
+          perms={perms}
+          canCreateStudent={canCreateStudent}
+          canPay={payment !== null}
+          onAdd={() => setAddOpen(true)}
+          onNew={() => setNewOpen(true)}
+          onActivate={setActivate}
+          onLeave={setLeave}
+          onPay={(student) => setPay({ open: true, student })}
+        />
+      ) : null}
+
+      {tab === "left" ? <LeftTab members={members.left} /> : null}
+
+      {tab === "attendance" && attendance ? (
+        <Card className="p-5">
           <AttendanceTab
             groupId={g.id}
             data={attendance}
@@ -395,8 +315,8 @@ export function GroupProfile({
             canMarkToday={canMarkToday}
             canEditPast={canEditPast}
           />
-        ) : null}
-      </Card>
+        </Card>
+      ) : null}
 
       {perms.edit || perms.changeTeacher ? (
         <GroupForm
@@ -444,8 +364,34 @@ export function GroupProfile({
         />
       ) : null}
 
+      {canArchive ? (
+        <ArchiveGroupModal
+          group={archiveOpen ? { id: g.id, name: g.name } : null}
+          onClose={() => setArchiveOpen(false)}
+          onArchived={() => router.push("/groups")}
+        />
+      ) : null}
+
+      {payment ? (
+        <PaymentDialog
+          open={pay.open}
+          onOpenChange={(o) => setPay((p) => ({ ...p, open: o }))}
+          students={members.open.map((m) => ({ id: m.studentId, title: m.name, subtitle: phoneLabel(m.phone) }))}
+          studentId={pay.student?.id}
+          studentName={pay.student?.name}
+          groupId={g.id}
+          methods={payment.methods}
+          maxDiscountPercent={payment.maxDiscountPercent}
+        />
+      ) : null}
+
       <ActivateDialog target={activate} onOpenChange={(o) => !o && setActivate(null)} />
       <LeaveDialog target={leave} onOpenChange={(o) => !o && setLeave(null)} />
     </div>
   );
+}
+
+/** Tab yorlig'idagi son: nol bo'lsa ko'rsatilmaydi */
+function TabCount({ n }: { n: number }) {
+  return n ? <span className="font-mono text-caption text-muted-foreground">{n}</span> : null;
 }

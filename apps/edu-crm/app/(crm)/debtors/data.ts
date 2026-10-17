@@ -1,7 +1,7 @@
 import "server-only";
-import { eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { groups, students, teachers } from "@ventura/db/schema/tenant";
+import { groups, studentNotes, students, teachers } from "@ventura/db/schema/tenant";
 import { overdueDays } from "@/lib/ledger";
 import { type FinanceSettings, loadAccounts } from "@/lib/server/finance";
 
@@ -19,6 +19,17 @@ export interface DebtGroup {
   months: string[];
 }
 
+/** Qarzdor bilan bog'lanish izohlari: qo'ng'iroq, xabar, ota-ona bilan suhbat, ogohlantirish (ADR 0042) */
+export const DEBTOR_NOTE_KINDS = ["call", "message", "parent", "warning"] as const;
+
+export interface DebtorNote {
+  kind: (typeof DEBTOR_NOTE_KINDS)[number];
+  text: string;
+  authorName: string;
+  /** ISO vaqt */
+  at: string;
+}
+
 export interface DebtorRow {
   studentId: string;
   name: string;
@@ -34,6 +45,8 @@ export interface DebtorRow {
   overdueDays: number;
   /** Joriy oy qisman to'langan */
   partial: boolean;
+  /** Eng oxirgi bog'lanish izohi (jadvalda faqat shu ko'rsatiladi) */
+  note: DebtorNote | null;
 }
 
 const localPhone = (p: string | null) => (p ? p.replace(/\D/g, "").slice(-9) : null);
@@ -56,6 +69,7 @@ export async function listDebtors(
     fs,
   );
   const debtors = list.filter((s) => (accounts.get(s.id)?.summary.debt ?? 0) > 0);
+  if (!debtors.length) return [];
   const groupIds = [...new Set(debtors.flatMap((s) => accounts.get(s.id)!.summary.groups.map((g) => g.groupId)))];
   const groupRows = groupIds.length
     ? await db
@@ -66,6 +80,27 @@ export async function listDebtors(
     : [];
   const groupById = new Map(groupRows.map((g) => [g.id, g]));
   const currentMonth = today.slice(0, 7);
+  // Har o'quvchining eng oxirgi izohi (DISTINCT ON student_id, yangisi birinchi)
+  const noteRows = await db
+    .selectDistinctOn([studentNotes.studentId], {
+      studentId: studentNotes.studentId,
+      kind: studentNotes.kind,
+      text: studentNotes.text,
+      authorName: studentNotes.authorName,
+      createdAt: studentNotes.createdAt,
+    })
+    .from(studentNotes)
+    .where(
+      and(
+        inArray(
+          studentNotes.studentId,
+          debtors.map((s) => s.id),
+        ),
+        inArray(studentNotes.kind, [...DEBTOR_NOTE_KINDS]),
+      ),
+    )
+    .orderBy(studentNotes.studentId, desc(studentNotes.createdAt));
+  const noteByStudent = new Map(noteRows.map((n) => [n.studentId, n]));
 
   return debtors.map((s) => {
     const { summary } = accounts.get(s.id)!;
@@ -99,6 +134,17 @@ export async function listDebtors(
       oldestUnpaid: summary.oldestUnpaid,
       overdueDays: overdueDays(summary.oldestUnpaid, fs.dueDay, today),
       partial,
+      note: (() => {
+        const n = noteByStudent.get(s.id);
+        return n
+          ? {
+              kind: n.kind as DebtorNote["kind"],
+              text: n.text,
+              authorName: n.authorName,
+              at: n.createdAt.toISOString(),
+            }
+          : null;
+      })(),
     };
   });
 }

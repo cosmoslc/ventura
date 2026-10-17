@@ -125,20 +125,13 @@ export async function teachersReport({ db, filter, period, today, finance }: Loa
       ),
   ]);
 
-  // Hisoblangan maosh: davrdagi o'tgan oylar bo'yicha (barcha davrda — yo'q). O'qituvchi tizimga qo'shilishidan
-  // oldingi oylar sanalmaydi (ish haqi hisobi belgilangan oylikni har oyga yozadi)
+  // Hisoblangan maosh: davrdagi o'tgan oylar bo'yicha (barcha davrda — yo'q). Belgilangan oylik ish boshlagan
+  // sanadan oldingi oylarga yozilmaydi — buni ish haqi hisobining o'zi hal qiladi (ADR 0043)
   const salary = new Map<string, number>();
   const months = finance && period.months ? period.months.filter((m) => m <= today.slice(0, 7)) : [];
-  const since = new Map(
-    (months.length ? await db.select({ id: teachers.id, createdAt: teachers.createdAt }).from(teachers) : []).map(
-      (x) => [x.id, tashkentDate(x.createdAt).slice(0, 7)],
-    ),
-  );
   for (const month of months) {
     const payroll = await loadPayroll(db, filter, month, today);
-    for (const r of payroll.rows)
-      if (r.kind === "teacher" && month >= (since.get(r.id) ?? month))
-        salary.set(r.id, (salary.get(r.id) ?? 0) + r.accrual.total);
+    for (const r of payroll.rows) if (r.kind === "teacher") salary.set(r.id, (salary.get(r.id) ?? 0) + r.accrual.total);
   }
 
   const counts = new Map<string, TeacherCounts & { studentSet: Set<string> }>();

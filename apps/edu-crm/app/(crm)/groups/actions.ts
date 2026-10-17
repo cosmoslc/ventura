@@ -111,6 +111,7 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
           existing.teacherSalaryType !== v.teacherSalaryType ||
           existing.teacherSalaryPercent !== v.teacherSalaryPercent ||
           existing.teacherSalaryAmount !== v.teacherSalaryAmount ||
+          existing.teacherSalaryFrom !== (v.teacherSalaryType === "fixed" ? v.teacherSalaryFrom : null) ||
           (existing.note ?? "") !== v.note;
         if (teacherChanged) {
           const gate = await requireAny(["groups.change_teacher"]);
@@ -161,6 +162,8 @@ export async function saveGroupAction(input: unknown): Promise<ActionResult<{ id
         teacherSalaryType: v.teacherSalaryType,
         teacherSalaryPercent: v.teacherSalaryType === "percent" ? v.teacherSalaryPercent : null,
         teacherSalaryAmount: v.teacherSalaryType && v.teacherSalaryType !== "percent" ? v.teacherSalaryAmount : null,
+        // Ish boshlagan sana faqat belgilangan summada; null — guruh boshlangan sana (ADR 0043)
+        teacherSalaryFrom: v.teacherSalaryType === "fixed" ? v.teacherSalaryFrom : null,
         note: v.note || null,
       };
 

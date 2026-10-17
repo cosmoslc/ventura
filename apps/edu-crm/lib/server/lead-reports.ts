@@ -1,18 +1,21 @@
 import "server-only";
-import { and, asc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import {
   courses,
   groupMemberships,
   leadEvents,
+  leadNotes,
   leadStages,
   leads,
   payments,
+  settings,
   students,
   users,
 } from "@ventura/db/schema/tenant";
 import { addMonths } from "@/lib/billing";
-import { formatDate } from "@/lib/format";
+import { displayPhone, formatDate, money } from "@/lib/format";
 import {
+  FUNNEL_HIDDEN_KEY,
   type FunnelLead,
   type LeadKind,
   type MonthAdvice,
@@ -21,12 +24,17 @@ import {
   bestSource,
   biggestDrop,
   countShare,
+  funnelKpis,
   funnelSteps,
+  matchesFunnelFilter,
   monthAdvice,
+  parseHiddenStages,
   seasonMonths,
   sourceRows,
   stageDays,
+  visibleIndexes,
 } from "@/lib/lead-reports";
+import { LEAD_SOURCES } from "@/lib/leads";
 import type { ReportData, ReportRow } from "@/lib/reports";
 import { uz } from "@/lib/uz";
 import type { LoadArgs, ReportPeriod } from "./reports";
@@ -40,12 +48,31 @@ const t = uz.reports;
 const pctLabel = (v: number | null) => (v === null ? "—" : `${v.toFixed(1)}%`);
 const day = (col: typeof leads.createdAt | typeof leads.stageChangedAt) =>
   sql<string>`to_char(${col} at time zone 'Asia/Tashkent', 'YYYY-MM-DD')`;
+/** Manbasi yo'q lidlar uchun filtr qiymati (standart manbalar ro'yxatidagi oxirgi band) */
+const NO_SOURCE = "Boshqa";
 const inPeriod = (d: string, r: ReportPeriod["range"]) => !r || (d >= r.from && d < r.to);
 
 /* ---------- Ko'rinish ma'lumoti (ADR 0034): grafiklar uchun, jadval/Excel'ga tegmaydi ---------- */
 
+export interface FunnelListRow {
+  id: string;
+  name: string;
+  /** 9 ta mahalliy raqam (qo'ng'iroq havolasi uchun) */
+  phone: string;
+  phoneText: string;
+  staff: string;
+  /** Voronkada yetib borgan bosqich (yo'qotilgan lid — yo'qotilishidan oldingisi) */
+  stage: string;
+  lostHere: boolean;
+  created: string;
+  entered: string;
+  note: string;
+}
+
 export interface FunnelViewData {
   steps: {
+    /** Bosqich id si; oxirgi pog'ona — "won" */
+    id: string;
     name: string;
     /** Bosqich rangi (lead_stages.color); oxirgi pog'ona — muvaffaqiyat rangi */
     color: string;
@@ -55,9 +82,25 @@ export interface FunnelViewData {
     drop: number;
     days: number | null;
   }[];
-  /** Eng katta tushish bo'lgan pog'ona indeksi */
+  /** Eng katta tushish bo'lgan pog'ona o'rni (steps ichida) */
   dropIndex: number | null;
+  /** Tanlangan bosqich (manzildagi `bosqich`); yo'q — barchasi */
+  selected: string | null;
+  selectedName: string | null;
   outcome: { open: number; won: number; lost: number };
+  /** Yakuniy bosqich (tizim "won") nomi */
+  wonName: string;
+  /** Filtr tanlovlari: kurslar, manbalar va mas'ullar (ro'yxat filtri uchun) */
+  filters: {
+    courses: { value: string; label: string }[];
+    sources: string[];
+    staff: { value: string; label: string }[];
+  };
+  /** Sozlama oynasi: barcha ochiq bosqichlar va yashirilganlari */
+  stages: { id: string; name: string; color: string; hidden: boolean }[];
+  canConfigure: boolean;
+  /** Tanlangan bosqich / mas'ul / qidiruv bo'yicha lidlar; `total` — jami topilgani */
+  leads: { rows: FunnelListRow[]; total: number };
 }
 
 export interface ShareItem {
@@ -97,7 +140,9 @@ interface LeadRow {
   name: string;
   phone: string;
   source: string | null;
+  courseId: string | null;
   courseName: string | null;
+  note: string | null;
   staffId: string | null;
   staffName: string | null;
   stageId: string;
@@ -117,7 +162,9 @@ async function loadLeads(db: LoadArgs["db"], filter: LoadArgs["filter"]): Promis
       name: leads.name,
       phone: leads.phone,
       source: leads.source,
+      courseId: leads.courseId,
       courseName: courses.name,
+      note: leads.note,
       staffId: leads.assignedTo,
       staffName: users.name,
       stageId: leads.stageId,
@@ -145,13 +192,51 @@ const openStagesOf = (db: LoadArgs["db"]) =>
 
 /* ---------- CRM voronka ---------- */
 
-export async function funnelReport({ db, filter, period }: LoadArgs): Promise<ReportData> {
+/** Voronka ro'yxati: sahifada ko'rsatiladigan va Excel'ga yoziladigan qatorlar chegarasi */
+const FUNNEL_VIEW_ROWS = 100;
+const FUNNEL_EXCEL_ROWS = 2000;
+const FINAL_STEP = "won";
+
+/** Eng oxirgi izoh: lid yozuvlaridan oxirgisi, bo'lmasa lid formasidagi izoh */
+async function lastNotes(db: LoadArgs["db"], ids: string[]): Promise<Map<string, string>> {
+  if (!ids.length) return new Map();
+  const rows = await db
+    .selectDistinctOn([leadNotes.leadId], { leadId: leadNotes.leadId, text: leadNotes.text })
+    .from(leadNotes)
+    .where(inArray(leadNotes.leadId, ids))
+    .orderBy(leadNotes.leadId, desc(leadNotes.createdAt));
+  return new Map(rows.map((r) => [r.leadId, r.text]));
+}
+
+export async function funnelReport({ db, filter, period, query = {}, manage = false }: LoadArgs): Promise<ReportData> {
   const k = t.funnel;
-  const [all, stageRows] = await Promise.all([loadLeads(db, filter), openStagesOf(db)]);
-  const list = all.filter((l) => inPeriod(l.created, period.range));
+  const [all, stageRows, hiddenRow] = await Promise.all([
+    loadLeads(db, filter),
+    openStagesOf(db),
+    db
+      .select({ value: settings.value })
+      .from(settings)
+      .where(eq(settings.key, FUNNEL_HIDDEN_KEY))
+      .then((r) => r[0]),
+  ]);
   const open = stageRows.filter((s) => s.kind === "open");
+  const wonName = stageRows.find((s) => s.kind === "won")?.name ?? k.won;
   const lostStageIds = new Set(stageRows.filter((s) => s.kind === "lost").map((s) => s.id));
   const index = new Map(open.map((s, i) => [s.id, i]));
+
+  // Voronkada ko'rinadigan bosqichlar (sozlama): yashirilganlari o'tkazib yuboriladi, oxirgisi doim bor
+  const hiddenIds = new Set(parseHiddenStages(hiddenRow?.value));
+  const hidden = new Set(open.flatMap((s, i) => (hiddenIds.has(s.id) ? [i] : [])));
+  const visible = visibleIndexes(open.length, hidden);
+  const stepId = (i: number) => (i < open.length ? open[i]!.id : FINAL_STEP);
+  const stepName = (i: number) => (i < open.length ? open[i]!.name : wonName);
+
+  // Filtrlar: davr (kelgan sana), kurs, manba — voronkaning hammasiga ta'sir qiladi
+  const sourceOf = (l: LeadRow) => l.source?.trim() || NO_SOURCE;
+  const inRange = all.filter((l) => inPeriod(l.created, period.range));
+  const list = inRange.filter(
+    (l) => (!query.kurs || l.courseId === query.kurs) && (!query.manba || sourceOf(l) === query.manba),
+  );
 
   const events = list.length
     ? await db
@@ -174,14 +259,21 @@ export async function funnelReport({ db, filter, period }: LoadArgs): Promise<Re
       .filter((i) => i !== undefined);
     return { staffId: l.staffId, kind: l.kind, reached: seen.length ? Math.max(...seen) : 0, row: l };
   });
-  const steps = funnelSteps(funnel, open.length);
-  const stepName = (i: number) => (i < open.length ? open[i]!.name : k.won);
+  const steps = funnelSteps(funnel, open.length, visible);
   // Yo'qotish bosqichidagi turish hisobga kirmaydi (u yerdan chiqilmaydi)
   const days = stageDays(
     events.filter((e) => !lostStageIds.has(e.toStageId)).map((e) => ({ ...e, at: e.at.getTime() })),
   );
+  const daysOf = (i: number) =>
+    i < open.length && days.has(open[i]!.id) ? Math.round(days.get(open[i]!.id)! * 10) / 10 : null;
   const drop = biggestDrop(steps);
-  const won = funnel.filter((f) => f.kind === "won").length;
+
+  // Tanlangan bosqich (manzildan): ko'rinadigan pog'ona bo'lsa — ko'rsatkichlar va ro'yxat shu bosqich bo'yicha
+  const selectedStep = steps.find((s) => stepId(s.index) === query.bosqich) ?? null;
+  const focus = selectedStep?.index ?? open.length;
+  const kpi = funnelKpis(funnel, steps, focus);
+  const focusPos = steps.findIndex((s) => s.index === focus);
+  const prevStep = focusPos > 0 ? steps[focusPos - 1]! : null;
 
   const staff = new Map<string, { name: string; leads: (typeof funnel)[number][] }>();
   for (const f of funnel) {
@@ -191,23 +283,65 @@ export async function funnelReport({ db, filter, period }: LoadArgs): Promise<Re
     staff.set(key, s);
   }
 
+  // Lidlar ro'yxati: mas'ul, bosqich va qidiruv bo'yicha (yangi kelganlari birinchi)
+  const staffFilter = query.xodim === "none" || (query.xodim && staff.has(query.xodim)) ? query.xodim : null;
+  const matched = funnel
+    .filter((f) =>
+      matchesFunnelFilter(
+        { name: f.row.name, phone: f.row.phone, staffId: f.staffId, reached: f.reached },
+        { q: query.q ?? "", staff: staffFilter ?? null, reached: selectedStep ? selectedStep.index : null },
+      ),
+    )
+    .sort((a, b) => b.row.created.localeCompare(a.row.created) || a.row.name.localeCompare(b.row.name));
+  const shown = matched.slice(0, FUNNEL_EXCEL_ROWS);
+  const notes = await lastNotes(
+    db,
+    shown.map((f) => f.row.id),
+  );
+  const listRows: FunnelListRow[] = shown.map((f) => ({
+    id: f.row.id,
+    name: f.row.name,
+    phone: f.row.phone,
+    phoneText: displayPhone(f.row.phone) ?? "",
+    staff: f.row.staffName ?? k.unassigned,
+    stage: stepName(f.reached),
+    lostHere: f.kind === "lost",
+    created: formatDate(f.row.created),
+    entered: formatDate(f.row.changed),
+    note: notes.get(f.row.id) ?? f.row.note ?? "",
+  }));
+
+  const staffRows = [...staff.entries()].sort(
+    (a, b) => b[1].leads.length - a[1].leads.length || a[1].name.localeCompare(b[1].name),
+  );
+
   return {
     metrics: [
-      { label: k.leads, value: list.length, kind: "number", tone: "primary" },
       {
-        label: k.won,
-        value: won,
-        kind: "number",
+        label: k.kpiConversion,
+        value: kpi.conversion,
+        kind: "percent",
         tone: "success",
-        foot: list.length ? k.convFoot(pctLabel((won / list.length) * 100)) : undefined,
+        foot: kpi.total ? k.kpiConversionFoot(money(kpi.total), money(kpi.won)) : undefined,
       },
-      { label: k.lost, value: funnel.filter((f) => f.kind === "lost").length, kind: "number", tone: "danger" },
+      {
+        label: k.kpiNotReached(stepName(focus)),
+        value: kpi.notReached,
+        kind: "number",
+        foot: kpi.notReached ? k.kpiNotReachedFoot(money(kpi.lostBefore)) : undefined,
+      },
+      {
+        label: k.kpiNotPassed,
+        value: prevStep ? kpi.notPassed : null,
+        kind: "number",
+        foot: prevStep ? k.dropFoot(stepName(prevStep.index), stepName(focus)) : undefined,
+      },
       {
         label: k.biggestDrop,
         value: drop?.rate ?? null,
         kind: "percent",
         tone: drop ? "warning" : "neutral",
-        foot: drop ? k.dropFoot(stepName(drop.index - 1), stepName(drop.index)) : undefined,
+        foot: drop ? k.dropFoot(stepName(drop.from), stepName(drop.index)) : undefined,
       },
     ],
     table: {
@@ -219,40 +353,52 @@ export async function funnelReport({ db, filter, period }: LoadArgs): Promise<Re
         { key: "drop", label: k.drop, kind: "number" },
         { key: "days", label: k.days, kind: "number" },
       ],
-      rows: steps.map((s): ReportRow => ({
+      rows: steps.map((s, p): ReportRow => ({
         kind: s.index === open.length ? "total" : "row",
         cells: {
           stage: stepName(s.index),
           count: s.count,
           share: s.share,
           conv: s.conv,
-          drop: s.index ? s.drop : null,
-          days:
-            s.index < open.length && days.has(open[s.index]!.id)
-              ? Math.round(days.get(open[s.index]!.id)! * 10) / 10
-              : null,
+          drop: p ? s.drop : null,
+          days: daysOf(s.index),
         },
       })),
     },
     view: {
-      steps: steps.map((s) => ({
+      steps: steps.map((s, p) => ({
+        id: stepId(s.index),
         name: stepName(s.index),
         color: s.index < open.length ? open[s.index]!.color : "var(--success-fg)",
         count: s.count,
         share: s.share,
         conv: s.conv,
-        drop: s.index ? s.drop : 0,
-        days:
-          s.index < open.length && days.has(open[s.index]!.id)
-            ? Math.round(days.get(open[s.index]!.id)! * 10) / 10
-            : null,
+        drop: p ? s.drop : 0,
+        days: daysOf(s.index),
       })),
-      dropIndex: drop?.index ?? null,
+      dropIndex: drop ? steps.findIndex((s) => s.index === drop.index) : null,
+      selected: selectedStep ? stepId(selectedStep.index) : null,
+      selectedName: selectedStep ? stepName(selectedStep.index) : null,
       outcome: {
         open: funnel.filter((f) => f.kind === "open").length,
-        won,
+        won: kpi.won,
         lost: funnel.filter((f) => f.kind === "lost").length,
       },
+      wonName,
+      filters: {
+        courses: [
+          ...new Map(
+            all.flatMap((l) => (l.courseId && l.courseName ? [[l.courseId, l.courseName] as const] : [])),
+          ).entries(),
+        ]
+          .map(([value, label]) => ({ value, label }))
+          .sort((a, b) => a.label.localeCompare(b.label)),
+        sources: [...new Set([...LEAD_SOURCES, ...all.map(sourceOf)])],
+        staff: staffRows.map(([id, s]) => ({ value: id || "none", label: s.name })),
+      },
+      stages: open.map((s) => ({ id: s.id, name: s.name, color: s.color, hidden: hiddenIds.has(s.id) })),
+      canConfigure: manage,
+      leads: { rows: listRows.slice(0, FUNNEL_VIEW_ROWS), total: matched.length },
     } satisfies FunnelViewData,
     note: k.footnote,
     extra: [
@@ -262,22 +408,48 @@ export async function funnelReport({ db, filter, period }: LoadArgs): Promise<Re
           columns: [
             { key: "staff", label: k.staff, kind: "text" },
             { key: "total", label: k.leads, kind: "number" },
-            ...steps.slice(1).map((s) => ({ key: `s${s.index}`, label: stepName(s.index), kind: "number" as const })),
+            ...steps
+              .filter((s) => s.index !== 0)
+              .map((s) => ({ key: `s${s.index}`, label: stepName(s.index), kind: "number" as const })),
             { key: "conv", label: k.convCol, kind: "percent" },
           ],
-          rows: [...staff.values()]
-            .sort((a, b) => b.leads.length - a.leads.length || a.name.localeCompare(b.name))
-            .map((s) => {
-              const st = funnelSteps(s.leads, open.length);
-              return {
-                cells: {
-                  staff: s.name,
-                  total: s.leads.length,
-                  ...Object.fromEntries(st.slice(1).map((x) => [`s${x.index}`, x.count])),
-                  conv: st.at(-1)!.share,
-                },
-              };
-            }),
+          rows: staffRows.map(([, s]) => {
+            const st = funnelSteps(s.leads, open.length, visible);
+            return {
+              cells: {
+                staff: s.name,
+                total: s.leads.length,
+                ...Object.fromEntries(st.filter((x) => x.index !== 0).map((x) => [`s${x.index}`, x.count])),
+                conv: st.at(-1)!.share,
+              },
+            };
+          }),
+        },
+      },
+      {
+        title: k.list,
+        table: {
+          columns: [
+            { key: "lead", label: k.lead, kind: "text" },
+            { key: "phone", label: k.phone, kind: "text" },
+            { key: "staff", label: k.staff, kind: "text" },
+            { key: "stage", label: k.stage, kind: "text" },
+            { key: "created", label: k.created, kind: "text" },
+            { key: "entered", label: k.entered, kind: "text" },
+            { key: "note", label: k.lastNote, kind: "text" },
+          ],
+          rows: listRows.map((r) => ({
+            href: `/leads/${r.id}`,
+            cells: {
+              lead: r.name,
+              phone: r.phoneText,
+              staff: r.staff,
+              stage: r.lostHere ? `${r.stage} · ${k.lostHere}` : r.stage,
+              created: r.created,
+              entered: r.entered,
+              note: r.note,
+            },
+          })),
         },
       },
     ],

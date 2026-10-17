@@ -4,11 +4,15 @@ import {
   type PayrollGroup,
   type StudentMonth,
   type TeacherRule,
+  daysInMonth,
+  fixedForMonth,
   groupPay,
+  groupShares,
   managerAccrual,
   salaryBalance,
   teacherAccrual,
   teacherCoef,
+  teacherFixedFrom,
 } from "./payroll";
 
 const percent: TeacherRule = { salaryType: "percent", percent: 40, perStudent: 0, fixed: 0 };
@@ -115,6 +119,109 @@ describe("belgilangan turi va jami", () => {
   it("foizli o'qituvchida guruh o'zgacha belgilangan bo'lsa", () => {
     const r = teacherAccrual(percent, [g({ salaryType: "fixed", amount: 700_000 })], [], [cash("a", 1_000_000)]);
     expect(r.total).toBe(700_000);
+  });
+});
+
+describe("belgilangan oylik: ish boshlagan sana", () => {
+  it("kunlar soni", () => {
+    expect(daysInMonth("2026-10")).toBe(31);
+    expect(daysInMonth("2026-02")).toBe(28);
+    expect(daysInMonth("2028-02")).toBe(29);
+  });
+
+  it("sana yo'q — har oy to'liq; sanadan oldingi oylar 0; keyingilari to'liq", () => {
+    expect(fixedForMonth(3_100_000, null, "2026-10")).toEqual({ pay: 3_100_000, proration: null });
+    expect(fixedForMonth(3_100_000, "2026-10-16", "2026-09")).toEqual({ pay: 0, proration: null });
+    expect(fixedForMonth(3_100_000, "2026-10-16", "2026-11")).toEqual({ pay: 3_100_000, proration: null });
+  });
+
+  it("birinchi oy kunlarga mutanosib (boshlagan kuni ham sanaladi)", () => {
+    expect(fixedForMonth(3_100_000, "2026-10-16", "2026-10")).toEqual({
+      pay: 1_600_000,
+      proration: { days: 16, total: 31 },
+    });
+    // 31-kuni boshlagan — bir kun
+    expect(fixedForMonth(3_100_000, "2026-10-31", "2026-10").pay).toBe(100_000);
+    // oyning 1-kuni — to'liq oy, mutanosiblik yo'q
+    expect(fixedForMonth(3_100_000, "2026-10-01", "2026-10")).toEqual({ pay: 3_100_000, proration: null });
+    // yaxlitlash: 1 000 000 × 10/30
+    expect(fixedForMonth(1_000_000, "2026-11-21", "2026-11").pay).toBe(333_333);
+  });
+
+  it("standart sana: aniq sana, aks holda qo'shilgan kun va guruhlar boshlanishidan eng erta", () => {
+    expect(teacherFixedFrom("2026-10-05", "2026-09-01", ["2026-08-01"])).toBe("2026-10-05");
+    expect(teacherFixedFrom(null, "2026-09-10", ["2026-08-20", "2026-09-01"])).toBe("2026-08-20");
+    expect(teacherFixedFrom(null, "2026-09-10", [])).toBe("2026-09-10");
+    expect(teacherFixedFrom("", "2026-09-10", ["2026-10-01"])).toBe("2026-09-10");
+  });
+
+  const rule = (fixedFrom: string | null): TeacherRule => ({
+    salaryType: "fixed",
+    percent: 0,
+    perStudent: 0,
+    fixed: 3_100_000,
+    fixedFrom,
+  });
+
+  it("o'z oyligi (support ham) sanadan oldin 0, birinchi oyda mutanosib", () => {
+    expect(teacherAccrual(rule("2026-10-16"), [], [], [], "2026-09").total).toBe(0);
+    const r = teacherAccrual(rule("2026-10-16"), [], [], [], "2026-10");
+    expect(r).toMatchObject({ base: 1_600_000, total: 1_600_000, baseProration: { days: 16, total: 31 } });
+    expect(teacherAccrual(rule("2026-10-16"), [], [], [], "2026-11").total).toBe(3_100_000);
+    // oy berilmasa — sanasiz, to'liq (eski chaqiruvlar)
+    expect(teacherAccrual(rule("2026-10-16"), [], [], []).total).toBe(3_100_000);
+  });
+
+  it("guruhdagi belgilangan summa guruhning o'z sanasidan; foizli o'qituvchi o'zgarmaydi", () => {
+    const grp = g({ id: "g2", salaryType: "fixed", amount: 620_000, fixedFrom: "2026-10-11" });
+    const pct = teacherAccrual(percent, [grp], [], [], "2026-10");
+    expect(pct.total).toBe(420_000);
+    expect(pct.groups[0]).toMatchObject({ pay: 420_000, proration: { days: 21, total: 31 } });
+    expect(teacherAccrual(percent, [grp], [], [], "2026-09").total).toBe(0);
+    expect(teacherAccrual(percent, [grp], [], [], "2026-12").total).toBe(620_000);
+  });
+});
+
+describe("to'lovlardan ulush qatorlari", () => {
+  it("foiz: har to'lovdan; yig'indi groupPay bilan teng", () => {
+    const c = [cash("a", 300_000), cash("b", 150_000), cash("b", -50_000)];
+    const lines = groupShares(percent, g(), [sm("a"), sm("b")], c);
+    expect(lines.map((l) => l.pay)).toEqual([120_000, 60_000, -20_000]);
+    expect(lines.reduce((x, l) => x + l.pay, 0)).toBe(groupPay(percent, g(), [sm("a"), sm("b")], c).pay);
+  });
+
+  const per: TeacherRule = { salaryType: "per_student", percent: 0, perStudent: 100_000, fixed: 0 };
+
+  it("har o'quvchi uchun: bo'lib-bo'lib to'lov sana tartibida bo'linadi, yig'indi o'zgarmaydi", () => {
+    const c: GroupCash[] = [
+      { studentId: "a", groupId: "g1", amount: 200_000, date: "2026-10-12", id: "p2" },
+      { studentId: "a", groupId: "g1", amount: 100_000, date: "2026-10-03", id: "p1" },
+    ];
+    const lines = groupShares(per, g(), [sm("a")], c);
+    // 3 oktabr: 100 000 / 300 000 → 33 333; 12 oktabr: qolgani 66 667
+    expect(lines.map((l) => [l.cash.id, l.pay])).toEqual([
+      ["p2", 66_667],
+      ["p1", 33_333],
+    ]);
+    expect(lines.reduce((x, l) => x + l.pay, 0)).toBe(groupPay(per, g(), [sm("a")], c).pay);
+    expect(groupPay(per, g(), [sm("a")], c).pay).toBe(100_000);
+  });
+
+  it("har o'quvchi uchun: ortiqcha to'lov va qaytarish; hisobsiz o'quvchi 0", () => {
+    const c: GroupCash[] = [
+      { studentId: "a", groupId: "g1", amount: 400_000, date: "2026-10-01" },
+      { studentId: "a", groupId: "g1", amount: -250_000, date: "2026-10-09" },
+      { studentId: "x", groupId: "g1", amount: 100_000, date: "2026-10-02" },
+    ];
+    const lines = groupShares(per, g(), [sm("a")], c);
+    // 400 000 (chegara 100 000) → 100 000; qaytarishdan keyin 150 000 → 50 000: −50 000
+    expect(lines.map((l) => l.pay)).toEqual([100_000, -50_000, 0]);
+    expect(lines.reduce((x, l) => x + l.pay, 0)).toBe(groupPay(per, g(), [sm("a")], c).pay);
+  });
+
+  it("belgilangan guruh: to'lovlar 0", () => {
+    const lines = groupShares(percent, g({ salaryType: "fixed", amount: 500_000 }), [], [cash("a", 100_000)]);
+    expect(lines.map((l) => l.pay)).toEqual([0]);
   });
 });
 

@@ -81,7 +81,7 @@ function StatusModal({
 
   // Muzlatish va qaytarishda sabab markaz ro'yxatidan tanlanadi (ADR 0035)
   const reasonCategory = status === student.status ? null : statusReasonCategory(status);
-  const reasonState = useReasonState(reasonCategory);
+  const reasonState = useReasonState(reasonCategory, open);
 
   // Muzlatishga va undan chiqarishga students.freeze kerak
   const allowed = (s: StudentStatus) =>
@@ -177,7 +177,7 @@ function ArchiveModal({
   const [error, setError] = React.useState<string | null>(null);
   const [pending, startTransition] = React.useTransition();
   // Sinovdagi va faol o'quvchi uchun sabablar alohida (ADR 0035)
-  const reasonState = useReasonState(studentArchiveCategory(student.status));
+  const reasonState = useReasonState(studentArchiveCategory(student.status), open);
 
   function archive() {
     if (reasonState.active && !reason.trim()) return setError(uz.reasons.required);

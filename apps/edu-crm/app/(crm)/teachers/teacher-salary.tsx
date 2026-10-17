@@ -1,6 +1,7 @@
 "use client";
 
 import { Pencil, RotateCcw, Trash2, Wallet } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -9,7 +10,7 @@ import { cn } from "@ventura/ui/lib/utils";
 import { EmptyState } from "@ventura/ui/page-header";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
-import type { TeacherPayrollRow } from "@/lib/server/payroll";
+import type { ShareRow, TeacherPayrollRow } from "@/lib/server/payroll";
 import { formatDate, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { VoidRecordDialog } from "../expenses/void-dialog";
@@ -152,48 +153,106 @@ export function TeacherTransactions({
   );
 }
 
-/** "To'lovlardan hisoblangan ulush" tabi: guruhlar bo'yicha tushum va o'qituvchi ulushi (Ish haqi bilan bir manba) */
-export function TeacherShares({ row, groupNames }: { row: TeacherPayrollRow; groupNames: Record<string, string> }) {
-  const a = row.accrual;
-  const groups = a.groups.filter((g) => g.pay !== 0 || g.revenue !== 0);
-  if (!groups.length && !a.base) return <EmptyState icon={<Wallet />} title={t.noGroupPay} />;
+/**
+ * "To'lovlardan hisoblangan ulush" tabi (eski tizimdagidek): tanlangan oyda guruhlariga tushgan har to'lov, ulush sharti
+ * va ustozga hisoblangan summa; belgilangan oyliklar alohida qatorda (ish boshlagan sanasi bilan). Ish haqi
+ * hisobining o'zi bilan bir manba: qatorlar yig'indisi "hisoblangan"ga teng (ADR 0043).
+ */
+export function TeacherShares({
+  row,
+  groupNames,
+  shares,
+}: {
+  row: TeacherPayrollRow;
+  groupNames: Record<string, string>;
+  shares: ShareRow[];
+}) {
+  const tt = uz.teachers;
+  if (!shares.length) return <EmptyState icon={<Wallet />} title={tt.sharesEmpty} />;
+
+  const condition = (r: ShareRow) => {
+    if (r.salaryType === "percent") return `${r.value}%`;
+    if (r.salaryType === "per_student") return tt.perStudentCondition(money(r.value));
+    const parts: string[] = [tt.fixedCondition];
+    if (r.from) parts.push(tt.fromDay(formatDate(r.from)));
+    if (r.proration) parts.push(tt.proratedDays(r.proration.days, r.proration.total));
+    return parts.join(" · ");
+  };
+  const who = (r: ShareRow) =>
+    r.kind === "own"
+      ? tt.ownSalaryRow
+      : r.kind === "group"
+        ? tt.groupFixedRow(groupNames[r.groupId ?? ""] ?? "—")
+        : (r.studentName ?? "—");
+
   return (
-    <TableWrap>
-      <Table>
-        <THead>
-          <Tr>
-            <Th>{t.colGroup}</Th>
-            <Th>{t.colType}</Th>
-            <Th className="text-right">{t.colRevenue}</Th>
-            <Th className="text-right">{t.colShare}</Th>
-          </Tr>
-        </THead>
-        <TBody>
-          {a.base ? (
+    <div className="space-y-3">
+      <div className="text-body font-bold text-foreground">{tt.sharesTitle}</div>
+      <TableWrap>
+        <Table>
+          <THead>
             <Tr>
-              <Td className="font-medium text-foreground">{t.ownSalary}</Td>
-              <Td className="text-muted-foreground">{t.typeName.fixed}</Td>
-              <Td className="text-right text-muted-foreground">—</Td>
-              <Td className="text-right font-semibold">{money(a.base)}</Td>
+              <Th className="w-10">#</Th>
+              <Th>{tt.colPayer}</Th>
+              <Th>{t.colGroup}</Th>
+              <Th className="text-right">{tt.colPaid}</Th>
+              <Th>{tt.colCondition}</Th>
+              <Th className="text-right">{tt.colAccrued}</Th>
+              <Th>{tt.colDate}</Th>
             </Tr>
-          ) : null}
-          {groups.map((g) => (
-            <Tr key={g.groupId}>
-              <Td className="font-medium text-foreground">{groupNames[g.groupId] ?? "—"}</Td>
-              <Td className="text-muted-foreground">{t.typeName[g.salaryType]}</Td>
-              <Td className="text-right whitespace-nowrap">{money(g.revenue)}</Td>
-              <Td className="text-right font-semibold whitespace-nowrap">{money(g.pay)}</Td>
+          </THead>
+          <TBody>
+            {shares.map((r, i) => (
+              <Tr key={r.key}>
+                <Td className="text-muted-foreground">{i + 1}</Td>
+                <Td className="font-medium text-foreground">
+                  {r.kind === "payment" && r.studentId ? (
+                    <Link href={`/students/${r.studentId}`} className="hover:text-primary">
+                      {who(r)}
+                    </Link>
+                  ) : (
+                    who(r)
+                  )}
+                </Td>
+                <Td className="text-muted-foreground">
+                  {r.kind === "payment" ? (groupNames[r.groupId ?? ""] ?? "—") : "—"}
+                </Td>
+                <Td className="text-right whitespace-nowrap">
+                  {r.amount === null ? (
+                    <span className="text-muted-foreground">—</span>
+                  ) : (
+                    <span className={cn(r.amount < 0 && "text-(--danger-fg)")}>
+                      {r.amount < 0 ? "−" : ""}
+                      {som(Math.abs(r.amount))}
+                    </span>
+                  )}
+                </Td>
+                <Td className="text-muted-foreground">{condition(r)}</Td>
+                <Td className="text-right font-semibold whitespace-nowrap">
+                  {r.pay === 0 && r.salaryType === "fixed" && r.kind === "payment" ? (
+                    <span className="font-normal text-muted-foreground">—</span>
+                  ) : (
+                    <span className={cn(r.pay < 0 ? "text-(--danger-fg)" : "text-(--success-fg)")}>
+                      {r.pay < 0 ? "−" : "+"}
+                      {som(Math.abs(r.pay))}
+                    </span>
+                  )}
+                </Td>
+                <Td className="whitespace-nowrap text-muted-foreground">{r.date ? formatDate(r.date) : "—"}</Td>
+              </Tr>
+            ))}
+            <Tr className="bg-muted">
+              <Td className="font-bold text-foreground" colSpan={3}>
+                {tt.sharesTotal}
+              </Td>
+              <Td className="text-right font-semibold whitespace-nowrap">{som(row.accrual.revenue)}</Td>
+              <Td />
+              <Td className="text-right font-bold whitespace-nowrap">{som(row.accrual.total)}</Td>
+              <Td />
             </Tr>
-          ))}
-          <Tr className="bg-muted">
-            <Td className="font-bold text-foreground" colSpan={2}>
-              {uz.teachers.sharesTotal}
-            </Td>
-            <Td className="text-right font-semibold whitespace-nowrap">{money(a.revenue)}</Td>
-            <Td className="text-right font-bold whitespace-nowrap">{money(a.total)}</Td>
-          </Tr>
-        </TBody>
-      </Table>
-    </TableWrap>
+          </TBody>
+        </Table>
+      </TableWrap>
+    </div>
   );
 }

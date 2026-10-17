@@ -18,7 +18,7 @@ import {
 } from "@ventura/db/schema/tenant";
 import { APPLY_FORM_KEY, applyFormSchema } from "@/lib/apply-form";
 import { LEAD_FIELDS_KEY, cleanCustomData, formFieldsSchema, missingRequired } from "@/lib/form-fields";
-import { LOST_REASONS_KEY, stagesError } from "@/lib/leads";
+import { LOST_REASONS_KEY, isFirstLessonDay, stagesError } from "@/lib/leads";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
 import { todayTashkent } from "@/lib/server/memberships";
@@ -42,6 +42,7 @@ import { assignedDraft } from "@/lib/notifications";
 import { notify } from "@/lib/server/notify";
 import { uz } from "@/lib/uz";
 import { convertLeads } from "./convert";
+import { holidayRanges } from "../holidays/data";
 import { getLeadFields, listStages, staffOptions } from "./data";
 
 /*
@@ -490,12 +491,22 @@ export async function scheduleFirstLessonAction(input: unknown): Promise<ActionR
       const stages = await listStages(ctx.db);
       if (stages.find((s) => s.id === l.stageId)?.kind !== "open") return { ok: false, error: uz.leads.notOpen };
       const [g] = await ctx.db
-        .select({ id: groups.id, name: groups.name, branchId: groups.branchId })
+        .select({
+          id: groups.id,
+          name: groups.name,
+          branchId: groups.branchId,
+          days: groups.days,
+          startDate: groups.startDate,
+        })
         .from(groups)
         .where(and(eq(groups.id, parsed.data.groupId), isNull(groups.archivedAt)));
       if (!g || !ctx.branch.options.some((b) => b.id === g.branchId))
         return { ok: false, error: uz.groups.groupArchived };
       if (g.branchId !== l.branchId) return { ok: false, error: uz.groups.branchMismatch };
+      // Sana — guruhning haqiqiy dars kuni (jadval, boshlanish sanasi, dam olish kunlari) va o'tib ketmagan
+      const holidays = await holidayRanges(ctx.db, parsed.data.date, parsed.data.date);
+      if (!isFirstLessonDay(g, parsed.data.date, todayTashkent(), holidays))
+        return { ok: false, error: uz.leads.firstLessonNotLessonDay };
       const values = {
         groupId: g.id,
         lessonDate: parsed.data.date,

@@ -66,6 +66,8 @@ interface Form {
   salaryType: string;
   salaryPercent: string;
   salaryAmount: number | null;
+  /** Belgilangan summa qaysi sanadan; bo'sh — guruh boshlangan sana */
+  salaryFrom: string;
   note: string;
   /** Narx o'zgarsa — yangi narx qaysi oydan ("YYYY-MM") */
   priceFrom: string;
@@ -129,6 +131,7 @@ export function GroupForm({
       salaryType: editing?.teacherSalaryType ?? DEFAULT,
       salaryPercent: editing?.teacherSalaryPercent != null ? String(editing.teacherSalaryPercent) : "",
       salaryAmount: editing?.teacherSalaryAmount ?? null,
+      salaryFrom: editing?.teacherSalaryFrom ?? "",
       note: editing?.note ?? "",
       priceFrom: todayLocal().slice(0, 7),
     };
@@ -195,6 +198,8 @@ export function GroupForm({
       teacherSalaryType: override,
       teacherSalaryPercent: override === "percent" ? Number(form.salaryPercent || 0) : null,
       teacherSalaryAmount: override && override !== "percent" ? (form.salaryAmount ?? 0) : null,
+      teacherSalaryFrom:
+        override === "fixed" && form.salaryFrom && form.salaryFrom !== form.startDate ? form.salaryFrom : null,
       note: form.note,
     });
     if (!parsed.success) return setError(firstError(parsed.error));
@@ -395,6 +400,18 @@ export function GroupForm({
               suffix={uz.common.som}
               placeholder={form.salaryType === "per_student" ? "100 000" : "2 000 000"}
             />
+          </div>
+        ) : null}
+        {form.salaryType === "fixed" ? (
+          <div>
+            <Label htmlFor="group-salary-from">{uz.groups.salaryFrom}</Label>
+            <Input
+              id="group-salary-from"
+              type="date"
+              value={form.salaryFrom || form.startDate}
+              onChange={(e) => set("salaryFrom", e.target.value)}
+            />
+            <FieldHint>{uz.groups.salaryFromHint}</FieldHint>
           </div>
         ) : null}
         <div>

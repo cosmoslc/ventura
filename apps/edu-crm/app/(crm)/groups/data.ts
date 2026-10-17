@@ -1,10 +1,11 @@
 import "server-only";
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lte } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import {
   type MembershipStatus,
   type TeacherSalaryType,
   type Weekday,
+  attendance,
   courses,
   groupMemberships,
   groups,
@@ -12,6 +13,9 @@ import {
   students,
   teachers,
 } from "@ventura/db/schema/tenant";
+import { type AttendanceStat, type MemberMoney, attendanceStat, daysAgo, memberMoney } from "@/lib/group-profile";
+import { loadAccounts } from "@/lib/server/finance";
+import type { GroupFinance } from "../payments/data";
 
 export interface GroupRow {
   id: string;
@@ -35,6 +39,8 @@ export interface GroupRow {
   teacherSalaryType: TeacherSalaryType | null;
   teacherSalaryPercent: number | null;
   teacherSalaryAmount: number | null;
+  /** Belgilangan summa shu sanadan; null — guruh boshlangan sana */
+  teacherSalaryFrom: string | null;
   note: string | null;
   /** Ochiq a'zoliklar soni holat bo'yicha */
   members: { trial: number; active: number; paused: number };
@@ -111,6 +117,7 @@ export async function listGroups(db: TenantDb, filter: readonly string[] | null,
       teacherSalaryType: g.teacherSalaryType,
       teacherSalaryPercent: g.teacherSalaryPercent,
       teacherSalaryAmount: g.teacherSalaryAmount,
+      teacherSalaryFrom: g.teacherSalaryFrom,
       note: g.note,
       members: {
         trial: mine.filter((c) => c.status === "trial").length,
@@ -330,4 +337,91 @@ export async function groupPickOptions(
     hint: `${g.courseName} · ${g.teacherName} · ${g.startTime}`,
     branchId: g.branchId,
   }));
+}
+
+/* ---------- Guruh profili: a'zolar bo'yicha pul va davomat ---------- */
+
+/** Davomat foizi shu necha kun ichidagi belgilangan darslardan hisoblanadi */
+export const ATTENDANCE_DAYS = 30;
+
+export interface MemberStat {
+  /** null — moliya bo'limi o'chiq yoki ruxsat yo'q */
+  money: MemberMoney | null;
+  /** null — Davomat bo'limi o'chiq */
+  attendance: AttendanceStat | null;
+}
+
+export interface GroupProfileStats {
+  /** Guruh yig'indisi (shu oy hisoblangan/yig'ilgan, jami qarz); null — moliya yo'q */
+  finance: GroupFinance | null;
+  /** Ochiq a'zolikdagi o'quvchi id → ko'rsatkichlar */
+  members: Record<string, MemberStat>;
+}
+
+const NO_MONEY = (groupId: string, month: string) => memberMoney({ groups: [] }, [], groupId, month);
+
+/**
+ * Guruh a'zolarining shu guruh bo'yicha puli (bitta hisob yuklash — kartalar ham, qatorlar ham shundan) va
+ * so'nggi `ATTENDANCE_DAYS` kundagi davomati. Faqat o'qish: yozuv yo'q, yangi hisob qoidasi yo'q.
+ */
+export async function groupProfileStats(
+  db: TenantDb,
+  groupId: string,
+  today: string,
+  open: readonly { studentId: string; enrolledAt: string }[],
+  on: { finance: boolean; attendance: boolean },
+): Promise<GroupProfileStats> {
+  const month = today.slice(0, 7);
+  const members: Record<string, MemberStat> = Object.fromEntries(
+    open.map((m) => [m.studentId, { money: null, attendance: null }]),
+  );
+  let finance: GroupFinance | null = null;
+
+  if (on.finance) {
+    // Chiqqanlar ham: ularning qarzi guruh qarziga kiradi (to'lov sahifalaridagi hisob bilan bir xil)
+    const all = await db
+      .select({ studentId: groupMemberships.studentId })
+      .from(groupMemberships)
+      .where(eq(groupMemberships.groupId, groupId));
+    const accounts = await loadAccounts(
+      db,
+      all.map((r) => r.studentId),
+      today,
+    );
+    const total = { month, charged: 0, collected: 0, due: 0 };
+    for (const [studentId, { summary, entries }] of accounts) {
+      const money = memberMoney(summary, entries, groupId, month);
+      total.charged += money.monthCharged;
+      total.collected += money.collected;
+      total.due += money.due;
+      const row = members[studentId];
+      if (row) row.money = money;
+    }
+    // Sinovdagilar hisobga kirmaydi (faollashtirilmagan) — ularning puli nol
+    for (const row of Object.values(members)) row.money ??= NO_MONEY(groupId, month);
+    finance = total;
+  }
+
+  if (on.attendance && open.length) {
+    const from = daysAgo(today, ATTENDANCE_DAYS);
+    const rows = await db
+      .select({ studentId: attendance.studentId, date: attendance.date, status: attendance.status })
+      .from(attendance)
+      .where(
+        and(
+          eq(attendance.groupId, groupId),
+          gte(attendance.date, from),
+          lte(attendance.date, today),
+          inArray(
+            attendance.studentId,
+            open.map((m) => m.studentId),
+          ),
+        ),
+      );
+    for (const m of open) {
+      const marks = rows.filter((r) => r.studentId === m.studentId);
+      members[m.studentId]!.attendance = attendanceStat(marks, m.enrolledAt > from ? m.enrolledAt : from);
+    }
+  }
+  return { finance, members };
 }

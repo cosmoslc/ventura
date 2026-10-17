@@ -16,7 +16,6 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
-import { Card } from "@ventura/ui/card";
 import { RadioCard, RadioGroup } from "@ventura/ui/checkbox";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
@@ -25,13 +24,13 @@ import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { FilterBar, FilterDates, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { StatCard } from "@ventura/ui/stat-card";
-import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
 import { type ReportFilter, matchesFilter } from "@/lib/attendance-report";
 import { displayPhone, formatDate } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import type { ReportRow } from "@/lib/server/attendance-report";
+import { StudentsTable } from "../student-table";
 import { markAttendanceAction } from "../groups/attendance-actions";
 import { logContactAction } from "./actions";
 import { JournalExport } from "./journal-export";
@@ -191,138 +190,126 @@ export function AttendanceReportView({
         </FilterEnd>
       </FilterBar>
 
-      <Card className="overflow-hidden">
-        {visible.length ? (
-          <TableWrap className="rounded-none border-0">
-            <Table>
-              <THead>
-                <Tr>
-                  <Th className="w-12 text-center">{uz.attendance.colNo}</Th>
-                  <Th>{uz.attendance.colStudent}</Th>
-                  <Th>{t.colGroup}</Th>
-                  <Th>{t.colPrevious}</Th>
-                  <Th>{t.colRange}</Th>
-                  <Th className="text-center">{t.colMonth}</Th>
-                  <Th>{t.colReason}</Th>
-                  <Th>{t.colContact}</Th>
-                </Tr>
-              </THead>
-              <TBody>
-                {visible.map((r, i) => (
-                  <Tr key={r.key}>
-                    <Td className="text-center text-muted-foreground">{i + 1}</Td>
-                    <Td>
-                      <Link
-                        href={`/students/${r.studentId}`}
-                        className="font-medium text-foreground hover:text-primary"
-                      >
-                        {r.name}
-                      </Link>
-                      <div className="text-caption text-muted-foreground">{displayPhone(r.phone)}</div>
-                    </Td>
-                    <Td>
-                      <Link
-                        href={`/groups/${r.groupId}?tab=attendance&month=${(r.lastMissed?.date ?? to).slice(0, 7)}`}
-                        className="font-medium text-foreground hover:text-primary"
-                      >
-                        {r.groupName}
-                      </Link>
-                      <div className="text-caption text-muted-foreground">
-                        {r.teacherName} · {r.startTime}
-                        {r.memberStatus !== "active" ? ` · ${t.memberStatuses[r.memberStatus]}` : ""}
-                      </div>
-                    </Td>
-                    <Td>
-                      {r.previous ? (
-                        <div className="space-y-1">
-                          {r.previous.status ? (
-                            <Badge tone={STATUS_TONE[r.previous.status]}>
-                              {uz.attendance.statuses[r.previous.status]}
-                            </Badge>
-                          ) : (
-                            <Badge tone="neutral">{t.unmarked}</Badge>
-                          )}
-                          <div className="text-caption text-muted-foreground">{formatDate(r.previous.date)}</div>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">{t.noLesson}</span>
-                      )}
-                    </Td>
-                    <Td>
-                      <div className="font-medium">{t.missedOf(r.missed, r.lessons)}</div>
-                      <div className="text-caption text-muted-foreground">
-                        {t.rateLine(r.rate)}
-                        {r.unmarked ? ` · ${t.unmarked}: ${r.unmarked}` : ""}
-                      </div>
-                      {r.consecutive >= 3 ? (
-                        <Badge tone="danger" className="mt-1">
-                          {t.consecutive(r.consecutive)}
-                        </Badge>
-                      ) : null}
-                    </Td>
-                    <Td className="text-center">
-                      <span
-                        className={cn(
-                          "font-semibold",
-                          r.missedThisMonth ? "text-(--danger-fg)" : "text-muted-foreground",
-                        )}
-                      >
-                        {t.monthMissed(r.missedThisMonth)}
-                      </span>
-                    </Td>
-                    <Td className="max-w-56">
-                      {r.lastMissed ? (
-                        <button
-                          type="button"
-                          className="text-left hover:text-primary disabled:cursor-default disabled:hover:text-inherit"
-                          onClick={() => setReasonFor(r)}
-                          disabled={!editableDay(r.lastMissed.date)}
-                          title={editableDay(r.lastMissed.date) ? t.editReason : t.reasonReadOnly}
-                        >
-                          {r.lastMissed.reason ? (
-                            <span className="line-clamp-2">{r.lastMissed.reason}</span>
-                          ) : (
-                            <span className="text-muted-foreground italic">{t.noReason}</span>
-                          )}
-                          <span className="block text-caption text-muted-foreground">
-                            {formatDate(r.lastMissed.date)}
-                          </span>
-                        </button>
-                      ) : (
-                        <span className="text-muted-foreground">{t.notNeeded}</span>
-                      )}
-                    </Td>
-                    <Td>
-                      {r.lastMissed ? (
-                        <div className="flex items-center gap-2">
-                          <Badge tone={r.contacted ? "success" : "warning"}>
-                            {r.contacted ? t.contacted : t.notContacted}
-                          </Badge>
-                          {canMarkToday || canEditPast ? (
-                            <Button
-                              variant="icon"
-                              size="icon"
-                              aria-label={t.logCall}
-                              title={t.logCall}
-                              onClick={() => setCallFor(r)}
-                            >
-                              <PhoneCall />
-                            </Button>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">{t.notNeeded}</span>
-                      )}
-                    </Td>
-                  </Tr>
-                ))}
-              </TBody>
-            </Table>
-          </TableWrap>
-        ) : (
-          <EmptyState icon={<CalendarX />} title={t.empty} description={t.emptyHint} />
-        )}
-      </Card>
+      <StudentsTable
+        rows={visible}
+        rowKey={(r) => r.key}
+        student={(r) => ({ name: r.name, href: `/students/${r.studentId}`, sub: displayPhone(r.phone) })}
+        studentHeader={uz.attendance.colStudent}
+        minWidth={960}
+        columns={[
+          {
+            key: "group",
+            header: t.colGroup,
+            cell: (r) => (
+              <>
+                <Link
+                  href={`/groups/${r.groupId}?tab=attendance&month=${(r.lastMissed?.date ?? to).slice(0, 7)}`}
+                  className="font-medium text-foreground hover:text-primary"
+                >
+                  {r.groupName}
+                </Link>
+                <div className="text-caption text-muted-foreground">
+                  {r.teacherName} · {r.startTime}
+                  {r.memberStatus !== "active" ? ` · ${t.memberStatuses[r.memberStatus]}` : ""}
+                </div>
+              </>
+            ),
+          },
+          {
+            key: "previous",
+            header: t.colPrevious,
+            cell: (r) =>
+              r.previous ? (
+                <div className="space-y-1">
+                  {r.previous.status ? (
+                    <Badge tone={STATUS_TONE[r.previous.status]}>{uz.attendance.statuses[r.previous.status]}</Badge>
+                  ) : (
+                    <Badge tone="neutral">{t.unmarked}</Badge>
+                  )}
+                  <div className="text-caption text-muted-foreground">{formatDate(r.previous.date)}</div>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">{t.noLesson}</span>
+              ),
+          },
+          {
+            key: "range",
+            header: t.colRange,
+            cell: (r) => (
+              <>
+                <div className="font-medium">{t.missedOf(r.missed, r.lessons)}</div>
+                <div className="text-caption text-muted-foreground">
+                  {t.rateLine(r.rate)}
+                  {r.unmarked ? ` · ${t.unmarked}: ${r.unmarked}` : ""}
+                </div>
+                {r.consecutive >= 3 ? (
+                  <Badge tone="danger" className="mt-1">
+                    {t.consecutive(r.consecutive)}
+                  </Badge>
+                ) : null}
+              </>
+            ),
+          },
+          {
+            key: "month",
+            header: t.colMonth,
+            align: "center",
+            cell: (r) => (
+              <span className={cn("font-semibold", r.missedThisMonth ? "text-(--danger-fg)" : "text-muted-foreground")}>
+                {t.monthMissed(r.missedThisMonth)}
+              </span>
+            ),
+          },
+          {
+            key: "reason",
+            header: t.colReason,
+            className: "max-w-56",
+            cell: (r) =>
+              r.lastMissed ? (
+                <button
+                  type="button"
+                  className="text-left hover:text-primary disabled:cursor-default disabled:hover:text-inherit"
+                  onClick={() => setReasonFor(r)}
+                  disabled={!editableDay(r.lastMissed.date)}
+                  title={editableDay(r.lastMissed.date) ? t.editReason : t.reasonReadOnly}
+                >
+                  {r.lastMissed.reason ? (
+                    <span className="line-clamp-2">{r.lastMissed.reason}</span>
+                  ) : (
+                    <span className="text-muted-foreground italic">{t.noReason}</span>
+                  )}
+                  <span className="block text-caption text-muted-foreground">{formatDate(r.lastMissed.date)}</span>
+                </button>
+              ) : (
+                <span className="text-muted-foreground">{t.notNeeded}</span>
+              ),
+          },
+          {
+            key: "contact",
+            header: t.colContact,
+            cell: (r) =>
+              r.lastMissed ? (
+                <div className="flex items-center gap-2">
+                  <Badge tone={r.contacted ? "success" : "warning"}>{r.contacted ? t.contacted : t.notContacted}</Badge>
+                  {canMarkToday || canEditPast ? (
+                    <Button
+                      variant="icon"
+                      size="icon"
+                      aria-label={t.logCall}
+                      title={t.logCall}
+                      onClick={() => setCallFor(r)}
+                    >
+                      <PhoneCall />
+                    </Button>
+                  ) : null}
+                </div>
+              ) : (
+                <span className="text-muted-foreground">{t.notNeeded}</span>
+              ),
+          },
+        ]}
+        empty={<EmptyState icon={<CalendarX />} title={t.empty} description={t.emptyHint} />}
+      />
 
       {reasonFor?.lastMissed ? (
         <ReasonModal row={reasonFor} onClose={() => setReasonFor(null)} onSaved={() => router.refresh()} />

@@ -9,6 +9,7 @@ export function formatCell(value: Cell, kind: CellKind): string {
   if (value === null || value === "") return "—";
   if (typeof value === "string") return value;
   if (kind === "percent") return `${value.toFixed(1)}%`;
+  if (kind === "decimal") return value.toFixed(1);
   if (kind === "money" || kind === "number") return `${value < 0 ? "−" : ""}${money(Math.abs(Math.round(value)))}`;
   return String(value);
 }

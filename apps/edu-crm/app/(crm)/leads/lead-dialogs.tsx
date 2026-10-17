@@ -31,13 +31,16 @@ import {
 } from "@ventura/ui/dropdown-menu";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
+import { cn } from "@ventura/ui/lib/utils";
 import { Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { SearchSelect } from "@ventura/ui/search-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
+import { formatDate } from "@/lib/format";
 import { STAGE_COLORS, type StageDraft, stagesError } from "@/lib/leads";
+import { weekdayOf } from "@/lib/lessons";
 import { uz } from "@/lib/uz";
 import { ReasonField, useReasonState } from "../reason-field";
 import { ReasonsModal } from "../reasons-modal";
@@ -400,7 +403,7 @@ export function LeadMenu({
 }
 
 /**
- * Doska ustunlari: nom, rang, tartib; yangi ustun. Tizim bosqichlari ("O'quvchi bo'ldi", "Yo'qotildi") nomi va rangi
+ * Doska ustunlari: nom, rang, tartib; yangi ustun. Tizim bosqichlari ("Guruhga qo'shildi", "Yo'qotildi") nomi va rangi
  * o'zgaradi, lekin o'chirilmaydi va tartibda oxirida turadi. Ustun o'chirilganda lidlari tanlangan ustunga o'tadi.
  */
 export function StagesModal({
@@ -704,18 +707,23 @@ export function FirstLessonDialog({
 }) {
   const { run, pending } = useRun();
   const [groupId, setGroupId] = React.useState<string[]>([]);
-  const [date, setDate] = React.useState(today);
+  const [date, setDate] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [shownFor, setShownFor] = React.useState<string | null>(null);
   if ((lead?.id ?? null) !== shownFor) {
     setShownFor(lead?.id ?? null);
     if (lead) {
       setGroupId(lead.firstLesson ? [lead.firstLesson.groupId] : []);
-      setDate(lead.firstLesson?.date ?? today);
+      // Yozilgan kun yaqin dars kunlari orasida bo'lsa — tanlangan holda ochiladi
+      const lesson = lead.firstLesson;
+      setDate(
+        lesson && groups.find((g) => g.value === lesson.groupId)?.lessonDays.includes(lesson.date) ? lesson.date : "",
+      );
       setError(null);
     }
   }
   const options = lead ? groups.filter((g) => g.branchId === lead.branchId) : [];
+  const group = options.find((g) => g.value === groupId[0]);
 
   function save() {
     if (!lead) return;
@@ -760,6 +768,8 @@ export function FirstLessonDialog({
             value={groupId}
             onChange={(v) => {
               setGroupId(v);
+              // Boshqa guruhda bu kun dars kuni bo'lmasligi mumkin
+              if (!groups.find((g) => g.value === v[0])?.lessonDays.includes(date)) setDate("");
               setError(null);
             }}
             placeholder={uz.staff.chooseGroup}
@@ -768,13 +778,14 @@ export function FirstLessonDialog({
           />
         </div>
         <div>
-          <Label htmlFor="first-lesson-date">{t.firstLessonDate} *</Label>
-          <Input
-            id="first-lesson-date"
-            type="date"
+          <Label id="first-lesson-days">{t.firstLessonDate} *</Label>
+          <LessonDayList
+            labelledBy="first-lesson-days"
+            group={group ?? null}
             value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
+            today={today}
+            onChange={(d) => {
+              setDate(d);
               setError(null);
             }}
           />
@@ -782,6 +793,67 @@ export function FirstLessonDialog({
         {error ? <FieldHint error>{error}</FieldHint> : null}
       </div>
     </Modal>
+  );
+}
+
+/**
+ * Tanlangan guruhning yaqin dars kunlari (jadval va dam olish kunlaridan, server hisoblagan): sana, hafta kuni, vaqt.
+ * Bugun ajratib ko'rsatiladi. Bitta kun tanlanadi.
+ */
+function LessonDayList({
+  group,
+  value,
+  today,
+  labelledBy,
+  onChange,
+}: {
+  group: LeadGroupOption | null;
+  value: string;
+  today: string;
+  labelledBy: string;
+  onChange: (date: string) => void;
+}) {
+  if (!group) return <p className="text-caption text-muted-foreground">{t.firstLessonPickGroup}</p>;
+  if (!group.lessonDays.length) return <p className="text-caption text-muted-foreground">{t.firstLessonNoDays}</p>;
+  return (
+    <ul role="radiogroup" aria-labelledby={labelledBy} className="grid max-h-64 gap-1.5 overflow-y-auto sm:grid-cols-2">
+      {group.lessonDays.map((d) => {
+        const selected = d === value;
+        const isToday = d === today;
+        return (
+          <li key={d}>
+            <button
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              onClick={() => onChange(d)}
+              className={cn(
+                "flex w-full items-center justify-between gap-3 rounded-control border px-3 py-2 text-left transition-colors",
+                selected
+                  ? "border-(--ring-border) bg-primary-soft"
+                  : "border-border-soft hover:border-border hover:bg-muted/60",
+              )}
+            >
+              <span className="min-w-0">
+                <span className={cn("block text-body font-bold", isToday ? "text-primary-text" : "text-foreground")}>
+                  {formatDate(d)}
+                </span>
+                <span
+                  className={cn(
+                    "block text-caption",
+                    isToday ? "font-semibold text-primary-text" : "text-muted-foreground",
+                  )}
+                >
+                  {isToday ? `${t.firstLessonToday} · ` : ""}
+                  {uz.weekdays.full[weekdayOf(d)]}
+                </span>
+              </span>
+              <span className="shrink-0 font-mono text-caption text-muted-foreground tabular-nums">{group.time}</span>
+            </button>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 

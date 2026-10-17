@@ -22,7 +22,6 @@ export function StaffDetail({
   row,
   positions,
   branches,
-  selectedBranch,
   fields,
   perms,
   canViewLog = false,
@@ -30,7 +29,6 @@ export function StaffDetail({
   row: StaffRow;
   positions: PositionOption[];
   branches: PickerBranch[];
-  selectedBranch: string;
   fields: FormField[];
   perms: StaffPerms;
   /** "Tizim harakatlari jurnali" ruxsati: xodimning faoliyatiga havola */
@@ -185,7 +183,6 @@ export function StaffDetail({
           editing={row}
           positions={positions}
           branches={branches}
-          selectedBranch={selectedBranch}
           fields={fields}
           perms={perms}
           onSaved={() => router.refresh()}

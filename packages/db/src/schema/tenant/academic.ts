@@ -110,6 +110,8 @@ export const teachers = pgTable(
     revenueSharePercent: integer("revenue_share_percent").notNull().default(0),
     perStudentSalary: bigint("per_student_salary", { mode: "number" }).notNull().default(0),
     fixedSalary: bigint("fixed_salary", { mode: "number" }).notNull().default(0),
+    /** Belgilangan oylik shu sanadan hisoblanadi (birinchi oy kunlarga mutanosib); null — avtomatik (ADR 0043) */
+    salaryStartDate: date("salary_start_date", { mode: "string" }),
     /** Support o'qituvchi ish jadvali */
     workingDays: text("working_days")
       .array()
@@ -136,6 +138,7 @@ export const teachers = pgTable(
     }).onDelete("restrict"),
     check("teachers_percent_range", sql`${t.revenueSharePercent} between 0 and 100`),
     check("teachers_salary_nonneg", sql`${t.perStudentSalary} >= 0 and ${t.fixedSalary} >= 0`),
+    check("teachers_salary_start_fixed", sql`${t.salaryStartDate} is null or ${t.salaryType} = 'fixed'`),
     check("teachers_assigned_support", sql`${t.assignedTeacherId} is null or ${t.kind} = 'support'`),
     check(
       "teachers_time_format",

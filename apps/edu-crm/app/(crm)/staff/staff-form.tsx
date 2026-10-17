@@ -43,7 +43,6 @@ export function StaffForm({
   editing,
   positions,
   branches,
-  selectedBranch,
   fields,
   perms,
   onSaved,
@@ -53,7 +52,6 @@ export function StaffForm({
   editing: StaffRow | null;
   positions: PositionOption[];
   branches: PickerBranch[];
-  selectedBranch: string;
   fields: FormField[];
   perms: StaffPerms;
   /** Yangi xodim bo'lsa — vaqtinchalik parol */
@@ -68,16 +66,15 @@ export function StaffForm({
       address: editing?.address ?? "",
       note: editing?.note ?? "",
       positionIds: editing?.positions.map((p) => p.id) ?? [],
-      branchIds:
-        editing?.branchIds ??
-        (selectedBranch !== "all" ? [selectedBranch] : branches.length === 1 ? [branches[0]!.id] : []),
+      // Yangi xodim: filial tanlanmagan bo'sh; faqat bitta filial bo'lsa (tanlov ko'rinmaydi) o'sha biriktiriladi
+      branchIds: editing?.branchIds ?? (branches.length === 1 ? [branches[0]!.id] : []),
       salaryType: editing?.salaryType ?? "fixed",
       monthlySalary: editing ? editing.monthlySalary : null,
       kpiStudentAmount: editing ? editing.kpiStudentAmount : null,
       kpiContractBonus: editing ? editing.kpiContractBonus : null,
       customData: editing?.customData ?? {},
     }),
-    [editing, selectedBranch, branches],
+    [editing, branches],
   );
   const [form, setForm] = React.useState(defaults);
   const [error, setError] = React.useState<string | null>(null);

@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import * as React from "react";
-import { Card } from "@ventura/ui/card";
 import { DonutChart } from "@ventura/ui/donut-chart";
 import { FilterBar, FilterEnd, FilterSearch } from "@ventura/ui/filter-bar";
-import { cn } from "@ventura/ui/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
-import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { uz } from "@/lib/uz";
+import { MoreRows, StudentsTable } from "../../../student-table";
 import type { RiskViewData } from "@/lib/server/academic-reports";
 import { BarList, type BarItem } from "./bar-list";
 import { pct1 } from "./format";
@@ -106,110 +104,124 @@ export function RiskBoard({ view }: { view: RiskViewData }) {
         </Panel>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="px-4 pt-4">
-          <h2 className={BLOCK_TITLE}>{k.listTitle}</h2>
-        </div>
-        <Tabs
-          value={tab}
-          onValueChange={(v) => {
-            setTab(v as "all" | Level);
-            setLimit(PAGE);
-          }}
-          className="mt-1 px-2"
-        >
-          <TabsList>
-            <TabsTrigger value="all">{k.tabAll}</TabsTrigger>
-            {view.levels.map((l) => (
-              <TabsTrigger key={l.level} value={l.level}>
-                {k.levels[l.level]}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-        <FilterBar>
-          <FilterSearch
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setLimit(PAGE);
-            }}
-            placeholder={k.searchPlaceholder}
-            aria-label={k.searchPlaceholder}
-          />
-          {factor !== null ? (
-            <button
-              type="button"
-              onClick={() => setFactor(null)}
-              title={k.resetFactor}
-              className="max-w-56 cursor-pointer truncate rounded-control border border-border px-3 py-2 text-caption font-semibold text-foreground transition-colors hover:bg-muted"
+      <StudentsTable
+        rows={rows.slice(0, limit)}
+        rowKey={(r) => r.key}
+        student={(r) => ({
+          name: r.student,
+          href: `/students/${r.studentId}`,
+          sub: r.phone ? <span className="tabular-nums">{r.phone}</span> : undefined,
+        })}
+        studentHeader={k.student}
+        minWidth={1000}
+        header={
+          <>
+            <div className="px-4 pt-4">
+              <h2 className={BLOCK_TITLE}>{k.listTitle}</h2>
+            </div>
+            <Tabs
+              value={tab}
+              onValueChange={(v) => {
+                setTab(v as "all" | Level);
+                setLimit(PAGE);
+              }}
+              className="mt-1 px-2"
             >
-              {k.factorLabels[factor]} ✕
-            </button>
-          ) : null}
-          <FilterEnd>{k.listCount(rows.length)}</FilterEnd>
-        </FilterBar>
-        {rows.length ? (
-          <TableWrap>
-            <Table className="min-w-[1000px]">
-              <THead>
-                <tr>
-                  <Th>{k.student}</Th>
-                  <Th>{k.group}</Th>
-                  <Th>{k.level}</Th>
-                  <Th className="text-right">{k.score}</Th>
-                  <Th className="text-right">{k.consecutive}</Th>
-                  <Th className="text-right">{k.monthMissed}</Th>
-                  <Th className="text-right">{k.rate}</Th>
-                  <Th>{k.lastMissed}</Th>
-                  <Th>{k.factors}</Th>
-                </tr>
-              </THead>
-              <TBody>
-                {rows.slice(0, limit).map((r) => (
-                  <Tr key={r.key}>
-                    <Td className="whitespace-nowrap">
-                      <Link
-                        href={`/students/${r.studentId}`}
-                        className="font-semibold text-foreground hover:text-primary-text"
-                      >
-                        {r.student}
-                      </Link>
-                      {r.phone ? (
-                        <div className="text-caption text-muted-foreground tabular-nums">{r.phone}</div>
-                      ) : null}
-                    </Td>
-                    <Td className="whitespace-nowrap">
-                      <Link href={`/groups/${r.groupId}`} className="text-foreground hover:text-primary-text">
-                        {r.group}
-                      </Link>
-                      <div className="text-caption text-muted-foreground">{r.teacher}</div>
-                    </Td>
-                    <Td className={cn("font-semibold whitespace-nowrap", LEVEL_TEXT[r.level])}>{k.levels[r.level]}</Td>
-                    <Td className="text-right tabular-nums">{r.score}</Td>
-                    <Td className="text-right tabular-nums">{r.consecutive}</Td>
-                    <Td className="text-right tabular-nums">{r.monthMissed}</Td>
-                    <Td className="text-right whitespace-nowrap tabular-nums">{pct1(r.rate)}</Td>
-                    <Td className="whitespace-nowrap tabular-nums">{r.lastMissed ?? "—"}</Td>
-                    <Td className="min-w-56">{r.factors.map((f) => k.factorLabels[f]).join(", ")}</Td>
-                  </Tr>
+              <TabsList>
+                <TabsTrigger value="all">{k.tabAll}</TabsTrigger>
+                {view.levels.map((l) => (
+                  <TabsTrigger key={l.level} value={l.level}>
+                    {k.levels[l.level]}
+                  </TabsTrigger>
                 ))}
-              </TBody>
-            </Table>
-          </TableWrap>
-        ) : (
-          <PanelEmpty>{k.emptyList}</PanelEmpty>
-        )}
-        {rows.length > limit ? (
-          <button
-            type="button"
-            onClick={() => setLimit((l) => l + PAGE)}
-            className="w-full cursor-pointer border-t border-border-soft py-3 text-center text-caption font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            {k.more(Math.min(PAGE, rows.length - limit))}
-          </button>
-        ) : null}
-      </Card>
+              </TabsList>
+            </Tabs>
+            <FilterBar>
+              <FilterSearch
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setLimit(PAGE);
+                }}
+                placeholder={k.searchPlaceholder}
+                aria-label={k.searchPlaceholder}
+              />
+              {factor !== null ? (
+                <button
+                  type="button"
+                  onClick={() => setFactor(null)}
+                  title={k.resetFactor}
+                  className="max-w-56 cursor-pointer truncate rounded-control border border-border px-3 py-2 text-caption font-semibold text-foreground transition-colors hover:bg-muted"
+                >
+                  {k.factorLabels[factor]} ✕
+                </button>
+              ) : null}
+              <FilterEnd>{k.listCount(rows.length)}</FilterEnd>
+            </FilterBar>
+          </>
+        }
+        columns={[
+          {
+            key: "group",
+            header: k.group,
+            className: "whitespace-nowrap",
+            cell: (r) => (
+              <>
+                <Link href={`/groups/${r.groupId}`} className="text-foreground hover:text-primary-text">
+                  {r.group}
+                </Link>
+                <div className="text-caption text-muted-foreground">{r.teacher}</div>
+              </>
+            ),
+          },
+          {
+            key: "level",
+            header: k.level,
+            className: "font-semibold whitespace-nowrap",
+            cell: (r) => <span className={LEVEL_TEXT[r.level]}>{k.levels[r.level]}</span>,
+          },
+          { key: "score", header: k.score, align: "right", className: "tabular-nums", cell: (r) => r.score },
+          {
+            key: "consecutive",
+            header: k.consecutive,
+            align: "right",
+            className: "tabular-nums",
+            cell: (r) => r.consecutive,
+          },
+          {
+            key: "monthMissed",
+            header: k.monthMissed,
+            align: "right",
+            className: "tabular-nums",
+            cell: (r) => r.monthMissed,
+          },
+          {
+            key: "rate",
+            header: k.rate,
+            align: "right",
+            className: "whitespace-nowrap tabular-nums",
+            cell: (r) => pct1(r.rate),
+          },
+          {
+            key: "lastMissed",
+            header: k.lastMissed,
+            className: "whitespace-nowrap tabular-nums",
+            cell: (r) => r.lastMissed ?? "—",
+          },
+          {
+            key: "factors",
+            header: k.factors,
+            className: "min-w-56",
+            cell: (r) => r.factors.map((f) => k.factorLabels[f]).join(", "),
+          },
+        ]}
+        footer={
+          rows.length > limit ? (
+            <MoreRows onClick={() => setLimit((l) => l + PAGE)}>{k.more(Math.min(PAGE, rows.length - limit))}</MoreRows>
+          ) : null
+        }
+        empty={<PanelEmpty>{k.emptyList}</PanelEmpty>}
+      />
     </>
   );
 }

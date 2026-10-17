@@ -3,15 +3,18 @@ import {
   barScale,
   barShare,
   flowHighlights,
+  gridRows,
   hasForecastGap,
   monthlyFlows,
   outflowBreakdown,
   planMonths,
   planPoints,
+  planTone,
   shortMonth,
+  showMonthForecast,
 } from "./cashflow-views";
 import type { DayFlow } from "./dashboard";
-import { cashflowTable, planTable } from "./reports";
+import { cashflowTable, planTable, yearMonths } from "./reports";
 
 const flow = (date: string, kind: DayFlow["kind"], amount: number, category?: string): DayFlow => ({
   date,
@@ -158,5 +161,86 @@ describe("shortMonth", () => {
     expect(shortMonth("Iyun")).toBe("Iyn");
     expect(shortMonth("Iyul")).toBe("Iyl");
     expect(shortMonth("Yanvar")).toBe("Yan");
+  });
+});
+
+describe("birlashgan jadval", () => {
+  const input = {
+    flows: FLOWS,
+    plans: { payments: new Map([["2026-01", 2000]]), salary: new Map([["2026-01", 400]]) },
+    expectedPayments: 700,
+    today: TODAY,
+  };
+  const months = yearMonths(2026);
+  const LABELS = {
+    label: "",
+    total: "Jami",
+    income: "",
+    pay: "",
+    extra: "",
+    incomeTotal: "Jami kirim",
+    outflow: "",
+    salary: "",
+    advance: "",
+    refund: "",
+    noCategory: "",
+    outflowTotal: "Jami chiqim",
+    net: "Sof",
+    cumulative: "",
+    months: months.map((_, i) => String(i)),
+  };
+  const rows = gridRows(planMonths(months, input), [
+    800,
+    1200,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+  ]);
+  const row = (k: string) => rows.find((r) => r.key === k)!;
+
+  it("yillik jami planTable(butun yil) bilan bir xil", () => {
+    const year = planTable(months, input);
+    expect(row("payments").total).toEqual(year.lines.payments);
+    expect(row("incomeTotal").total).toEqual(year.income);
+    expect(row("outflowTotal").total).toEqual(year.outflow);
+    expect(row("net").total).toEqual(year.net);
+  });
+
+  it("oyma-oy fakt pul oqimi jadvali bilan mos", () => {
+    const table = cashflowTable(FLOWS, 2026, TODAY, LABELS);
+    const cells = (label: string) => table.rows.find((r) => r.cells.label === label)!.cells;
+    expect(row("incomeTotal").cells[0]!.fact).toBe(cells("Jami kirim")["2026-01"]);
+    expect(row("outflowTotal").cells[1]!.fact).toBe(cells("Jami chiqim")["2026-02"]);
+    expect(row("net").cells[2]!.fact).toBeNull();
+  });
+
+  it("faqat uchta qator tahrirlanadi; yig'ma qoldiq — oxirgi qiymat", () => {
+    expect(rows.filter((r) => r.editable).map((r) => r.key)).toEqual(["payments", "income", "salary"]);
+    expect(row("balance").total.fact).toBe(1200);
+    expect(row("balance").cells[2]!.fact).toBeNull();
+  });
+
+  it("rang: kirimda 90–99% ogohlantirish, chiqimda reja doirasida yaxshi", () => {
+    expect(planTone(1000, 1000, false)).toBe("success");
+    expect(planTone(1000, 950, false)).toBe("warning");
+    expect(planTone(1000, 500, false)).toBe("danger");
+    expect(planTone(1000, 900, true)).toBe("success");
+    expect(planTone(1000, 1080, true)).toBe("warning");
+    expect(planTone(1000, 1200, true)).toBe("danger");
+    expect(planTone(null, 500, false)).toBeNull();
+    expect(planTone(1000, null, false)).toBeNull();
+  });
+
+  it("prognoz ustuni faqat joriy va kelgusi oylarda", () => {
+    expect(showMonthForecast("2026-01", TODAY)).toBe(false);
+    expect(showMonthForecast("2026-02", TODAY)).toBe(true);
+    expect(showMonthForecast("2026-12", TODAY)).toBe(true);
   });
 });

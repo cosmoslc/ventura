@@ -42,14 +42,12 @@ export function StaffView({
   rows,
   positions,
   branches,
-  selectedBranch,
   fields,
   perms,
 }: {
   rows: StaffRow[];
   positions: PositionOption[];
   branches: PickerBranch[];
-  selectedBranch: string;
   fields: FormField[];
   perms: StaffPerms;
 }) {
@@ -332,7 +330,6 @@ export function StaffView({
           editing={editing}
           positions={positions}
           branches={branches}
-          selectedBranch={selectedBranch}
           fields={fields}
           perms={perms}
           onSaved={(pw) => {

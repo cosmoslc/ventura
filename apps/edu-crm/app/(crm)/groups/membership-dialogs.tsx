@@ -14,7 +14,7 @@ import { toast } from "@ventura/ui/toast";
 import { displayPhone, money, signedMoney } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { type LeavePreview, leavePreviewAction } from "../payments/account-actions";
-import { activateMembershipAction, enrollStudentAction, leaveMembershipAction } from "./actions";
+import { activateMembershipAction, enrollStudentAction, leaveMembershipAction, leaveStudentsAction } from "./actions";
 import { LeaveReasonFields } from "./leave-reason-fields";
 
 function todayLocal() {
@@ -354,3 +354,104 @@ export function EnrollDialog({
 }
 
 export const phoneLabel = (p: string) => displayPhone(p) ?? "—";
+
+/** Tanlangan bir nechta o'quvchini shu guruhdan chiqarish — bir sana va sabab bilan, bitta tranzaksiya */
+export function BulkLeaveDialog({
+  open,
+  onOpenChange,
+  groupId,
+  studentIds,
+  onDone,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  groupId: string;
+  studentIds: string[];
+  onDone: () => void;
+}) {
+  const router = useRouter();
+  const t = uz.groupProfile;
+  const [date, setDate] = React.useState(todayLocal());
+  const [reason, setReason] = React.useState("");
+  const [note, setNote] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  const [pending, startTransition] = React.useTransition();
+  const [wasOpen, setWasOpen] = React.useState(false);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setDate(todayLocal());
+      setReason("");
+      setNote("");
+      setError(null);
+    }
+  }
+  const n = studentIds.length;
+
+  function save() {
+    if (!reason) return setError(uz.groups.removeReasonRequired);
+    startTransition(async () => {
+      const res = await leaveStudentsAction({
+        groupId,
+        studentIds,
+        date,
+        reason,
+        note,
+        title: uz.students.bulkTitle(n),
+      });
+      if (!res.ok && res.pending) {
+        toast({ tone: "info", title: res.error });
+        onOpenChange(false);
+        onDone();
+        return;
+      }
+      if (!res.ok) return setError(res.error);
+      toast({
+        tone: "success",
+        title: t.bulkRemoved(res.done),
+        description: res.skipped ? t.bulkSkipped(res.skipped) : undefined,
+      });
+      onOpenChange(false);
+      onDone();
+      router.refresh();
+    });
+  }
+
+  return (
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      position="center"
+      title={t.bulkRemoveTitle(n)}
+      description={t.bulkRemoveHint}
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {uz.common.cancel}
+          </Button>
+          <Button variant="danger" onClick={save} disabled={pending || !date || !n}>
+            {t.bulkRemoveButton(n)}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <Label htmlFor="bulk-leave-date">{uz.groups.removeDate}</Label>
+          <Input id="bulk-leave-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+        <LeaveReasonFields
+          id="group-bulk-leave"
+          reason={reason}
+          onReason={(v) => {
+            setReason(v);
+            setError(null);
+          }}
+          note={note}
+          onNote={setNote}
+        />
+        {error ? <FieldHint error>{error}</FieldHint> : null}
+      </div>
+    </Modal>
+  );
+}

@@ -51,43 +51,8 @@ export const formFieldSchema = z.object({
 export type FormField = z.infer<typeof formFieldSchema>;
 export const formFieldsSchema = z.array(formFieldSchema).max(40);
 
-export const DEFAULT_STAFF_FIELDS: FormField[] = [
-  {
-    id: "passport",
-    label: "Pasport seriya va raqami",
-    type: "text",
-    placeholder: "AA 1234567",
-    required: false,
-    options: [],
-  },
-  { id: "pinfl", label: "JSHSHIR (PINFL)", type: "text", placeholder: "14 xonali raqam", required: false, options: [] },
-  {
-    id: "education",
-    label: "Ta'lim darajasi / Mutaxassisligi",
-    type: "select",
-    placeholder: "",
-    required: false,
-    options: ["Oliy (Magistr)", "Oliy (Bakalavr)", "O'rta maxsus", "Talaba", "Boshqa"],
-  },
-  { id: "telegram", label: "Telegram username", type: "text", placeholder: "@username", required: false, options: [] },
-  {
-    id: "contractNo",
-    label: "Mehnat shartnomasi raqami",
-    type: "text",
-    placeholder: "№ 12/2025",
-    required: false,
-    options: [],
-  },
-  {
-    id: "emergencyPhone",
-    label: "Favqulodda bog'lanish telefoni (Yaqini)",
-    type: "tel",
-    placeholder: "+998 90 123 45 67",
-    required: false,
-    options: [],
-  },
-];
-
+/** Yangi xodim formasida qo'shimcha maydonlar o'zi paydo bo'lmaydi: markaz kerakini o'zi qo'shadi */
+export const DEFAULT_STAFF_FIELDS: FormField[] = [];
 export const DEFAULT_STUDENT_FIELDS: FormField[] = [];
 export const DEFAULT_LEAD_FIELDS: FormField[] = [];
 

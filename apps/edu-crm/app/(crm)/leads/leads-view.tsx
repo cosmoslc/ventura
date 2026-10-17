@@ -60,6 +60,8 @@ import { type GroupFormData, WaitlistAssignDialog, WaitlistsPanel } from "./wait
 const t = uz.leads;
 const ALL = "all";
 const NONE = "none";
+/** Doskadagi "Guruhga qo'shildi" ustunida ko'rinadigan eng yangi lidlar soni */
+const WON_COLUMN_LIMIT = 20;
 type View = "board" | "list" | "waitlists" | "lost" | "won";
 
 /**
@@ -148,6 +150,11 @@ export function LeadsView({
   const wonRows = rows.filter((l) => kindOf(l) === "won" && matches(l));
   const lostTotal = rows.filter((l) => kindOf(l) === "lost").length;
   const wonTotal = rows.filter((l) => kindOf(l) === "won").length;
+  // Doskaning oxirgi (faqat ko'rish) ustuni: o'quvchiga aylanganlarning eng yangilari, qolgani "O'quvchi bo'lganlar" tabida
+  const wonStage = stages.find((s) => s.kind === "won") ?? null;
+  const wonRecent = [...wonRows]
+    .sort((a, b) => b.stageChangedAt.localeCompare(a.stageChangedAt))
+    .slice(0, WON_COLUMN_LIMIT);
   const shown = view === "lost" ? lostRows : view === "won" ? wonRows : filtered;
   const filtering = !!q || source !== ALL || course !== ALL || assignee !== ALL;
   const counts = Object.fromEntries(stages.map((s) => [s.id, rows.filter((l) => stageOf(l) === s.id).length]));
@@ -306,8 +313,10 @@ export function LeadsView({
       ) : view === "board" ? (
         <Board
           waitlistName={(id) => waitlists.find((w) => w.id === id)?.name ?? "—"}
-          stages={openStages}
-          leads={filtered}
+          stages={wonStage ? [...openStages, wonStage] : openStages}
+          leads={[...filtered, ...wonRecent]}
+          wonTotal={wonRows.length}
+          onShowWon={() => setView("won")}
           stageOf={stageOf}
           today={today}
           canMove={perms.move}
@@ -388,6 +397,8 @@ function Board({
   waitlistName,
   stages,
   leads,
+  wonTotal,
+  onShowWon,
   stageOf,
   today,
   canMove,
@@ -395,8 +406,12 @@ function Board({
   menu,
 }: {
   waitlistName: (id: string) => string;
+  /** Ochiq bosqichlar; oxirida (bo'lsa) "won" — faqat ko'rish ustuni */
   stages: StageRow[];
   leads: LeadRow[];
+  /** "won" ustunidagi jami lidlar (ustunda eng yangilari ko'rinadi) */
+  wonTotal: number;
+  onShowWon: () => void;
   stageOf: (l: LeadRow) => string;
   today: string;
   canMove: boolean;
@@ -409,12 +424,14 @@ function Board({
     <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-2">
       {stages.map((s) => {
         const items = leads.filter((l) => stageOf(l) === s.id);
+        // O'quvchiga aylanganlar ustuni: sudralmaydi va unga tashlanmaydi (o'tish — "O'quvchiga aylantirish" amali bilan)
+        const readOnly = s.kind === "won";
         return (
           <section
             key={s.id}
             aria-label={s.name}
             onDragOver={(e) => {
-              if (!canMove || !dragging) return;
+              if (readOnly || !canMove || !dragging) return;
               e.preventDefault();
               setOver(s.id);
             }}
@@ -426,7 +443,7 @@ function Board({
               const id = e.dataTransfer.getData("text/lead");
               setOver(null);
               setDragging(null);
-              if (id) onDrop(id, s.id);
+              if (id && !readOnly) onDrop(id, s.id);
             }}
             className={cn(
               "flex w-72 shrink-0 flex-col rounded-card border border-border-soft bg-muted/60 transition-colors",
@@ -440,14 +457,14 @@ function Board({
               <span className="flex min-w-0 items-center gap-2 text-body font-bold text-foreground">
                 <span className="truncate">{s.name}</span>
               </span>
-              <Badge tone="neutral">{items.length}</Badge>
+              <Badge tone="neutral">{readOnly ? wonTotal : items.length}</Badge>
             </header>
             <div className="flex min-h-24 flex-col gap-2 px-2 pb-2">
               {items.length ? (
                 items.map((l) => (
                   <article
                     key={l.id}
-                    draggable={canMove}
+                    draggable={canMove && !readOnly}
                     onDragStart={(e) => {
                       e.dataTransfer.setData("text/lead", l.id);
                       e.dataTransfer.effectAllowed = "move";
@@ -459,7 +476,7 @@ function Board({
                     }}
                     className={cn(
                       "group rounded-control border border-border-soft bg-card p-3 shadow-card transition-[opacity,box-shadow]",
-                      canMove && "cursor-grab active:cursor-grabbing",
+                      canMove && !readOnly && "cursor-grab active:cursor-grabbing",
                       dragging === l.id && "opacity-50",
                     )}
                   >
@@ -528,9 +545,14 @@ function Board({
                     over === s.id && "border-(--ring-border)",
                   )}
                 >
-                  {dragging ? t.dropHere : t.columnEmpty}
+                  {readOnly ? t.wonColumnEmpty : dragging ? t.dropHere : t.columnEmpty}
                 </div>
               )}
+              {readOnly && wonTotal > items.length ? (
+                <Button variant="ghost" size="sm" onClick={onShowWon}>
+                  {t.showAllWon(wonTotal)}
+                </Button>
+              ) : null}
             </div>
           </section>
         );

@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import * as React from "react";
-import { Card } from "@ventura/ui/card";
 import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { cn } from "@ventura/ui/lib/utils";
-import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { TrendChart } from "@ventura/ui/trend-chart";
 import { uz } from "@/lib/uz";
+import { MoreRows, StudentsTable } from "../../../student-table";
 import type { LeavesViewData } from "@/lib/server/academic-reports";
 import { BarList, type BarItem } from "./bar-list";
 import { durationLabel, pct1 } from "./format";
@@ -106,112 +105,117 @@ export function LeavesBoard({ view }: { view: LeavesViewData }) {
         </Panel>
       </div>
 
-      <Card className="overflow-hidden">
-        <div className="flex items-baseline justify-between gap-3 px-4 pt-4">
-          <h2 className={BLOCK_TITLE}>{k.list}</h2>
-        </div>
-        <FilterBar className="mt-2">
-          <FilterSearch
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setLimit(PAGE);
-            }}
-            placeholder={k.searchPlaceholder}
-            aria-label={k.searchPlaceholder}
-          />
-          <FilterSelect
-            label={k.status}
-            value={status}
-            onValueChange={(v) => {
-              setStatus(v as Status);
-              setLimit(PAGE);
-            }}
-            options={[
-              { value: "all", label: k.statusAll },
-              { value: "active", label: k.statusActive },
-              { value: "trial", label: k.statusTrial },
-            ]}
-          />
-          {reason !== null ? (
-            <button
-              type="button"
-              onClick={() => setReason(null)}
-              title={k.resetReason}
-              className="max-w-56 cursor-pointer truncate rounded-control border border-border px-3 py-2 text-caption font-semibold text-foreground transition-colors hover:bg-muted"
-            >
-              {reason} ✕
-            </button>
-          ) : null}
-          <FilterEnd>{k.listCount(rows.length)}</FilterEnd>
-        </FilterBar>
-        {rows.length ? (
-          <TableWrap>
-            <Table className="min-w-[860px]">
-              <THead>
-                <tr>
-                  <Th>{k.student}</Th>
-                  <Th>{k.group}</Th>
-                  <Th>{k.left}</Th>
-                  <Th>{k.tenureCol}</Th>
-                  <Th>{k.status}</Th>
-                  <Th>{k.reason}</Th>
-                  <Th className="text-right">{k.rate}</Th>
-                </tr>
-              </THead>
-              <TBody>
-                {rows.slice(0, limit).map((r) => (
-                  <Tr key={r.id}>
-                    <Td className="font-semibold whitespace-nowrap text-foreground">
-                      <Link href={`/students/${r.studentId}`} className="hover:text-primary-text">
-                        {r.student}
-                      </Link>
-                    </Td>
-                    <Td className="whitespace-nowrap">
-                      <Link href={`/groups/${r.groupId}`} className="text-foreground hover:text-primary-text">
-                        {r.group}
-                      </Link>
-                      <div className="text-caption text-muted-foreground">
-                        {r.teacher} · {r.course}
-                      </div>
-                    </Td>
-                    <Td className="whitespace-nowrap tabular-nums">{r.left}</Td>
-                    <Td className="whitespace-nowrap tabular-nums">{durationLabel(r.days)}</Td>
-                    <Td className={cn("whitespace-nowrap", r.trial && "text-(--warning-fg)")}>
-                      {r.trial ? k.statusTrial : k.statusActive}
-                    </Td>
-                    <Td className="max-w-72">
-                      <div
-                        className={cn("truncate", r.none ? "text-muted-foreground" : "text-foreground")}
-                        title={r.reason}
-                      >
-                        {r.reason}
-                      </div>
-                      {r.note ? (
-                        <div className="line-clamp-2 text-caption text-muted-foreground" title={r.note}>
-                          {r.note}
-                        </div>
-                      ) : null}
-                    </Td>
-                    <Td className="text-right whitespace-nowrap tabular-nums">{pct1(r.rate)}</Td>
-                  </Tr>
-                ))}
-              </TBody>
-            </Table>
-          </TableWrap>
-        ) : (
-          <PanelEmpty>{k.emptyList}</PanelEmpty>
-        )}
-        {rows.length > limit ? (
-          <button
-            type="button"
-            onClick={() => setLimit((l) => l + PAGE)}
-            className="w-full cursor-pointer border-t border-border-soft py-3 text-center text-caption font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          >
-            {k.more(Math.min(PAGE, rows.length - limit))}
-          </button>
-        ) : null}
-      </Card>
+      <StudentsTable
+        rows={rows.slice(0, limit)}
+        rowKey={(r) => r.id}
+        student={(r) => ({ name: r.student, href: `/students/${r.studentId}` })}
+        studentHeader={k.student}
+        minWidth={860}
+        header={
+          <>
+            <div className="flex items-baseline justify-between gap-3 px-4 pt-4">
+              <h2 className={BLOCK_TITLE}>{k.list}</h2>
+            </div>
+            <FilterBar className="mt-2">
+              <FilterSearch
+                value={q}
+                onChange={(e) => {
+                  setQ(e.target.value);
+                  setLimit(PAGE);
+                }}
+                placeholder={k.searchPlaceholder}
+                aria-label={k.searchPlaceholder}
+              />
+              <FilterSelect
+                label={k.status}
+                value={status}
+                onValueChange={(v) => {
+                  setStatus(v as Status);
+                  setLimit(PAGE);
+                }}
+                options={[
+                  { value: "all", label: k.statusAll },
+                  { value: "active", label: k.statusActive },
+                  { value: "trial", label: k.statusTrial },
+                ]}
+              />
+              {reason !== null ? (
+                <button
+                  type="button"
+                  onClick={() => setReason(null)}
+                  title={k.resetReason}
+                  className="max-w-56 cursor-pointer truncate rounded-control border border-border px-3 py-2 text-caption font-semibold text-foreground transition-colors hover:bg-muted"
+                >
+                  {reason} ✕
+                </button>
+              ) : null}
+              <FilterEnd>{k.listCount(rows.length)}</FilterEnd>
+            </FilterBar>
+          </>
+        }
+        columns={[
+          {
+            key: "group",
+            header: k.group,
+            className: "whitespace-nowrap",
+            cell: (r) => (
+              <>
+                <Link href={`/groups/${r.groupId}`} className="text-foreground hover:text-primary-text">
+                  {r.group}
+                </Link>
+                <div className="text-caption text-muted-foreground">
+                  {r.teacher} · {r.course}
+                </div>
+              </>
+            ),
+          },
+          { key: "left", header: k.left, className: "whitespace-nowrap tabular-nums", cell: (r) => r.left },
+          {
+            key: "tenure",
+            header: k.tenureCol,
+            className: "whitespace-nowrap tabular-nums",
+            cell: (r) => durationLabel(r.days),
+          },
+          {
+            key: "status",
+            header: k.status,
+            className: "whitespace-nowrap",
+            cell: (r) => (
+              <span className={cn(r.trial && "text-(--warning-fg)")}>{r.trial ? k.statusTrial : k.statusActive}</span>
+            ),
+          },
+          {
+            key: "reason",
+            header: k.reason,
+            className: "max-w-72",
+            cell: (r) => (
+              <>
+                <div className={cn("truncate", r.none ? "text-muted-foreground" : "text-foreground")} title={r.reason}>
+                  {r.reason}
+                </div>
+                {r.note ? (
+                  <div className="line-clamp-2 text-caption text-muted-foreground" title={r.note}>
+                    {r.note}
+                  </div>
+                ) : null}
+              </>
+            ),
+          },
+          {
+            key: "rate",
+            header: k.rate,
+            align: "right",
+            className: "whitespace-nowrap tabular-nums",
+            cell: (r) => pct1(r.rate),
+          },
+        ]}
+        footer={
+          rows.length > limit ? (
+            <MoreRows onClick={() => setLimit((l) => l + PAGE)}>{k.more(Math.min(PAGE, rows.length - limit))}</MoreRows>
+          ) : null
+        }
+        empty={<PanelEmpty>{k.emptyList}</PanelEmpty>}
+      />
     </>
   );
 }

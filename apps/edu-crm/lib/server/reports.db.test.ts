@@ -19,6 +19,8 @@ import {
 } from "@ventura/db/schema/tenant";
 import { resolvePeriod } from "@/lib/dashboard";
 import { chargeDiscount } from "@/lib/reports";
+import type { CashflowViewData } from "./cashflow-reports";
+import { cashflowPlan } from "./cashflow-reports";
 import { loadDashboard } from "./dashboard";
 import { listCategories } from "./expenses";
 import { ensurePaymentMethods, loadAccounts } from "./finance";
@@ -193,7 +195,7 @@ describe.skipIf(!ADMIN_URL)("hisobotlar (haqiqiy PostgreSQL)", () => {
     ]);
     const acc = (await loadAccounts(db, [studentId], TODAY)).get(studentId)!;
     const expected = acc.charges.filter((c) => c.month === "2026-10").reduce((s, c) => s + c.amount, 0);
-    const r = await load("plan");
+    const r = await cashflowPlan({ db, filter: null, period: month, today: TODAY });
     const cells = (label: string) => r.table.rows.find((x) => x.cells.label === label)!.cells;
     expect(cells("O'quvchi to'lovlari")).toMatchObject({
       plan: 300_000,
@@ -207,15 +209,33 @@ describe.skipIf(!ADMIN_URL)("hisobotlar (haqiqiy PostgreSQL)", () => {
     expect(cells("Jami kirim").fact).toBe(250_000);
 
     // Butun yil: noyabr rejasi va kelgusi oylar prognozi qo'shiladi
-    const year = await REPORTS.plan.load({
+    const year = await cashflowPlan({
       db,
       filter: null,
-      period: reportPeriod({ yil: "2026", oy: "all" }, TODAY, "month"),
+      period: reportPeriod({ yil: "2026" }, TODAY, "year"),
       today: TODAY,
     });
     const extra = year.table.rows.find((x) => x.cells.label === "Qo'shimcha daromad")!.cells;
     expect(extra.plan).toBe(70_000);
     expect(extra.fact).toBe(50_000);
+
+    // Birlashgan sahifa: 12 oylik jadval shu raqamlardan, operatsion bo'lim bazadan
+    const merged = await load("cashflow");
+    const view = merged.view as CashflowViewData;
+    const row = (key: string) => view.grid.find((x) => x.key === key)!;
+    expect(row("payments").cells[9]).toMatchObject({ plan: 300_000, fact: 200_000 });
+    expect(row("income").cells[10]).toMatchObject({ plan: 70_000, fact: null });
+    expect(row("incomeTotal").cells[9]!.fact).toBe(250_000);
+    expect(row("expenses").cells[9]).toMatchObject({ plan: 100_000, fact: 80_000 });
+    expect(row("payments").total.plan).toBe(300_000);
+    expect(merged.extra?.map((e) => e.title)).toEqual([
+      "Reja, fakt va prognoz",
+      "Oyma-oy reja va fakt",
+      "Operatsion ko'rsatkichlar",
+    ]);
+    // Oktyabr: bitta guruh, bitta faol o'quvchi, birinchi to'lov shu oyda
+    expect(view.operational[9]).toMatchObject({ groups: 1, students: 1, firstPayers: 1, left: 0 });
+    expect(view.operational[10]!.future).toBe(true);
 
     // Bazadagi himoya: summa musbat, qator ro'yxatdan, bitta katak — bitta qator
     await expect(

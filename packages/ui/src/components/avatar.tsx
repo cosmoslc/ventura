@@ -11,12 +11,15 @@ const HUES = [
 ] as const;
 
 export function initials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase())
-    .join("");
+  return (
+    name
+      .split(/\s+/)
+      // "(Assistent)" kabi qavsli yoki belgili so'zlar bosh harfga kirmaydi
+      .filter((w) => /^\p{L}/u.test(w))
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase())
+      .join("")
+  );
 }
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLSpanElement> {

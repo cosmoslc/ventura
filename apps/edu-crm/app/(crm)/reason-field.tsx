@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Textarea } from "@ventura/ui/textarea";
 import { type ReasonCategoryId, type ReasonsConfig, reasonOptions } from "@/lib/reasons";
 import { uz } from "@/lib/uz";
@@ -15,21 +15,35 @@ import { reasonsConfigAction } from "./reasons/actions";
  * o'qiladi; Sabablar sahifasida o'zgargach unutiladi.
  */
 
-let cache: Promise<ReasonsConfig | null> | null = null;
+const OTHER = "__other__";
+/** Sozlama shuncha vaqt eski hisoblanmaydi: boshqa oynada/xodim tahrirlasa ham tez orada yangilanadi */
+const CACHE_MS = 15_000;
+
+let cache: { at: number; promise: Promise<ReasonsConfig | null> } | null = null;
 
 export function forgetReasonsConfig() {
   cache = null;
 }
 
+/** Xato (ruxsat, tarmoq) keshga tushmaydi — keyingi ochishda qayta uriniladi, aks holda sahifa yangilanguncha matn maydoni qolardi */
 function loadConfig(): Promise<ReasonsConfig | null> {
-  cache ??= reasonsConfigAction().then(
-    (r) => (r.ok ? r.config : null),
+  if (cache && Date.now() - cache.at < CACHE_MS) return cache.promise;
+  const at = Date.now();
+  const drop = () => {
+    if (cache?.at === at) cache = null;
+  };
+  const promise = reasonsConfigAction().then(
+    (r) => {
+      if (!r.ok) drop();
+      return r.ok ? r.config : null;
+    },
     () => {
-      cache = null;
+      drop();
       return null;
     },
   );
-  return cache;
+  cache = { at, promise };
+  return promise;
 }
 
 export interface ReasonState {
@@ -40,9 +54,11 @@ export interface ReasonState {
 }
 
 /** Tur uchun holat; `category` null bo'lsa — sabab turi yo'q (oddiy matn) */
-export function useReasonState(category: ReasonCategoryId | null): ReasonState {
+export function useReasonState(category: ReasonCategoryId | null, open = true): ReasonState {
   const [config, setConfig] = React.useState<ReasonsConfig | null | undefined>(undefined);
+  // Oyna ochilganda qayta o'qiladi (kesh 15 soniya), yopiq oyna so'rov yubormaydi
   React.useEffect(() => {
+    if (!open) return;
     let alive = true;
     void loadConfig().then((c) => {
       if (alive) setConfig(c);
@@ -50,7 +66,7 @@ export function useReasonState(category: ReasonCategoryId | null): ReasonState {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [open]);
   if (!category) return { loading: false, active: false, options: [] };
   if (config === undefined) return { loading: true, active: false, options: [] };
   if (config === null) return { loading: false, active: false, options: [] };
@@ -97,46 +113,38 @@ export function ReasonField({
 
   // Ro'yxatda yo'q qiymat (masalan oldingi matn) — "Boshqa" sifatida ko'rsatiladi
   const isOther = other || (value !== "" && !options.includes(value));
+  const selected = loading ? undefined : isOther ? OTHER : value || undefined;
   return (
     <div>
-      <Label>{label} *</Label>
-      <div className="flex min-h-8 flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
-        {loading ? (
-          [96, 128, 112, 88].map((w) => (
-            <span key={w} className="h-8 animate-pulse rounded-btn bg-muted" style={{ width: w }} />
-          ))
-        ) : (
-          <>
+      <Label htmlFor={id}>{label} *</Label>
+      {loading ? (
+        <span className="block h-9 animate-pulse rounded-btn bg-muted" aria-hidden />
+      ) : (
+        <Select
+          value={selected}
+          onValueChange={(v) => {
+            if (v === OTHER) {
+              setOther(true);
+              if (options.includes(value)) onChange("");
+              return;
+            }
+            setOther(false);
+            onChange(v);
+          }}
+        >
+          <SelectTrigger id={id} aria-label={label}>
+            <SelectValue placeholder={uz.reasons.choose} />
+          </SelectTrigger>
+          <SelectContent>
             {options.map((r) => (
-              <Button
-                key={r}
-                size="sm"
-                role="radio"
-                aria-checked={!isOther && value === r}
-                variant={!isOther && value === r ? "primary" : "ghost"}
-                onClick={() => {
-                  setOther(false);
-                  onChange(r);
-                }}
-              >
+              <SelectItem key={r} value={r}>
                 {r}
-              </Button>
+              </SelectItem>
             ))}
-            <Button
-              size="sm"
-              role="radio"
-              aria-checked={isOther}
-              variant={isOther ? "primary" : "ghost"}
-              onClick={() => {
-                setOther(true);
-                if (options.includes(value)) onChange("");
-              }}
-            >
-              {uz.reasons.other}
-            </Button>
-          </>
-        )}
-      </div>
+            <SelectItem value={OTHER}>{uz.reasons.other}</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
       {isOther ? (
         <Input
           className="mt-2"

@@ -39,6 +39,7 @@ interface Form {
   revenueSharePercent: string;
   perStudentSalary: number | null;
   fixedSalary: number | null;
+  salaryStartDate: string;
   workingDays: Weekday[];
   startTime: string;
   endTime: string;
@@ -78,6 +79,7 @@ export function TeacherForm({
       revenueSharePercent: String(editing?.revenueSharePercent ?? 40),
       perStudentSalary: editing ? editing.perStudentSalary : 100_000,
       fixedSalary: editing ? editing.fixedSalary : null,
+      salaryStartDate: editing?.salaryStartDate ?? "",
       workingDays: editing?.workingDays ?? PRESETS.odd,
       startTime: editing?.startTime ?? "09:00",
       endTime: editing?.endTime ?? "18:00",
@@ -134,6 +136,7 @@ export function TeacherForm({
       revenueSharePercent: form.revenueSharePercent ? Number(form.revenueSharePercent) : 0,
       perStudentSalary: form.perStudentSalary ?? 0,
       fixedSalary: form.fixedSalary ?? 0,
+      salaryStartDate: support || form.salaryType === "fixed" ? form.salaryStartDate : "",
       workingDays: support ? WEEKDAYS.filter((d) => form.workingDays.includes(d)) : [],
       startTime: support ? form.startTime : "",
       endTime: support ? form.endTime : "",
@@ -313,6 +316,18 @@ export function TeacherForm({
                 </>
               )}
             </div>
+            {form.salaryType === "fixed" ? (
+              <div>
+                <Label htmlFor="teacher-salary-start">{uz.teachers.salaryStart}</Label>
+                <Input
+                  id="teacher-salary-start"
+                  type="date"
+                  value={form.salaryStartDate}
+                  onChange={(e) => set("salaryStartDate", e.target.value)}
+                />
+                <FieldHint>{uz.teachers.salaryStartHint}</FieldHint>
+              </div>
+            ) : null}
           </>
         ) : (
           <>
@@ -375,6 +390,16 @@ export function TeacherForm({
                 suffix={uz.common.som}
                 placeholder="1 500 000"
               />
+            </div>
+            <div>
+              <Label htmlFor="teacher-salary-start">{uz.teachers.salaryStart}</Label>
+              <Input
+                id="teacher-salary-start"
+                type="date"
+                value={form.salaryStartDate}
+                onChange={(e) => set("salaryStartDate", e.target.value)}
+              />
+              <FieldHint>{uz.teachers.salaryStartHint}</FieldHint>
             </div>
           </>
         )}

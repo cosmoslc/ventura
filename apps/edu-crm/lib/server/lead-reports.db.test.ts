@@ -1,8 +1,10 @@
+import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type TenantDb, createTenantDb } from "@ventura/db";
 import { migrateTenantDb } from "@ventura/db/migrate";
-import { branches, leadEvents, leads, payments, students, users } from "@ventura/db/schema/tenant";
+import { branches, leadEvents, leads, payments, settings, students, users } from "@ventura/db/schema/tenant";
+import { FUNNEL_HIDDEN_KEY } from "@/lib/lead-reports";
 import { listStages } from "@/app/(crm)/leads/data";
 import { ensurePaymentMethods } from "./finance";
 import { REPORTS, reportPeriod } from "./reports";
@@ -129,21 +131,63 @@ describe.skipIf(!ADMIN_URL)("lid hisobotlari (haqiqiy PostgreSQL)", () => {
     await other?.close();
   });
 
-  const load = (key: "funnel" | "lost" | "sources" | "seasonal", finance = true, d = db) =>
+  const load = (
+    key: "funnel" | "lost" | "sources" | "seasonal",
+    finance = true,
+    d = db,
+    query?: Record<string, string>,
+  ) =>
     REPORTS[key].load({
       db: d,
       filter: null,
       period: reportPeriod({ yil: "2026", oy: "10" }, TODAY, REPORTS[key].periodMode),
       today: TODAY,
       finance,
+      query,
     });
 
   it("voronka: bosqichlar tarixidan yetgan pog'ona, eng katta tushish", async () => {
     const r = await load("funnel");
-    // 3 ochiq bosqich + o'quvchi bo'ldi
-    expect(r.table.rows.map((x) => x.cells.count)).toEqual([3, 2, 1, 1]);
-    expect(r.metrics.map((m) => m.value)).toEqual([3, 1, 1, 50]);
+    // 4 ochiq bosqich + "Guruhga qo'shildi" (won)
+    expect(r.table.rows.map((x) => x.cells.count)).toEqual([3, 2, 1, 1, 1]);
+    // konversiya, yakuniy bosqichga yetmagan, avvalgidan o'tmagan, eng katta tushish
+    expect(r.metrics.map((m) => m.value)).toEqual([(1 / 3) * 100, 2, 0, 50]);
     expect(r.table.rows[0]!.cells.days).toBe(1);
+  });
+
+  it("voronka: manba filtri, yashirin bosqich, bosqich tanlash, mas'ul va ro'yxat", async () => {
+    // Instagram: Aziz (o'quvchi bo'ldi) va Botir (2-bosqichgacha, yo'qotilgan)
+    const ig = await load("funnel", true, db, { manba: "Instagram" });
+    expect(ig.table.rows.map((x) => x.cells.count)).toEqual([2, 2, 1, 1, 1]);
+    // "Boshqa" — manbasiz lid
+    const none = await load("funnel", true, db, { manba: "Boshqa" });
+    expect(none.table.rows.map((x) => x.cells.count)).toEqual([1, 0, 0, 0, 0]);
+
+    // Tanlangan bosqich ("Ma'lumot berildi"): ro'yxatda shu yerda to'xtagan lid, yo'qotilgani belgilanadi
+    const stages = await listStages(db);
+    const s1 = stages.filter((s) => s.kind === "open")[1]!;
+    const sel = await load("funnel", true, db, { bosqich: s1.id });
+    const rows = sel.extra!.find((x) => x.title === "Lidlar ro'yxati")!.table.rows;
+    expect(rows.map((x) => x.cells.lead)).toEqual(["Botir"]);
+    expect(rows[0]!.cells.stage).toBe("Ma'lumot berildi · shu yerda yo'qotilgan");
+    // Shu bosqichga yetmaganlar: 3 − 2
+    expect(sel.metrics[1]!.value).toBe(1);
+
+    // Mas'uli yo'q lidlar
+    const unassigned = await load("funnel", true, db, { xodim: "none" });
+    expect(unassigned.extra!.find((x) => x.title === "Lidlar ro'yxati")!.table.rows.map((x) => x.cells.lead)).toEqual([
+      "Vali",
+    ]);
+
+    // Yashirin bosqich voronkadan chiqadi, o'tish ko'rinadigan oldingisiga nisbatan
+    await db.insert(settings).values({ key: FUNNEL_HIDDEN_KEY, value: [s1.id] });
+    try {
+      const hidden = await load("funnel");
+      expect(hidden.table.rows.map((x) => x.cells.count)).toEqual([3, 1, 1, 1]);
+      expect(hidden.table.rows[1]!.cells.conv).toBeCloseTo(33.33, 1);
+    } finally {
+      await db.delete(settings).where(eq(settings.key, FUNNEL_HIDDEN_KEY));
+    }
   });
 
   it("yo'qotilganlar: yo'qotilgan sana bo'yicha, sabab va bosqich", async () => {
@@ -170,7 +214,7 @@ describe.skipIf(!ADMIN_URL)("lid hisobotlari (haqiqiy PostgreSQL)", () => {
     expect(row("Sentabr")).toMatchObject({ leads: 1, won: 0 });
     expect(row("Oktabr")).toMatchObject({ leads: 3, won: 1, newStudents: 0 });
     expect(row("Dekabr").leads).toBeNull();
-    expect((await load("funnel", true, other)).metrics[0]!.value).toBe(0);
+    expect((await load("funnel", true, other)).metrics[1]!.value).toBe(0);
     expect((await load("lost", true, other)).metrics[0]!.value).toBe(0);
   });
 });

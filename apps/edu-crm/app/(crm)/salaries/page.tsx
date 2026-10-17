@@ -1,4 +1,6 @@
 import { canAny } from "@ventura/auth/staff/policy";
+import { hasFeature } from "@ventura/tenants";
+import { pagePermissions } from "@/lib/access";
 import { recentMonths } from "@/lib/format";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
@@ -40,6 +42,7 @@ export default async function SalariesPage({
     ensurePaymentMethods(db),
   ]);
   // Filial cheklovi: faqat xodim ko'ra oladigan odamlar yozuvlari
+  const teachersOn = await hasFeature(tenant, "teachers");
   const visible = new Set(people.map((p) => p.value));
   const rows = branch.filter === null ? entries : entries.filter((e) => visible.has(e.person));
 
@@ -55,6 +58,10 @@ export default async function SalariesPage({
       payroll={payroll}
       people={people}
       methods={methods}
+      links={{
+        teacher: teachersOn && canAny(staff.access, pagePermissions("/teachers")),
+        staff: teachersOn && canAny(staff.access, pagePermissions("/staff")),
+      }}
       perms={{
         salary: canAny(staff.access, ["salaries.pay"]),
         advance: canAny(staff.access, ["salaries.advance_manage", "finance.advance_give"]),

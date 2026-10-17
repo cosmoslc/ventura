@@ -17,6 +17,7 @@ import { memberOn, weekdayOf } from "@/lib/lessons";
 import { uz } from "@/lib/uz";
 import type { AttendanceMember, GroupAttendance } from "@/lib/server/attendance";
 import { markFirstLessonAction } from "../leads/actions";
+import { StudentCell } from "../student-table";
 import { markAttendanceAction, markRestPresentAction } from "./attendance-actions";
 
 type Status = "present" | "late" | "excused" | "absent";
@@ -207,31 +208,26 @@ export function AttendanceTab({
 
           {rows.length ? (
             <TableWrap>
-              <Table className="min-w-[760px]">
+              <Table className="min-w-[640px]">
                 <THead>
                   <tr>
-                    <Th className="w-10">{uz.attendance.colNo}</Th>
                     <Th>{uz.attendance.colStudent}</Th>
-                    <Th>{uz.attendance.colPhone}</Th>
                     <Th>{uz.attendance.colStatus}</Th>
                   </tr>
                 </THead>
                 <TBody>
-                  {rows.map((m, i) => {
+                  {rows.map((m) => {
                     const st = stateOn(m, date);
                     const cur = mark(m.studentId, date);
                     return (
                       <Tr key={m.studentId}>
-                        <Td className="font-mono text-caption text-muted-foreground">{i + 1}</Td>
                         <Td>
-                          <Link
+                          <StudentCell
+                            name={m.name}
                             href={`/students/${m.studentId}`}
-                            className="font-bold text-foreground hover:text-primary"
-                          >
-                            {m.name}
-                          </Link>
+                            sub={displayPhone(m.phone) ?? uz.students.phoneMissing}
+                          />
                         </Td>
-                        <Td className="font-mono">{displayPhone(m.phone) ?? "—"}</Td>
                         <Td>
                           {st === "paused" ? (
                             <Badge tone="warning">{uz.attendance.paused}</Badge>
