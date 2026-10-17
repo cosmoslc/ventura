@@ -1,8 +1,8 @@
-import { createHash } from "node:crypto";
+import { createHash, generateKeyPairSync, randomBytes } from "node:crypto";
 import ssh2 from "ssh2";
 
 // ssh2 — CommonJS paket: nomli eksportlar Node ESM'da ko'rinmaydi, shuning uchun standart importdan olinadi
-const { Client, utils } = ssh2;
+const { Client } = ssh2;
 
 /*
  * Serverga SSH ulanish. Qoidalar (CLAUDE.md, SPEC 11):
@@ -63,10 +63,59 @@ export function sh(value: string | number): string {
 export const fingerprint = (key: Buffer) =>
   `SHA256:${createHash("sha256").update(key).digest("base64").replace(/=+$/, "")}`;
 
-/** Yangi ed25519 kalit jufti (OpenSSH formatida). Yopiq qismi shifrlanib saqlanadi. */
+/** SSH formatidagi satr: uzunlik (uint32) + baytlar */
+function sshString(value: Buffer | string): Buffer {
+  const data = typeof value === "string" ? Buffer.from(value, "utf8") : value;
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length);
+  return Buffer.concat([len, data]);
+}
+
+/**
+ * Yangi ed25519 kalit jufti (OpenSSH formatida). Yopiq qismi shifrlanib saqlanadi.
+ *
+ * Kalitni Node `crypto` yaratadi, OpenSSH formati shu yerda yig'iladi. `ssh2.utils.generateKeyPairSync` ishlatilmaydi:
+ * u ochiq kalitni son kabi yozib, birinchi bayti 0 bo'lsa uni tashlab yuboradi (har ~256 kalitdan biri 31 bayt —
+ * "Malformed OpenSSH private key", serverdagi ochiq kalit ham buzuq bo'ladi).
+ */
 export function generateKeyPair(comment: string): { privateKey: string; publicKey: string } {
-  const pair = utils.generateKeyPairSync("ed25519", { comment });
-  return { privateKey: pair.private, publicKey: pair.public.trim() };
+  const pair = generateKeyPairSync("ed25519");
+  const pub = Buffer.from(pair.publicKey.export({ format: "jwk" }).x!, "base64url");
+  const seed = Buffer.from(pair.privateKey.export({ format: "jwk" }).d!, "base64url");
+  if (pub.length !== 32 || seed.length !== 32) throw new Error("ed25519 kalit uzunligi noto'g'ri");
+  const type = "ssh-ed25519";
+  const pubBlob = Buffer.concat([sshString(type), sshString(pub)]);
+
+  // Yopiq qism: ikki bir xil tekshiruv soni, kalit, izoh va 8 ga karrali to'ldirish (1, 2, 3, ...)
+  const check = randomBytes(4);
+  const body = Buffer.concat([
+    check,
+    check,
+    sshString(type),
+    sshString(pub),
+    sshString(Buffer.concat([seed, pub])),
+    sshString(comment),
+  ]);
+  const padLen = (8 - (body.length % 8)) % 8;
+  const padding = Buffer.from(Array.from({ length: padLen }, (_, i) => i + 1));
+  const privBlock = Buffer.concat([body, padding]);
+
+  const nKeys = Buffer.alloc(4);
+  nKeys.writeUInt32BE(1);
+  const raw = Buffer.concat([
+    Buffer.from("openssh-key-v1\0", "binary"),
+    sshString("none"),
+    sshString("none"),
+    sshString(""),
+    nKeys,
+    sshString(pubBlob),
+    sshString(privBlock),
+  ]);
+  const lines = raw.toString("base64").match(/.{1,70}/g)!;
+  return {
+    privateKey: ["-----BEGIN OPENSSH PRIVATE KEY-----", ...lines, "-----END OPENSSH PRIVATE KEY-----", ""].join("\n"),
+    publicKey: `${type} ${pubBlob.toString("base64")} ${comment}`,
+  };
 }
 
 function lineSplitter(emit: (line: string) => void) {
