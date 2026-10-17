@@ -5,6 +5,7 @@ import { phoneNumber, twoFactor } from "better-auth/plugins";
 import type { PanelDb } from "@ventura/db";
 import { accounts, sessions, twoFactors, users, verifications } from "@ventura/db/schema/panel";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
+import { trustedOrigins } from "./policy";
 
 /*
  * Better Auth sozlamasi (SPEC 2: login; 1-bosqich qarorlari docs/decisions/0001):
@@ -25,6 +26,8 @@ export function createAuth({ db, telegram, secret, baseURL }: AuthDeps) {
     appName: "Ventura",
     secret: secret ?? process.env.BETTER_AUTH_SECRET,
     baseURL: baseURL ?? process.env.BETTER_AUTH_URL,
+    // Panel bir nechta manzildan ochiladi (masalan https://admin.ventura.uz tunnel orqali va http://localhost:3000)
+    trustedOrigins: trustedOrigins(process.env.BETTER_AUTH_TRUSTED_ORIGINS),
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: { user: users, session: sessions, account: accounts, verification: verifications, twoFactor: twoFactors },

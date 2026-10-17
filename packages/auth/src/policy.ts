@@ -33,6 +33,17 @@ export function secureCookies(baseURL: string | undefined = process.env.BETTER_A
   return (baseURL ?? "").startsWith("https://");
 }
 
+/**
+ * Qo'shimcha ishonchli manzillar (vergul bilan): panel tunnel orqali (https://admin.ventura.uz) va mahalliy
+ * (http://localhost:3000) ochilganda ikkalasidan ham kirish mumkin. Faqat to'liq http(s) manzil qabul qilinadi.
+ */
+export function trustedOrigins(raw: string | undefined): string[] {
+  return (raw ?? "")
+    .split(",")
+    .map((s) => s.trim().replace(/\/+$/, ""))
+    .filter((s) => /^https?:\/\/[a-z0-9.-]+(:\d{1,5})?$/i.test(s));
+}
+
 export function passwordProblem(password: string): string | null {
   if (password.length < PASSWORD_MIN) return `Parol kamida ${PASSWORD_MIN} belgidan iborat bo'lishi kerak`;
   if (password.length > 128) return "Parol juda uzun";

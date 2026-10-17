@@ -7,6 +7,7 @@ import {
   passwordProblem,
   shouldLock,
   secureCookies,
+  trustedOrigins,
 } from "./policy";
 import { readPending, signPending } from "./service";
 
@@ -16,6 +17,17 @@ describe("cookie xavfsizligi", () => {
     expect(secureCookies("http://localhost:3000")).toBe(false);
     expect(secureCookies("http://192.168.1.10:3000")).toBe(false);
     expect(secureCookies(undefined)).toBe(false);
+  });
+});
+
+describe("ishonchli manzillar", () => {
+  it("vergul bilan, oxirgi / siz; noto'g'ri qiymatlar tashlanadi", () => {
+    expect(trustedOrigins(" https://admin.ventura.uz/ , http://localhost:3000 ")).toEqual([
+      "https://admin.ventura.uz",
+      "http://localhost:3000",
+    ]);
+    expect(trustedOrigins("*, javascript:alert(1), https://a.uz/path")).toEqual([]);
+    expect(trustedOrigins(undefined)).toEqual([]);
   });
 });
 
