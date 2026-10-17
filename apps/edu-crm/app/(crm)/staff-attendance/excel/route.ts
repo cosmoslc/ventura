@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { can } from "@ventura/auth/staff/policy";
 import { notFound } from "next/navigation";
 import { hasFeature } from "@ventura/tenants";
+import { sheetName } from "@/lib/excel";
 import { rankEmployees } from "@/lib/employee-ranking";
 import { formatMonth } from "@/lib/format";
 import { monthRange } from "@/lib/lessons";
@@ -44,7 +45,7 @@ export async function GET(req: Request) {
   );
 
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(t.title.slice(0, 31));
+  const ws = wb.addWorksheet(sheetName(t.title, new Set()));
   ws.addRow([t.excelTitle(formatMonth(month))]).font = { bold: true, size: 13 };
   ws.addRow([]);
   ws.addRow([

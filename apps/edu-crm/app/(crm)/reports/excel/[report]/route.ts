@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { notFound } from "next/navigation";
 import { canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
+import { sheetName } from "@/lib/excel";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { todayTashkent } from "@/lib/server/memberships";
@@ -46,9 +47,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ report: 
 
   const wb = new ExcelJS.Workbook();
   const sheets = [{ title, table: data.table, note: data.note }, ...(data.extra ?? [])];
+  const used = new Set<string>();
   for (const [i, sheet] of sheets.entries()) {
-    // Varaq nomi: 31 belgigacha, takrorlanmaydi
-    const ws = wb.addWorksheet(`${i ? `${i + 1}. ` : ""}${sheet.title}`.slice(0, 31));
+    const ws = wb.addWorksheet(sheetName(`${i ? `${i + 1}. ` : ""}${sheet.title}`, used));
     ws.addRow([`${sheet.title} — ${period.label}`]).font = { bold: true, size: 13 };
     ws.addRow([]);
     const cols = sheet.table.columns;

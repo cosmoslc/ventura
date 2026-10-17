@@ -202,3 +202,18 @@ export function parseSalary(raw: string): { type: "percent" | "per_student" | "f
   if (type === "percent" && value > 100) return null;
   return { type, value };
 }
+
+/**
+ * Excel varaq nomi: taqiqlangan belgilar (`\ / ? * [ ] :`) bo'sh joyga, 31 belgigacha, kitobda takrorlanmaydi
+ * (katta-kichik harf farqsiz — Excel shunday solishtiradi). `used` — shu kitobdagi nomlar, chaqiruvda to'ldiriladi.
+ */
+export function sheetName(raw: string, used: Set<string>, fallback = "Varaq"): string {
+  const clean = raw
+    .replace(/[\\/?*[\]:]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  let name = clean.slice(0, 31).trim() || fallback;
+  for (let n = 2; used.has(name.toLowerCase()); n++) name = `${clean.slice(0, 27).trim() || fallback} ${n}`;
+  used.add(name.toLowerCase());
+  return name;
+}

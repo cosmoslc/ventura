@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  sheetName,
   detectColumns,
   parseDate,
   parseDays,
@@ -121,5 +122,24 @@ describe("lidlar (E4c)", () => {
     expect(parseGender("qiz")).toBe("female");
     expect(parseGender("F")).toBe("female");
     expect(parseGender("noma'lum")).toBeNull();
+  });
+});
+
+describe("sheetName", () => {
+  it("taqiqlangan belgilarni olib tashlaydi va 31 belgiga qisqartiradi", () => {
+    const used = new Set<string>();
+    const name = sheetName("3. Kohortalar: kelgan oyi bo'yicha qolganlar", used);
+    expect(name).toBe("3. Kohortalar kelgan oyi bo'yic");
+    expect(name).not.toMatch(/[\/?*[\]:]/);
+    expect(name.length).toBeLessThanOrEqual(31);
+  });
+  it("takrorlansa raqam qo'shadi (katta-kichik harf farqsiz)", () => {
+    const used = new Set<string>();
+    expect(sheetName("Guruh A", used)).toBe("Guruh A");
+    expect(sheetName("guruh a", used)).toBe("guruh a 2");
+    expect(sheetName("Guruh A", used)).toBe("Guruh A 3");
+  });
+  it("faqat taqiqlangan belgilardan iborat nom — zaxira nom", () => {
+    expect(sheetName("[/:]", new Set(), "Guruh")).toBe("Guruh");
   });
 });

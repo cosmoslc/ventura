@@ -1009,7 +1009,7 @@ export const uz = {
     studentsUnit: (n: number) => `${n} nafar`,
     membersHint: (a: number, p: number) => `${a} faol • ${p} muzlatilgan`,
     trialHint: "To'lov faollashtirilgandan keyin hisoblanadi",
-    seatsHint: (cap: number) => `Xonalar sig'imi: ${cap} o'rin`,
+    seatsHint: (cap: number) => `Guruhlar sig'imi (xona bo'yicha): ${cap} o'rin`,
     search: "Guruh, kurs yoki ustoz...",
     allCourses: "Barcha kurslar",
     allDays: "Barcha kunlar",
