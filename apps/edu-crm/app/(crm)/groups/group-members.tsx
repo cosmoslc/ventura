@@ -1,66 +1,27 @@
 "use client";
 
-import {
-  Eye,
-  LogOut,
-  MoreHorizontal,
-  Pause,
-  Play,
-  Plus,
-  RotateCcw,
-  UserMinus,
-  UserPlus,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { Eye, LogOut, Play, Plus, RotateCcw, UserMinus, UserPlus, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@ventura/ui/dropdown-menu";
 import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { EmptyState } from "@ventura/ui/page-header";
 import { SelectionBar, SelectionBarAction } from "@ventura/ui/selection-bar";
-import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatDate, money } from "@/lib/format";
-import {
-  type MemberFilter,
-  type MemberSort,
-  type MonthState,
-  compareMembers,
-  matchesFilter,
-  monthState,
-} from "@/lib/group-profile";
+import { type MemberFilter, type MemberSort, compareMembers, matchesFilter } from "@/lib/group-profile";
 import { uz } from "@/lib/uz";
 import { StudentsTable } from "../student-table";
-import { pauseMembershipAction } from "./actions";
 import type { GroupProfileStats, GroupRow, MemberRow } from "./data";
 import type { GroupPerms } from "./groups-view";
 import { BulkLeaveDialog, type MembershipTarget } from "./membership-dialogs";
 
 const t = uz.groupProfile;
 
-const TONE = { trial: "info", active: "success", paused: "warning", left: "neutral" } as const;
-
 /** Qatorga a'zolik + shu guruh bo'yicha pul va davomat */
 type Row = MemberRow & {
   due: number;
   rate: number | null;
 };
-
-const PAY_TEXT: Record<Exclude<MonthState, "none">, string> = {
-  paid: "text-(--success-fg)",
-  partial: "text-(--warning-fg)",
-  unpaid: "text-(--danger-fg)",
-};
-
-const rateTone = (rate: number) => (rate < 60 ? "text-(--danger-fg)" : rate < 80 ? "text-(--warning-fg)" : "");
 
 export function MembersTab({
   group: g,
@@ -69,12 +30,10 @@ export function MembersTab({
   attendanceOn,
   perms,
   canCreateStudent,
-  canPay,
   onAdd,
   onNew,
   onActivate,
   onLeave,
-  onPay,
 }: {
   group: GroupRow;
   members: MemberRow[];
@@ -82,12 +41,10 @@ export function MembersTab({
   attendanceOn: boolean;
   perms: GroupPerms;
   canCreateStudent: boolean;
-  canPay: boolean;
   onAdd: () => void;
   onNew: () => void;
   onActivate: (t: MembershipTarget) => void;
   onLeave: (t: MembershipTarget) => void;
-  onPay: (student: { id: string; name: string }) => void;
 }) {
   const router = useRouter();
   const financeOn = stats.finance !== null;
@@ -96,7 +53,6 @@ export function MembersTab({
   const [sort, setSort] = React.useState<MemberSort>("name");
   const [selected, setSelected] = React.useState<ReadonlySet<string>>(new Set());
   const [bulkOpen, setBulkOpen] = React.useState(false);
-  const [pending, startTransition] = React.useTransition();
 
   const rows: Row[] = members.map((m) => {
     const s = stats.members[m.studentId];
@@ -126,15 +82,6 @@ export function MembersTab({
     enrolledAt: m.enrolledAt,
     pendingLeave: m.leavePendingAt ? { date: m.leavePendingAt, reason: m.leftReason, note: m.leftNote } : null,
   });
-
-  function pause(m: Row, on: boolean) {
-    startTransition(async () => {
-      const res = await pauseMembershipAction({ id: m.id, pause: on });
-      if (!res.ok) return void toast({ tone: res.pending ? "info" : "danger", title: res.error });
-      toast({ tone: "success", title: on ? uz.groups.frozen : uz.groups.unfrozen, description: m.name });
-      router.refresh();
-    });
-  }
 
   const filterOptions = [
     { value: "all", label: t.filterAll },
@@ -203,10 +150,17 @@ export function MembersTab({
         student={(m) => ({
           name: m.name,
           href: `/students/${m.studentId}`,
-          sub: [displayPhone(m.phone), m.parentName].filter(Boolean).join(" · ") || uz.students.phoneMissing,
+          // Telefon alohida ustunda; ism ostida — holat (faol bo'lmasa) yoki ota-ona
+          sub:
+            (m.leavePendingAt
+              ? uz.groups.pendingLeave
+              : m.status !== "active"
+                ? uz.groups.membership[m.status]
+                : m.parentName) ?? "",
         })}
         studentHeader={uz.groups.colStudent}
-        minWidth={financeOn ? 1060 : 800}
+        minWidth={600}
+        numbered
         selection={
           selectable
             ? {
@@ -234,144 +188,75 @@ export function MembersTab({
         }
         columns={[
           {
-            key: "status",
-            header: t.colStatus,
-            cell: (m) => (
-              <>
-                <Badge tone={TONE[m.status]} dot>
-                  {m.leavePendingAt ? uz.groups.pendingLeave : uz.groups.membership[m.status]}
-                </Badge>
-                {m.status === "active" && m.activatedAt ? (
-                  <div className="mt-1 text-caption text-muted-foreground">
-                    {t.sinceActive(formatDate(m.activatedAt))}
-                  </div>
-                ) : null}
-                {m.status === "paused" && m.pausedAt ? (
-                  <div className="mt-1 text-caption text-muted-foreground">{t.sincePaused(formatDate(m.pausedAt))}</div>
-                ) : null}
-              </>
-            ),
-          },
-          {
-            key: "since",
-            header: uz.groups.colSince,
+            key: "phone",
+            header: t.colPhone,
             className: "font-mono whitespace-nowrap",
-            cell: (m) => formatDate(m.enrolledAt),
+            cell: (m) =>
+              m.phone ? (
+                <a href={`tel:+998${m.phone}`} className="text-(--primary-text) hover:underline">
+                  {displayPhone(m.phone)}
+                </a>
+              ) : (
+                <span className="text-muted-foreground">—</span>
+              ),
           },
           ...(financeOn
             ? [
                 {
-                  key: "month",
-                  header: t.colMonth,
+                  key: "balance",
+                  header: t.colBalance,
                   className: "whitespace-nowrap",
-                  cell: (m: Row) => {
-                    const money_ = stats.members[m.studentId]?.money;
-                    const state = money_ && m.status !== "trial" ? monthState(money_) : "none";
-                    if (!money_ || state === "none") return <span className="text-muted-foreground">—</span>;
-                    return (
-                      <>
-                        <div className={`font-semibold ${PAY_TEXT[state]}`}>
-                          {state === "paid" ? t.monthPaid : state === "partial" ? t.monthPartial : t.monthUnpaid}
-                        </div>
-                        <div className="text-caption text-muted-foreground">
-                          {state === "partial"
-                            ? t.monthLeft(money(money_.monthDue))
-                            : t.monthAmount(money(money_.monthCharged))}
-                        </div>
-                      </>
-                    );
-                  },
-                },
-                {
-                  key: "debt",
-                  header: t.colDebt,
-                  className: "whitespace-nowrap",
-                  cell: (m: Row) => {
-                    const money_ = stats.members[m.studentId]?.money;
-                    if (!money_ || money_.due <= 0) return <span className="text-muted-foreground">—</span>;
-                    return (
-                      <>
-                        <div className="font-semibold text-(--danger-fg)">
-                          {money(money_.due)} {uz.common.som}
-                        </div>
-                        <div className="text-caption text-muted-foreground">{t.debtMonths(money_.dueMonths)}</div>
-                      </>
-                    );
-                  },
-                },
-              ]
-            : []),
-          ...(attendanceOn
-            ? [
-                {
-                  key: "attendance",
-                  header: t.colAttendance,
-                  className: "whitespace-nowrap",
-                  cell: (m: Row) => {
-                    const a = stats.members[m.studentId]?.attendance;
-                    if (!a || a.rate === null) return <span className="text-muted-foreground">—</span>;
-                    return (
-                      <>
-                        <div className={`font-semibold ${rateTone(a.rate)}`}>{uz.attendance.rate(a.rate)}</div>
-                        <div className="text-caption text-muted-foreground">{t.attendanceHint(a.came, a.marked)}</div>
-                      </>
-                    );
-                  },
+                  cell: (m: Row) =>
+                    m.due > 0 ? (
+                      <span className="font-semibold text-(--danger-fg)">
+                        −{money(m.due)} {uz.common.som}
+                      </span>
+                    ) : (
+                      <span className="text-foreground">0 {uz.common.som}</span>
+                    ),
                 },
               ]
             : []),
           {
             key: "actions",
-            header: uz.common.actions,
+            header: "",
             align: "right",
-            cell: (m) => {
-              const owes = (stats.members[m.studentId]?.money?.due ?? 0) > 0;
-              return (
-                <div className="flex items-center justify-end gap-1.5">
-                  {m.status === "trial" && perms.addStudent ? (
-                    <Button size="sm" onClick={() => onActivate(target(m))}>
-                      <Play /> {uz.groups.activate}
-                    </Button>
-                  ) : null}
-                  {owes && canPay ? (
-                    <Button size="sm" variant="ghost" onClick={() => onPay({ id: m.studentId, name: m.name })}>
-                      <Wallet /> {t.pay}
-                    </Button>
-                  ) : null}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="subtle" size="icon-sm" title={t.rowMore} aria-label={`${m.name} — ${t.rowMore}`}>
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-60">
-                      <DropdownMenuItem onSelect={() => router.push(`/students/${m.studentId}`)}>
-                        <Eye /> {t.rowProfile}
-                      </DropdownMenuItem>
-                      {canPay && financeOn && m.status !== "trial" && !owes ? (
-                        <DropdownMenuItem onSelect={() => onPay({ id: m.studentId, name: m.name })}>
-                          <Wallet /> {t.rowPay}
-                        </DropdownMenuItem>
-                      ) : null}
-                      {perms.freeze && m.status !== "trial" ? (
-                        <DropdownMenuItem disabled={pending} onSelect={() => pause(m, m.status !== "paused")}>
-                          {m.status === "paused" ? <Play /> : <Pause />}
-                          {m.status === "paused" ? uz.groups.unfreeze : uz.groups.freeze}
-                        </DropdownMenuItem>
-                      ) : null}
-                      {perms.removeStudent ? (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem danger onSelect={() => onLeave(target(m))}>
-                            <LogOut /> {m.leavePendingAt ? uz.groups.forgivePending : uz.groups.remove}
-                          </DropdownMenuItem>
-                        </>
-                      ) : null}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              );
-            },
+            cell: (m) => (
+              <div className="flex items-center justify-end gap-1.5">
+                {m.status === "trial" && perms.addStudent ? (
+                  <Button
+                    variant="subtle"
+                    size="icon-sm"
+                    title={uz.groups.activate}
+                    aria-label={`${m.name} — ${uz.groups.activate}`}
+                    onClick={() => onActivate(target(m))}
+                  >
+                    <Play />
+                  </Button>
+                ) : null}
+                <Button
+                  variant="subtle"
+                  size="icon-sm"
+                  title={t.rowProfile}
+                  aria-label={`${m.name} — ${t.rowProfile}`}
+                  onClick={() => router.push(`/students/${m.studentId}`)}
+                >
+                  <Eye />
+                </Button>
+                {perms.removeStudent ? (
+                  <Button
+                    variant="subtle"
+                    size="icon-sm"
+                    className="text-destructive-text"
+                    title={m.leavePendingAt ? uz.groups.forgivePending : uz.groups.remove}
+                    aria-label={`${m.name} — ${m.leavePendingAt ? uz.groups.forgivePending : uz.groups.remove}`}
+                    onClick={() => onLeave(target(m))}
+                  >
+                    <UserMinus />
+                  </Button>
+                ) : null}
+              </div>
+            ),
           },
         ]}
         empty={

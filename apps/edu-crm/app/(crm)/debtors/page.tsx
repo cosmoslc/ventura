@@ -21,7 +21,6 @@ export default async function DebtorsPage() {
   return (
     <DebtorsView
       rows={rows}
-      dueDay={fs.dueDay}
       methods={methods}
       canPay={financePerms(staff.access).create}
       canNote={canAny(staff.access, ["finance.debtors_remind", "students.edit"])}

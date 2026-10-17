@@ -122,7 +122,7 @@ export function AttendanceReportView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={uz.attendance.title} description={t.description} />
 
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
@@ -141,7 +141,6 @@ export function AttendanceReportView({
               tone={k.tone}
               label={k.label}
               value={String(kpi(k.filter))}
-              hint={t.kpiHint[k.filter]}
               className={cn("h-full", filter === k.filter && "border-primary")}
             />
           </button>

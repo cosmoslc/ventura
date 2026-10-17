@@ -35,7 +35,7 @@ export function StatCard({ icon, label, value, tone, trend, hint, className, ...
       </div>
       <div className="min-w-0 flex-1">
         <div className="type-stat leading-tight text-foreground">{value}</div>
-        <div className="mt-0.5 truncate text-xs font-medium text-muted-foreground">{label}</div>
+        <div className="mt-0.5 truncate text-body font-medium text-muted-foreground">{label}</div>
         {hint ? <div className="mt-1 space-y-0.5 text-caption text-muted-foreground">{hint}</div> : null}
       </div>
       {trend ? (

@@ -16,7 +16,7 @@ import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatMonth, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { type MethodOption, PaymentDialog } from "../payments/payment-dialog";
-import { GroupBoxHeader, MoreRows, StudentsTable } from "../student-table";
+import { GroupChip, MoreRows, StudentsTable } from "../student-table";
 import { addDebtorNoteAction } from "./actions";
 import type { DebtorNote, DebtorRow } from "./data";
 
@@ -25,25 +25,8 @@ const ALL = "all";
 const SORTS = ["high", "low", "oldest", "name"] as const;
 /** Izoh yozishda tanlanadigan turlar (jadvalda ogohlantirish ham ko'rinadi) */
 const NOTE_KINDS = ["call", "message", "parent"] as const;
-/** Har bir guruh qutisida dastlab ko'rinadigan qatorlar */
-const BOX_ROWS = 10;
-const NO_GROUP = "none";
-
-/** Bir guruh (yoki guruhsiz) bo'yicha qarzdorlar */
-interface Entry {
-  r: DebtorRow;
-  /** Shu guruh bo'yicha qarz */
-  due: number;
-  months: string[];
-}
-interface Box {
-  key: string;
-  id: string | null;
-  name: string;
-  teacher: string | null;
-  entries: Entry[];
-  sum: number;
-}
+/** Jadvalda dastlab (va har "yana" bosilganda) ko'rinadigan qatorlar */
+const PAGE_ROWS = 30;
 
 /** "12.10.2026" (Toshkent vaqti) */
 function noteDate(iso: string) {
@@ -166,14 +149,12 @@ function NoteDialog({
 
 export function DebtorsView({
   rows,
-  dueDay,
   methods,
   canPay,
   canNote = false,
   maxDiscountPercent,
 }: {
   rows: DebtorRow[];
-  dueDay: number;
   methods: MethodOption[];
   canPay: boolean;
   canNote?: boolean;
@@ -184,7 +165,7 @@ export function DebtorsView({
   const [teacher, setTeacher] = React.useState(ALL);
   const [sort, setSort] = React.useState<(typeof SORTS)[number]>("high");
   const [paying, setPaying] = React.useState<string | null>(null);
-  const [limits, setLimits] = React.useState<Record<string, number>>({});
+  const [limit, setLimit] = React.useState(PAGE_ROWS);
   const [noting, setNoting] = React.useState<DebtorRow | null>(null);
   const [noteOpen, setNoteOpen] = React.useState(false);
   const [noteSeq, setNoteSeq] = React.useState(0);
@@ -199,6 +180,11 @@ export function DebtorsView({
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
+  // Guruh tanlangan bo'lsa qarz va oylar — shu guruh bo'yicha, aks holda o'quvchining jami qarzi
+  const dueOf = (r: DebtorRow) => (group === ALL ? r.debt : (r.groups.find((g) => g.id === group)?.due ?? 0));
+  const monthsOf = (r: DebtorRow) => [
+    ...new Set(r.groups.filter((g) => group === ALL || g.id === group).flatMap((g) => g.months)),
+  ];
   const visible = rows
     .filter((r) => {
       if (group !== ALL && !r.groups.some((g) => g.id === group)) return false;
@@ -212,50 +198,14 @@ export function DebtorsView({
       );
     })
     .sort((a, b) => {
-      if (sort === "low") return a.debt - b.debt;
+      if (sort === "low") return dueOf(a) - dueOf(b);
       if (sort === "oldest")
-        return (a.oldestUnpaid ?? "9999").localeCompare(b.oldestUnpaid ?? "9999") || b.debt - a.debt;
+        return (a.oldestUnpaid ?? "9999").localeCompare(b.oldestUnpaid ?? "9999") || dueOf(b) - dueOf(a);
       if (sort === "name") return a.name.localeCompare(b.name);
-      return b.debt - a.debt;
+      return dueOf(b) - dueOf(a);
     });
 
   const total = rows.reduce((s, r) => s + r.debt, 0);
-
-  // Guruhlar bo'yicha qutilar: har bir guruhning o'z qarzdorlari; guruhsiz qarz — alohida quti
-  const boxes: Box[] = [];
-  {
-    const byKey = new Map<string, Box>();
-    const put = (key: string, id: string | null, name: string, teacherName: string | null, entry: Entry) => {
-      let box = byKey.get(key);
-      if (!box) {
-        box = { key, id, name, teacher: teacherName, entries: [], sum: 0 };
-        byKey.set(key, box);
-      }
-      box.entries.push(entry);
-      box.sum += entry.due;
-    };
-    for (const r of visible) {
-      for (const g of r.groups) {
-        if (group !== ALL && g.id !== group) continue;
-        if (teacher !== ALL && g.teacherId !== teacher) continue;
-        put(g.id, g.id, g.name, g.teacherName, { r, due: g.due, months: g.months });
-      }
-      const loose = r.groups.length ? r.otherDebt : r.debt;
-      if (loose > 0 && group === ALL && teacher === ALL)
-        put(NO_GROUP, null, t.noGroupCard, null, { r, due: loose, months: [] });
-    }
-    for (const box of byKey.values()) {
-      box.entries.sort((a, b) => {
-        if (sort === "low") return a.due - b.due;
-        if (sort === "oldest")
-          return (a.r.oldestUnpaid ?? "9999").localeCompare(b.r.oldestUnpaid ?? "9999") || b.due - a.due;
-        if (sort === "name") return a.r.name.localeCompare(b.r.name);
-        return b.due - a.due;
-      });
-      boxes.push(box);
-    }
-    boxes.sort((a, b) => (a.id === null ? 1 : b.id === null ? -1 : b.sum - a.sum || a.name.localeCompare(b.name)));
-  }
 
   function openNote(r: DebtorRow) {
     setNoting(r);
@@ -264,31 +214,23 @@ export function DebtorsView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={t.title} description={t.description} />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<Users />} tone={4} label={t.kpiCount} value={String(rows.length)} hint={t.kpiCountHint} />
-        <StatCard
-          icon={<CircleDollarSign />}
-          tone={3}
-          label={t.kpiSum}
-          value={`${money(total)} ${uz.common.som}`}
-          hint={t.kpiSumHint}
-        />
+        <StatCard icon={<Users />} tone={4} label={t.kpiCount} value={String(rows.length)} />
+        <StatCard icon={<CircleDollarSign />} tone={3} label={t.kpiSum} value={`${money(total)} ${uz.common.som}`} />
         <StatCard
           icon={<Wallet />}
           tone={1}
           label={t.kpiPartial}
           value={String(rows.filter((r) => r.partial).length)}
-          hint={t.kpiPartialHint}
         />
         <StatCard
           icon={<AlarmClock />}
           tone={3}
           label={t.kpiOverdue}
           value={String(rows.filter((r) => r.overdueDays > 0).length)}
-          hint={t.kpiOverdueHint(dueDay)}
         />
       </div>
 
@@ -324,128 +266,117 @@ export function DebtorsView({
         </FilterEnd>
       </FilterBar>
 
-      {boxes.length ? (
-        <div className="space-y-5">
-          {boxes.map((box) => {
-            const limit = limits[box.key] ?? BOX_ROWS;
-            const shown = box.entries.slice(0, limit);
-            return (
-              <StudentsTable
-                key={box.key}
-                rows={shown}
-                rowKey={(e) => e.r.studentId}
-                student={(e) => ({
-                  name: e.r.name,
-                  href: `/students/${e.r.studentId}`,
-                  sub: [
-                    displayPhone(e.r.phone),
-                    e.r.parentPhone ? `${e.r.parentName ?? ""} ${displayPhone(e.r.parentPhone)}`.trim() : null,
-                    e.r.archived ? t.archived : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" · "),
-                })}
-                studentHeader={t.colStudent}
-                minWidth={940}
-                header={
-                  <GroupBoxHeader
-                    title={box.name}
-                    href={box.id ? `/groups/${box.id}` : undefined}
-                    sub={[box.id ? box.teacher : t.noGroupCardHint, t.groupStudents(box.entries.length)]
-                      .filter(Boolean)
-                      .join(" · ")}
-                    aside={
-                      <span className="text-(--danger-fg)">
-                        {money(box.sum)} {uz.common.som}
-                      </span>
-                    }
-                  />
-                }
-                columns={[
-                  {
-                    key: "months",
-                    headClassName: "w-48",
-                    header: t.colMonths,
-                    cell: (e) => {
-                      const text = [...e.months].sort().map(formatMonth).join(", ");
-                      return text ? (
-                        <span className="line-clamp-2 max-w-48" title={text}>
-                          {text}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      );
-                    },
-                  },
-                  {
-                    key: "debt",
-                    headClassName: "w-40",
-                    header: t.colDebt,
-                    align: "right",
-                    className: "whitespace-nowrap",
-                    cell: (e) => (
-                      <>
-                        <div className="font-semibold text-(--danger-fg)">
-                          {money(e.due)} {uz.common.som}
-                        </div>
-                        {e.r.debt !== e.due ? (
-                          <div className="text-caption text-muted-foreground">{t.totalDebt(money(e.r.debt))}</div>
-                        ) : null}
-                      </>
-                    ),
-                  },
-                  {
-                    key: "status",
-                    headClassName: "w-44",
-                    header: t.colStatus,
-                    cell: (e) =>
-                      e.r.overdueDays > 0 ? (
-                        <Badge tone="danger">{t.overdue(e.r.overdueDays)}</Badge>
-                      ) : (
-                        <Badge tone="warning">{t.dueSoon}</Badge>
-                      ),
-                  },
-                  { key: "note", headClassName: "w-64", header: t.colNote, cell: (e) => <NoteCell note={e.r.note} /> },
-                  {
-                    key: "actions",
-                    headClassName: "w-36",
-                    header: uz.common.actions,
-                    align: "right",
-                    cell: (e) =>
-                      canPay || canNote ? (
-                        <div className="flex items-center justify-end gap-1">
-                          {canNote ? (
-                            <Button
-                              variant="icon"
-                              size="icon"
-                              title={t.noteAdd}
-                              aria-label={t.noteAdd}
-                              onClick={() => openNote(e.r)}
-                            >
-                              <MessageSquarePlus />
-                            </Button>
-                          ) : null}
-                          {canPay ? (
-                            <Button size="sm" onClick={() => setPaying(e.r.studentId)}>
-                              {t.pay}
-                            </Button>
-                          ) : null}
-                        </div>
-                      ) : null,
-                  },
-                ]}
-                footer={
-                  box.entries.length > limit ? (
-                    <MoreRows onClick={() => setLimits((l) => ({ ...l, [box.key]: limit + BOX_ROWS }))}>
-                      {t.showMore(Math.min(BOX_ROWS, box.entries.length - limit))}
-                    </MoreRows>
-                  ) : null
-                }
-                empty={null}
-              />
-            );
+      {visible.length ? (
+        <StudentsTable
+          rows={visible.slice(0, limit)}
+          rowKey={(r) => r.studentId}
+          numbered
+          student={(r) => ({
+            name: r.name,
+            href: `/students/${r.studentId}`,
+            sub: [displayPhone(r.phone) ?? displayPhone(r.parentPhone), r.archived ? t.archived : null]
+              .filter(Boolean)
+              .join(" · "),
           })}
-        </div>
+          studentHeader={t.colStudent}
+          minWidth={1080}
+          columns={[
+            {
+              key: "groups",
+              headClassName: "w-44",
+              header: t.colGroups,
+              cell: (r) =>
+                r.groups.length ? (
+                  <div className="flex max-w-60 flex-wrap gap-1">
+                    {r.groups.map((g) => (
+                      <GroupChip key={g.id} id={g.id} name={g.name} muted={group !== ALL && g.id !== group} />
+                    ))}
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">{t.noGroupCard}</span>
+                ),
+            },
+            {
+              key: "months",
+              headClassName: "w-48",
+              header: t.colMonths,
+              cell: (r) => {
+                const text = monthsOf(r).sort().map(formatMonth).join(", ");
+                return text ? (
+                  <span className="line-clamp-2 max-w-48" title={text}>
+                    {text}
+                  </span>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                );
+              },
+            },
+            {
+              key: "debt",
+              headClassName: "w-40",
+              header: t.colDebt,
+              align: "right",
+              className: "whitespace-nowrap",
+              cell: (r) => (
+                <>
+                  <div className="font-semibold text-(--danger-fg)">
+                    {money(dueOf(r))} {uz.common.som}
+                  </div>
+                  {r.debt !== dueOf(r) ? (
+                    <div className="text-caption text-muted-foreground">{t.totalDebt(money(r.debt))}</div>
+                  ) : null}
+                </>
+              ),
+            },
+            {
+              key: "status",
+              headClassName: "w-44",
+              header: t.colStatus,
+              cell: (r) =>
+                r.overdueDays > 0 ? (
+                  <Badge tone="danger">{t.overdue(r.overdueDays)}</Badge>
+                ) : (
+                  <Badge tone="warning">{t.dueSoon}</Badge>
+                ),
+            },
+            { key: "note", headClassName: "w-64", header: t.colNote, cell: (r) => <NoteCell note={r.note} /> },
+            {
+              key: "actions",
+              headClassName: "w-36",
+              header: uz.common.actions,
+              align: "right",
+              cell: (r) =>
+                canPay || canNote ? (
+                  <div className="flex items-center justify-end gap-1">
+                    {canNote ? (
+                      <Button
+                        variant="icon"
+                        size="icon"
+                        title={t.noteAdd}
+                        aria-label={t.noteAdd}
+                        onClick={() => openNote(r)}
+                      >
+                        <MessageSquarePlus />
+                      </Button>
+                    ) : null}
+                    {canPay ? (
+                      <Button size="sm" onClick={() => setPaying(r.studentId)}>
+                        {t.pay}
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null,
+            },
+          ]}
+          footer={
+            visible.length > limit ? (
+              <MoreRows onClick={() => setLimit((l) => l + PAGE_ROWS)}>
+                {t.showMore(Math.min(PAGE_ROWS, visible.length - limit))}
+              </MoreRows>
+            ) : null
+          }
+          empty={null}
+        />
       ) : (
         <Card className="overflow-hidden">
           <EmptyState icon={<UserX />} title={t.empty} description={t.emptyHint} />

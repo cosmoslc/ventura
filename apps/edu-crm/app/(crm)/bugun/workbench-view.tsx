@@ -87,7 +87,7 @@ export function WorkbenchView({ data, today }: { data: WorkbenchData; today: str
   ].filter(Boolean);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={t.title} description={todayTitle(today, uz.months, WEEKDAYS)} />
 
       {metrics.length ? (

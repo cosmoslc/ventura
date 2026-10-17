@@ -3,3 +3,10 @@
 @import "@ventura/config/tokens/ventura.css";
 
 @source "../../../packages/ui/src";
+
+/* Menyu ikonkalari bitta neytral rangda (faol band — o'z rangida, sidebar o'zi oq qiladi) */
+:root,
+[data-brand="ventura"],
+[data-brand="ventura"].dark {
+  --nav-icon-color: #9595a2;
+}

@@ -59,7 +59,7 @@ export function AccountView({
   const roleLine = director ? uz.staff.director : positions.map((p) => p.name).join(", ") || uz.staff.noPosition;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={t.title} description={t.description} />
 
       <Card>

@@ -23,12 +23,12 @@ export function ReportsHub({ items }: { items: HubItem[] }) {
     (s) => s.items.length,
   );
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <PageHeader title={t.title} description={t.description} />
       {sections.length ? (
-        <div className="space-y-8">
+        <div className="space-y-5">
           {sections.map((s) => (
-            <section key={s.group} className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
+            <section key={s.group} className="grid gap-4 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-6">
               <div className="lg:pt-1">
                 <h2 className="type-heading text-lg text-foreground">{t.navGroups[s.group]}</h2>
                 <p className="mt-1 text-caption text-muted-foreground">{t.hubHints[s.group]}</p>

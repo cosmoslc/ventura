@@ -97,10 +97,15 @@ const WIDTH_CLASS = /(^|\s)(w-|min-w-|max-w-)/;
 interface Placement {
   top: number;
   left: number;
+  /** Panel balandligi: sig'masa cheklanadi, kontent ichida aylanadi */
+  height: number;
   /** Morph boshlanadigan nuqta */
   startTop: number;
   origin: string;
 }
+
+/** Pastda shundan kam joy qolsa (va tepada ko'proq bo'lsa) panel yuqoriga ochiladi */
+const MIN_BELOW = 200;
 
 function place(
   tr: DOMRect,
@@ -112,21 +117,22 @@ function place(
 ): Placement {
   if (side === "right") {
     const left = Math.max(8, Math.min(tr.right + offset, innerWidth - w - 8));
-    const top = Math.max(8, Math.min(tr.top, innerHeight - h - 12));
-    return { top, left, startTop: tr.top, origin: "top left" };
+    const height = Math.min(h, innerHeight - 20);
+    const top = Math.max(8, Math.min(tr.top, innerHeight - height - 12));
+    return { top, left, height, startTop: tr.top, origin: "top left" };
   }
   let left = align === "end" ? tr.right - w : align === "center" ? tr.left + tr.width / 2 - w / 2 : tr.left;
   left = Math.max(8, Math.min(left, innerWidth - w - 8));
-  let top = tr.bottom + offset;
-  let startTop = top;
-  let up = false;
-  if (top + h > innerHeight - 12) {
-    up = true;
-    top = Math.max(8, tr.top - h - offset);
-    startTop = tr.top - (tr.height || 4);
-  }
+  // Odatda pastga ochiladi; sig'masa balandlik cheklanadi va ro'yxat ichida aylanadi. Yuqoriga faqat pastda juda
+  // kam joy qolgan va tepada ko'proq joy bo'lsa (uzun ro'yxat butunlay yuqoriga "sakramasin")
+  const below = innerHeight - tr.bottom - offset - 12;
+  const above = tr.top - offset - 8;
+  const up = h > below && below < MIN_BELOW && above > below;
+  const height = Math.max(0, Math.min(h, up ? above : below));
+  const top = up ? Math.max(8, tr.top - height - offset) : tr.bottom + offset;
+  const startTop = up ? tr.top - (tr.height || 4) : tr.bottom + offset;
   const hx = align === "end" ? "right" : align === "center" ? "center" : "left";
-  return { top, left, startTop, origin: `${up ? "bottom" : "top"} ${hx}` };
+  return { top, left, height, startTop, origin: `${up ? "bottom" : "top"} ${hx}` };
 }
 
 interface ItemCtx {
@@ -224,10 +230,23 @@ export function DropdownMenuContent({
         transform: "none",
         borderRadius: radius,
       });
-      Object.assign(content.style, { width: "auto", transform: "none", transition: "none" });
+      Object.assign(content.style, {
+        width: "auto",
+        transform: "none",
+        transition: "none",
+        maxHeight: "",
+        overflowY: "",
+      });
       const final = panel.getBoundingClientRect();
       const targetWidth = Math.min(final.width, innerWidth - 16);
       const p = place(tr, targetWidth, final.height, side, align, sideOffset);
+      // Sig'magan ro'yxat ichida aylanadi (panel o'zi ekrandan chiqmaydi)
+      if (p.height < final.height) {
+        const pcs = getComputedStyle(panel);
+        const chromeY = parseFloat(pcs.borderTopWidth) + parseFloat(pcs.borderBottomWidth);
+        Object.assign(content.style, { maxHeight: `${p.height - chromeY}px`, overflowY: "auto" });
+      }
+      const targetHeight = Math.min(final.height, p.height);
 
       // Boshlang'ich band: tanlangan qiymat (select)
       highlight(panel.querySelector<HTMLElement>("[aria-selected='true']"));
@@ -248,7 +267,7 @@ export function DropdownMenuContent({
       const cs = getComputedStyle(panel);
       const chromeX = parseFloat(cs.borderLeftWidth) + parseFloat(cs.borderRightWidth);
       content.style.width = `${Math.max(0, targetWidth - chromeX)}px`;
-      const s = uniformScale(tr, { width: targetWidth, height: final.height });
+      const s = uniformScale(tr, { width: targetWidth, height: targetHeight });
 
       // 2. Panelni trigger chegarasiga qo'yish
       Object.assign(panel.style, {
@@ -271,7 +290,7 @@ export function DropdownMenuContent({
         top: `${p.top}px`,
         left: `${p.left}px`,
         width: `${targetWidth}px`,
-        height: `${final.height}px`,
+        height: `${targetHeight}px`,
         borderRadius: radius,
       });
       content.style.transition = `transform ${ease}`;
@@ -329,10 +348,20 @@ export function DropdownMenuContent({
   React.useEffect(() => {
     if (!open || !mounted) return;
     const items = () =>
-      Array.from(panelRef.current?.querySelectorAll<HTMLElement>("[data-menu-item]:not([data-disabled])") ?? []);
+      Array.from(
+        panelRef.current?.querySelectorAll<HTMLElement>("[data-menu-item]:not([data-disabled]):not([hidden])") ?? [],
+      );
     const current = () => panelRef.current?.querySelector<HTMLElement>("[data-highlighted]") ?? null;
     let consumedSpace = false;
     const onKeyDown = (e: KeyboardEvent) => {
+      // Qidiruv maydonida: Probel, Home, End — matn uchun; Enter tanlanmagan bo'lsa — birinchi topilgan band
+      const typing = (e.target as HTMLElement | null)?.tagName === "INPUT";
+      if (typing && (e.key === " " || e.key === "Home" || e.key === "End")) return;
+      if (typing && e.key === "Enter" && !current()) {
+        e.preventDefault();
+        items()[0]?.click();
+        return;
+      }
       const list = items();
       const i = list.indexOf(current() as HTMLElement);
       const go = (n: number) => {
@@ -371,7 +400,10 @@ export function DropdownMenuContent({
   if (!mounted) return null;
 
   // Bosish fokusni trigger'dan olmasin (modal fokus tuzog'i bilan to'qnashmasin)
-  const keepFocus = (e: React.MouseEvent) => e.preventDefault();
+  // Fokus trigger'da qoladi; panel ichidagi qidiruv maydoni bundan mustasno (unga yoziladi)
+  const keepFocus = (e: React.MouseEvent) => {
+    if (!(e.target as HTMLElement).closest("input, textarea")) e.preventDefault();
+  };
 
   return createPortal(
     <>
@@ -400,7 +432,7 @@ export function DropdownMenuContent({
           className,
         )}
       >
-        <div ref={contentRef} className="morph-content shrink-0 origin-top-left p-1.5">
+        <div ref={contentRef} className="morph-content shrink-0 origin-top-left overscroll-contain p-1">
           <ItemContext.Provider value={{ close, highlight }}>{children}</ItemContext.Provider>
         </div>
       </div>
@@ -411,7 +443,7 @@ export function DropdownMenuContent({
 
 /** Menyu bandi — dropdown, select va flyout uchun umumiy o'lcham. */
 export const menuItemClass =
-  "flex h-9 max-[900px]:h-10 cursor-pointer items-center gap-2 rounded-menu-item px-3 text-body font-semibold outline-none select-none [&_svg]:size-4 [&_svg]:shrink-0";
+  "flex h-8 max-[900px]:h-9 cursor-pointer items-center gap-2 rounded-menu-item px-2.5 text-body font-semibold outline-none select-none [&_svg]:size-4 [&_svg]:shrink-0";
 
 export function DropdownMenuItem({
   className,

@@ -115,7 +115,7 @@ export function SalariesView({
     router.push(query(next), { scroll: false });
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={t.title}
         description={t.description}
@@ -334,7 +334,7 @@ function ListTab({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={<Banknote />} tone={2} label={t.kpiPaid} value={som(paid)} hint={t.kpiPaidHint} />
@@ -520,7 +520,7 @@ function CalcTab({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard icon={<PiggyBank />} tone={2} label={t.kpiRevenue} value={som(revenue)} hint={t.kpiRevenueHint} />
         <StatCard icon={<Coins />} tone={4} label={t.kpiShare} value={som(share)} hint={t.kpiShareHint} />

@@ -144,7 +144,7 @@ export function CategoriesTab({
       <FilterBar standalone>
         <FilterSearch placeholder={t.categoriesSearch} value={query} onChange={(e) => setQuery(e.target.value)} />
       </FilterBar>
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {section("expense", t.expenseCategories)}
         {section("income", t.incomeCategories)}
       </div>

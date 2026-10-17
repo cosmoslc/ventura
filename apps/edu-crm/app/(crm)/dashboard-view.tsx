@@ -971,7 +971,7 @@ function Events({
         </div>
       }
     >
-      <div className={cn("grid flex-1 gap-6", finance && leads && "sm:grid-cols-2")}>
+      <div className={cn("grid flex-1 gap-4", finance && leads && "sm:grid-cols-2")}>
         {finance ? (
           <div className="min-w-0">
             <div className="mb-2 text-2xs font-semibold tracking-wide text-muted-foreground uppercase">

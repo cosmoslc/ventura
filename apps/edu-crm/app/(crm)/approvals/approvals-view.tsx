@@ -80,7 +80,7 @@ export function ApprovalsView({ rows, director }: { rows: Row[]; director: boole
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={director ? t.titleDirector : t.titleStaff}
         description={director ? t.descriptionDirector : t.descriptionStaff}

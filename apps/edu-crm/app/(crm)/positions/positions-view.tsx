@@ -123,7 +123,7 @@ export function PositionsView({
   const approvalCount = current.approvals.length;
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-4 pb-20">
       <PageHeader
         title={uz.positions.title}
         actions={
@@ -136,7 +136,7 @@ export function PositionsView({
       />
 
       <div className="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <Card className="flex flex-col gap-3 self-start p-4">
+        <Card className="flex flex-col gap-3 self-start p-4 lg:sticky lg:top-[calc(var(--topbar-h)+1.5rem)] lg:max-h-[calc(100dvh-var(--topbar-h)-3rem)]">
           <div className="flex items-center justify-between">
             <span className="text-body font-bold text-foreground">{uz.positions.list(rows.length)}</span>
             {canWrite ? (
@@ -157,7 +157,7 @@ export function PositionsView({
             value={roleQuery}
             onChange={(e) => setRoleQuery(e.target.value)}
           />
-          <ul className="space-y-1">
+          <ul className="-mx-1 min-h-0 space-y-1 overflow-y-auto overscroll-contain px-1">
             {visibleRoles.map((r) => {
               const active = r.id === selected?.id;
               return (

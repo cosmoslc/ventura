@@ -109,7 +109,7 @@ export function ApplySettingsModal({
         </>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4">
         <label className="flex cursor-pointer items-start justify-between gap-4 rounded-control border border-border-soft p-4">
           <span className="min-w-0">
             <span className="block text-body font-semibold text-foreground">{t.applyEnabled}</span>

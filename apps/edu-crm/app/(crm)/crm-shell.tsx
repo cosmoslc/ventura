@@ -294,7 +294,7 @@ export function CrmShell({
         <main
           aria-busy={navigating || undefined}
           className={cn(
-            "min-w-0 flex-1 animate-[page-in_480ms_var(--ease-ios)] p-4 transition-opacity duration-200 sm:p-6 lg:p-8",
+            "min-w-0 flex-1 animate-[page-in_480ms_var(--ease-ios)] p-4 transition-opacity duration-200 sm:p-5 lg:p-6",
             navigating && "opacity-50 delay-150",
           )}
         >

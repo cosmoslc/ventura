@@ -53,11 +53,36 @@ const url = (normalize: (v: string) => string) =>
 
 const minutes = (v: string) => Number(v.slice(0, 2)) * 60 + Number(v.slice(3));
 
+/** O'zbekiston viloyatlari (markaz joylashgan shahar/viloyat) */
+export const REGIONS = [
+  "Toshkent shahri",
+  "Toshkent viloyati",
+  "Andijon",
+  "Buxoro",
+  "Farg'ona",
+  "Jizzax",
+  "Xorazm",
+  "Namangan",
+  "Navoiy",
+  "Qashqadaryo",
+  "Qoraqalpog'iston",
+  "Samarqand",
+  "Sirdaryo",
+  "Surxondaryo",
+] as const;
+
 /** Bazadagi shakl (saqlashdan keyingi) */
 export const centerSchema = z.object({
   /** 9 ta mahalliy raqam yoki bo'sh */
   phone: phone.default(""),
   phone2: phone.default(""),
+  email: z
+    .string()
+    .trim()
+    .max(120)
+    .refine((v) => v === "" || z.email().safeParse(v).success, uz.settingsCenter.emailInvalid)
+    .default(""),
+  city: z.union([z.enum(REGIONS), z.literal("")]).default(""),
   address: z.string().trim().max(200).default(""),
   mapUrl: url(normalizeUrl).default(""),
   telegram: url((v) => normalizeSocial("telegram", v)).default(""),

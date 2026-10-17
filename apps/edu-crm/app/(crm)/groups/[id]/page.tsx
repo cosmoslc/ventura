@@ -31,5 +31,7 @@ export default async function GroupPage({
     month: sp.month,
   });
   if (!props) notFound();
-  return <GroupProfile {...props} />;
+  // Filial qatori — faqat tepada "Barcha filiallar" tanlanganda (bitta filial tanlansa ma'lumot ortiqcha)
+  const showBranch = branch.enabled && branch.selected === "all" && branch.options.length > 1;
+  return <GroupProfile {...props} showBranch={showBranch} />;
 }

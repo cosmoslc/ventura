@@ -75,7 +75,7 @@ export function MetricCard({
       {...props}
     >
       <div className="flex h-7 items-center justify-between gap-2">
-        <span className="truncate text-caption font-semibold text-muted-foreground" title={label}>
+        <span className="truncate text-body font-semibold text-muted-foreground" title={label}>
           {label}
         </span>
         {badge ? (
@@ -92,11 +92,11 @@ export function MetricCard({
         <span className={cn("type-stat truncate leading-7", colorValue ? VALUE[tone] : "text-foreground")}>
           {value}
         </span>
-        {unit ? <span className="shrink-0 text-caption text-muted-foreground">{unit}</span> : null}
+        {unit ? <span className="shrink-0 text-xs text-muted-foreground">{unit}</span> : null}
       </div>
       {foot ? (
         <div
-          className="mt-auto truncate border-t border-border-soft pt-1 text-caption leading-4 text-muted-foreground"
+          className="mt-auto truncate border-t border-border-soft pt-1 text-xs leading-5 text-muted-foreground"
           title={typeof foot === "string" ? foot : undefined}
         >
           {foot}

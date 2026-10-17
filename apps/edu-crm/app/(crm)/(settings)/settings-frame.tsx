@@ -50,8 +50,8 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
 
   return (
     // Katta ekranda ikkala ustun ekran balandligida, har biri o'zi aylanadi: navbar joyidan qimirlamaydi va uning
-    // ustida aylantirilganda yonidagi sahifa siljimaydi (topbar + main'ning yuqori/pastki ichki bo'shlig'i — 4rem)
-    <div className="lg:grid lg:h-[calc(100dvh-var(--topbar-h)-4rem)] lg:grid-cols-[264px_minmax(0,1fr)] lg:gap-8">
+    // ustida aylantirilganda yonidagi sahifa siljimaydi (topbar + main'ning yuqori/pastki ichki bo'shlig'i — 3rem)
+    <div className="lg:grid lg:h-[calc(100dvh-var(--topbar-h)-3rem)] lg:grid-cols-[264px_minmax(0,1fr)] lg:gap-6">
       {/* Kichik ekran: gorizontal tasma */}
       <nav aria-label={t.title} className="-mx-4 mb-5 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:hidden">
         <ul className="flex w-max gap-1.5">

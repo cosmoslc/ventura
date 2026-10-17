@@ -1,12 +1,31 @@
 "use client";
 
-import { Armchair, Clock, DoorOpen, Layers, Pencil, Plus, Trash2, UserCheck, Users, UserRound } from "lucide-react";
+import {
+  Armchair,
+  Clock,
+  DoorOpen,
+  Layers,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  UserCheck,
+  Users,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { FilterBar, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
 import { Meter } from "@ventura/ui/meter";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
@@ -38,6 +57,7 @@ export const daysLabel = (days: readonly string[]) =>
 export function GroupsView({
   rows,
   courses,
+  initialCourse,
   teachers,
   rooms,
   branches,
@@ -46,6 +66,8 @@ export function GroupsView({
 }: {
   rows: GroupRow[];
   courses: CourseOption[];
+  /** Boshlang'ich kurs filtri (?kurs=), bo'lmasa "all" */
+  initialCourse?: string;
   teachers: TeacherOption[];
   rooms: RoomOption[];
   branches: PickerBranch[];
@@ -54,7 +76,7 @@ export function GroupsView({
 }) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
-  const [course, setCourse] = React.useState("all");
+  const [course, setCourse] = React.useState(initialCourse ?? "all");
   const [days, setDays] = React.useState("all");
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<GroupRow | null>(null);
@@ -76,11 +98,8 @@ export function GroupsView({
 
   // Statistika — faqat bazadagi a'zoliklardan (o'quvchi takrorsiz; daromad kartalari — E3)
   const distinct = new Set(rows.flatMap((g) => g.studentIds)).size;
-  const active = rows.reduce((s, g) => s + g.members.active, 0);
-  const paused = rows.reduce((s, g) => s + g.members.paused, 0);
   const trial = rows.reduce((s, g) => s + g.members.trial, 0);
   const withRoom = rows.filter((g) => g.roomCapacity !== null);
-  const capacity = withRoom.reduce((s, g) => s + (g.roomCapacity ?? 0), 0);
   const seats = withRoom.reduce((s, g) => s + Math.max(0, (g.roomCapacity ?? 0) - g.studentIds.length), 0);
 
   function openForm(g: GroupRow | null) {
@@ -91,7 +110,7 @@ export function GroupsView({
   const missing = !courses.length ? "courses" : !teachers.length ? "teachers" : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={uz.groups.title}
         actions={
@@ -108,27 +127,9 @@ export function GroupsView({
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard tone={1} icon={<Layers />} label={uz.groups.statGroups} value={uz.groups.groupsUnit(rows.length)} />
-        <StatCard
-          tone={2}
-          icon={<Users />}
-          label={uz.groups.statStudents}
-          value={uz.groups.studentsUnit(distinct)}
-          hint={<div>{uz.groups.membersHint(active, paused)}</div>}
-        />
-        <StatCard
-          tone={3}
-          icon={<UserCheck />}
-          label={uz.groups.statTrial}
-          value={uz.groups.studentsUnit(trial)}
-          hint={<div>{uz.groups.trialHint}</div>}
-        />
-        <StatCard
-          tone={4}
-          icon={<Armchair />}
-          label={uz.groups.statSeats}
-          value={uz.common.count(seats)}
-          hint={<div>{uz.groups.seatsHint(capacity)}</div>}
-        />
+        <StatCard tone={2} icon={<Users />} label={uz.groups.statStudents} value={uz.groups.studentsUnit(distinct)} />
+        <StatCard tone={3} icon={<UserCheck />} label={uz.groups.statTrial} value={uz.groups.studentsUnit(trial)} />
+        <StatCard tone={4} icon={<Armchair />} label={uz.groups.statSeats} value={uz.common.count(seats)} />
       </div>
 
       <FilterBar standalone>
@@ -179,31 +180,36 @@ export function GroupsView({
                       <Badge tone="info">{uz.groups.fewStudents}</Badge>
                     ) : null}
                   </div>
-                  <div className="flex shrink-0 gap-1">
-                    {perms.edit || perms.changeTeacher ? (
-                      <Button
-                        variant="icon"
-                        size="icon-sm"
-                        title={uz.groups.edit}
-                        aria-label={`${g.name} — ${uz.groups.edit}`}
-                        onClick={() => openForm(g)}
-                      >
-                        <Pencil />
-                      </Button>
-                    ) : null}
-                    {perms.delete ? (
-                      <Button
-                        variant="icon"
-                        size="icon-sm"
-                        className="text-destructive-text"
-                        title={uz.groups.archive}
-                        aria-label={`${g.name} — ${uz.groups.archive}`}
-                        onClick={() => setToArchive(g)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    ) : null}
-                  </div>
+                  {perms.edit || perms.changeTeacher || perms.delete ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="subtle"
+                          size="icon-sm"
+                          className="-mt-1 -mr-1 shrink-0"
+                          title={uz.common.actions}
+                          aria-label={`${g.name} — ${uz.common.actions}`}
+                        >
+                          <MoreHorizontal />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-52">
+                        {perms.edit || perms.changeTeacher ? (
+                          <DropdownMenuItem onSelect={() => openForm(g)}>
+                            <Pencil /> {uz.groups.edit}
+                          </DropdownMenuItem>
+                        ) : null}
+                        {perms.delete ? (
+                          <>
+                            {perms.edit || perms.changeTeacher ? <DropdownMenuSeparator /> : null}
+                            <DropdownMenuItem danger onSelect={() => setToArchive(g)}>
+                              <Trash2 /> {uz.groups.archive}
+                            </DropdownMenuItem>
+                          </>
+                        ) : null}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  ) : null}
                 </div>
                 <Link href={`/groups/${g.id}`} className="type-heading text-title text-foreground hover:text-primary">
                   {g.name}

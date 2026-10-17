@@ -63,7 +63,7 @@ export function ReceiptCard({
   return (
     <Card className="p-5">
       <h2 className="type-heading mb-5 text-base">{t.title}</h2>
-      <div className="grid gap-8 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <form onSubmit={submit} className="min-w-0 space-y-5">
           <div>
             <Label htmlFor="r-header">{t.header}</Label>

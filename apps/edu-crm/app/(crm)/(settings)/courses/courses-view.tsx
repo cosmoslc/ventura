@@ -1,13 +1,32 @@
 "use client";
 
-import { BookOpen, ChevronDown, Clock, Layers, Pencil, Plus, Trash2, Users, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  MoreHorizontal,
+  BookOpen,
+  GraduationCap,
+  LayoutGrid,
+  Layers,
+  Pencil,
+  Plus,
+  Trash2,
+  Users,
+  Wallet,
+} from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { Badge } from "@ventura/ui/badge";
+import { Avatar } from "@ventura/ui/avatar";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { FilterBar, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
-import { cn } from "@ventura/ui/lib/utils";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
@@ -87,7 +106,7 @@ export function CoursesView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={uz.courses.title}
         actions={
@@ -216,99 +235,100 @@ function CourseCard({
   onEdit: () => void;
   onArchive: () => void;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const t = uz.courses;
+  // Kursdagi o'qituvchilar (guruhlaridan, takrorsiz): birinchisi ko'rinadi, qolgani "+N"
+  const teachers = [...new Set(course.groups.flatMap((g) => (g.teacher ? [g.teacher] : [])))];
+  const meta = [branchName, course.durationMonths > 0 ? t.months(course.durationMonths) : null].filter(Boolean);
   return (
-    <Card className="flex flex-col gap-4 border-l-4 p-5" style={{ borderLeftColor: course.color }}>
+    <Card className="flex flex-col p-5">
       <div className="flex items-start gap-3">
         <div
-          className="grid size-10 shrink-0 place-items-center rounded-stat-icon [&_svg]:size-5"
-          style={{ background: `color-mix(in oklab, ${course.color} 16%, transparent)`, color: course.color }}
+          className="grid size-11 shrink-0 place-items-center rounded-stat-icon [&_svg]:size-5"
+          style={{ background: `color-mix(in oklab, ${course.color} 14%, transparent)`, color: course.color }}
         >
           <BookOpen />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-body font-bold text-foreground" title={course.name}>
+          <div className="truncate text-body leading-snug font-bold text-foreground" title={course.name}>
             {course.name}
           </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            {branchName ? <Badge tone="neutral">{branchName}</Badge> : null}
-            {course.durationMonths > 0 ? (
-              <span className="flex items-center gap-1 text-caption text-muted-foreground">
-                <Clock className="size-3" /> {uz.courses.months(course.durationMonths)}
-              </span>
-            ) : null}
-          </div>
+          {meta.length ? (
+            <div className="mt-0.5 truncate text-caption text-muted-foreground">{meta.join(" · ")}</div>
+          ) : null}
         </div>
         {canWrite ? (
-          <div className="flex shrink-0 gap-1.5">
-            <Button variant="icon" size="icon-sm" title={uz.common.edit} aria-label={uz.common.edit} onClick={onEdit}>
-              <Pencil />
-            </Button>
-            <Button
-              variant="icon"
-              size="icon-sm"
-              title={uz.common.delete}
-              aria-label={uz.common.delete}
-              onClick={onArchive}
-              className="text-destructive-text"
-            >
-              <Trash2 />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="subtle"
+                size="icon-sm"
+                className="-mt-1 -mr-1 shrink-0"
+                title={uz.common.actions}
+                aria-label={`${course.name} — ${uz.common.actions}`}
+              >
+                <MoreHorizontal />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onSelect={onEdit}>
+                <Pencil /> {uz.common.edit}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem danger onSelect={onArchive}>
+                <Trash2 /> {uz.common.delete}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : null}
       </div>
 
-      <div className="grid grid-cols-3 divide-x divide-border-soft rounded-control border border-border-soft">
-        <Metric label={uz.courses.metricGroups} value={uz.common.count(course.groups.length)} />
-        <Metric label={uz.courses.metricStudents} value={uz.common.count(course.students)} />
-        <Metric label={uz.courses.metricPrice} value={course.price ? money(course.price) : uz.courses.noPrice} />
-      </div>
-
-      <div className="flex items-center justify-between gap-2 text-body">
-        <span className="text-muted-foreground">{uz.courses.monthlyRevenue}</span>
-        <span className="font-mono font-bold text-foreground">
-          {money(course.revenue)} {uz.courses.revenueUnit}
+      <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-body text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <LayoutGrid className="size-4" aria-hidden />
+          <b className="font-bold text-foreground">{course.groups.length}</b> {t.activeGroups}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <GraduationCap className="size-4" aria-hidden />
+          <b className="font-bold text-foreground">{course.students}</b> {t.studentsWord}
         </span>
       </div>
 
-      <div className="border-t border-border-soft pt-3">
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          className="flex w-full items-center justify-between text-body font-semibold text-foreground"
-        >
-          {uz.courses.groupList(course.groups.length)}
-          <ChevronDown className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")} />
-        </button>
-        {open ? (
-          course.groups.length ? (
-            <ul className="mt-3 space-y-2">
-              {course.groups.map((g) => (
-                <li key={g.id} className="flex items-center gap-2 rounded-control bg-muted px-3 py-2">
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ background: g.color ?? course.color }}
-                    aria-hidden
-                  />
-                  <span className="min-w-0 flex-1 truncate text-body font-semibold text-foreground">{g.name}</span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-3 text-body text-muted-foreground">{uz.courses.noGroups}</p>
-          )
-        ) : null}
+      <div className="mt-3 flex min-h-8 items-center gap-2 text-body">
+        {teachers.length ? (
+          <>
+            <Avatar name={teachers[0]!} size={28} variant="brand" />
+            <span className="min-w-0 truncate text-foreground">{teachers[0]}</span>
+            {teachers.length > 1 ? (
+              <span className="shrink-0 text-caption text-muted-foreground" title={teachers.slice(1).join(", ")}>
+                +{teachers.length - 1}
+              </span>
+            ) : null}
+          </>
+        ) : (
+          <span className="text-muted-foreground">{t.noTeacher}</span>
+        )}
+      </div>
+
+      <div className="mt-4 flex items-end justify-between gap-3 border-t border-border-soft pt-4">
+        <div className="min-w-0">
+          <div className="text-caption text-muted-foreground">{t.metricPrice}</div>
+          <div className="truncate text-body leading-tight font-bold text-foreground">
+            {course.price ? (
+              <>
+                {money(course.price)}{" "}
+                <span className="text-caption font-medium text-muted-foreground">{uz.common.som}</span>
+              </>
+            ) : (
+              <span className="text-body font-medium text-muted-foreground">{t.noPrice}</span>
+            )}
+          </div>
+        </div>
+        <Button asChild variant="ghost" size="sm" className="shrink-0">
+          <Link href={`/groups?kurs=${course.id}`}>
+            {t.view} <ArrowRight />
+          </Link>
+        </Button>
       </div>
     </Card>
-  );
-}
-
-function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-3 py-2.5 text-center">
-      <div className="text-2xs font-semibold tracking-wide text-muted-foreground uppercase">{label}</div>
-      <div className="mt-0.5 truncate text-body font-bold text-foreground">{value}</div>
-    </div>
   );
 }
