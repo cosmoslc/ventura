@@ -1,18 +1,30 @@
 import { execFile } from "node:child_process";
 import { createHash, randomBytes } from "node:crypto";
 import { promisify } from "node:util";
-import { and, asc, eq, isNull, max, ne } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull, max, ne } from "drizzle-orm";
 import type { PanelDb } from "@ventura/db";
 import { apps, domains, projectFeatures, projects, servers, templates } from "@ventura/db/schema/panel";
 import { readSecret, putSecret } from "@ventura/security";
-import { type Tenant, emptyRegistry, emptySecrets, parseRegistry, parseSecrets, upsertTenant } from "@ventura/tenants";
+import {
+  type Tenant,
+  emptyRegistry,
+  emptySecrets,
+  parseRegistry,
+  parseSecrets,
+  removeTenant,
+  upsertTenant,
+} from "@ventura/tenants";
 import { openSession } from "../servers";
 import { type SshSession, sh } from "../ssh";
 import { type DeployContext, type DeployDriver, StepError, type StepKey, type StepLog } from "../types";
 
 /*
- * SSH drayveri (SPEC 6: "SSH drayveri: bitta deploy qadamlari"), `shared` rejim: serverda shablonning bitta
- * ilovasi ishlaydi va shu serverdagi hamma mijozga xizmat qiladi; mijoz domen bo'yicha aniqlanadi.
+ * SSH drayveri (SPEC 6: "SSH drayveri: bitta deploy qadamlari"). Ikki rejim (ADR 0048):
+ *  - `shared`: serverda shablonning bitta ilovasi (`edu-crm`) shu serverdagi hamma mijozga xizmat qiladi;
+ *    mijoz domen bo'yicha aniqlanadi;
+ *  - `dedicated`: mijozga o'z ilova nusxasi (`edu-crm-<slug>`): o'z papkasi, PM2 jarayoni, porti va faqat o'zi
+ *    yozilgan mijozlar ro'yxati. `dedicated_server` bazasida server butunlay shu mijozniki.
+ * Baza nomi rejimga bog'liq emas (shablon + slug): rejim almashganda ma'lumot o'sha bazada qoladi.
  *
  * Buyruqlar faqat shu fayldagi qoliplardan tuziladi. O'zgaruvchi qismlar (slug, port, yo'l, commit) avval
  * qat'iy tekshiriladi va har doim `sh()` bilan qo'shtirnoqlanadi; foydalanuvchi matni buyruqqa qo'shilmaydi.
@@ -21,6 +33,8 @@ import { type DeployContext, type DeployDriver, StepError, type StepKey, type St
 const run = promisify(execFile);
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
+/** Ilova nusxasi nomi: `shared` — shablon kaliti, `dedicated` — `<shablon>-<slug>` */
+const INSTANCE_RE = /^[a-z0-9][a-z0-9-]{1,80}[a-z0-9]$/;
 const HOST_RE = /^(?=.{1,253}$)[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/;
 const APP_PATH_RE = /^apps\/[a-z0-9][a-z0-9-]*$/;
 const ROOT_RE = /^\/[A-Za-z0-9._/-]+$/;
@@ -47,7 +61,14 @@ interface Plan {
   dbStrategy: string;
   owner: { name: string | null; phone: string | null };
   slug: string;
+  /** Shablon kaliti (`edu-crm`): baza nomi va bir xil shablondagi boshqa mijozlar shu bo'yicha */
+  templateKey: string;
+  /** Ilova nusxasi: papka va PM2 jarayoni nomi (`edu-crm` yoki `edu-crm-<slug>`) */
   appName: string;
+  /** `dedicated` rejim: nusxada faqat shu mijoz */
+  dedicated: boolean;
+  /** Serverdagi umumiy papka (`servers.deploy_root`) */
+  deployRoot: string;
   appPath: string;
   appId: string;
   port: number;
@@ -71,6 +92,29 @@ interface Plan {
 function must(value: string, pattern: RegExp, what: string): string {
   if (!pattern.test(value)) throw new StepError(`${what} noto'g'ri: deploy to'xtatildi`);
   return value;
+}
+
+/** Ilova nusxasi nomi: shared — shablon kaliti, dedicated — `<shablon>-<slug>`. */
+export function instanceName(templateKey: string, slug: string, dedicated: boolean): string {
+  return dedicated ? `${templateKey}-${slug}` : templateKey;
+}
+
+/**
+ * Loyiha shu serverga qo'yilishi mumkinmi (alohida server bazasi qoidasi): `null` — mumkin, aks holda sabab.
+ * `neighbours` — shu loyihadan boshqa, serverga biriktirilgan loyihalar.
+ */
+export function serverFit(
+  dbStrategy: string,
+  neighbours: readonly { serverId: string | null; dbStrategy: string }[],
+): (serverId: string) => string | null {
+  return (serverId) => {
+    const here = neighbours.filter((n) => n.serverId === serverId);
+    if (here.some((n) => n.dbStrategy === "dedicated_server"))
+      return "Bu server boshqa mijozga alohida server sifatida berilgan: unga loyiha qo'shib bo'lmaydi";
+    if (dbStrategy === "dedicated_server" && here.length)
+      return "Alohida server bazasi uchun server bo'sh bo'lishi kerak: unda boshqa loyihalar bor";
+    return null;
+  };
 }
 
 export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
@@ -100,8 +144,13 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   async function prepare(ctx: DeployContext, log: StepLog) {
     const [project] = await db.select().from(projects).where(eq(projects.id, ctx.project.id)).limit(1);
     if (!project) throw new StepError("Loyiha topilmadi");
-    if (project.mode !== "shared")
-      throw new StepError(`"${project.mode}" rejimi hali qo'llab-quvvatlanmaydi (3-bosqich)`);
+    if (project.mode !== "shared" && project.mode !== "dedicated")
+      throw new StepError(`"${project.mode}" rejimi qo'llab-quvvatlanmaydi`);
+    const dedicated = project.mode === "dedicated";
+    if (project.dbStrategy === "dedicated_server" && !dedicated)
+      throw new StepError("Alohida server bazasi faqat dedicated rejimda ishlaydi");
+    if (project.dbStrategy === "shared_db" && dedicated)
+      throw new StepError("Umumiy baza faqat shared rejimda ishlaydi");
     const [template] = await db.select().from(templates).where(eq(templates.key, project.templateKey)).limit(1);
     if (!template) throw new StepError("Shablon topilmadi");
 
@@ -109,21 +158,34 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const kind = project.target === "home" ? "home" : project.target === "vps" ? "online" : null;
     if (!kind) throw new StepError(`"${project.target}" manzili SSH orqali deploy qilinmaydi`);
     const ready = await db.select().from(servers).where(eq(servers.status, "ready")).orderBy(asc(servers.createdAt));
+    // Alohida server bazasi: server butunlay bitta mijozniki — unda boshqa loyiha bo'lmaydi va unga boshqasi qo'shilmaydi
+    const neighbours = await db
+      .select({ serverId: projects.serverId, dbStrategy: projects.dbStrategy })
+      .from(projects)
+      .where(and(ne(projects.id, project.id), isNull(projects.deletedAt), isNotNull(projects.serverId)));
+    const fit = serverFit(project.dbStrategy, neighbours);
+    const where = kind === "home" ? "uydagi server" : "online VPS";
     const server =
       ready.find((s) => s.id === project.serverId) ??
-      (project.serverId ? undefined : ready.find((s) => s.kind === kind));
+      (project.serverId ? undefined : ready.find((s) => s.kind === kind && fit(s.id) === null));
     if (!server) {
       throw new StepError(
-        `Tayyor ${kind === "home" ? "uydagi server" : "online VPS"} yo'q. Serverlar bo'limida server qo'shing va "Tekshirish"ni bosing.`,
+        project.dbStrategy === "dedicated_server"
+          ? `Bo'sh ${where} yo'q: alohida server bazasi uchun boshqa loyihasi yo'q server kerak.`
+          : `Tayyor ${where} yo'q. Serverlar bo'limida server qo'shing va "Tekshirish"ni bosing.`,
       );
     }
+    const problem = fit(server.id);
+    if (problem) throw new StepError(problem);
 
     const slug = must(project.slug, SLUG_RE, "Loyiha nomi (slug)");
-    const appName = must(template.key, SLUG_RE, "Shablon kaliti");
+    const templateKey = must(template.key, SLUG_RE, "Shablon kaliti");
+    const appName = must(instanceName(templateKey, slug, dedicated), INSTANCE_RE, "Ilova nomi");
     const appPath = must(template.appPath, APP_PATH_RE, "Shablon papkasi");
-    const root = `${must(server.deployRoot, ROOT_RE, "Server papkasi")}/${appName}`;
+    const deployRoot = must(server.deployRoot, ROOT_RE, "Server papkasi");
+    const root = `${deployRoot}/${appName}`;
 
-    // Ilova nusxasi: shu serverda shu shablon uchun bitta; porti birinchi marta ajratiladi
+    // Ilova nusxasi: shared — shu serverda shu shablon uchun bitta, dedicated — loyihaga bitta; porti birinchi marta ajratiladi
     let [app] = await db
       .select()
       .from(apps)
@@ -163,6 +225,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const sha = must(stdout.trim(), SHA_RE, "Commit");
 
     log(`Server: ${server.name} (${server.sshUser}@${server.host}:${server.sshPort})`, "info");
+    log(dedicated ? `Rejim: dedicated — alohida ilova ${appName}` : `Rejim: shared — umumiy ilova ${appName}`, "info");
     const session = await openSession(db, server);
     plan = {
       session,
@@ -171,7 +234,10 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       dbStrategy: project.dbStrategy,
       owner: { name: project.ownerName, phone: project.ownerPhone },
       slug,
+      templateKey,
       appName,
+      dedicated,
+      deployRoot,
       appPath,
       appId: app!.id,
       port: app!.port,
@@ -233,7 +299,8 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const file = `${p.root}/shared/tenants.json`;
     const existing = await probe(`cat ${sh(file)}`);
     let registry = emptyRegistry();
-    if (existing) {
+    // Alohida ilovada ro'yxat har safar noldan: unda faqat shu mijoz bo'ladi
+    if (existing && !p.dedicated) {
       try {
         registry = parseRegistry(existing);
       } catch {
@@ -364,9 +431,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     if (!(await probe(`test -f ${sh(`${appDir}/${PROVISION_SCRIPT}`)} && echo bor`))) {
       return void log("Shablonda mijoz bazasi yo'q — o'tkazib yuborildi.", "info");
     }
-    if (p.dbStrategy === "dedicated_server") {
-      throw new StepError("Alohida baza serveri (dedicated_server) hali qo'llab-quvvatlanmaydi (3-bosqich)");
-    }
+    // Alohida server bazasi ham shu serverning PostgreSQL'ida (ilova va baza bitta VPS'da); server boshqa loyihaga berilmaydi
     const { shared, dbName, passwordOwner, passwordName } = dbFor(p.dbStrategy, p.slug, p.projectId);
 
     const helper = await p.session.exec(`bash -lc ${sh("sudo -n /usr/local/sbin/ventura-db check")}`, {
@@ -387,7 +452,8 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       MINUTE,
       `${dbPassword}\n`,
     );
-    log(`Baza: ${dbName} (${shared ? "umumiy baza" : "alohida baza"})`, "info");
+    const kindLabel = shared ? "umumiy baza" : p.dbStrategy === "dedicated_server" ? "alohida server" : "alohida baza";
+    log(`Baza: ${dbName} (${kindLabel})`, "info");
 
     const project = { type: "project", id: p.projectId };
     const databaseUrl = `postgres://${dbName}:${dbPassword}@127.0.0.1:5432/${dbName}`;
@@ -411,7 +477,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const file = `${p.root}/shared/tenant-secrets.json`;
     const existing = await probe(`cat ${sh(file)}`);
     let secrets = emptySecrets();
-    if (existing) {
+    if (existing && !p.dedicated) {
       try {
         secrets = parseSecrets(existing);
       } catch {
@@ -437,7 +503,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   function dbFor(strategy: string, slug: string, projectId: string) {
     const p = plan!;
     const shared = strategy === "shared_db";
-    const base = p.appName.replace(/-/g, "_");
+    const base = p.templateKey.replace(/-/g, "_");
     const dbName = must(shared ? `${base}_shared` : `${base}_${slug.replace(/-/g, "_")}`, DB_NAME_RE, "Baza nomi");
     return {
       shared,
@@ -449,13 +515,16 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
 
   async function migrateOthers(log: StepLog, appDir: string) {
     const p = plan!;
+    // Alohida ilova faqat o'z mijoziga xizmat qiladi: boshqalar o'z versiyasida qoladi
+    if (p.dedicated) return;
     const others = await db
       .select({ id: projects.id, slug: projects.slug, name: projects.name, dbStrategy: projects.dbStrategy })
       .from(projects)
       .where(
         and(
           eq(projects.serverId, p.serverId),
-          eq(projects.templateKey, p.appName),
+          eq(projects.templateKey, p.templateKey),
+          eq(projects.mode, "shared"),
           ne(projects.id, p.projectId),
           isNull(projects.deletedAt),
         ),
@@ -501,6 +570,52 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `rm -rf -- ${old.map((name) => sh(`${p.root}/releases/${name}`)).join(" ")}`);
   }
 
+  /** Faylni vaqtinchalik nusxa orqali almashtiradi: ilova hech qachon yarim yozilgan faylni o'qimaydi */
+  async function replaceFile(log: StepLog, file: string, content: string) {
+    await plan!.session.writeFile(`${file}.tmp`, content, 0o600);
+    await remote(log, `chmod 600 ${sh(`${file}.tmp`)} && mv -f ${sh(`${file}.tmp`)} ${sh(file)}`);
+  }
+
+  /**
+   * Rejim almashganda eski nusxadan chiqish (nginx allaqachon yangisiga ulangan, shuning uchun uzilish yo'q):
+   *  - dedicated bo'ldi: umumiy ilova ro'yxati va maxfiy faylidan shu mijoz olib tashlanadi;
+   *  - shared bo'ldi: alohida nusxaning PM2 jarayoni to'xtatiladi (papkasi joyida qoladi, logda yo'li yoziladi).
+   * Xato deploy'ni yiqitmaydi: yangi versiya ishlab turibdi, faqat logga yoziladi.
+   */
+  async function handover(log: StepLog) {
+    const p = plan!;
+    try {
+      if (p.dedicated) {
+        const dir = `${p.deployRoot}/${p.templateKey}/shared`;
+        const registryText = await probe(`cat ${sh(`${dir}/tenants.json`)}`);
+        if (!registryText) return;
+        const registry = parseRegistry(registryText);
+        if (!registry.tenants.some((t) => t.slug === p.slug)) return;
+        await replaceFile(log, `${dir}/tenants.json`, `${JSON.stringify(removeTenant(registry, p.slug), null, 2)}\n`);
+        const secretsText = await probe(`cat ${sh(`${dir}/tenant-secrets.json`)}`);
+        if (secretsText) {
+          const secrets = parseSecrets(secretsText);
+          delete secrets.tenants[p.slug];
+          await replaceFile(log, `${dir}/tenant-secrets.json`, `${JSON.stringify(secrets, null, 2)}\n`);
+        }
+        log(`Mijoz umumiy ilovadan (${p.templateKey}) olib tashlandi: endi alohida ilovada.`, "info");
+        return;
+      }
+      const old = must(instanceName(p.templateKey, p.slug, true), INSTANCE_RE, "Ilova nomi");
+      const [row] = await db
+        .select({ id: apps.id })
+        .from(apps)
+        .where(and(eq(apps.serverId, p.serverId), eq(apps.name, old)))
+        .limit(1);
+      if (!row) return;
+      await remote(log, `(pm2 delete ${sh(old)} || true) && pm2 save`);
+      await db.delete(apps).where(eq(apps.id, row.id));
+      log(`Alohida ilova (${old}) to'xtatildi; fayllari ${p.deployRoot}/${old} da qoldi.`, "info");
+    } catch (error) {
+      log(`Eski nusxani tozalab bo'lmadi (qo'lda tekshiring): ${(error as Error).message}`, "err");
+    }
+  }
+
   const steps: Record<Exclude<StepKey, "prepare">, (log: StepLog) => Promise<void>> = {
     fetch,
     env,
@@ -521,6 +636,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       // Oxirgi majburiy qadam o'tdi: ilova holati eslab qolinadi
       if (step === "route") {
         await db.update(apps).set({ commitSha: plan.sha, releasePath: plan.release }).where(eq(apps.id, plan.appId));
+        await handover(log);
       }
     },
     async rollback(_ctx, log) {

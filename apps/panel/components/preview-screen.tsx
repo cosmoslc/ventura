@@ -693,7 +693,6 @@ function ProjectFields() {
             <SelectContent>
               <SelectItem value="home">Uydagi server</SelectItem>
               <SelectItem value="vps">Online VPS</SelectItem>
-              <SelectItem value="vercel">Vercel</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -846,7 +845,6 @@ function ProjectSettings({ onDelete }: { onDelete: () => void }) {
                   {[
                     ["shared", "Bitta ilova, ko'p mijoz (standart)"],
                     ["dedicated", "Mijozga alohida deploy"],
-                    ["fork", "Alohida GitHub repo"],
                   ].map(([v, d]) => (
                     <ChoiceField
                       key={v}

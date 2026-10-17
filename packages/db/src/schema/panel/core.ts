@@ -64,8 +64,8 @@ export const templates = pgTable("templates", {
 
 /* ---------- Loyihalar (mijoz tizimlari) ---------- */
 
-export const DEPLOY_MODES = ["shared", "dedicated", "fork"] as const;
-export const TARGET_KINDS = ["home", "vps", "vercel"] as const;
+export const DEPLOY_MODES = ["shared", "dedicated"] as const;
+export const TARGET_KINDS = ["home", "vps"] as const;
 export const DB_STRATEGIES = ["shared_db", "db_per_tenant", "dedicated_server"] as const;
 /** `draft` — hali muvaffaqiyatli deploy bo'lmagan; birinchi `ready` deploy loyihani `active` qiladi */
 export const PROJECT_STATUSES = ["draft", "active", "paused"] as const;

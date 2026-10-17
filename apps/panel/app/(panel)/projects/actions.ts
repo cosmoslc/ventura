@@ -18,7 +18,7 @@ import {
 import { escapeHtml } from "@ventura/integrations";
 import { audit, putSecret } from "@ventura/security";
 import { type Feature, withRequirements } from "@ventura/tenants";
-import { BASE_DOMAIN, projectInputSchema, slugProblem } from "@/lib/project-rules";
+import { BASE_DOMAIN, deployProblem, projectInputSchema, slugProblem } from "@/lib/project-rules";
 import { deps } from "@/lib/server/deps";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
@@ -99,7 +99,7 @@ export async function createProjectAction(input: unknown): Promise<Result<{ id: 
         dbStrategy: v.dbStrategy,
         status: "draft",
         brand: v.brand,
-        settings: v.githubRepo && v.mode === "fork" ? { githubRepo: v.githubRepo } : {},
+        settings: {},
         ownerName: v.ownerName,
         ownerPhone: `+998${v.ownerPhone}`,
         createdBy: viewer.id,
@@ -170,6 +170,12 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
     .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
     .limit(1);
   if (!before) return { ok: false, error: uz.common.loadError };
+  const dp = deployProblem(parsed.data.mode, parsed.data.dbStrategy);
+  if (dp) return { ok: false, error: dp };
+  // Umumiy baza ↔ alohida baza: ma'lumot boshqa bazada qoladi — deploy qilingan loyihada ko'chirishsiz o'zgartirilmaydi
+  const sharedDbChanged =
+    before.dbStrategy !== parsed.data.dbStrategy && [before.dbStrategy, parsed.data.dbStrategy].includes("shared_db");
+  if (sharedDbChanged && before.status !== "draft") return { ok: false, error: uz.projects.dbChangeLocked };
   await db.update(projects).set(parsed.data).where(eq(projects.id, id));
   const changed = Object.fromEntries(
     Object.entries(parsed.data).filter(([k, val]) => before[k as keyof typeof before] !== val),

@@ -58,8 +58,8 @@ export interface ProjectRow {
   client: string;
   domain: string;
   template: "edu-crm" | "sawmill";
-  target: "Uydagi server" | "Online VPS" | "Vercel";
-  mode: "shared" | "dedicated" | "fork";
+  target: "Uydagi server" | "Online VPS";
+  mode: "shared" | "dedicated";
   status: ProjectStatus;
   lastDeploy: string;
   phone: string;
@@ -110,8 +110,8 @@ const statuses: ProjectStatus[] = [
   "trial",
   "active",
 ];
-const targets: ProjectRow["target"][] = ["Uydagi server", "Online VPS", "Uydagi server", "Vercel"];
-const modes: ProjectRow["mode"][] = ["shared", "shared", "dedicated", "shared", "fork"];
+const targets: ProjectRow["target"][] = ["Uydagi server", "Online VPS", "Uydagi server", "Online VPS"];
+const modes: ProjectRow["mode"][] = ["shared", "shared", "dedicated", "shared", "dedicated"];
 
 function slugify(s: string) {
   return s
