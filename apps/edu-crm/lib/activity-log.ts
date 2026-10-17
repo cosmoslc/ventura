@@ -156,6 +156,13 @@ const REGISTRY: Record<string, Def> = {
   "student.leave": simple(
     "student",
     "o'quvchini guruhdan chiqardi",
+    (i) => parts(groupOf(i), reason(i), i.m.forgiven ? "qarzdan kechib" : i.m.auto ? "qarzi to'langach" : null),
+    (i) => i.who,
+    true,
+  ),
+  "student.leave_pending": simple(
+    "student",
+    "o'quvchini qarz to'languncha muzlatdi (keyin guruhdan chiqadi)",
     (i) => parts(groupOf(i), reason(i)),
     (i) => i.who,
     true,
@@ -170,7 +177,12 @@ const REGISTRY: Record<string, Def> = {
   "group.activate": simple("group", "guruhda o'quvchini faollashtirdi", studentOf),
   "group.pause": simple("group", "guruhda o'quvchini muzlatdi", studentOf),
   "group.unpause": simple("group", "guruhda o'quvchining muzlatilishini bekor qildi", studentOf),
-  "group.leave": simple("group", "guruhdan o'quvchini chiqardi", (i) => parts(studentOf(i), reason(i))),
+  "group.leave": simple("group", "guruhdan o'quvchini chiqardi", (i) =>
+    parts(studentOf(i), reason(i), i.m.forgiven ? "qarzdan kechib" : i.m.auto ? "qarzi to'langach" : null),
+  ),
+  "group.leave_pending": simple("group", "o'quvchini qarz to'languncha muzlatdi (keyin guruhdan chiqadi)", (i) =>
+    parts(studentOf(i), reason(i)),
+  ),
 
   // O'qituvchilar
   "teacher.create": created("teacher", "yangi o'qituvchi qo'shdi", "Excel'dan o'qituvchi qo'shdi"),
@@ -228,6 +240,7 @@ const REGISTRY: Record<string, Def> = {
   ),
   "payment.refund": { section: "payment", text: money2("to'lovni qaytardi", reason) },
   "payment.correction": { section: "payment", text: money2("o'quvchi balansini tuzatdi", reason) },
+  "payment.writeoff": { section: "payment", text: money2("guruhdan chiqarishda qarzdan kechdi") },
   "payment.void": { section: "payment", text: money2("to'lovni bekor qildi", reason) },
   "payment.restore": { section: "payment", text: money2("bekor qilingan to'lovni tikladi") },
   "discount.create": simple("payment", "chegirma berdi", discountText, (i) => i.who),

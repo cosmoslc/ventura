@@ -101,7 +101,12 @@ export async function syncMembershipsWithStatus(
   }
   if (from === "paused" && (to === "active" || to === "returned")) {
     // Faollashtirilgan a'zoliklar qayta faol; sinovdan to'g'ri muzlatilganlar sinovga qaytadi
-    const base = and(eq(groupMemberships.studentId, studentId), eq(groupMemberships.status, "paused"));
+    // "Qarz bilan chiqarish" kutayotganlar muzlatilgan holicha qoladi (ADR 0050)
+    const base = and(
+      eq(groupMemberships.studentId, studentId),
+      eq(groupMemberships.status, "paused"),
+      isNull(groupMemberships.leavePendingAt),
+    );
     const before = await db
       .select({ id: groupMemberships.id, pausedAt: groupMemberships.pausedAt })
       .from(groupMemberships)
@@ -127,7 +132,7 @@ export async function syncMembershipsWithStatus(
     await closePauses(db, open, today);
     const r = await db
       .update(groupMemberships)
-      .set({ status: "left", leftAt: today, leftReason: reason })
+      .set({ status: "left", leftAt: today, leftReason: reason, leavePendingAt: null })
       .where(and(eq(groupMemberships.studentId, studentId), isNull(groupMemberships.leftAt)))
       .returning({ id: groupMemberships.id });
     return r.length;

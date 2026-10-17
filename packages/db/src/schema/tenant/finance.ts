@@ -161,10 +161,11 @@ export const paymentMethods = pgTable(
  *  - payment    — kassaga tushgan to'lov (+), chek raqami bilan;
  *  - refund     — o'quvchiga qaytarilgan pul (−);
  *  - discount   — bir martalik chegirma (+, pul emas);
- *  - correction — balansni qo'lda tuzatish (±, pul emas, sabab bilan).
+ *  - correction — balansni qo'lda tuzatish (±, pul emas, sabab bilan);
+ *  - writeoff   — kechilgan qarz (+, pul emas): guruhdan qarzdan kechib chiqarishda shu guruh qarzi yopiladi.
  * Eski tizimda `amount` ba'zan naqd, ba'zan balansdan olingan qism edi; bu yerda har yozuv bitta ma'noga ega.
  */
-export const LEDGER_KINDS = ["payment", "refund", "discount", "correction"] as const;
+export const LEDGER_KINDS = ["payment", "refund", "discount", "correction", "writeoff"] as const;
 export type LedgerKind = (typeof LEDGER_KINDS)[number];
 
 export const payments = pgTable(
@@ -227,6 +228,7 @@ export const payments = pgTable(
       "payments_amount",
       sql`(${t.kind} = 'correction' and ${t.amount} <> 0) or (${t.kind} <> 'correction' and ${t.amount} > 0)`,
     ),
+    check("payments_kind", sql`${t.kind} in ('payment', 'refund', 'discount', 'correction', 'writeoff')`),
     check("payments_method", sql`(${t.kind} in ('payment', 'refund')) = (${t.methodId} is not null)`),
     check("payments_receipt", sql`(${t.kind} = 'payment') = (${t.receiptNo} is not null)`),
     check("payments_month", sql`${t.month} is null or ${t.month} ~ '${sql.raw(MONTH)}'`),

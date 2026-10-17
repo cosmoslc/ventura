@@ -261,6 +261,11 @@ const leaveFields = {
   date: day,
   reason: z.string().trim().max(500).default(""),
   note: z.string().trim().max(500).default(""),
+  /**
+   * Qarzi bo'lsa (ADR 0050): `auto` — qarz bo'lsa chiqarilmaydi (oyna variant so'raydi), `pending` — qarz bilan
+   * (to'languncha muzlatiladi), `forgive` — qarzdan kechib (balansni tahrirlash ruxsati bilan)
+   */
+  mode: z.enum(["auto", "pending", "forgive"]).default("auto"),
 };
 export const membershipLeaveInput = z.object({ id, ...leaveFields });
 

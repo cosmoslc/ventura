@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { hasFeature } from "@ventura/tenants";
 import { z } from "zod";
 import { groupMemberships, groups, students } from "@ventura/db/schema/tenant";
-import { suggestedAmount, suggestedMonth } from "@/lib/ledger";
+import { groupDebt, suggestedAmount, suggestedMonth } from "@/lib/ledger";
 import { type ActionResult, crmAction } from "@/lib/server/action";
 import { loadAccount, loadAccounts } from "@/lib/server/finance";
 import { todayTashkent } from "@/lib/server/memberships";
@@ -72,6 +72,8 @@ export async function accountPreviewAction(studentId: unknown): Promise<ActionRe
 export interface LeavePreview {
   before: number;
   after: number;
+  /** Shu sana bilan chiqarilsa shu guruh bo'yicha qoladigan qarz (ADR 0050): > 0 bo'lsa oyna variant so'raydi */
+  groupDebt: number;
 }
 
 export async function leavePreviewAction(input: unknown): Promise<ActionResult<{ preview: LeavePreview | null }>> {
@@ -91,9 +93,14 @@ export async function leavePreviewAction(input: unknown): Promise<ActionResult<{
       loadAccount(ctx.db, row.m.studentId, today),
       loadAccounts(ctx.db, [row.m.studentId], today, undefined, { membershipId: row.m.id, leftAt: parsed.data.date }),
     ]);
+    const projected = after.get(row.m.studentId)!.summary;
     return {
       ok: true,
-      preview: { before: before.summary.balance, after: after.get(row.m.studentId)!.summary.balance },
+      preview: {
+        before: before.summary.balance,
+        after: projected.balance,
+        groupDebt: row.m.activatedAt ? groupDebt(projected, row.m.groupId) : 0,
+      },
     };
   });
 }

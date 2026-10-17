@@ -15,6 +15,7 @@ import {
 import { addDays } from "@/lib/billing";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { FINANCE_SETTINGS_KEY, financeSettingsSchema, loadAccount } from "@/lib/server/finance";
+import { lockStudent, settlePendingLeaves } from "@/lib/server/leave-debt";
 import { type Tx, todayTashkent } from "@/lib/server/memberships";
 import { firstError } from "@/lib/rules";
 import { money } from "@/lib/format";
@@ -48,11 +49,20 @@ async function loadStudent(ctx: ActionCtx, id: string) {
   return s;
 }
 
-/** Shu o'quvchining pul amallari ketma-ket bajariladi */
-async function lockStudent(tx: Tx, studentId: string) {
-  await tx.execute(
-    sql`select pg_advisory_xact_lock(hashtextextended(${`student:${studentId}`} || current_setting('app.tenant_id'), 0))`,
-  );
+/**
+ * Pul yozuvidan keyin: "qarz bilan chiqarish" kutayotgan a'zoliklardan qarzi yopilganlari chiqariladi (ADR 0050).
+ * Alohida qisqa tranzaksiya (o'quvchi qulfi bilan); qayta chaqirilsa ham natija o'zgarmaydi.
+ */
+async function settleAfter(ctx: ActionCtx, studentId: string) {
+  const list = await ctx.db.transaction(async (tx) => {
+    await lockStudent(tx, studentId);
+    return settlePendingLeaves(tx, studentId, todayTashkent());
+  });
+  for (const l of list) {
+    const meta = { date: l.leftAt, membershipId: l.membershipId, auto: true };
+    await ctx.audit("group.leave", { type: "group", id: l.groupId }, { studentId, ...meta });
+    await ctx.audit("student.leave", { type: "student", id: studentId }, { groupId: l.groupId, ...meta });
+  }
 }
 
 async function nextReceiptNo(tx: Tx): Promise<number> {
@@ -161,6 +171,7 @@ export async function recordPaymentAction(input: unknown): Promise<ActionResult<
           ...(v.discount ? { discount: v.discount.amount, discountReason: v.discount.reason } : {}),
         },
       );
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true, ...result };
     },
@@ -268,6 +279,7 @@ export async function correctionAction(input: unknown): Promise<ActionResult> {
         });
       });
       await ctx.audit("payment.correction", { type: "student", id: s.id }, { amount: v.amount, reason: v.reason });
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true };
     },
@@ -284,8 +296,9 @@ async function loadEntry(ctx: ActionCtx, id: string) {
   return s ? { e, s } : null;
 }
 
-/** Tuzatishni bekor qilish — balans ruxsati bilan, qolganlari — to'lovni bekor qilish ruxsati bilan */
-const voidPermission = (kind: string) => (kind === "correction" ? "students.balance_edit" : "finance.payment_delete");
+// Pul emas yozuvlar (tuzatish, kechilgan qarz) — balansni tahrirlash ruxsati bilan
+const voidPermission = (kind: string) =>
+  kind === "correction" || kind === "writeoff" ? "students.balance_edit" : "finance.payment_delete";
 
 export async function voidEntryAction(input: unknown): Promise<ActionResult> {
   return crmAction(
@@ -320,6 +333,7 @@ export async function voidEntryAction(input: unknown): Promise<ActionResult> {
           reason: parsed.data.reason,
         },
       );
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true };
     },
@@ -359,6 +373,7 @@ export async function restoreEntryAction(id: unknown): Promise<ActionResult> {
         { type: "student", id: s.id },
         { paymentId: e.id, kind: e.kind, amount: e.amount },
       );
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true };
     },
@@ -389,7 +404,8 @@ export async function editEntryAction(input: unknown): Promise<ActionResult> {
       const found = await loadEntry(ctx, v.id);
       if (!found) return { ok: false, error: uz.common.gone };
       const { e, s } = found;
-      if (e.kind === "correction" || e.voidedAt) return { ok: false, error: uz.common.invalid };
+      if (e.kind === "correction" || e.kind === "writeoff" || e.voidedAt)
+        return { ok: false, error: uz.common.invalid };
       const bad = dateError(v.date);
       if (bad) return { ok: false, error: bad };
       const cashKind = e.kind === "payment" || e.kind === "refund";
@@ -444,6 +460,7 @@ export async function editEntryAction(input: unknown): Promise<ActionResult> {
           changed: Object.fromEntries(changed.map((k) => [k, { from: before[k], to: next[k] }])),
         },
       );
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true };
     },
@@ -513,6 +530,7 @@ export async function saveDiscountAction(input: unknown): Promise<ActionResult> 
           .returning({ id: studentDiscounts.id });
         await ctx.audit("discount.create", { type: "student", id: s.id }, { discountId: d!.id, ...values });
       }
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true };
     },
@@ -545,6 +563,7 @@ export async function deleteDiscountAction(id: unknown): Promise<ActionResult> {
           reason: d.reason,
         },
       );
+      await settleAfter(ctx, s.id);
       refresh(s.id);
       return { ok: true };
     },

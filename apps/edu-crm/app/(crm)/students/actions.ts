@@ -182,6 +182,7 @@ export async function transferStudentAction(input: unknown): Promise<ActionResul
           .update(groupMemberships)
           .set({
             status: "left",
+            leavePendingAt: null,
             leftAt: sql`greatest(${groupMemberships.enrolledAt}, ${today}::date)`,
             leftReason: reason || uz.students.transferReason,
           })
@@ -246,6 +247,7 @@ export async function archiveStudentAction(input: unknown): Promise<ActionResult
           .update(groupMemberships)
           .set({
             status: "left",
+            leavePendingAt: null,
             leftAt: todayTashkent(),
             leftReason: parsed.data.reason || uz.groups.archivedStudentReason,
           })
