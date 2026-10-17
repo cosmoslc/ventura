@@ -8,10 +8,11 @@
 #   cloudflared tunnel create ventura-tunnel     -> %USERPROFILE%\.cloudflared\<uuid>.json
 #   cloudflared tunnel route dns ventura-tunnel admin.<domen>
 #   cloudflared tunnel route dns ventura-tunnel "*.<domen>"
+#   cloudflared tunnel route dns ventura-tunnel <domen>
 #
 # Nima qiladi:
 #   1. Xizmat profiliga (LocalSystem) sozlama va tunnel kalitini yozadi; kalit faqat SYSTEM va Administratorlarga ochiq
-#   2. Yo'naltirish: admin.<domen> -> panel (127.0.0.1:<PanelPort>), *.<domen> -> WSL nginx (127.0.0.1:80)
+#   2. Yo'naltirish: admin.<domen> -> panel (127.0.0.1:<PanelPort>), <domen> (landing) va *.<domen> -> WSL nginx (127.0.0.1:80)
 #   3. Sozlamani tekshiradi, xizmatni o'rnatadi (yoki yangilaydi) va ishga tushiradi
 # Qayta ishga tushirish xavfsiz. Kalit mazmuni ekranga chiqarilmaydi.
 
@@ -51,6 +52,9 @@ ingress:
   # Panel
   - hostname: admin.$Domain
     service: http://127.0.0.1:$PanelPort
+  # Landing (tooling/landing/publish.sh): asosiy domen -> WSL nginx
+  - hostname: $Domain
+    service: http://127.0.0.1:80
   # Mijoz tizimlari: <slug>.$Domain -> WSL nginx (sayt Host bo'yicha tanlanadi)
   - hostname: "*.$Domain"
     service: http://127.0.0.1:80
