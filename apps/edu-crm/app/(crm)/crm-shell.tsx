@@ -7,7 +7,6 @@ import {
   Building2,
   CalendarCheck,
   CalendarOff,
-  DoorOpen,
   IdCard,
   ShieldCheck,
   ChartColumn,
@@ -21,11 +20,9 @@ import {
   LogOut,
   type LucideIcon,
   MessageSquareText,
-  MonitorSmartphone,
   Receipt,
   ScrollText,
   Settings,
-  Settings2,
   Target,
   UserCheck,
   UserRound,
@@ -51,10 +48,11 @@ import { cn } from "@ventura/ui/lib/utils";
 import { type NavChild, type NavItem, type NavSection, Sidebar } from "@ventura/ui/sidebar";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { ProfileButton, Topbar } from "@ventura/ui/topbar";
+import { isSettingsPath } from "@/lib/settings-nav";
 import { uz } from "@/lib/uz";
 import { signOutAction } from "../(auth)/actions";
 import { BranchPicker, type PickerBranch } from "./branch-picker";
-import { NotificationBell } from "./notifications/notification-bell";
+import { NotificationBell } from "./(settings)/notifications/notification-bell";
 import { type QuickAction, SearchPalette } from "./search/search-palette";
 
 /** Bo'lim kaliti → menyu ikonkasi va rangi (light rejim; dark'da --nav-icon-color). Manifestda yo'q bo'lsa — umumiy. */
@@ -80,32 +78,16 @@ const FALLBACK = { icon: Blocks, hue: "slate" };
 /** Menyu manzili → ikonka (bitta bo'limning bir nechta bandi bo'lsa, masalan Xonalar — guruhlar bo'limida) */
 const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/bugun": { icon: ListChecks, hue: "amber" },
-  "/rooms": { icon: DoorOpen, hue: "teal" },
   "/positions": { icon: ShieldCheck, hue: "violet" },
   "/staff": { icon: IdCard, hue: "sky" },
   "/staff-attendance": { icon: UserCheck, hue: "teal" },
-  "/settings": { icon: Settings, hue: "blue" },
-  "/payment-settings": { icon: Settings2, hue: "amber" },
   "/money-audit": { icon: History, hue: "violet" },
   "/archive": { icon: Archive, hue: "slate" },
   "/activity": { icon: ScrollText, hue: "blue" },
-  "/devices": { icon: MonitorSmartphone, hue: "teal" },
 };
 
 /** Bo'lim ichidagi tartib (eski tizimdagi "Ofis" menyusi): ro'yxatda yo'qlari oxirida, manifest tartibida */
-const ITEM_ORDER = [
-  "/branches",
-  "/positions",
-  "/staff",
-  "/staff-attendance",
-  "/rooms",
-  "/holidays",
-  "/settings",
-  "/payment-settings",
-  "/archive",
-  "/activity",
-  "/devices",
-];
+const ITEM_ORDER = ["/branches", "/positions", "/staff", "/staff-attendance", "/archive", "/activity"];
 const itemRank = (href: string) => {
   const i = ITEM_ORDER.indexOf(href);
   return i === -1 ? ITEM_ORDER.length : i;
@@ -114,11 +96,13 @@ const itemRank = (href: string) => {
 /** Menyu bo'limlari tartibi (eski tizimdagidek); "Asos" bandlari bosh sahifa bilan birga eng tepada. */
 const SECTION_ORDER = ["Asos", "Moliya", "Sotuv va aloqa", "Hisobotlar", "Ofis", "O'quv"];
 const MAIN = "Asos";
+const SETTINGS_SECTION = "Ofis";
 
 function sections(
   groups: NavGroup[],
   approvals: { label: string; count: number } | null,
   reportMenu: NavChild[],
+  settingsHref: string | null,
 ): NavSection[] {
   const toItems = (g: NavGroup): NavItem[] =>
     [...g.links]
@@ -140,6 +124,19 @@ function sections(
     return i === -1 ? SECTION_ORDER.length : i;
   };
   const main = groups.find((g) => g.title === MAIN);
+  // "Sozlamalar" — Ofis bo'limining oxirida (ichida o'z navbari, ADR 0051)
+  const settings: NavItem | null = settingsHref
+    ? { id: settingsHref, label: uz.nav.settings, icon: Settings, color: "var(--nav-hue-blue)" }
+    : null;
+  const rest = groups
+    .filter((g) => g.title !== MAIN)
+    .sort((a, b) => rank(a.title) - rank(b.title))
+    .map((g) => ({ title: g.title, items: toItems(g) }));
+  if (settings) {
+    const office = rest.find((s) => s.title === SETTINGS_SECTION);
+    if (office) office.items.push(settings);
+    else rest.push({ title: SETTINGS_SECTION, items: [settings] });
+  }
   return [
     {
       title: uz.nav.main,
@@ -159,10 +156,7 @@ function sections(
         ...(main ? toItems(main) : []),
       ],
     },
-    ...groups
-      .filter((g) => g.title !== MAIN)
-      .sort((a, b) => rank(a.title) - rank(b.title))
-      .map((g) => ({ title: g.title, items: toItems(g) })),
+    ...rest,
   ];
 }
 
@@ -186,6 +180,7 @@ export function CrmShell({
   nav,
   approvals,
   reportMenu,
+  settingsHref,
   branches,
   unreadNotifications,
   quickActions,
@@ -198,6 +193,8 @@ export function CrmShell({
   approvals: { label: string; count: number } | null;
   /** Hisobotlar ichki menyusi: guruh → xodimga ochiq hisobotlar */
   reportMenu: NavChild[];
+  /** "Sozlamalar" bandi manzili: xodim ochishi mumkin bo'lgan birinchi sozlama; null — band yo'q */
+  settingsHref: string | null;
   /** Filial tanlovi: ko'p filialli rejimda va xodimga bittadan ortiq filial ochiq bo'lsa */
   branches: { options: PickerBranch[]; selected: string } | null;
   /** Qo'ng'iroqdagi o'qilmagan bildirishnomalar soni (E6d) */
@@ -211,12 +208,20 @@ export function CrmShell({
   const [collapsed, setCollapsed] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [searchOpen, setSearchOpen] = React.useState(false);
-  const navSections = React.useMemo(() => sections(nav, approvals, reportMenu), [nav, approvals, reportMenu]);
+  const navSections = React.useMemo(
+    () => sections(nav, approvals, reportMenu, settingsHref),
+    [nav, approvals, reportMenu, settingsHref],
+  );
   const hrefs = React.useMemo(() => navSections.flatMap((s) => s.items.flatMap(leaves)), [navSections]);
   // Bosilgan band darhol aktiv ko'rinadi; sahifa serverdan kelguncha kontent xiralashadi (panel bilan bir xil)
   const [target, setTarget] = React.useState<{ id: string; from: string } | null>(null);
   const navigating = target !== null && target.from === pathname;
-  const activeId = navigating ? target.id : activeFor(pathname, hrefs);
+  // Sozlamalar ichidagi istalgan sahifada "Sozlamalar" bandi faol
+  const activeId = navigating
+    ? target.id
+    : settingsHref && isSettingsPath(pathname)
+      ? settingsHref
+      : activeFor(pathname, hrefs);
 
   React.useEffect(() => {
     if (!target) return;

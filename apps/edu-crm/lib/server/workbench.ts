@@ -6,7 +6,7 @@ import { type StaffAccess, canAny } from "@ventura/auth/staff/policy";
 import { type Tenant, hasFeature } from "@ventura/tenants";
 import { listDebtors } from "@/app/(crm)/debtors/data";
 import { listGroups } from "@/app/(crm)/groups/data";
-import { holidayRanges } from "@/app/(crm)/holidays/data";
+import { holidayRanges } from "@/app/(crm)/(settings)/holidays/data";
 import { listLeads, listStages } from "@/app/(crm)/leads/data";
 import { PAGE_ACCESS } from "@/lib/access";
 import { isHoliday, weekdayOf } from "@/lib/lessons";

@@ -14,7 +14,7 @@ import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import { uz } from "@/lib/uz";
-import type { PickerBranch } from "../branch-picker";
+import type { PickerBranch } from "../../branch-picker";
 import { deleteRoomAction } from "./actions";
 import type { RoomRow } from "./data";
 import { RoomForm } from "./room-form";

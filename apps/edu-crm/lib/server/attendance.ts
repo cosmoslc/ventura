@@ -10,7 +10,7 @@ import {
   leads,
   students,
 } from "@ventura/db/schema/tenant";
-import { holidayRanges } from "@/app/(crm)/holidays/data";
+import { holidayRanges } from "@/app/(crm)/(settings)/holidays/data";
 import { type MemberPeriod, lessonDates, monthRange } from "@/lib/lessons";
 
 /*

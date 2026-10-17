@@ -7,8 +7,10 @@ import { features } from "@/lib/manifest";
 import { pendingApprovalCount } from "@/lib/server/approvals";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
-import { unreadCount } from "./notifications/data";
+import { unreadCount } from "./(settings)/notifications/data";
 import { REPORTS, REPORT_GROUPS, visibleReports } from "@/lib/server/reports";
+import { settingsFor } from "@/lib/server/settings-access";
+import { SETTINGS_HREFS } from "@/lib/settings-nav";
 import { requireStaff, requireTenant } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { CrmShell } from "./crm-shell";
@@ -21,7 +23,13 @@ import type { QuickAction } from "./search/search-palette";
 export default async function CrmLayout({ children }: { children: React.ReactNode }) {
   const tenant = await requireTenant();
   const staff = await requireStaff();
-  const nav = navFor(features, tenant.features, (_key, href) => canAny(staff.access, pagePermissions(href)));
+  // Sozlamalar sahifalari asosiy menyuda emas — bitta "Sozlamalar" bandi, ichida o'z navbari (ADR 0051)
+  const nav = navFor(
+    features,
+    tenant.features,
+    (_key, href) => !SETTINGS_HREFS.includes(href) && canAny(staff.access, pagePermissions(href)),
+  );
+  const settingsHref = settingsFor(tenant, staff)[0]?.items[0]?.href ?? null;
   const branch = await getBranchContext();
   // Tasdiqlar (ADR 0019): direktorga — hammasi, "tasdiq bilan" ruxsati bor xodimga — o'z so'rovlari
   const showApprovals = staff.director || staff.access.approvals.size > 0;
@@ -66,6 +74,7 @@ export default async function CrmLayout({ children }: { children: React.ReactNod
       nav={nav}
       approvals={approvals}
       reportMenu={reportMenu}
+      settingsHref={settingsHref}
       unreadNotifications={await unreadCount(getTenantDb(tenant), staff.id).catch((e: Error) => {
         // Migratsiya hali qo'llanmagan bo'lsa ham markaz sahifalari ochilsin (qo'ng'iroq 0 ko'rsatadi)
         console.error("[notifications] sonni o'qib bo'lmadi:", e.message);

@@ -31,7 +31,7 @@ import {
   parseLostReasons,
 } from "@/lib/leads";
 import { todayTashkent } from "@/lib/server/memberships";
-import { holidayRanges } from "../holidays/data";
+import { holidayRanges } from "../(settings)/holidays/data";
 import { listGroups } from "../groups/data";
 
 export interface StageRow {

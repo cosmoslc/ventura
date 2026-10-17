@@ -13,7 +13,7 @@ import { toast } from "@ventura/ui/toast";
 import { COURSE_COLORS, DEFAULT_COLOR } from "@/lib/palette";
 import { courseInput, firstError } from "@/lib/rules";
 import { uz } from "@/lib/uz";
-import type { PickerBranch } from "../branch-picker";
+import type { PickerBranch } from "../../branch-picker";
 import { saveCourseAction } from "./actions";
 import type { CourseRow } from "./data";
 
