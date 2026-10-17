@@ -449,11 +449,11 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 ### 2-bosqich. Uydagi serverga deploy
 
 - [x] Uydagi kompyuterni server qilib tayyorlash skripti (Node, pnpm, PM2, nginx, PostgreSQL; `tooling/server/setup.sh`, CI'da haqiqiy Ubuntu'da sinaladi). PgBouncer hali yo'q
-- [ ] Cloudflare Tunnel orqali `admin.ventura.uz` va `*.ventura.uz`ni internetga chiqarish
+- [x] Cloudflare Tunnel orqali `admin.ventura.uz` va `*.ventura.uz`ni internetga chiqarish (ADR 0049; Windows xizmati, joker DNS)
 - [x] `packages/deploy`: `DeployDriver` interfeysi va SSH drayveri (relizlar, `pm2 reload`, health check, rollback)
 - [x] pg-boss navbati, deploy vazifasi, jonli loglar (`deployment_steps`)
 - [x] Baza strategiyalari: `shared_db` va `db_per_tenant`, `getTenantDb()`, barcha bazalarda migratsiya (ADR 0006, 0007)
-- [ ] `edu-crm`ni bepul subdomenda ishga tushirish
+- [x] `edu-crm`ni bepul subdomenda ishga tushirish (`https://<slug>.ventura.uz`, deploy bilan avtomatik)
 - [ ] Deploylar tabi: tarix, holat, loglar, qayta deploy, rollback
 
 * **Qabul:** Yangi loyiha formasi orqali yaratilgan loyiha `<slug>.ventura.uz`da SSL bilan ochiladi; build yiqilsa, oldingi versiya ishlashda davom etadi.
