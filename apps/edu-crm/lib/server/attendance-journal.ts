@@ -1,6 +1,7 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import type { TenantDb } from "@ventura/db";
+import { sheetName } from "@/lib/excel";
 import { journalRows } from "@/lib/attendance-journal";
 import { formatMonth } from "@/lib/format";
 import { uz } from "@/lib/uz";
@@ -27,13 +28,7 @@ export async function journalWorkbook(
       marks: (i, d) => att.marks[`${att.members[i]!.studentId}|${d}`]?.status,
     });
     // Varaq nomi: taqiqlangan belgilarsiz, 31 belgigacha, takrorlanmaydi
-    let name =
-      g.name
-        .replace(/[\/?*[\]:]/g, " ")
-        .trim()
-        .slice(0, 31) || "Guruh";
-    for (let n = 2; used.has(name.toLowerCase()); n++) name = `${name.slice(0, 27)} ${n}`;
-    used.add(name.toLowerCase());
+    const name = sheetName(g.name, used, "Guruh");
     const ws = wb.addWorksheet(name, { views: [{ state: "frozen", xSplit: 2, ySplit: 3 }] });
     ws.addRow([t.sheetTitle(g.name, formatMonth(month))]).font = { bold: true, size: 13 };
     ws.addRow([]);

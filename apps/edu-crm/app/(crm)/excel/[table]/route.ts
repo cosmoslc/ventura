@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { notFound } from "next/navigation";
 import { type Permission, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
+import { sheetName } from "@/lib/excel";
 import { fieldText } from "@/lib/form-fields";
 import { formatDate } from "@/lib/format";
 import { getBranchContext } from "@/lib/server/branch";
@@ -212,7 +213,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ table: s
   const body = template ? TEMPLATE[key].sample : (data as { rows: (string | number)[][] }).rows;
 
   const wb = new ExcelJS.Workbook();
-  const ws = wb.addWorksheet(template ? `${conf.sheet} namuna` : conf.sheet);
+  const ws = wb.addWorksheet(sheetName(template ? `${conf.sheet} namuna` : conf.sheet, new Set()));
   ws.addRow(data.headers).font = { bold: true };
   for (const r of body) ws.addRow(r);
   ws.columns.forEach((c) => (c.width = 24));
