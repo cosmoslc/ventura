@@ -130,6 +130,17 @@ map "$remote_addr|$http_cf_connecting_ip" $ventura_client_ip {
     default $remote_addr;
 }
 CONF
+# Noma'lum domen (masalan hali deploy qilinmagan <slug>.ventura.uz) — 404; Ubuntu'ning standart sahifasi ko'rsatilmaydi
+cat > /etc/nginx/conf.d/00-ventura-default.conf <<'CONF'
+# Ventura boshqaradi — qo'lda o'zgartirmang (tooling/server/setup.sh)
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+    return 404;
+}
+CONF
+rm -f /etc/nginx/sites-enabled/default
 
 say "nginx yordamchisi (ventura-site)"
 cat > /usr/local/sbin/ventura-site <<'HELPER'
