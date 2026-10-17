@@ -1,6 +1,8 @@
 # Bog'liqliklar va build natijalari
 node_modules
 .next
+# Dev preview alohida papkada (NEXT_DIST_DIR=.next-preview)
+.next-*
 .turbo
 dist
 coverage
