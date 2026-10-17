@@ -1,0 +1,3085 @@
+<!doctype html>
+<html lang="uz">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ventura — avtomatlashtirilgan ERP va CRM tizimlari</title>
+    <meta
+      name="description"
+      content="Ventura har qanday biznes uchun avtomatlashtirilgan ERP va CRM tizimlarini joriy qiladi. Modullar, integratsiyalar, jonli loyihalar va qulay narx."
+    />
+    <meta name="theme-color" content="#0A0A0B" />
+    <meta
+      property="og:title"
+      content="Ventura — avtomatlashtirilgan ERP va CRM tizimlari"
+    />
+    <meta
+      property="og:description"
+      content="Har qanday biznes uchun. Jonli loyihalarni kirib sinab ko‘ring."
+    />
+    <meta property="og:type" content="website" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%230A0A0B'/%3E%3Cpath d='M11 12l9 9 9-9M11 20l9 9 9-9' fill='none' stroke='%23FF5B2E' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+    <script>
+      (function () {
+        /* tanlangan rejim: avval saqlangani, bo'lmasa qurilma sozlamasi, bo'lmasa qorong'i */
+        var d = document.documentElement,
+          t = null;
+        try {
+          t = localStorage.getItem("ventura-theme");
+        } catch (e) {}
+        if (t !== "light" && t !== "dark")
+          t =
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: light)").matches
+              ? "light"
+              : "dark";
+        d.setAttribute("data-theme", t);
+        d.className += " js";
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute("content", t === "light" ? "#ECE9E2" : "#0A0A0B");
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600&display=swap"
+    />
+    <style>
+      :root {
+        --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+        --body: "Onest", system-ui, -apple-system, "Segoe UI", sans-serif;
+        --pad: clamp(16px, 4vw, 48px);
+        /* QORONG'I REJIM (asosiy) */
+        --ground: #0a0a0b;
+        --ground-2: #121214;
+        --card: #141416;
+        --ink: #0a0a0b;
+        --text: #f1eee7;
+        --on-dark: #f1eee7;
+        --muted: #a9a69e;
+        --line: rgba(241, 238, 231, 0.14);
+        --bone: #efece5;
+        --graphite: #28282c;
+        --obsidian: #141416;
+        --accent: #ff5b2e;
+        --accent-text: #ff5b2e;
+        --hair: rgba(241, 238, 231, 0.17);
+        --hair-2: rgba(241, 238, 231, 0.26);
+        --hair-3: rgba(241, 238, 231, 0.14);
+        --dot: rgba(241, 238, 231, 0.085);
+        --top-bg: rgba(10, 10, 11, 0.72);
+        --btn-bg: #f1eee7;
+        --btn-fg: #0a0a0b;
+        --tag-bg: #f1eee7;
+        --tag-fg: #0a0a0b;
+        --ghost-line: rgba(241, 238, 231, 0.3);
+        --plus: #6f6c66;
+        --sheen: rgba(255, 255, 255, 0.11);
+        --pf-shadow: 0 0 0 0 transparent;
+        --card-shadow: none;
+        --form-bg: #121214;
+        --input-line: rgba(241, 238, 231, 0.2);
+        --placeholder: #7d7a73;
+        --aura: rgba(255, 91, 46, 0.13);
+        --floor: rgba(241, 238, 231, 0.12);
+        --orbit-line: rgba(241, 238, 231, 0.34);
+        --rim: #ff5b2e;
+        --paper-line: none;
+      }
+      /* YORUG' REJIM */
+      [data-theme="light"] {
+        --ground: #ece9e2;
+        --ground-2: #e3e0d8;
+        --card: #fbfaf7;
+        --ink: #111113;
+        --text: #111113;
+        --muted: #5e5b55;
+        --line: rgba(17, 17, 19, 0.13);
+        --bone: #fbfaf7;
+        --graphite: #2a2a2e;
+        --obsidian: #151517;
+        --accent-text: #b23a0c;
+        --hair: rgba(17, 17, 19, 0.1);
+        --hair-2: rgba(17, 17, 19, 0.2);
+        --hair-3: rgba(17, 17, 19, 0.12);
+        --dot: rgba(17, 17, 19, 0.085);
+        --top-bg: rgba(236, 233, 226, 0.8);
+        --btn-bg: #111113;
+        --btn-fg: #fbfaf7;
+        --tag-bg: #111113;
+        --tag-fg: #fbfaf7;
+        --ghost-line: rgba(17, 17, 19, 0.28);
+        --plus: #8f8b83;
+        --sheen: rgba(255, 255, 255, 0.7);
+        --pf-shadow: 0 14px 30px rgba(17, 17, 19, 0.15);
+        --card-shadow: 0 24px 60px rgba(17, 17, 19, 0.08);
+        --form-bg: #fbfaf7;
+        --input-line: rgba(17, 17, 19, 0.18);
+        --placeholder: #67645d;
+        --aura: rgba(255, 91, 46, 0.17);
+        --floor: rgba(17, 17, 19, 0.24);
+        --orbit-line: rgba(17, 17, 19, 0.3);
+        --rim: #d5d0c6;
+        --paper-line: inset 0 0 0 1px rgba(17, 17, 19, 0.08);
+      }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        background: var(--ground);
+        color: var(--text);
+        font-family: var(--body);
+        font-size: 17px;
+        line-height: 1.55;
+        overflow-x: hidden;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background-image: radial-gradient(var(--dot) 1px, transparent 1.4px);
+        background-size: 32px 32px;
+      }
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+      p,
+      h1,
+      h2,
+      h3,
+      ul,
+      ol {
+        margin: 0;
+      }
+      ul,
+      ol {
+        padding: 0;
+        list-style: none;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+      }
+      .skip {
+        position: absolute;
+        left: -9999px;
+        top: 8px;
+        z-index: 60;
+        background: var(--btn-bg);
+        color: var(--btn-fg);
+        padding: 12px 18px;
+        border-radius: 999px;
+        font-weight: 600;
+      }
+      .skip:focus {
+        left: 8px;
+      }
+      .ico {
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .grain {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        pointer-events: none;
+        opacity: 0.055;
+      }
+      .grain svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      [data-theme="light"] .grain {
+        filter: invert(1);
+        opacity: 0.05;
+      }
+
+      /* ================= LANGAR OBYEKT: 3D kartalar sahnasi ================= */
+      #stage {
+        position: fixed;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        display: none;
+      }
+      .js #stage {
+        display: block;
+      }
+      .aura {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 900px;
+        height: 900px;
+        margin: -450px 0 0 -450px;
+        border-radius: 50%;
+        background: radial-gradient(
+          closest-side,
+          var(--aura),
+          rgba(255, 91, 46, 0)
+        );
+        will-change: transform, opacity;
+      }
+      .scene3d {
+        position: absolute;
+        inset: 0;
+        perspective: 1700px;
+      }
+      .rig {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 0;
+        height: 0;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .ground {
+        position: absolute;
+        left: -260px;
+        top: -260px;
+        width: 520px;
+        height: 520px;
+        border-radius: 50%;
+        background: radial-gradient(closest-side, var(--floor), transparent);
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .oring {
+        position: absolute;
+        border-radius: 50%;
+        border: 1.5px dashed var(--orbit-line);
+        opacity: 0;
+        transform: rotateX(66deg);
+      }
+      .core {
+        position: absolute;
+        left: -62px;
+        top: -62px;
+        width: 124px;
+        height: 124px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .core svg {
+        width: 60px;
+        height: 60px;
+        stroke-width: 3;
+      }
+      .core::before {
+        content: "";
+        position: absolute;
+        inset: -14px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 91, 46, 0.6);
+        animation: pulse 2.6s ease-out infinite;
+      }
+      @keyframes pulse {
+        from {
+          transform: scale(0.9);
+          opacity: 0.9;
+        }
+        to {
+          transform: scale(1.55);
+          opacity: 0;
+        }
+      }
+
+      .card3 {
+        position: absolute;
+        left: -110px;
+        top: -155px;
+        width: 220px;
+        height: 310px;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .flip {
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .c-mid,
+      .c-face {
+        position: absolute;
+        inset: 0;
+        border-radius: 22px;
+      }
+      .c-mid {
+        background: var(--rim);
+      }
+      .c-shadow {
+        display: none;
+        position: absolute;
+        inset: 14px 16px;
+        border-radius: 22px;
+        box-shadow: 0 16px 36px 8px rgba(17, 17, 19, 0.17);
+        transform: translate3d(0, 6px, -14px);
+      }
+      [data-theme="light"] .c-shadow {
+        display: block;
+      }
+      .c-face {
+        overflow: hidden;
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+        transition: box-shadow 0.35s ease;
+      }
+      .c-front {
+        transform: translateZ(3px);
+      }
+      .c-back {
+        transform: rotateY(180deg) translateZ(3px);
+      }
+      .c-face::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: linear-gradient(
+          140deg,
+          rgba(255, 255, 255, 0.11),
+          rgba(255, 255, 255, 0) 42%
+        );
+        pointer-events: none;
+      }
+      .c-face[data-v="p"]::after {
+        display: none;
+      }
+      .shade {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        border-radius: inherit;
+        background: var(--ground);
+        opacity: 0;
+      }
+      .card3.hot .c-face {
+        box-shadow:
+          0 0 0 3px var(--accent),
+          0 0 44px rgba(255, 91, 46, 0.5);
+      }
+      .v {
+        position: absolute;
+        inset: 0;
+        display: none;
+      }
+      .c-face[data-v="t"] .v-t,
+      .c-face[data-v="m"] .v-m,
+      .c-face[data-v="i"] .v-i,
+      .c-face[data-v="p"] .v-p,
+      .c-face[data-v="b"] .v-b {
+        display: flex;
+      }
+
+      /* karta yuzlari: biznes turi (t), integratsiya (i), brend (b) */
+      .v-t,
+      .v-i,
+      .v-b {
+        padding: 18px;
+        flex-direction: column;
+        justify-content: space-between;
+        font-family: var(--display);
+      }
+      .vt-top {
+        display: flex;
+        justify-content: space-between;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .vt-ring {
+        align-self: center;
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        border: 1px solid;
+        display: grid;
+        place-items: center;
+      }
+      .vt-ring svg {
+        width: 84px;
+        height: 84px;
+        stroke-width: 1.2;
+      }
+      .vt-name {
+        font-size: 15px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: 0.01em;
+        text-transform: uppercase;
+      }
+      .sk-bone {
+        background: var(--bone);
+        color: var(--ink);
+        box-shadow: var(--paper-line);
+      }
+      .sk-bone .vt-ring {
+        border-color: rgba(10, 10, 11, 0.24);
+      }
+      .sk-ember {
+        background: var(--accent);
+        color: var(--ink);
+      }
+      .sk-ember .vt-ring {
+        border-color: rgba(10, 10, 11, 0.32);
+      }
+      .sk-obs {
+        background: var(--obsidian);
+        color: var(--on-dark);
+        box-shadow: inset 0 0 0 1px rgba(241, 238, 231, 0.17);
+      }
+      .sk-obs .vt-ring {
+        border-color: rgba(241, 238, 231, 0.3);
+      }
+      .sk-graph {
+        background: var(--graphite);
+        color: var(--on-dark);
+        box-shadow: inset 0 0 0 1px rgba(241, 238, 231, 0.12);
+      }
+      .sk-graph .vt-ring {
+        border-color: rgba(241, 238, 231, 0.3);
+      }
+      .v-i .vt-ring svg {
+        stroke: var(--accent);
+      }
+      .v-b {
+        background: var(--accent);
+        color: var(--ink);
+      }
+      .v-b .bmark {
+        align-self: center;
+        width: 104px;
+        height: 104px;
+        stroke-width: 2.6;
+      }
+      .v-b .vt-name {
+        font-size: 20px;
+        letter-spacing: 0.04em;
+        text-align: center;
+      }
+
+      /* karta yuzi: modul ekrani (m) */
+      .v-m {
+        background: var(--bone);
+        color: var(--ink);
+        box-shadow: var(--paper-line);
+        padding: 16px;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .mh {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-height: 22px;
+      }
+      .mh b {
+        font-family: var(--display);
+        font-size: 10px;
+        font-weight: 600;
+        opacity: 0.55;
+      }
+      .mh span {
+        font-family: var(--display);
+        font-size: 12.5px;
+        font-weight: 800;
+        line-height: 1.1;
+      }
+      .mh i {
+        margin-left: auto;
+        flex: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: grid;
+        place-items: center;
+        opacity: 0;
+        transform: scale(0.5);
+        transition:
+          opacity 0.3s ease,
+          transform 0.3s ease;
+      }
+      .mh i svg {
+        width: 11px;
+        height: 11px;
+        stroke: var(--ink);
+        stroke-width: 3;
+      }
+      .card3.done .mh i,
+      .card3.hot .mh i {
+        opacity: 1;
+        transform: none;
+      }
+      .mz {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .mz s,
+      .mz u,
+      .mz em,
+      .mz b {
+        display: block;
+        text-decoration: none;
+        font-style: normal;
+      }
+      .mz p {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+      .mz-rec p {
+        justify-content: space-between;
+      }
+      .mz-rec s {
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(10, 10, 11, 0.15);
+        flex: 0 0 52%;
+      }
+      .mz-rec s.r {
+        flex-basis: 22%;
+      }
+      .mz-rec hr {
+        border: 0;
+        border-top: 1.5px dashed rgba(10, 10, 11, 0.28);
+        margin: 3px 0;
+        width: 100%;
+      }
+      .mz-rec .tot s {
+        height: 12px;
+        background: var(--ink);
+      }
+      .mz-rec b {
+        margin-top: auto;
+        height: 42px;
+        border-radius: 13px;
+        background: var(--accent);
+      }
+      .mz-rows {
+        justify-content: space-between;
+      }
+      .mz-rows u {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: rgba(10, 10, 11, 0.17);
+        flex: none;
+      }
+      .mz-rows s {
+        flex: 1;
+        height: 8px;
+        border-radius: 4px;
+        background: rgba(10, 10, 11, 0.14);
+      }
+      .mz-rows em {
+        width: 34px;
+        height: 16px;
+        border-radius: 99px;
+        background: rgba(10, 10, 11, 0.14);
+        flex: none;
+      }
+      .mz-rows em.a {
+        background: var(--accent);
+      }
+      .mz-box {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 8px;
+      }
+      .mz-box s {
+        border-radius: 9px;
+        background: rgba(10, 10, 11, 0.08);
+        position: relative;
+        overflow: hidden;
+      }
+      .mz-box s::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: var(--h, 50%);
+        background: rgba(10, 10, 11, 0.24);
+      }
+      .mz-box s.a::after {
+        background: var(--accent);
+      }
+      .mz-bars {
+        flex-direction: row;
+        align-items: flex-end;
+        gap: 8px;
+        border-bottom: 1.5px solid rgba(10, 10, 11, 0.3);
+      }
+      .mz-bars s {
+        flex: 1;
+        height: var(--h, 50%);
+        border-radius: 6px 6px 0 0;
+        background: rgba(10, 10, 11, 0.22);
+      }
+      .mz-bars s.a {
+        background: var(--accent);
+      }
+      .mz-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+        gap: 6px;
+      }
+      .mz-grid s {
+        border-radius: 6px;
+        background: rgba(10, 10, 11, 0.08);
+      }
+      .mz-grid s.f {
+        background: rgba(10, 10, 11, 0.28);
+      }
+      .mz-grid s.a {
+        background: var(--accent);
+      }
+      .mz-rep svg {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+      }
+      .mz-rep p s {
+        flex: 1;
+        height: 44px;
+        border-radius: 10px;
+        background: rgba(10, 10, 11, 0.1);
+      }
+
+      /* loyiha kartasi: ham 3D karta yuzida, ham oddiy havolada bir xil ko'rinadi (o'lchamlar em'da) */
+      .v-p {
+        font-size: 16px;
+      }
+      .pf {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 1.125em;
+        border-radius: 1.375em;
+        background:
+          linear-gradient(140deg, var(--sheen), rgba(255, 255, 255, 0) 42%),
+          var(--card);
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--hair);
+        transition:
+          box-shadow 0.25s ease,
+          transform 0.25s ease;
+      }
+      .pf-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.6em;
+        font-family: var(--display);
+        font-size: 0.625em;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .pf-tag {
+        padding: 0.45em 0.95em;
+        border-radius: 99em;
+        box-shadow: inset 0 0 0 1px var(--hair-2);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 11em;
+      }
+      .pf-mid {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6em;
+      }
+      .pf-name {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 1.28em;
+        line-height: 1.08;
+        letter-spacing: -0.01em;
+        overflow-wrap: anywhere;
+      }
+      .pf-desc {
+        font-size: 0.8125em;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+      .pf-go {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-top: 0.9em;
+        border-top: 1px solid var(--hair-3);
+        font-family: var(--display);
+        font-size: 0.625em;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .pf-go i {
+        width: 3.2em;
+        height: 3.2em;
+        border-radius: 50%;
+        background: var(--accent);
+        color: var(--ink);
+        display: grid;
+        place-items: center;
+      }
+      .pf-go svg {
+        width: 1.5em;
+        height: 1.5em;
+        stroke-width: 2.4;
+      }
+
+      .tag {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform-origin: 0 0;
+        white-space: nowrap;
+        padding: 7px 14px 7px 12px;
+        border-radius: 999px;
+        background: var(--tag-bg);
+        color: var(--tag-fg);
+        font-size: 12.5px;
+        font-weight: 600;
+        line-height: 1.2;
+        opacity: 0;
+        will-change: transform, opacity;
+      }
+      .tag b {
+        font-family: var(--display);
+        font-size: 10px;
+        font-weight: 600;
+        margin-right: 8px;
+        opacity: 0.6;
+      }
+      #stage[data-tag="p"] .tag {
+        padding: 7px 14px;
+        font-family: var(--display);
+        font-size: 11px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      #stage[data-tag="p"] .tag b {
+        display: none;
+      }
+      .band {
+        display: none;
+      }
+      .bar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 30;
+        width: 100%;
+        height: 2px;
+        background: var(--accent);
+        transform-origin: 0 50%;
+        transform: scaleX(0);
+        pointer-events: none;
+        display: none;
+      }
+      .js .bar {
+        display: block;
+      }
+
+      /* ================= SAHIFA ================= */
+      .page {
+        position: relative;
+      }
+      main {
+        position: relative;
+        z-index: 2;
+      }
+      .wrap {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding-left: var(--pad);
+        padding-right: var(--pad);
+      }
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: var(--top-bg);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--line);
+      }
+      .top__in {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px 28px;
+        min-height: 68px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 44px;
+      }
+      .brand svg {
+        width: 34px;
+        height: 34px;
+        stroke-width: 2.6;
+        flex: none;
+      }
+      .brand span {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 0.08em;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 0 26px;
+        font-family: var(--display);
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .nav a {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        color: var(--muted);
+        transition: color 0.2s;
+      }
+      .nav a:hover {
+        color: var(--text);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 54px;
+        padding: 0 28px;
+        border: 0;
+        border-radius: 999px;
+        background: var(--btn-bg);
+        color: var(--btn-fg);
+        font-family: var(--display);
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        background: var(--accent);
+        color: var(--ink);
+      }
+      .btn--sm {
+        min-height: 44px;
+        padding: 0 20px;
+        font-size: 10.5px;
+      }
+      .top__act {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .theme {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--ghost-line);
+        display: grid;
+        place-items: center;
+        cursor: pointer;
+        transition:
+          box-shadow 0.2s ease,
+          transform 0.3s ease;
+      }
+      .theme:hover {
+        box-shadow: inset 0 0 0 1px var(--text);
+        transform: rotate(-14deg);
+      }
+      .theme svg {
+        grid-area: 1 / 1;
+        width: 19px;
+        height: 19px;
+        stroke-width: 1.9;
+      }
+      .theme .i-moon {
+        display: none;
+      }
+      [data-theme="light"] .theme .i-sun {
+        display: none;
+      }
+      [data-theme="light"] .theme .i-moon {
+        display: block;
+      }
+      /* rejim almashganda tugmadan doira bo'lib yoyiladi */
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+      }
+      .btn--ghost {
+        background: transparent;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--ghost-line);
+      }
+      .btn--ghost:hover {
+        background: transparent;
+        color: var(--text);
+        box-shadow: inset 0 0 0 1px var(--text);
+      }
+
+      .sec {
+        min-height: 120vh;
+        display: flex;
+        align-items: center;
+        padding-top: 96px;
+        padding-bottom: 96px;
+      }
+      .sec .wrap {
+        width: 100%;
+        display: flex;
+      }
+      .sec.right .wrap {
+        justify-content: flex-end;
+      }
+      .sec.last {
+        min-height: 100vh;
+      }
+      .col {
+        width: min(520px, 44vw);
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .kicker {
+        font-family: var(--display);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--accent-text);
+      }
+      h2 {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: clamp(26px, 3.1vw, 46px);
+        line-height: 1.06;
+        letter-spacing: -0.015em;
+        overflow-wrap: anywhere;
+      }
+      .lead {
+        font-size: clamp(16px, 1.35vw, 19px);
+        color: var(--muted);
+        max-width: 490px;
+      }
+      .note {
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      /* muqova */
+      .hero {
+        min-height: 100vh;
+        display: block;
+        padding-top: 10px;
+        padding-bottom: 0;
+      }
+      .hero .wrap {
+        display: block;
+      }
+      .hero__head {
+        position: relative;
+        padding: clamp(16px, 2.8vh, 28px) 0;
+      }
+      .hero__block {
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        width: clamp(60px, 15%, 210px);
+        transform: translateX(-50%);
+        background: var(--accent);
+      }
+      .plus {
+        position: absolute;
+        color: var(--plus);
+        font-size: 16px;
+        line-height: 1;
+      }
+      .plus.tl {
+        left: 0;
+        top: 0;
+      }
+      .plus.tr {
+        right: 0;
+        top: 0;
+      }
+      .plus.bl {
+        left: 0;
+        bottom: 0;
+      }
+      .plus.br {
+        right: 0;
+        bottom: 0;
+      }
+      .hero__in {
+        position: relative;
+        padding: 0 clamp(12px, 3vw, 40px);
+      }
+      .hero__row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+      }
+      .hero__kicker {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: clamp(11px, 1.15vw, 15px);
+        line-height: 1.25;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .hero__mark {
+        width: 34px;
+        height: 34px;
+        stroke-width: 2.6;
+      }
+      .title {
+        position: relative;
+        height: 1.28em;
+        margin: clamp(12px, 2.6vh, 30px) 0;
+        font-family: var(--display);
+        font-weight: 900;
+        font-size: clamp(44px, min(12vw, 17vh), 184px);
+        line-height: 1;
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+        text-align: center;
+        animation: wave 5.5s ease-in-out infinite alternate;
+      }
+      .title > * {
+        position: absolute;
+        left: 0;
+        right: 0;
+        margin: 0;
+        font: inherit;
+        letter-spacing: inherit;
+      }
+      .title .r1 {
+        top: 0;
+      }
+      .title .r2 {
+        top: 0.28em;
+      }
+      .title .sa {
+        animation: clipA 5.5s ease-in-out infinite alternate;
+      }
+      .title .sb {
+        animation: clipB 5.5s ease-in-out infinite alternate;
+      }
+      .outline {
+        color: transparent;
+        -webkit-text-stroke: 1.5px var(--text);
+      }
+      @keyframes wave {
+        from {
+          transform: skewY(-1.4deg);
+        }
+        to {
+          transform: skewY(1.4deg);
+        }
+      }
+      @keyframes clipA {
+        from {
+          clip-path: inset(-10% 64% -10% 0);
+        }
+        to {
+          clip-path: inset(-10% 28% -10% 0);
+        }
+      }
+      @keyframes clipB {
+        from {
+          clip-path: inset(-10% 0 -10% 36%);
+        }
+        to {
+          clip-path: inset(-10% 0 -10% 72%);
+        }
+      }
+      .hero__meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        font-family: var(--display);
+        font-size: clamp(9px, 0.8vw, 11px);
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .hero__meta b {
+        color: var(--text);
+        font-weight: 800;
+      }
+      .hero__lead {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px 64px;
+        padding-top: clamp(18px, 3vh, 32px);
+      }
+      .hero__lead p {
+        flex: 1 1 320px;
+        max-width: 600px;
+        font-size: clamp(16px, 1.35vw, 20px);
+        line-height: 1.5;
+        color: var(--muted);
+      }
+      .cta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .list {
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid var(--line);
+      }
+      .list li {
+        display: grid;
+        grid-template-columns: 34px 1fr auto;
+        align-items: center;
+        gap: 4px 14px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--line);
+        min-height: 60px;
+        transition: opacity 0.3s ease;
+      }
+      .list b {
+        font-family: var(--display);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--accent-text);
+      }
+      .list strong {
+        display: block;
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 15.5px;
+        line-height: 1.3;
+      }
+      .list small {
+        display: block;
+        font-size: 14.5px;
+        color: var(--muted);
+      }
+      .list em {
+        font-style: normal;
+        font-family: var(--display);
+        font-weight: 600;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .js .steps.live li {
+        opacity: 0.4;
+      }
+      .js .steps.live li.on {
+        opacity: 1;
+      }
+
+      /* loyihalar */
+      .sec--proj .wrap {
+        display: grid;
+        grid-template-columns: minmax(260px, 400px) 1fr;
+        gap: clamp(32px, 5vw, 72px);
+        align-items: center;
+      }
+      .sec--proj .col {
+        width: auto;
+      }
+      .pgrid {
+        --sw: min(
+          220px,
+          calc((100vh - 170px) / 2 * 0.7097),
+          calc((100vw - 2 * var(--pad) - 584px) / 3)
+        );
+        display: grid;
+        grid-template-columns: repeat(3, var(--sw));
+        gap: 20px;
+        justify-content: end;
+        font-size: calc(var(--sw) / 220 * 16);
+        counter-reset: slot;
+      }
+      .slot {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 0.5em;
+        aspect-ratio: 220 / 310;
+        padding: 1.125em;
+        border-radius: 1.375em;
+        background: var(--card);
+        box-shadow:
+          inset 0 0 0 1px var(--hair),
+          var(--pf-shadow);
+        counter-increment: slot;
+      }
+      .slot::before {
+        content: counter(slot, decimal-leading-zero) "  ·  " attr(data-tag);
+        margin-bottom: auto;
+        font-family: var(--display);
+        font-size: 0.625em;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .slot strong {
+        font-family: var(--display);
+        font-weight: 800;
+        font-size: 1.28em;
+        line-height: 1.08;
+        overflow-wrap: anywhere;
+      }
+      .slot > span {
+        font-size: 0.8125em;
+        line-height: 1.4;
+        color: var(--muted);
+      }
+      .slot.enh {
+        display: block;
+        padding: 0;
+        background: none;
+        box-shadow: none;
+      }
+      .slot.enh::before {
+        content: none;
+      }
+      .slot.enh .pf {
+        box-shadow:
+          inset 0 0 0 1px var(--hair),
+          var(--pf-shadow);
+      }
+      .slot.enh:hover .pf,
+      .slot.enh:focus-visible .pf {
+        box-shadow:
+          inset 0 0 0 2px var(--accent),
+          0 18px 50px rgba(255, 91, 46, 0.22);
+        transform: translateY(-5px);
+      }
+      .js .slot.anch .pf {
+        opacity: 0;
+      }
+      .js .pgrid.docked .slot.anch .pf {
+        opacity: 1;
+      }
+
+      .card {
+        width: min(430px, 100%);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: 30px;
+        border-radius: 26px;
+        background: var(--form-bg);
+        border: 1px solid var(--line);
+        box-shadow: var(--card-shadow);
+      }
+      .card h2 {
+        font-size: clamp(22px, 2.3vw, 30px);
+      }
+      .card p {
+        font-size: 15px;
+        color: var(--muted);
+      }
+      .form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-family: var(--display);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .field input,
+      .field select {
+        min-height: 52px;
+        padding: 0 16px;
+        border-radius: 14px;
+        border: 1px solid var(--input-line);
+        background: var(--ground);
+        width: 100%;
+      }
+      .field input::placeholder {
+        color: var(--placeholder);
+      }
+      .form__status {
+        min-height: 1.5em;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--accent-text);
+      }
+
+      .dots {
+        position: fixed;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 15;
+        display: flex;
+        flex-direction: column;
+      }
+      .dots a {
+        width: 44px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dots a::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        border: 1.5px solid var(--muted);
+        transition: all 0.3s ease;
+      }
+      .dots a.on::before {
+        background: var(--accent);
+        border-color: var(--accent);
+        transform: scale(1.55);
+      }
+
+      footer {
+        position: relative;
+        z-index: 8;
+        background: var(--ground-2);
+        border-top: 1px solid var(--line);
+      }
+      .foot {
+        padding-top: 56px;
+        padding-bottom: 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 36px;
+      }
+      .foot__cols {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 28px 56px;
+      }
+      .foot__col {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        font-size: 15px;
+        color: var(--muted);
+      }
+      .foot__col h3 {
+        font-family: var(--display);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+      .foot__col a {
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+      }
+      .foot__col a:hover {
+        color: var(--accent-text);
+      }
+      .foot__copy {
+        padding-top: 20px;
+        border-top: 1px solid var(--line);
+        font-family: var(--display);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      @media (max-width: 1200px) {
+        .dots {
+          display: none;
+        }
+      }
+      @media (max-width: 1100px) {
+        .sec--proj .wrap {
+          grid-template-columns: 1fr;
+        }
+        .pgrid {
+          --sw: min(220px, calc((100vw - 2 * var(--pad) - 40px) / 3));
+          justify-content: start;
+        }
+      }
+      @media (max-width: 820px) {
+        .nav,
+        .dots {
+          display: none;
+        }
+        /* telefonda kartalar yuqoridagi alohida oynada turadi, loyihalar bo'limida esa oynadan chiqib havolalar ustiga tushadi */
+        .js .band {
+          display: block;
+          position: fixed;
+          left: 0;
+          right: 0;
+          top: 0;
+          height: 42vh;
+          z-index: 4;
+          background: var(--ground);
+          border-bottom: 1px solid var(--line);
+          will-change: transform;
+        }
+        .js #stage {
+          z-index: 5;
+        }
+        .tag {
+          padding: 5px 10px;
+          font-size: 11.5px;
+        }
+        #stage[data-tag="m"] .tag span {
+          display: none;
+        }
+        #stage[data-tag="m"] .tag b {
+          margin-right: 0;
+          opacity: 1;
+        }
+        #stage[data-tag="p"] .tag {
+          padding: 5px 10px;
+          font-size: 9.5px;
+        }
+        .sec,
+        .sec.last {
+          align-items: flex-start;
+          min-height: 0;
+          padding-top: 48px;
+          padding-bottom: 48px;
+        }
+        .js .sec {
+          scroll-margin-top: 42vh;
+        }
+        .js .hero {
+          padding-top: calc(42vh - 56px);
+        }
+        .sec.last {
+          padding-bottom: 76px;
+        }
+        .sec .wrap,
+        .sec.right .wrap {
+          justify-content: stretch;
+        }
+        .col {
+          width: 100%;
+        }
+        .card {
+          width: 100%;
+        }
+        .pgrid {
+          --sw: calc((100vw - 2 * var(--pad) - 12px) / 2);
+          grid-template-columns: repeat(2, var(--sw));
+          gap: 12px;
+        }
+      }
+      @media (max-width: 420px) {
+        .top .btn--ghost {
+          display: none;
+        }
+        .top__in {
+          gap: 8px;
+        }
+        .top__act {
+          gap: 8px;
+        }
+        .brand {
+          gap: 9px;
+        }
+        .brand span {
+          font-size: 13px;
+          letter-spacing: 0.05em;
+        }
+        .top .btn--sm {
+          padding: 0 14px;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        .title,
+        .title .sa,
+        .title .sb,
+        .core::before {
+          animation: none;
+        }
+        .title .sa {
+          clip-path: inset(-10% 46% -10% 0);
+        }
+        .title .sb {
+          clip-path: inset(-10% 0 -10% 54%);
+        }
+        .btn,
+        .c-face,
+        .mh i,
+        .list li,
+        .pf {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#main">Asosiy qismga o‘tish</a>
+    <div class="grain" aria-hidden="true">
+      <svg>
+        <filter id="gr">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency=".85"
+            numOctaves="2"
+            stitchTiles="stitch"
+          />
+          <feColorMatrix values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1 0" />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#gr)" />
+      </svg>
+    </div>
+
+    <div class="bar" id="bar" aria-hidden="true"></div>
+    <div class="band" id="band" aria-hidden="true"></div>
+    <!-- LANGAR OBYEKT: oltita ikki yuzli karta. Kartalarni pastdagi skript yasaydi va boshqaradi. -->
+    <div id="stage" aria-hidden="true" data-tag="m">
+      <div class="aura" id="aura"></div>
+      <div class="scene3d" id="scene3d">
+        <div class="rig" id="rig">
+          <div class="ground" id="ground"></div>
+          <div class="oring" id="oring"></div>
+          <div class="core" id="core">
+            <svg class="ico" viewBox="0 0 40 40">
+              <path d="M11 12l9 9 9-9M11 20l9 9 9-9" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="page">
+      <header class="top">
+        <div class="wrap top__in">
+          <a class="brand" href="#s0" aria-label="Ventura bosh sahifa">
+            <svg class="ico" viewBox="0 0 40 40" aria-hidden="true">
+              <rect x="2" y="2" width="36" height="36" rx="11" />
+              <path d="M11 12l9 9 9-9M11 20l9 9 9-9" />
+            </svg>
+            <span>VENTURA</span>
+          </a>
+          <nav class="nav" aria-label="Asosiy">
+            <a href="#s1">Modullar</a>
+            <a href="#s2">Avtomatlashtirish</a>
+            <a href="#s3">Integratsiyalar</a>
+            <a href="#s4">Loyihalar</a>
+            <a href="#s5">Narx</a>
+          </nav>
+          <div class="top__act">
+            <!-- rejim almashtirgich: qorong'i <-> yorug' -->
+            <button
+              class="theme"
+              id="themeBtn"
+              type="button"
+              aria-label="Yorug‘ rejimga o‘tish"
+            >
+              <svg class="ico i-sun" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="4.2" />
+                <path
+                  d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"
+                />
+              </svg>
+              <svg class="ico i-moon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z" />
+              </svg>
+            </button>
+            <a class="btn btn--sm" href="#s6">Konsultatsiya</a>
+          </div>
+        </div>
+      </header>
+
+      <main id="main">
+        <!-- 0: YELPIG'ICH -->
+        <section class="sec hero" id="s0" data-state="0">
+          <div class="wrap">
+            <div class="hero__head">
+              <div class="hero__block" aria-hidden="true"></div>
+              <span class="plus tl" aria-hidden="true">+</span
+              ><span class="plus tr" aria-hidden="true">+</span>
+              <span class="plus bl" aria-hidden="true">+</span
+              ><span class="plus br" aria-hidden="true">+</span>
+              <div class="hero__in">
+                <div class="hero__row">
+                  <p class="hero__kicker">ERP · CRM<br />Avtomatlashtirish</p>
+                  <svg
+                    class="ico hero__mark"
+                    viewBox="0 0 40 40"
+                    aria-hidden="true"
+                  >
+                    <rect x="2" y="2" width="36" height="36" rx="11" />
+                    <path d="M11 12l9 9 9-9M11 20l9 9 9-9" />
+                  </svg>
+                </div>
+                <div class="title">
+                  <span class="r2 outline" aria-hidden="true">VENTURA</span>
+                  <span class="r1 outline" aria-hidden="true">VENTURA</span>
+                  <span class="r2 sb" aria-hidden="true">VENTURA</span>
+                  <h1 class="r1 sa">VENTURA</h1>
+                </div>
+                <div class="hero__meta">
+                  <span>Har qanday biznes uchun</span>
+                  <span>Masalan: <b id="nowType">Do‘kon</b></span>
+                </div>
+              </div>
+            </div>
+            <div class="hero__lead" id="heroLead">
+              <p>
+                Ventura har qanday biznes uchun avtomatlashtirilgan ERP va CRM
+                tizimlarini joriy qiladi. Savdo, ombor, moliya va xodimlar bitta
+                tizimda, kerakli xizmatlar bilan ulangan holda.
+              </p>
+              <div class="cta">
+                <a class="btn" href="#s6">Bepul konsultatsiya</a>
+                <a class="btn btn--ghost" href="#s4">Jonli loyihalar</a>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 1: QATLAMLAR -->
+        <section class="sec" id="s1" data-state="1">
+          <div class="wrap">
+            <div class="col">
+              <span class="kicker">01 — Modullar</span>
+              <h2>Bitta tizim, olti qatlam</h2>
+              <ul class="list">
+                <li>
+                  <b>01</b
+                  ><span
+                    ><strong>Savdo va kassa</strong
+                    ><small>Sotuv, chek va to‘lovlar bitta oynada.</small></span
+                  >
+                </li>
+                <li>
+                  <b>02</b
+                  ><span
+                    ><strong>Mijozlar (CRM)</strong
+                    ><small
+                      >Mijozlar bazasi, bitimlar va sotuv voronkasi.</small
+                    ></span
+                  >
+                </li>
+                <li>
+                  <b>03</b
+                  ><span
+                    ><strong>Ombor</strong
+                    ><small
+                      >Qoldiq, kirim-chiqim va inventarizatsiya.</small
+                    ></span
+                  >
+                </li>
+                <li>
+                  <b>04</b
+                  ><span
+                    ><strong>Moliya</strong
+                    ><small>Hisob-faktura, daromad va xarajat.</small></span
+                  >
+                </li>
+                <li>
+                  <b>05</b
+                  ><span
+                    ><strong>Xodimlar</strong
+                    ><small>Vazifalar, davomat va ish haqi.</small></span
+                  >
+                </li>
+                <li>
+                  <b>06</b
+                  ><span
+                    ><strong>Hisobotlar</strong
+                    ><small
+                      >Butun biznes bo‘yicha jonli ko‘rsatkichlar.</small
+                    ></span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2: KASKAD -->
+        <section class="sec right" id="s2" data-state="2">
+          <div class="wrap">
+            <div class="col">
+              <span class="kicker">02 — Avtomatlashtirish</span>
+              <h2>Bitta buyurtma. Qolgani avtomatik.</h2>
+              <ol class="list steps" id="steps">
+                <li>
+                  <b>01</b
+                  ><span><strong>Buyurtma kassaga tushadi</strong></span>
+                </li>
+                <li>
+                  <b>02</b
+                  ><span><strong>Mijoz kartasi yangilanadi</strong></span>
+                </li>
+                <li>
+                  <b>03</b
+                  ><span><strong>Ombordagi tovar band qilinadi</strong></span>
+                </li>
+                <li>
+                  <b>04</b
+                  ><span><strong>Hisob-faktura o‘zi chiqadi</strong></span>
+                </li>
+                <li>
+                  <b>05</b
+                  ><span
+                    ><strong>Vazifa mas’ul xodimga biriktiriladi</strong></span
+                  >
+                </li>
+                <li>
+                  <b>06</b
+                  ><span><strong>Hisobot shu zahoti yangilanadi</strong></span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3: ORBITA -->
+        <section class="sec" id="s3" data-state="3">
+          <div class="wrap">
+            <div class="col">
+              <span class="kicker">03 — Integratsiyalar</span>
+              <h2>Siz ishlatadigan xizmatlar bilan ulanadi</h2>
+              <p class="lead">
+                Ventura mavjud vositalaringizni almashtirmaydi, ularni bitta
+                tizimga bog‘laydi. Ma’lumot qo‘lda ko‘chirilmaydi.
+              </p>
+              <p class="note">
+                Qo‘llab-quvvatlanadigan xizmatlar: [INTEGRATSIYALAR RO‘YXATI]
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4: LOYIHALAR PANJARASI -->
+        <section class="sec sec--proj" id="s4" data-state="4">
+          <div class="wrap">
+            <div class="col">
+              <span class="kicker">04 — Loyihalar</span>
+              <h2>Jonli loyihalar. Kirib sinab ko‘ring.</h2>
+              <p class="lead">
+                Biz qurgan tizimlar shu yerda. Istalganini oching va o‘zingiz
+                ishlatib ko‘ring.
+              </p>
+            </div>
+
+            <!-- ============================================================
+             LOYIHALAR RO'YXATI. Yangi loyiha qo'shish uchun bitta qator nusxalang:
+               href      = loyiha havolasi (https://... bo'lsa yangi oynada ochiladi)
+               data-tag  = soha
+               <strong>  = loyiha nomi
+               <span>    = qisqa tavsif
+             Dastlabki 6 tasiga 3D kartalar tushadi, qolganlari oddiy karta bo'lib ko'rinadi.
+             ============================================================ -->
+            <div class="pgrid" id="pgrid">
+              <a class="slot" href="#s4" data-tag="Ta’lim"
+                ><strong>Vertuna CRM</strong
+                ><span>O‘quv markazlari uchun CRM tizimi.</span></a
+              >
+              <a class="slot" href="#s4" data-tag="Savdo"
+                ><strong>Pilorama Boshqaruv</strong
+                ><span
+                  >Piloramangizni Oz qolingizda mukammal darajada
+                  boshqaring.</span
+                ></a
+              >
+              <a class="slot" href="#s4" data-tag="O'quv"
+                ><strong>Teaching App</strong
+                ><span
+                  >Darsingiz uchun Plan Vertuna AI o'zi reja tuzib beradi.</span
+                ></a
+              >
+              <a class="slot" href="#s4" data-tag="AI Yordamchi"
+                ><strong>Vertuna AI</strong
+                ><span>Bepul Va Mukammal ishlar uchun AI yordamchi</span></a
+              >
+              <a class="slot" href="#s4" data-tag="VPS Hosting"
+                ><strong>Vertuna VPS </strong
+                ><span
+                  >O'z serveringizni 24/7 soat ishlatmoqchi bolsangiz.
+                  Bosing</span
+                ></a
+              >
+              <a class="slot" href="#s4" data-tag="Batafsil"
+                ><strong>Boshqa Tizimlar Uchun Bosing!!!</strong
+                ><span>[Qisqa tavsif]</span></a
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- 5: UCHTA USTUN -->
+        <section class="sec right" id="s5" data-state="5">
+          <div class="wrap">
+            <div class="col">
+              <span class="kicker">05 — Narx</span>
+              <h2>Qulay narx, biznesingiz hajmiga mos</h2>
+              <ul class="list">
+                <li>
+                  <b>A</b
+                  ><span
+                    ><strong>Start</strong
+                    ><small>Kichik jamoa va yangi biznes uchun.</small></span
+                  ><em>299 000 UZS</em>
+                </li>
+                <li>
+                  <b>B</b
+                  ><span
+                    ><strong>Biznes</strong
+                    ><small>O‘sayotgan kompaniya uchun.</small></span
+                  ><em>599 000 UZS</em>
+                </li>
+                <li>
+                  <b>C</b
+                  ><span
+                    ><strong>Korporativ</strong
+                    ><small
+                      >Murakkab jarayonlar va filiallar uchun.</small
+                    ></span
+                  ><em>899 000 UZS</em>
+                </li>
+              </ul>
+              <p class="note">
+                Aniq narx biznes turi va kerakli modullarga qarab hisoblanadi.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6: KOLODA -->
+        <section class="sec last" id="s6" data-state="6">
+          <div class="wrap">
+            <div class="card">
+              <span class="kicker">06 — Bog‘lanish</span>
+              <h2>Bepul konsultatsiya oling</h2>
+              <p>
+                Biznesingiz haqida qisqacha ayting, mos yechim va narxni
+                hisoblab beramiz.
+              </p>
+              <!-- FORMA: hozircha serverga ulanmagan. Pastdagi skriptda "FORMA" qismiga qarang. -->
+              <form class="form" id="leadForm" novalidate>
+                <div class="field">
+                  <label for="fName">Ism</label
+                  ><input
+                    id="fName"
+                    name="name"
+                    type="text"
+                    autocomplete="name"
+                    placeholder="Ismingiz"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="fPhone">Telefon</label
+                  ><input
+                    id="fPhone"
+                    name="phone"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    placeholder="+998 90 123 45 67"
+                    required
+                  />
+                </div>
+                <div class="field">
+                  <label for="fType">Biznes turi</label>
+                  <select id="fType" name="type">
+                    <option>Savdo</option>
+                    <option>Xizmat ko‘rsatish</option>
+                    <option>Ishlab chiqarish</option>
+                    <option>Ta’lim</option>
+                    <option>Tibbiyot</option>
+                    <option>Restoran va kafe</option>
+                    <option>Logistika</option>
+                    <option>Boshqa</option>
+                  </select>
+                </div>
+                <button class="btn" type="submit">Konsultatsiya olish</button>
+                <p class="form__status" id="formStatus" role="status"></p>
+              </form>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="dots" aria-label="Bo‘limlar">
+        <a href="#s0" aria-label="Muqova"></a>
+        <a href="#s1" aria-label="Modullar"></a>
+        <a href="#s2" aria-label="Avtomatlashtirish"></a>
+        <a href="#s3" aria-label="Integratsiyalar"></a>
+        <a href="#s4" aria-label="Loyihalar"></a>
+        <a href="#s5" aria-label="Narx"></a>
+        <a href="#s6" aria-label="Bog‘lanish"></a>
+      </nav>
+
+      <footer>
+        <div class="wrap foot">
+          <div class="foot__cols">
+            <div class="foot__col" style="max-width: 340px">
+              <a
+                class="brand"
+                href="#s0"
+                aria-label="Ventura bosh sahifa"
+                style="color: var(--text)"
+              >
+                <svg class="ico" viewBox="0 0 40 40" aria-hidden="true">
+                  <rect x="2" y="2" width="36" height="36" rx="11" />
+                  <path d="M11 12l9 9 9-9M11 20l9 9 9-9" />
+                </svg>
+                <span>VENTURA</span>
+              </a>
+              <p>
+                Har qanday biznes uchun avtomatlashtirilgan ERP va CRM
+                tizimlari.
+              </p>
+            </div>
+            <div class="foot__col">
+              <h3>Sahifa</h3>
+              <a href="#s1">Modullar</a><a href="#s2">Avtomatlashtirish</a
+              ><a href="#s3">Integratsiyalar</a><a href="#s4">Loyihalar</a
+              ><a href="#s5">Narx</a>
+            </div>
+            <div class="foot__col">
+              <h3>Aloqa</h3>
+              <span>[TELEFON]</span><span>[EMAIL]</span><span>[TELEGRAM]</span
+              ><span>[MANZIL]</span>
+            </div>
+          </div>
+          <div class="foot__copy">© <span id="year">2026</span> Ventura</div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      (function () {
+        "use strict";
+        var D = document;
+        function $(id) {
+          return D.getElementById(id);
+        }
+        function arr(list) {
+          return Array.prototype.slice.call(list);
+        }
+        function clamp(v, a, b) {
+          return v < a ? a : v > b ? b : v;
+        }
+        function lerp(a, b, t) {
+          return a + (b - a) * t;
+        }
+        function smooth(x) {
+          return x * x * (3 - 2 * x);
+        }
+        function pad(v) {
+          return (v < 10 ? "0" : "") + v;
+        }
+        function esc(s) {
+          return String(s).replace(/[&<>"]/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+          });
+        }
+        var reduce =
+          window.matchMedia &&
+          window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        /* ================= MA'LUMOT: shu ro'yxatlarni o'zgartirsangiz, kartalar ham o'zgaradi ================= */
+        var BRAND = "VENTURA";
+        /* muqovadagi yelpig'ich: biznes turlari (nom, ikonka chizig'i) */
+        var TYPES = [
+          ["Do‘kon", "M3 9l1.5-5h15L21 9M4 9v11h16V9M3 9h18M9 20v-6h6v6"],
+          [
+            "Restoran",
+            "M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-2.5 5-2.5 8H17V3zM17 11v10",
+          ],
+          [
+            "Kafe",
+            "M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9zM17 10h2a2.5 2.5 0 0 1 0 5h-2M8 3v3M12 3v3",
+          ],
+          [
+            "Salon",
+            "M6 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8.5 7.5L20 19M8.5 16.5L20 5",
+          ],
+          ["Klinika", "M9 3h6v6h6v6h-6v6H9v-6H3V9h6V3z"],
+          [
+            "O‘quv markazi",
+            "M12 6c-2-1.5-5-2-8-2v14c3 0 6 .5 8 2 2-1.5 5-2 8-2V4c-3 0-6 .5-8 2zM12 6v14",
+          ],
+          ["Fitnes", "M3 9v6M6 6v12M18 6v12M21 9v6M6 12h12"],
+          [
+            "Avtoservis",
+            "M5 11l1.5-4.5A2 2 0 0 1 8.4 5h7.2a2 2 0 0 1 1.9 1.5L19 11M3 11h18v6H3v-6zM6 17v2M18 17v2M7 14h.01M17 14h.01",
+          ],
+          [
+            "Mehmonxona",
+            "M3 7v11M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5M7 11.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z",
+          ],
+          [
+            "Yetkazib berish",
+            "M2 6h11v10H2V6zM13 9h4l4 4v3h-8V9zM6.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+          ],
+          [
+            "Ishlab chiqarish",
+            "M3 21V10l6 4v-4l6 4V4h6v17H3zM7 17h2M12 17h2M17 17h1",
+          ],
+          [
+            "Onlayn do‘kon",
+            "M3 4h2.5l2 11h10.5l2-8H6.5M9 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2z",
+          ],
+        ];
+        var SKINS = [
+          "sk-bone",
+          "sk-obs",
+          "sk-ember",
+          "sk-obs",
+          "sk-graph",
+          "sk-bone",
+          "sk-obs",
+          "sk-ember",
+          "sk-graph",
+          "sk-bone",
+          "sk-obs",
+          "sk-graph",
+        ];
+        function rep(n, fn) {
+          var s = "";
+          for (var i = 0; i < n; i++) s += fn(i);
+          return s;
+        }
+        /* modul ekranlari (nom, mini-interfeys) */
+        var MODULES = [
+          [
+            "Savdo va kassa",
+            "mz-rec",
+            rep(3, function () {
+              return '<p><s></s><s class="r"></s></p>';
+            }) + '<hr><p class="tot"><s></s><s class="r"></s></p><b></b>',
+          ],
+          [
+            "Mijozlar",
+            "mz-rows",
+            rep(4, function (i) {
+              return (
+                "<p><u></u><s></s><em" +
+                (i % 2 ? "" : ' class="a"') +
+                "></em></p>"
+              );
+            }),
+          ],
+          [
+            "Ombor",
+            "mz-box",
+            [70, 35, 88, 52, 20, 44, 80, 28, 64]
+              .map(function (h, i) {
+                return (
+                  "<s" +
+                  (i === 2 || i === 7 ? ' class="a"' : "") +
+                  ' style="--h:' +
+                  h +
+                  '%"></s>'
+                );
+              })
+              .join(""),
+          ],
+          [
+            "Moliya",
+            "mz-bars",
+            [38, 54, 46, 68, 92, 74]
+              .map(function (h, i) {
+                return (
+                  "<s" +
+                  (i === 4 ? ' class="a"' : "") +
+                  ' style="--h:' +
+                  h +
+                  '%"></s>'
+                );
+              })
+              .join(""),
+          ],
+          [
+            "Xodimlar",
+            "mz-grid",
+            rep(30, function (i) {
+              return (
+                '<s class="' +
+                (i % 7 === 3 ? "a" : i % 3 === 0 || i % 5 === 1 ? "f" : "") +
+                '"></s>'
+              );
+            }),
+          ],
+          [
+            "Hisobotlar",
+            "mz-rep",
+            '<svg viewBox="0 0 188 120" preserveAspectRatio="none"><path d="M0 100 L28 84 L56 92 L84 58 L112 68 L140 34 L164 42 L188 12 L188 120 L0 120 Z" fill="rgba(10,10,11,.1)"/><path d="M0 100 L28 84 L56 92 L84 58 L112 68 L140 34 L164 42 L188 12" fill="none" stroke="#FF5B2E" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><p><s></s><s></s></p>',
+          ],
+        ];
+        /* integratsiya toifalari (nom, ikonka) */
+        var INTEG = [
+          ["To‘lov tizimlari", "M3 6h18v12H3zM3 10h18M7 15h4"],
+          [
+            "Banklar",
+            "M3 10l9-6 9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18",
+          ],
+          ["Messenjerlar", "M4 5h16v11H9l-5 4V5z"],
+          [
+            "Telefoniya",
+            "M6 3h4l2 5-2.5 1.5a11 11 0 0 0 5 5L16 12l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 4 5a2 2 0 0 1 2-2z",
+          ],
+          ["Marketpleyslar", "M5 8h14l-1 12H6L5 8zM9 8V6a3 3 0 0 1 6 0v2"],
+          [
+            "Yetkazib berish",
+            "M2 6h11v10H2V6zM13 9h4l4 4v3h-8V9zM6.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM17.5 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4z",
+          ],
+        ];
+        var TARIFFS = {
+          0: "Start",
+          1: "Biznes",
+          3: "Korporativ",
+        }; /* ustun tepasidagi kartalar */
+
+        /* ================= HOLATLAR ================= */
+        var N = 6,
+          CW = 220,
+          CH = 310,
+          MOBILE_BP = 820;
+        /* lay: kartalar joylashuvi; rx/ry/rz: sahna burilishi; cx/cy: ekrandagi o'rni; k: o'lcham (kM telefonda) */
+        var ST = [
+          { lay: "wheel", rx: 8, ry: 0, rz: 0, sway: 0 }, // 0 yelpig'ich
+          {
+            lay: "stack",
+            rx: 60,
+            ry: 0,
+            rz: -38,
+            sway: 1,
+            k: 1.05,
+            kM: 1,
+            gap: 78,
+            gapM: 46,
+            s: 1,
+            cx: 0.72,
+            cy: 0.56,
+          }, // 1 qatlamlar
+          {
+            lay: "casc",
+            rx: 12,
+            ry: -24,
+            rz: 0,
+            sway: 0,
+            k: 1.05,
+            kM: 1.05,
+            cx: 0.3,
+            cy: 0.54,
+          }, // 2 kaskad
+          {
+            lay: "orbit",
+            rx: 4,
+            ry: 0,
+            rz: 0,
+            sway: 0,
+            k: 1.02,
+            kM: 1,
+            cxN: 0.04,
+            cx: 0.695,
+            cy: 0.52,
+          }, // 3 orbita
+          { lay: "grid", rx: 0, ry: 0, rz: 0, sway: 0, abs: true }, // 4 loyihalar panjarasi
+          {
+            lay: "piles",
+            rx: 60,
+            ry: 0,
+            rz: -38,
+            sway: 1,
+            k: 1.15,
+            kM: 0.9,
+            cyM: 0.68,
+            cx: 0.27,
+            cy: 0.6,
+          }, // 5 ustunlar
+          {
+            lay: "stack",
+            rx: 58,
+            ry: 0,
+            rz: -38,
+            sway: 1,
+            k: 1.25,
+            kM: 1.15,
+            gap: 9,
+            gapM: 9,
+            s: 1.02,
+            cx: 0.72,
+            cy: 0.56,
+          }, // 6 koloda
+        ];
+        var NS = ST.length;
+        var FLIPS = [
+          0, 1, 1, 2, 3, 4, 5,
+        ]; /* har holatgacha karta necha marta o'girilgan */
+        var CONTENT = [
+          "t",
+          "m",
+          "m",
+          "i",
+          "p",
+          "m",
+          "b",
+        ]; /* holatda ko'rinadigan yuz: tur, modul, integratsiya, loyiha, brend */
+        var ISO = [0, 1, 0, 0, 0, 1, 1];
+        var WIN = [
+          [0.04, 0.36],
+          [0.3, 0.62],
+          [0.3, 0.62],
+          [0.4, 0.8],
+          [0.42, 0.74],
+          [0.3, 0.62],
+        ]; /* o'tish qaysi skroll oralig'ida bo'ladi */
+        var WIN_STACKED = [
+          0.18, 0.52,
+        ]; /* tor ekranda loyihalar matni ustun bo'lib turadi, shuning uchun kartalar ertaroq uchadi */
+        var PILE = [0, 1, 1, 2, 2, 2],
+          LEVEL = [0, 1, 0, 2, 1, 0];
+
+        /* ================= DOM ================= */
+        var stage = $("stage"),
+          scene = $("scene3d"),
+          rig = $("rig"),
+          ground = $("ground"),
+          core = $("core"),
+          oring = $("oring"),
+          aura = $("aura"),
+          band = $("band"),
+          bar = $("bar");
+        var secs = arr(D.querySelectorAll("[data-state]")),
+          dots = arr(D.querySelectorAll(".dots a"));
+        var steps = $("steps"),
+          stepItems = arr(steps.children),
+          nowType = $("nowType"),
+          heroLead = $("heroLead"),
+          pgrid = $("pgrid");
+        var slots = arr(D.querySelectorAll(".slot"));
+        var CHECK =
+          '<svg class="ico" viewBox="0 0 16 16"><path d="M3 8.5l3.2 3.2L13 5"/></svg>';
+        var MARK =
+          '<svg class="ico bmark" viewBox="0 0 40 40"><rect x="2" y="2" width="36" height="36" rx="11"/><path d="M11 12l9 9 9-9M11 20l9 9 9-9"/></svg>';
+
+        /* loyiha havolalarini bezash: har bir <a class="slot"> karta ko'rinishini oladi */
+        var slotPf = slots.map(function (sl, i) {
+          var nm = sl.querySelector("strong"),
+            ds = sl.querySelector("span"),
+            tg = sl.getAttribute("data-tag") || "";
+          var html =
+            '<div class="pf"><div class="pf-top"><span>' +
+            pad(i + 1) +
+            "</span>" +
+            (tg ? '<span class="pf-tag">' + esc(tg) + "</span>" : "") +
+            "</div>" +
+            '<div class="pf-mid"><strong class="pf-name">' +
+            esc(nm ? nm.textContent : "") +
+            '</strong><span class="pf-desc">' +
+            esc(ds ? ds.textContent : "") +
+            "</span></div>" +
+            '<div class="pf-go"><span>Ochish</span><i><svg class="ico" viewBox="0 0 24 24"><path d="M7 17L17 7M9 7h8v8"/></svg></i></div></div>';
+          sl.innerHTML = html;
+          sl.classList.add("enh");
+          if (i < N) sl.classList.add("anch");
+          if (/^https?:/i.test(sl.getAttribute("href") || "")) {
+            sl.target = "_blank";
+            sl.rel = "noopener";
+          }
+          return html;
+        });
+
+        var cards = [],
+          flipEls = [],
+          fronts = [],
+          backs = [],
+          tags = [],
+          shades = [];
+        function faceInner(k) {
+          var M = MODULES[k],
+            I = INTEG[k];
+          return (
+            '<div class="v v-t"><div class="vt-top"><span class="tn"></span><span>' +
+            BRAND +
+            '</span></div><div class="vt-ring"><svg class="ico" viewBox="0 0 24 24"><path d=""/></svg></div><div class="vt-name"></div></div>' +
+            '<div class="v v-m"><div class="mh"><b>' +
+            pad(k + 1) +
+            "</b><span>" +
+            M[0] +
+            "</span><i>" +
+            CHECK +
+            '</i></div><div class="mz ' +
+            M[1] +
+            '">' +
+            M[2] +
+            "</div></div>" +
+            '<div class="v v-i sk-graph"><div class="vt-top"><span>' +
+            pad(k + 1) +
+            '</span><span>Integratsiya</span></div><div class="vt-ring"><svg class="ico" viewBox="0 0 24 24"><path d="' +
+            I[1] +
+            '"/></svg></div><div class="vt-name">' +
+            I[0] +
+            "</div></div>" +
+            '<div class="v v-p">' +
+            (slotPf[k] || "") +
+            "</div>" +
+            '<div class="v v-b"><div class="vt-top"><span>ERP · CRM</span><span>' +
+            pad(k + 1) +
+            "</span></div>" +
+            MARK +
+            '<div class="vt-name">' +
+            BRAND +
+            "</div></div>" +
+            '<i class="shade"></i>'
+          );
+        }
+        for (var q = 0; q < N; q++) {
+          var c = D.createElement("div"),
+            f = D.createElement("div"),
+            mid = D.createElement("div"),
+            fr = D.createElement("div"),
+            bk = D.createElement("div"),
+            tg = D.createElement("span");
+          c.className = "card3";
+          f.className = "flip";
+          mid.className = "c-mid";
+          fr.className = "c-face c-front";
+          bk.className = "c-face c-back";
+          tg.className = "tag";
+          fr.innerHTML = bk.innerHTML = faceInner(q);
+          tg.innerHTML = "<b></b><span></span>";
+          f.appendChild(mid);
+          f.appendChild(fr);
+          f.appendChild(bk);
+          var csh = D.createElement("div");
+          csh.className = "c-shadow";
+          c.appendChild(csh);
+          c.appendChild(f);
+          c.appendChild(tg);
+          rig.appendChild(c);
+          cards.push(c);
+          flipEls.push(f);
+          fronts.push(fr);
+          backs.push(bk);
+          tags.push(tg);
+          shades.push([fr.querySelector(".shade"), bk.querySelector(".shade")]);
+        }
+
+        /* ================= HOLAT O'ZGARUVCHILARI ================= */
+        var W = 0,
+          VH = 0,
+          docH = 1,
+          mob = false,
+          S = 1,
+          bandH = 0,
+          wheelTop = 0,
+          centers = [],
+          tops = [],
+          slotDoc = [],
+          gridC = { x: 0, y: 0 };
+        var progress = 0,
+          target = 0,
+          raf = 0,
+          t0 = performance.now(),
+          lastDot = -1,
+          lastTick = -2,
+          tagMode = "",
+          faceV = ["", ""],
+          lastNow = "";
+        var rot = 0,
+          rotT = 0,
+          jOf = [],
+          lift = [],
+          liftT = [],
+          curS = [],
+          curR = [],
+          lastShade = [];
+        var mx = 0,
+          my = 0,
+          pmx = 0,
+          pmy = 0,
+          intro = reduce ? 1 : 0,
+          docked = false;
+        for (q = 0; q < N; q++) {
+          jOf.push(null);
+          lift.push(0);
+          liftT.push(0);
+          curS.push(1);
+          curR.push(0);
+          lastShade.push(-1);
+        }
+
+        function setType(k, j) {
+          var ti = ((j % TYPES.length) + TYPES.length) % TYPES.length,
+            v = fronts[k].querySelector(".v-t");
+          v.className = "v v-t " + SKINS[ti];
+          v.querySelector(".tn").textContent = pad(ti + 1);
+          v.querySelector("path").setAttribute("d", TYPES[ti][1]);
+          v.querySelector(".vt-name").textContent = TYPES[ti][0];
+          v.setAttribute("data-name", TYPES[ti][0]);
+        }
+        function setFace(par, v) {
+          if (faceV[par] === v) return;
+          faceV[par] = v;
+          var list = par ? backs : fronts;
+          for (var k = 0; k < N; k++) list[k].setAttribute("data-v", v);
+        }
+        /* kartalar havolalar ustiga aniq tushgach, o'rnini haqiqiy havolalar oladi: matn tiniq, bosish va klaviatura odatdagidek ishlaydi */
+        function setDock(v) {
+          if (docked === v) return;
+          docked = v;
+          pgrid.classList.toggle("docked", v);
+          stage.style.visibility = v ? "hidden" : "";
+        }
+        function setTagMode(mode) {
+          if (tagMode === mode) return;
+          tagMode = mode;
+          stage.setAttribute("data-tag", mode);
+          for (var k = 0; k < N; k++) {
+            tags[k].firstChild.textContent = mode === "m" ? pad(k + 1) : "";
+            tags[k].lastChild.textContent =
+              mode === "m" ? MODULES[k][0] : TARIFFS[k] || "";
+          }
+        }
+
+        /* i-holatning ekrandagi markazi va o'lchami */
+        function geo(i) {
+          var st = ST[i];
+          if (st.lay === "wheel") {
+            var sc = mob ? clamp(W / 540, 0.6, 0.8) : S;
+            return {
+              x: W / 2,
+              y: wheelTop + ((mob ? 330 : 470) + CH / 2) * sc,
+              sc: sc,
+            };
+          }
+          if (st.abs) return { x: W / 2, y: VH / 2, sc: 1 };
+          if (mob)
+            return { x: W / 2, y: bandH * (st.cyM || 0.6), sc: S * st.kM };
+          return {
+            x: (st.cx + (W < 1200 && st.cxN ? st.cxN : 0)) * W,
+            y: st.cy * VH,
+            sc: S * st.k,
+          };
+        }
+
+        /* k-kartaning i-holatdagi o'rni: out = [x, y, z, burilish, masshtab, xiralik] */
+        function place(i, k, time, out) {
+          var st = ST[i],
+            x = 0,
+            y = 0,
+            z = 0,
+            r = 0,
+            s = 1,
+            sh = 0,
+            v,
+            c;
+          switch (st.lay) {
+            case "wheel":
+              var R = mob ? 330 : 470,
+                m = Math.ceil((rot - 3 - k) / 6),
+                j = k + 6 * m,
+                a = (j - rot) * 30 * intro;
+              if (jOf[k] !== j) {
+                jOf[k] = j;
+                setType(k, j);
+              }
+              v = (a * Math.PI) / 180;
+              x = R * Math.sin(v);
+              y = -R * Math.cos(v) + (1 - intro) * 460;
+              z = -Math.abs(a) * 0.4;
+              r = a;
+              break;
+            case "stack":
+              z = (2.5 - k) * (mob ? st.gapM : st.gap);
+              s = st.s;
+              break;
+            case "casc":
+              v = k - 2.5;
+              x = v * (mob ? 84 : 112);
+              y = v * 26 - lift[k] * 8;
+              z = v * 30 + lift[k] * 46;
+              s = mob ? 0.6 : 0.66;
+              break;
+            case "orbit":
+              var Rc = mob ? 205 : 270;
+              v = ((k * 60 + time * 11) * Math.PI) / 180;
+              c = Math.cos(v);
+              x = Rc * Math.sin(v);
+              y = 0.407 * Rc * c;
+              z = 0.914 * Rc * c;
+              s = mob ? 0.5 : 0.56;
+              sh = ((1 - c) / 2) * 0.58;
+              break;
+            case "grid":
+              var sl = slotDoc[k],
+                sy = window.pageYOffset;
+              if (sl) {
+                x = sl.x - W / 2;
+                y = sl.y - sy - VH / 2;
+                s = sl.w / CW;
+              } else {
+                x = gridC.x - W / 2;
+                y = gridC.y - sy - VH / 2;
+                z = -40;
+                s = 0.001;
+              }
+              break;
+            case "piles":
+              x = (PILE[k] - 1) * (mob ? 150 : 196);
+              z = LEVEL[k] * 30;
+              s = 0.62;
+              break;
+          }
+          out[0] = x;
+          out[1] = y;
+          out[2] = z;
+          out[3] = r;
+          out[4] = s;
+          out[5] = sh;
+        }
+
+        function measure() {
+          VH = window.innerHeight;
+          W = D.documentElement.clientWidth || window.innerWidth;
+          mob = W < MOBILE_BP;
+          bandH = mob ? band.offsetHeight || Math.round(VH * 0.42) : VH;
+          S = mob
+            ? Math.min(W / 560, (bandH - 84) / 392)
+            : clamp(Math.min(W / 1440, VH / 880), 0.6, 1.1);
+          var sy = window.pageYOffset;
+          docH = Math.max(1, D.documentElement.scrollHeight - VH);
+          centers = secs.map(function (el) {
+            var b = el.getBoundingClientRect();
+            return b.top + sy + b.height / 2;
+          });
+          tops = secs.map(function (el) {
+            return el.getBoundingClientRect().top + sy;
+          });
+          slotDoc = slots.slice(0, N).map(function (el) {
+            var b = el.getBoundingClientRect();
+            return {
+              x: b.left + b.width / 2,
+              y: b.top + sy + b.height / 2,
+              w: b.width,
+            };
+          });
+          var gb = pgrid.getBoundingClientRect();
+          gridC = { x: gb.left + gb.width / 2, y: gb.top + sy + gb.height / 2 };
+          wheelTop = mob
+            ? 84
+            : clamp(
+                heroLead.getBoundingClientRect().bottom + sy + 30,
+                VH * 0.56,
+                VH - 150,
+              );
+          var Rc = mob ? 205 : 270;
+          oring.style.width = oring.style.height = 2 * Rc + "px";
+          oring.style.left = oring.style.top = -Rc + "px";
+          if (!mob) {
+            band.style.transform = "";
+            stage.style.clipPath = "";
+            stage.style.webkitClipPath = "";
+          }
+        }
+
+        function readScroll() {
+          var n = centers.length,
+            k,
+            sy = window.pageYOffset;
+          if (mob) {
+            /* telefon: keyingi bo'lim boshi ekran pastiga kirganda holat almashadi */
+            var sum = 0;
+            for (k = 1; k < n; k++)
+              sum += clamp((VH * 0.84 - (tops[k] - sy)) / (VH * 0.3), 0, 1);
+            target = sum;
+            return;
+          }
+          var yc = sy + VH / 2;
+          if (yc <= centers[0]) {
+            target = 0;
+            return;
+          }
+          if (yc >= centers[n - 1]) {
+            target = n - 1;
+            return;
+          }
+          for (k = 0; k < n - 1; k++) if (yc < centers[k + 1]) break;
+          var r = (yc - centers[k]) / (centers[k + 1] - centers[k]),
+            w = k === 3 && W <= 1100 ? WIN_STACKED : WIN[k];
+          target = k + clamp((r - w[0]) / (w[1] - w[0]), 0, 1);
+        }
+
+        var pa = [0, 0, 0, 0, 1, 0],
+          pb = [0, 0, 0, 0, 1, 0];
+        function draw(now) {
+          var time = reduce ? 0 : (now - t0) / 1000,
+            k;
+          if (!reduce && intro < 1) {
+            var it = clamp((now - t0 - 150) / 1500, 0, 1);
+            intro = 1 - Math.pow(1 - it, 3);
+          }
+          var a = Math.min(NS - 1, Math.floor(progress)),
+            b = Math.min(NS - 1, a + 1),
+            t = progress - a;
+          if (reduce) t = t < 0.5 ? 0 : 1;
+          var e = smooth(t),
+            A = ST[a],
+            B = ST[b],
+            ga = geo(a),
+            gb = geo(b),
+            same = a === b;
+          function raw(i) {
+            return a === i ? 1 - e : b === i ? e : 0;
+          }
+          function sharp(i) {
+            return clamp((raw(i) - 0.6) / 0.4, 0, 1);
+          }
+          var absW = raw(4),
+            free = 1 - absW;
+          setDock(a === 4 && t === 0 && progress === target);
+
+          /* sahna: o'rni, o'lchami, burilishi */
+          var CX = lerp(ga.x, gb.x, e),
+            CY =
+              lerp(ga.y, gb.y, e) +
+              Math.sin(time * 0.8) * 5 * free * lerp(A.sway, B.sway, e);
+          var sc = lerp(ga.sc, gb.sc, e);
+          var rx = lerp(A.rx, B.rx, e) - pmy * 5 * free,
+            ry = lerp(A.ry, B.ry, e) + pmx * 5 * free;
+          var rz =
+            lerp(A.rz, B.rz, e) +
+            Math.sin(time * 0.45) * 2.2 * lerp(A.sway, B.sway, e) +
+            pmx * 3 * lerp(A.sway, B.sway, e);
+          scene.style.perspectiveOrigin =
+            CX.toFixed(1) + "px " + CY.toFixed(1) + "px";
+          rig.style.transform =
+            "translate3d(" +
+            CX.toFixed(1) +
+            "px," +
+            CY.toFixed(1) +
+            "px,0) scale(" +
+            sc.toFixed(4) +
+            ") rotateX(" +
+            rx.toFixed(2) +
+            "deg) rotateY(" +
+            ry.toFixed(2) +
+            "deg) rotateZ(" +
+            rz.toFixed(2) +
+            "deg)";
+          aura.style.transform =
+            "translate3d(" + CX.toFixed(1) + "px," + CY.toFixed(1) + "px,0)";
+          aura.style.opacity = (0.95 * free).toFixed(3);
+
+          /* ko'rinmay turgan yuzga keyingi mazmun oldindan qo'yiladi */
+          var fa = FLIPS[a] & 1,
+            fb = FLIPS[b] & 1;
+          setFace(fa, CONTENT[a]);
+          if (fb !== fa) setFace(fb, CONTENT[b]);
+
+          /* avtomatik oqim: kartalar navbat bilan "yonadi", ro'yxatdagi qadamlar bilan birga */
+          var tick =
+            raw(2) > 0.5
+              ? reduce
+                ? N
+                : Math.floor(time / 0.95) % (N + 2)
+              : -1;
+          if (tick !== lastTick) {
+            lastTick = tick;
+            steps.classList.toggle("live", tick >= 0 && !reduce);
+            for (k = 0; k < N; k++) {
+              cards[k].classList.toggle("hot", tick === k);
+              cards[k].classList.toggle("done", tick > k);
+              stepItems[k].classList.toggle("on", tick >= k);
+            }
+          }
+
+          /* kartalar */
+          var zmin = 1e9,
+            best = 1e9,
+            bestK = 0,
+            D0 = 0.38;
+          for (k = 0; k < N; k++) {
+            liftT[k] = tick === k ? 1 : 0;
+            lift[k] += (liftT[k] - lift[k]) * (reduce ? 1 : ease(0.16));
+            place(a, k, time, pa);
+            if (same) {
+              pb[0] = pa[0];
+              pb[1] = pa[1];
+              pb[2] = pa[2];
+              pb[3] = pa[3];
+              pb[4] = pa[4];
+              pb[5] = pa[5];
+            } else place(b, k, time, pb);
+            var u = reduce
+              ? t
+              : smooth(clamp(t * (1 + D0) - (k * D0) / (N - 1), 0, 1));
+            var x = lerp(pa[0], pb[0], u),
+              y = lerp(pa[1], pb[1], u),
+              z =
+                lerp(pa[2], pb[2], u) + (same ? 0 : Math.sin(Math.PI * u) * 70);
+            var r = lerp(pa[3], pb[3], u),
+              s = lerp(pa[4], pb[4], u),
+              sh = lerp(pa[5], pb[5], u);
+            curS[k] = s;
+            curR[k] = r;
+            if (z < zmin) zmin = z;
+            cards[k].style.transform =
+              "translate3d(" +
+              x.toFixed(1) +
+              "px," +
+              y.toFixed(1) +
+              "px," +
+              z.toFixed(1) +
+              "px) rotateZ(" +
+              r.toFixed(2) +
+              "deg) scale(" +
+              s.toFixed(4) +
+              ")";
+            flipEls[k].style.transform =
+              "rotateY(" +
+              (180 * lerp(FLIPS[a], FLIPS[b], u)).toFixed(1) +
+              "deg)";
+            var shq = Math.round(sh * 40) / 40;
+            if (shq !== lastShade[k]) {
+              lastShade[k] = shq;
+              shades[k][0].style.opacity = shq;
+              shades[k][1].style.opacity = shq;
+            }
+            if (Math.abs(r) < best) {
+              best = Math.abs(r);
+              bestK = k;
+            }
+          }
+          if (a === 0 && t < 0.5) {
+            /* muqovadagi "Masalan: ..." yozuvi tepada turgan karta bilan birga o'zgaradi */
+            var nm = fronts[bestK]
+              .querySelector(".v-t")
+              .getAttribute("data-name");
+            if (nm && nm !== lastNow) {
+              lastNow = nm;
+              nowType.textContent = nm;
+            }
+          }
+
+          /* yorliqlar: doim tomoshabinga qarab turadi (burilishlarning teskarisi) */
+          var w1 = sharp(1),
+            w5 = sharp(5),
+            mode = w5 > 0 ? "p" : "m";
+          if (w1 > 0 || w5 > 0) setTagMode(mode);
+          for (k = 0; k < N; k++) {
+            var op = mode === "m" ? w1 : TARIFFS[k] ? w5 : 0;
+            tags[k].style.opacity = op.toFixed(3);
+            if (op > 0) {
+              var cs = curS[k],
+                ox = mode === "m" ? 182 * cs + 16 : 0,
+                oy = mode === "m" ? 27 * cs : -(95 * cs + 34);
+              tags[k].style.transform =
+                "rotateZ(" +
+                (-curR[k] - rz).toFixed(2) +
+                "deg) rotateY(" +
+                (-ry).toFixed(2) +
+                "deg) rotateX(" +
+                (-rx).toFixed(2) +
+                "deg) scale(" +
+                (1 / cs).toFixed(4) +
+                ") translate(" +
+                ox.toFixed(1) +
+                "px," +
+                oy.toFixed(1) +
+                "px) translate(" +
+                (mode === "m" ? "0" : "-50%") +
+                ",-50%)";
+            }
+          }
+
+          /* orbita markazi, halqa va pol yorug'ligi */
+          var w3 = sharp(3),
+            iso = lerp(ISO[a], ISO[b], e);
+          core.style.opacity = w3.toFixed(3);
+          core.style.transform =
+            "rotateZ(" +
+            (-rz).toFixed(2) +
+            "deg) rotateY(" +
+            (-ry).toFixed(2) +
+            "deg) rotateX(" +
+            (-rx).toFixed(2) +
+            "deg) scale(" +
+            (0.7 + 0.3 * w3).toFixed(3) +
+            ")";
+          oring.style.opacity = (w3 * 0.9).toFixed(3);
+          ground.style.opacity = iso.toFixed(3);
+          ground.style.transform =
+            "translateZ(" + (zmin - 70).toFixed(1) + "px)";
+
+          /* telefon: loyihalar bo'limida yuqori oyna ko'tariladi va kartalar sahifaga chiqadi */
+          if (mob) {
+            band.style.transform =
+              "translate3d(0," + (-absW * 100).toFixed(2) + "%,0)";
+            var clip =
+              "inset(0 0 " + ((VH - bandH) * (1 - absW)).toFixed(0) + "px 0)";
+            stage.style.clipPath = clip;
+            stage.style.webkitClipPath = clip;
+          }
+
+          bar.style.transform =
+            "scaleX(" + clamp(window.pageYOffset / docH, 0, 1).toFixed(4) + ")";
+          var d = Math.round(progress);
+          if (d !== lastDot) {
+            lastDot = d;
+            dots.forEach(function (el, n) {
+              el.classList.toggle("on", n === d);
+            });
+          }
+        }
+
+        var lastT = 0,
+          dtF = 1;
+        function ease(k) {
+          return 1 - Math.pow(1 - k, dtF);
+        }
+        function frame(now) {
+          raf = 0;
+          dtF = lastT ? Math.min(4, Math.max(0.25, (now - lastT) / 16.667)) : 1;
+          lastT = now;
+          progress += (target - progress) * ease(0.1);
+          if (Math.abs(target - progress) < 0.0005) progress = target;
+          rot += (rotT - rot) * ease(0.055);
+          pmx += (mx - pmx) * ease(0.06);
+          pmy += (my - pmy) * ease(0.06);
+          draw(now);
+          if (!D.hidden) raf = requestAnimationFrame(frame);
+        }
+        function kick() {
+          if (!raf)
+            raf = requestAnimationFrame(
+              reduce
+                ? function (n) {
+                    raf = 0;
+                    progress = target;
+                    rot = rotT;
+                    draw(n);
+                  }
+                : frame,
+            );
+        }
+
+        window.addEventListener(
+          "scroll",
+          function () {
+            readScroll();
+            if (reduce) kick();
+          },
+          { passive: true },
+        );
+        window.addEventListener("resize", function () {
+          measure();
+          readScroll();
+          kick();
+        });
+        window.addEventListener("load", function () {
+          measure();
+          readScroll();
+          kick();
+        });
+        D.addEventListener("visibilitychange", function () {
+          if (!D.hidden) {
+            lastT = 0;
+            kick();
+          }
+        });
+        if (D.fonts && D.fonts.ready)
+          D.fonts.ready.then(function () {
+            measure();
+            readScroll();
+            kick();
+          });
+        if (!reduce && window.matchMedia("(pointer:fine)").matches) {
+          window.addEventListener(
+            "pointermove",
+            function (ev) {
+              mx = ev.clientX / window.innerWidth - 0.5;
+              my = ev.clientY / window.innerHeight - 0.5;
+            },
+            { passive: true },
+          );
+        }
+        /* muqovadagi yelpig'ich o'zi aylanadi */
+        if (!reduce)
+          setInterval(function () {
+            if (!D.hidden && progress < 0.05) rotT += 1;
+          }, 3400);
+
+        measure();
+        readScroll();
+        progress = target;
+        kick();
+
+        /* ================= FORMA: hozircha hech qayerga yubormaydi =================
+     Ulash uchun "TODO" o'rniga o'z serveringiz, CRM yoki Telegram bot manziliga fetch() so'rovini yozing. */
+        var form = $("leadForm"),
+          status = $("formStatus"),
+          fName = $("fName"),
+          fPhone = $("fPhone"),
+          fType = $("fType");
+        form.addEventListener("submit", function (ev) {
+          ev.preventDefault();
+          if (fName.value.trim().length < 2) {
+            status.textContent = "Ismingizni kiriting.";
+            fName.focus();
+            return;
+          }
+          if (fPhone.value.replace(/\D/g, "").length < 9) {
+            status.textContent = "Telefon raqamini to‘liq kiriting.";
+            fPhone.focus();
+            return;
+          }
+          // TODO: fetch('https://SIZNING-SERVER/api/leads', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ name: fName.value, phone: fPhone.value, type: fType.value }) })
+          status.textContent =
+            "Namuna rejimi: forma hali serverga ulanmagan, ariza yuborilmadi.";
+        });
+
+        /* ================= REJIM ALMASHTIRGICH ================= */
+        var themeBtn = $("themeBtn"),
+          metaTheme = D.querySelector('meta[name="theme-color"]');
+        function currentTheme() {
+          return D.documentElement.getAttribute("data-theme") === "light"
+            ? "light"
+            : "dark";
+        }
+        function labelTheme(t) {
+          themeBtn.setAttribute(
+            "aria-label",
+            t === "light" ? "Qorong‘i rejimga o‘tish" : "Yorug‘ rejimga o‘tish",
+          );
+        }
+        function applyTheme(t) {
+          D.documentElement.setAttribute("data-theme", t);
+          if (metaTheme)
+            metaTheme.setAttribute(
+              "content",
+              t === "light" ? "#ECE9E2" : "#0A0A0B",
+            );
+          labelTheme(t);
+          try {
+            localStorage.setItem("ventura-theme", t);
+          } catch (e) {}
+        }
+        labelTheme(currentTheme());
+        themeBtn.addEventListener("click", function () {
+          var next = currentTheme() === "light" ? "dark" : "light";
+          if (reduce || !D.startViewTransition) {
+            applyTheme(next);
+            return;
+          }
+          var r = themeBtn.getBoundingClientRect(),
+            x = r.left + r.width / 2,
+            y = r.top + r.height / 2;
+          var R = Math.hypot(
+            Math.max(x, window.innerWidth - x),
+            Math.max(y, window.innerHeight - y),
+          );
+          var vt = D.startViewTransition(function () {
+            applyTheme(next);
+          });
+          vt.ready
+            .then(function () {
+              D.documentElement.animate(
+                {
+                  clipPath: [
+                    "circle(0px at " + x + "px " + y + "px)",
+                    "circle(" + R + "px at " + x + "px " + y + "px)",
+                  ],
+                },
+                {
+                  duration: 700,
+                  easing: "cubic-bezier(.65,0,.35,1)",
+                  pseudoElement: "::view-transition-new(root)",
+                },
+              );
+            })
+            .catch(function () {});
+        });
+
+        $("year").textContent = new Date().getFullYear();
+      })();
+    </script>
+  </body>
+</html>
