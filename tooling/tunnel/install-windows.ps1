@@ -60,14 +60,18 @@ ingress:
 & $Cloudflared tunnel --config $config ingress validate
 if ($LASTEXITCODE -ne 0) { throw "Sozlama tekshiruvdan o'tmadi" }
 
-$svc = Get-Service -Name cloudflared -ErrorAction SilentlyContinue
-if ($svc) {
-  Restart-Service cloudflared
-} else {
+if (-not (Get-Service -Name cloudflared -ErrorAction SilentlyContinue)) {
   & $Cloudflared service install
   if ($LASTEXITCODE -ne 0) { throw "Xizmatni o'rnatib bo'lmadi" }
 }
+# `service install` xizmatni argumentsiz yozadi va u darhol yiqiladi: buyruq aniq beriladi
+Stop-Service cloudflared -Force -ErrorAction SilentlyContinue
+$image = "`"$Cloudflared`" tunnel --no-autoupdate --config `"$config`" run"
+Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\cloudflared" -Name ImagePath -Value $image
 Set-Service -Name cloudflared -StartupType Automatic
-Start-Sleep -Seconds 5
+Start-Service cloudflared
+Start-Sleep -Seconds 8
+$state = (Get-Service cloudflared).Status
 Get-Service cloudflared | Format-List Name, Status, StartType
+if ($state -ne "Running") { throw "Xizmat ishlamayapti: Ilovalar jurnalida (Event Viewer, cloudflared) sababini ko'ring" }
 Write-Host "Tayyor. Tekshirish: cloudflared tunnel info $TunnelId"
