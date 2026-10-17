@@ -49,7 +49,9 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
   const flat = groups.flatMap((g) => g.items);
 
   return (
-    <div className="lg:grid lg:grid-cols-[264px_minmax(0,1fr)] lg:gap-8">
+    // Katta ekranda ikkala ustun ekran balandligida, har biri o'zi aylanadi: navbar joyidan qimirlamaydi va uning
+    // ustida aylantirilganda yonidagi sahifa siljimaydi (topbar + main'ning yuqori/pastki ichki bo'shlig'i — 4rem)
+    <div className="lg:grid lg:h-[calc(100dvh-var(--topbar-h)-4rem)] lg:grid-cols-[264px_minmax(0,1fr)] lg:gap-8">
       {/* Kichik ekran: gorizontal tasma */}
       <nav aria-label={t.title} className="-mx-4 mb-5 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:hidden">
         <ul className="flex w-max gap-1.5">
@@ -78,8 +80,8 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
       </nav>
 
       {/* Katta ekran: chap ustun */}
-      <aside className="hidden lg:block">
-        <div className="sticky top-20 space-y-4 border-r border-border pr-6">
+      <aside className="hidden min-h-0 lg:block">
+        <div className="flex h-full flex-col gap-4 border-r border-border pr-6">
           <div>
             <h2 className="type-heading text-xl leading-tight text-foreground">{t.title}</h2>
             <p className="mt-1 text-body text-muted-foreground">{t.subtitle}</p>
@@ -94,7 +96,10 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
               className="min-w-0 flex-1 bg-transparent text-body outline-none placeholder:text-muted-foreground"
             />
           </label>
-          <nav aria-label={t.title} className="max-h-[calc(100dvh-15rem)] space-y-5 overflow-y-auto pb-4">
+          <nav
+            aria-label={t.title}
+            className="-mr-2 min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-2 pb-4"
+          >
             {shown.map((g) => (
               <div key={g.title}>
                 <div className="mb-1.5 px-2.5 text-caption font-semibold text-muted-foreground">{g.title}</div>
@@ -128,7 +133,9 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
         </div>
       </aside>
 
-      <div className="min-w-0">{children}</div>
+      <div className="min-w-0 lg:-mr-3 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-3 lg:pb-4">
+        {children}
+      </div>
     </div>
   );
 }
