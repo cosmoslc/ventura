@@ -3,7 +3,7 @@
 import { ArrowLeft, ArrowRight, Check, Copy, KeyRound, Rocket } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { DB_STRATEGIES, DEPLOY_MODES, type ProjectBrand, TARGET_KINDS } from "@ventura/db/schema/panel";
+import { type DB_STRATEGIES, DEPLOY_MODES, type ProjectBrand, TARGET_KINDS } from "@ventura/db/schema/panel";
 import { type Feature, withRequirements } from "@ventura/tenants";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
@@ -15,7 +15,7 @@ import { PhoneInput, formatUzPhone } from "@ventura/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Stepper } from "@ventura/ui/stepper";
 import { toast } from "@ventura/ui/toast";
-import { BASE_DOMAIN, HOST_RE, slugProblem, slugify } from "@/lib/project-rules";
+import { BASE_DOMAIN, HOST_RE, dbOptionsFor, slugProblem, slugify } from "@/lib/project-rules";
 import { uz } from "@/lib/uz";
 import { checkSlugAction, createProjectAction } from "../actions";
 import { BrandPicker, ChoiceCards, FeaturePicker } from "../parts";
@@ -87,7 +87,6 @@ export function ProjectWizard({
   const [dbStrategy, setDbStrategy] = React.useState<DbStrategy>("db_per_tenant");
   // 7. Integratsiyalar
   const [telegramToken, setTelegramToken] = React.useState("");
-  const [githubRepo, setGithubRepo] = React.useState("");
 
   function pickTemplate(key: string) {
     setTemplateKey(key);
@@ -152,7 +151,6 @@ export function ProjectWizard({
         target,
         dbStrategy,
         telegramToken,
-        githubRepo,
       });
       if (!res.ok) {
         setError(res.error);
@@ -359,9 +357,12 @@ export function ProjectWizard({
               <ChoiceCards
                 label={uz.projects.mode}
                 value={mode}
-                onChange={setMode}
+                onChange={(m) => {
+                  setMode(m);
+                  if (!dbOptionsFor(m).includes(dbStrategy)) setDbStrategy("db_per_tenant");
+                }}
                 options={DEPLOY_MODES}
-                labels={{ shared: "shared", dedicated: "dedicated", fork: "fork" }}
+                labels={{ shared: "shared", dedicated: "dedicated" }}
                 hints={uz.projects.modeHints}
               />
               <ChoiceCards
@@ -376,7 +377,7 @@ export function ProjectWizard({
                 label={uz.projects.db}
                 value={dbStrategy}
                 onChange={setDbStrategy}
-                options={DB_STRATEGIES}
+                options={dbOptionsFor(mode)}
                 labels={uz.projects.dbLabels}
                 hints={uz.projects.dbHints}
               />
@@ -397,18 +398,6 @@ export function ProjectWizard({
                   className="font-mono"
                   placeholder="123456:ABC…"
                 />
-              </div>
-              <div>
-                <Label htmlFor="w-gh">{uz.wizard.githubRepo}</Label>
-                <Input
-                  id="w-gh"
-                  value={githubRepo}
-                  onChange={(e) => setGithubRepo(e.target.value)}
-                  disabled={mode !== "fork"}
-                  className="font-mono"
-                  placeholder={`ventura-${slug || "slug"}`}
-                />
-                <FieldHint>{uz.wizard.githubHint}</FieldHint>
               </div>
             </div>
           ) : null}

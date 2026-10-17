@@ -9,7 +9,7 @@ Ventura.uz boshqaruv tizimi — bitta joydan mijozlar uchun tayyor tizimlarni (o
 Panel quyidagilarni qila olishi kerak:
 
 - Shablondan yangi mijoz loyihasini yaratish (klonlash).
-- Loyihani 3 xil joyga chiqarish: **GitHub + Vercel**, **online VPS** (IP, port, SSH), **lokal VPS** (uydagi kompyuter, internetga chiqarilgan).
+- Loyihani 2 xil joyga chiqarish: **online VPS** (IP, port, SSH) va **lokal VPS** (uydagi kompyuter, internetga chiqarilgan). VPS'ning o'zida frontend, backend va baza ishlaydi. GitHub + Vercel rejadan olib tashlangan (2026-10-17, ADR 0048).
 - Har loyihaga cheksiz domen ulash, SSL avtomatik.
 - Har mijozga moslash: brend (rang, logo, nom), bo'limlarni yoqish/o'chirish, sozlamalar.
 - To'liq nazorat: kim, qachon push qildi, qaysi build o'tdi yoki yiqildi, kim serverga kirdi.
@@ -36,12 +36,10 @@ Hamma loyihalar (panel va barcha shablonlar) bitta stackda yoziladi. Bu qaror o'
 | Validatsiya | Zod | Har bir kirish ma'lumotini tekshirish |
 | VPS deploy | O'z SSH drayverimiz (`ssh2`): git, pnpm build, PM2, nginx, certbot | To'liq nazorat, har qadam bizning logda |
 | Uydagi server | Cloudflare Tunnel (yoki statik IP + port yo'naltirish) | Uydagi kompyuterni xavfsiz internetga chiqarish |
-| Bulut deploy | Vercel REST API | Avto loyiha, env, domen |
-| Kod | GitHub App | Avto repo, webhooklar, qisqa muddatli tokenlar |
 | Ogohlantirish | Telegram Bot API | Tezkor xabarlar |
 | Testlar | Vitest + Playwright | Mantiq va sahifalar testi |
 
-**Panelning o'zi Vercel'da emas, VPS'da ishlaydi.** Sabab: unga uzoq davom etadigan fon vazifalari, SSH va server bilan doimiy aloqa kerak.
+**Panelning o'zi VPS'da ishlaydi.** Sabab: unga uzoq davom etadigan fon vazifalari, SSH va server bilan doimiy aloqa kerak.
 
 ## 3. Monorepo tuzilishi
 
@@ -58,8 +56,8 @@ ventura/
 │   ├── db/              Drizzle sxemalar: panel/ va tenant/ alohida
 │   ├── auth/            Better Auth sozlamasi, rollar, 2FA
 │   ├── tenants/         tenant konfiguratsiyasi, bo'limlar, sozlamalar
-│   ├── deploy/          deploy drayverlari: vercel, ssh
-│   ├── integrations/    GitHub, Vercel, Cloudflare, Telegram API klientlari
+│   ├── deploy/          deploy drayverlari: ssh (va sinov uchun sim)
+│   ├── integrations/    Cloudflare, Telegram API klientlari
 │   ├── security/        shifrlash, audit yozuvi, xesh zanjiri
 │   ├── jobs/            pg-boss vazifalari (deploy, tekshiruv, zahira, migratsiya)
 │   └── config/          tsconfig, eslint, tailwind preset
@@ -87,8 +85,8 @@ Kod va interfeysda shu nomlar bir xil ishlatiladi.
 | --- | --- | --- |
 | Shablon | `Template` | Klonlanadigan tizim turi: `edu-crm`, `sawmill` |
 | Loyiha (mijoz tizimi) | `Project` / `Tenant` | Bitta mijozning tizimi: `bilim.ventura.uz` |
-| Deploy rejimi | `DeployMode` | Loyiha qanday ishlashi: `shared`, `dedicated`, `fork` |
-| Deploy manzili | `Target` | Qayerda ishlashi: `vercel`, `vps-online`, `vps-local` |
+| Deploy rejimi | `DeployMode` | Loyiha qanday ishlashi: `shared`, `dedicated` |
+| Deploy manzili | `Target` | Qayerda ishlashi: `vps` (online VPS), `home` (uydagi server) |
 | Server | `Server` | Panelga ulangan VPS (IP, port, SSH) |
 | Domen | `Domain` | Loyihaga ulangan manzil, cheksiz soni |
 | Bo'lim | `Feature` | Yoqib/o'chiriladigan funksiya: `attendance`, `coins` |
@@ -101,10 +99,9 @@ Kod va interfeysda shu nomlar bir xil ishlatiladi.
 | Rejim | Qanday ishlaydi | Qachon |
 | --- | --- | --- |
 | `shared` (standart) | Bitta ilova, ko'p mijoz. Mijoz domeniga qarab o'z sozlamasini va bazasini oladi | Ko'pchilik mijozlar |
-| `dedicated` | Kod umumiy repodan, lekin mijozga alohida deploy | Katta mijoz, alohida server so'rasa |
-| `fork` | Mijozga alohida GitHub repo klonlanadi, o'z deploy bilan | Juda katta moslash kerak bo'lsa (qimmat, kam ishlatiladi) |
+| `dedicated` | Kod umumiy, lekin mijozga o'z ilova nusxasi: alohida papka, PM2 jarayoni, port va mijozlar ro'yxati (faqat o'zi) | Katta mijoz, alohida server yoki yuklama ajratish kerak bo'lsa |
 
-`shared` rejimda xato bir marta tuzatiladi va hamma mijozga tushadi. `fork` rejimda har bir repo alohida yangilanadi, shuning uchun panel "shablondan N ta commit orqada" deb ko'rsatadi va bir tugma bilan yangilash PR'ini ochadi.
+Ikkala rejimda kod bitta repodan: xato bir marta tuzatiladi. `shared` rejimda yangi versiya serverdagi hamma mijozga birdan tushadi; `dedicated` mijoz o'z deploy'ida yangilanadi. Rejim almashganda baza o'sha qoladi (nomi shablon + slug), eski nusxa avtomatik bo'shatiladi (ADR 0048).
 
 ### Baza strategiyasi
 
@@ -114,7 +111,7 @@ Har loyiha yaratilayotganda baza qanday saqlanishi tanlanadi. Barcha variantlar 
 | --- | --- | --- | --- |
 | Umumiy baza | `shared_db` | Hamma mijoz bitta bazada, har jadvalda `tenant_id` + PostgreSQL RLS | Kichik mijozlar, eng arzon |
 | Alohida baza (standart) | `db_per_tenant` | Bitta PostgreSQL server ichida har mijozga o'z bazasi (`db_bilim`) | Ko'pchilik mijozlar: to'liq ajratilgan, alohida zahira va tiklash |
-| Alohida server | `dedicated_server` | Mijozga o'z PostgreSQL serveri | Katta mijoz yoki qonun talabi bo'lsa |
+| Alohida server | `dedicated_server` | Baza mijozning o'z VPS'idagi PostgreSQL'da; server faqat shu mijozga (boshqa loyiha qo'yilmaydi). Faqat `dedicated` rejimda | Katta mijoz yoki qonun talabi bo'lsa |
 
 **Qoidalar:**
 
@@ -139,7 +136,7 @@ Chap tomonda sidebar, o'ngda kontent. Interfeys tili o'zbekcha, light/dark/tizim
 | Mijozlar | `/clients` | Mijozlar, ularning loyihalari, obuna holati (sinov, faol, to'xtatilgan) |
 | Audit jurnali | `/audit` | Barcha hodisalar, filtr: kim, loyiha, turi, sana |
 | Ogohlantirishlar | `/alerts` | Qoidalar va yuborilgan xabarlar tarixi |
-| Integratsiyalar | `/settings/integrations` | GitHub App, Vercel, Cloudflare, Telegram ulanishi |
+| Integratsiyalar | `/settings/integrations` | Cloudflare, Telegram ulanishi |
 | Xavfsizlik | `/settings/security` | 2FA, sessiyalar, adminlar va rollar |
 | Xavfli hudud | `/settings/danger` | Qaytarib bo'lmaydigan amallar, qayta tasdiq bilan |
 
@@ -160,17 +157,17 @@ Loyiha bazasini panel ichidan ko'rish va tahrirlash (Supabase'dagi Table Editor'
 3. **Brend:** asosiy rang (tayyor palitralar + o'z rangi), logo, light/dark ko'rinishi. O'ng tomonda jonli ko'rinish (preview).
 4. **Ega hisobi:** login va parol (generatsiya tugmasi).
 5. **Bo'limlar:** guruhlangan ro'yxat, qidiruv, bog'liqlar avtomatik yoqiladi/o'chadi.
-6. **Rejim, manzil va baza:** `shared` / `dedicated` / `fork`; Vercel / online VPS / uydagi server; baza strategiyasi (umumiy / alohida baza / alohida server).
-7. **Integratsiyalar:** Telegram bot tokeni (ixtiyoriy), alohida GitHub repo (faqat `fork`).
+6. **Rejim, manzil va baza:** `shared` / `dedicated`; online VPS / uydagi server; baza strategiyasi (`shared` — umumiy yoki alohida baza, `dedicated` — alohida baza yoki alohida server).
+7. **Integratsiyalar:** Telegram bot tokeni (ixtiyoriy).
 8. **Ko'rib chiqish → "Yaratish va ishga tushirish".** Keyin har qadam jonli ko'rsatiladi: repo → baza → env → build → domen → SSL → tekshiruv.
 
 ## 6. Deploy usullari
 
-Uchala usul bitta umumiy interfeys orqali ishlaydi, panel qaysi drayver ekanini bilmasdan ishlaydi. Har deploy fon vazifasi (pg-boss) sifatida bajariladi, so'rov ichida emas.
+Ikkala usul bitta umumiy interfeys orqali ishlaydi, panel qaysi drayver ekanini bilmasdan ishlaydi. Har deploy fon vazifasi (pg-boss) sifatida bajariladi, so'rov ichida emas.
 
 ```ts
 interface DeployDriver {
-  kind: 'vercel' | 'ssh';
+  kind: 'ssh' | 'sim';
   createApp(input: CreateAppInput): Promise<AppRef>;
   setEnv(app: AppRef, vars: EnvVar[]): Promise<void>;
   deploy(app: AppRef, opts?: { commitSha?: string }): Promise<DeploymentRef>;
@@ -185,18 +182,7 @@ interface DeployDriver {
 }
 ```
 
-### ① GitHub + Vercel
-
-1. GitHub App Ventura GitHub hisobiga o'rnatiladi (faqat kerakli repolarga ruxsat).
-2. `fork` rejimda: shablon reposidan yangi yopiq repo yaratiladi (GitHub API `generate`).
-3. Vercel API orqali loyiha yaratiladi: repo ulanadi, `rootDirectory` = `apps/edu-crm`, framework = Next.js.
-4. Muhit o'zgaruvchilari yoziladi (baza manzili, tenant kaliti, brend).
-5. Domenlar qo'shiladi, Vercel SSL'ni o'zi beradi.
-6. Har `git push` avtomatik deploy beradi; holat Vercel webhook orqali panelga keladi.
-
-Eslatma: tijorat uchun Vercel Pro tarifi kerak. Shaxsiy ma'lumotlar uchun Vercel faqat qonun talabi aniqlashtirilgandan keyin ishlatiladi (11-bo'lim).
-
-### ② Online VPS (IP, port, SSH)
+### ① Online VPS (IP, port, SSH)
 
 1. "VPS qo'shish": nom, IP/domen, SSH port, foydalanuvchi, SSH kalit (shifrlanib saqlanadi), sig'im. Standart: O'zbekistondagi provayder.
 2. Panel SSH orqali ulanishni tekshiradi va serverni tayyorlaydi (bir martalik skript): `deploy` foydalanuvchi, Node.js, pnpm, PM2, nginx, certbot, PostgreSQL, PgBouncer, firewall, fail2ban.
@@ -204,9 +190,9 @@ Eslatma: tijorat uchun Vercel Pro tarifi kerak. Shaxsiy ma'lumotlar uchun Vercel
 4. Loyiha SSH drayveri orqali chiqariladi (pastdagi qadamlar).
 5. Domen va SSL: nginx konfiguratsiyasi + certbot (Let's Encrypt).
 
-### ③ Uydagi server (lokal)
+### ② Uydagi server (lokal)
 
-Uydagi kompyuter server sifatida ishlaydi va internetga chiqariladi; panelning o'zi ham shu yerda turishi mumkin. Keyinchalik shu kompyuterga VPS dasturlari o'rnatilib, mijozlarga tarqatish uchun ishlatiladi. Panel bu serverda SSH'siz, to'g'ridan-to'g'ri buyruq bajaradi; qolgan qadamlar ② bilan bir xil.
+Uydagi kompyuter server sifatida ishlaydi va internetga chiqariladi; panelning o'zi ham shu yerda turishi mumkin. Keyinchalik shu kompyuterga VPS dasturlari o'rnatilib, mijozlarga tarqatish uchun ishlatiladi. Panel bu serverda SSH'siz, to'g'ridan-to'g'ri buyruq bajaradi; qolgan qadamlar ① bilan bir xil.
 
 **Internetga chiqarish:** uy internetida odatda statik IP yo'q va portlar yopiq bo'ladi. Shuning uchun standart yo'l — **Cloudflare Tunnel**: kompyuterdan tashqariga shifrlangan tunnel ochiladi, router'da port ochish shart emas, uy IP'si ko'rinmaydi. Muqobil: provayderdan statik IP olib, 80/443 portlarni yo'naltirish.
 
@@ -219,7 +205,7 @@ Uydagi kompyuter server sifatida ishlaydi va internetga chiqariladi; panelning o
 ### SSH drayveri: bitta deploy qadamlari
 
 1. Yangi reliz papkasi: `/home/deploy/apps/<slug>/releases/<sana-commit>`.
-2. `git clone` (GitHub App tokeni bilan) va kerakli commit'ga o'tish.
+2. Kod paneldan `git archive` bilan aynan commit qilingan holatda yuboriladi va ochiladi.
 3. `.env` yozish (sirlar paneldan, faqat server ichida).
 4. `pnpm install --frozen-lockfile` va `pnpm turbo build --filter=<shablon>`.
 5. Baza migratsiyasi (tanlangan baza strategiyasiga qarab).
@@ -240,7 +226,7 @@ Har loyihaga avtomatik subdomen beriladi va istalgancha o'z domeni ulanadi.
 
 1. Domen mijoz uchun qo'lda sotib olinadi (`.uz` registrator orqali). Panel domen sotib olmaydi.
 2. Loyiha yaratilayotganda yoki keyin "Domenlar" tabida domen kiritiladi (`crm.bilim.uz`).
-3. Panel DNS ko'rsatmasini beradi: VPS uchun **A yozuvi** (server IP), Vercel yoki Cloudflare Tunnel uchun **CNAME**.
+3. Panel DNS ko'rsatmasini beradi: VPS uchun **A yozuvi** (server IP), Cloudflare Tunnel uchun **CNAME**.
 4. Yozuv DNS provayderda qo'shiladi.
 5. Panel DNS'ni tekshiradi; to'g'ri bo'lsa, domen ulanadi va SSL avtomatik chiqariladi.
 
@@ -310,7 +296,7 @@ export const features = [
 ### Konfiguratsiya ilovaga qanday yetadi
 
 - `shared` rejim: ilova so'rovdagi domen bo'yicha tenant'ni topadi, konfiguratsiyani bazadan o'qiydi va qisqa muddat keshlaydi.
-- `dedicated` va `fork` rejim: ilova paneldan imzolangan so'rov bilan konfiguratsiyani oladi (`GET /api/tenant-config`); panel o'zgarishdan keyin ilovaga webhook yuborib, keshni yangilatadi.
+- `dedicated` rejim: `shared` bilan bir xil — konfiguratsiya o'z nusxasining `tenants.json` faylida (unda faqat shu mijoz).
 - Ikkala holatda ham brend va bo'lim o'zgarishi deploysiz qo'llanadi.
 
 ## 9. Baza sxemasi (panel bazasi)
@@ -327,8 +313,7 @@ Panel o'z alohida PostgreSQL bazasiga ega. Barcha jadvallarda `id` (uuid), `crea
 | `servers` | name, host, ssh\_port, ssh\_user, kind (`home` / `online`), provider, tunnel\_id, ssh\_key\_secret\_id, deploy\_root, capacity, status, last\_seen\_at | Serverlar (uydagi va online) |
 | `db_servers` | server\_id, host, port, admin\_secret\_id, pgbouncer\_port | PostgreSQL serverlari |
 | `tenant_databases` | project\_id, db\_server\_id, db\_name, db\_user, password\_secret\_id, schema\_version, last\_migrated\_at | Har loyiha bazasi va uning migratsiya versiyasi |
-| `targets` | type (`vercel` / `ssh`), server\_id, vercel\_team\_id | Deploy manzillari |
-| `repos` | project\_id, owner, name, private, default\_branch, template\_version | Faqat `fork` rejim uchun |
+| `targets` | type (`ssh`), server\_id | Deploy manzillari |
 | `deployments` | project\_id, provider, release\_path, commit\_sha, branch, triggered\_by, status, started\_at, finished\_at, rolled\_back\_from | Har build |
 | `deployment_steps` | deployment\_id, step, command, exit\_code, output, started\_at, finished\_at | SSH drayveri bajargan har buyruq |
 | `domains` | project\_id, hostname, kind (`subdomain` / `custom`), is\_primary, status, ssl\_expires\_at, last\_checked\_at | Domenlar |
@@ -343,7 +328,7 @@ Panel o'z alohida PostgreSQL bazasiga ega. Barcha jadvallarda `id` (uuid), `crea
 
 ## 10. Audit va monitoring
 
-Panel, GitHub, Vercel va serverlarda bo'lgan har bir muhim hodisa bitta audit jurnalida ko'rinadi.
+Panel, GitHub (asosiy repo) va serverlarda bo'lgan har bir muhim hodisa bitta audit jurnalida ko'rinadi.
 
 | Hodisa | Manba | Telegram xabari |
 | --- | --- | --- |
@@ -351,7 +336,7 @@ Panel, GitHub, Vercel va serverlarda bo'lgan har bir muhim hodisa bitta audit ju
 | Panelga kirish, 2FA xatosi, yangi qurilmadan kirish | Panel | Ha |
 | `push`, yangi branch, PR, `main`ga to'g'ridan-to'g'ri push | GitHub webhook | `main`ga panel tashqarisidan push bo'lsa — ha |
 | Repo ochiq (public) qilindi, yangi a'zo yoki deploy kalit qo'shildi | GitHub webhook | Ha |
-| Build boshlandi / tugadi / yiqildi | Vercel webhook, SSH drayveri | Yiqilsa — ha |
+| Build boshlandi / tugadi / yiqildi | SSH drayveri | Yiqilsa — ha |
 | Serverga SSH orqali kirish (kim, qaysi IP) | Server auth logi | Notanish IP bo'lsa — ha |
 | Sayt ishlamay qoldi (2 daqiqadan ko'p) | Uptime tekshiruv (har daqiqa) | Ha |
 | Disk 85% dan, RAM 90% dan oshdi | Server metrikalari | Ha |
@@ -363,7 +348,7 @@ Panel, GitHub, Vercel va serverlarda bo'lgan har bir muhim hodisa bitta audit ju
 - Har bir o'zgartiruvchi amal `audit.record()` chaqiradi: kim, qachon, nima, qaysi obyekt, IP, oldingi va keyingi qiymat.
 - Jurnalni o'zgartirib bo'lmaydi: ilova baza foydalanuvchisida `audit_events` uchun `UPDATE` va `DELETE` huquqi yo'q.
 - Har yozuv oldingisining xeshini saqlaydi (xesh zanjiri). Kimdir bazaga qo'lda aralashsa, zanjir buziladi va panel buni ko'rsatadi.
-- Webhooklar imzo bilan tekshiriladi (GitHub `X-Hub-Signature-256`, Vercel imzosi); imzosizlari rad etiladi.
+- Webhooklar imzo bilan tekshiriladi (GitHub `X-Hub-Signature-256`); imzosizlari rad etiladi.
 - Saqlash muddati: kamida 1 yil.
 
 **Audit sahifasi:** filtr (kim, loyiha, hodisa turi, sana), har yozuvni ochib tafsilotini ko'rish, CSV eksport.
@@ -412,7 +397,7 @@ Panel barcha serverlar va repolarning kalitlarini saqlaydi, shuning uchun u eng 
 
 ### Shaxsiy ma'lumotlar qonuni
 
-O'zbekiston fuqarolarining shaxsiy ma'lumotlari (ism, telefon) O'zbekistondagi serverlarda saqlanishi talab qilinadi. Shuning uchun standart manzil — O'zbekistondagi VPS. Vercel'ni shaxsiy ma'lumotli loyihalar uchun ishlatishdan oldin talabni yurist bilan aniqlashtirish kerak.
+O'zbekiston fuqarolarining shaxsiy ma'lumotlari (ism, telefon) O'zbekistondagi serverlarda saqlanishi talab qilinadi. Shuning uchun standart manzil — O'zbekistondagi VPS.
 
 ## 12. Zahira (backup) va tiklash
 
@@ -463,7 +448,7 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 ### 2-bosqich. Uydagi serverga deploy
 
-- [ ] Uydagi kompyuterni server qilib tayyorlash skripti (Node, pnpm, PM2, nginx, PostgreSQL, PgBouncer)
+- [x] Uydagi kompyuterni server qilib tayyorlash skripti (Node, pnpm, PM2, nginx, PostgreSQL; `tooling/server/setup.sh`, CI'da haqiqiy Ubuntu'da sinaladi). PgBouncer hali yo'q
 - [ ] Cloudflare Tunnel orqali `admin.ventura.uz` va `*.ventura.uz`ni internetga chiqarish
 - [x] `packages/deploy`: `DeployDriver` interfeysi va SSH drayveri (relizlar, `pm2 reload`, health check, rollback)
 - [x] pg-boss navbati, deploy vazifasi, jonli loglar (`deployment_steps`)
@@ -477,21 +462,15 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 - [x] Serverlar sahifasi: VPS qo'shish (IP, port, foydalanuvchi, SSH kalit), server tayyorlash skripti, metrikalar (ADR 0009)
 - [ ] O'zbekistondagi provayder VPS'ini ulash
-- [ ] `dedicated` rejim va `dedicated_server` baza strategiyasi
+- [x] `dedicated` rejim va `dedicated_server` baza strategiyasi (ADR 0048)
 - [ ] Mijozning o'z domenini ulash: DNS ko'rsatmasi, tekshiruv, certbot SSL, holatlar
 - [ ] Loyihani bir serverdan boshqasiga ko'chirish (uydagi → online)
 
 * **Qabul:** tashqi VPS'da `dedicated` loyiha o'z domenida SSL bilan ishlaydi; DNS xato bo'lsa, panel sababini ko'rsatadi.
 
-### 4-bosqich. GitHub + Vercel
+> GitHub + Vercel bosqichi rejadan olib tashlandi (2026-10-17, egasi qarori, ADR 0048): VPS'ning o'zi frontend, backend va baza.
 
-- [ ] GitHub App ulash, webhooklar (imzo tekshiruvi bilan)
-- [ ] `fork` rejim: shablondan repo yaratish (`turbo prune` eksporti), "orqada qolgan commitlar" va yangilash PR'i
-- [ ] Vercel drayveri: loyiha, env, domen, deploy holati webhook orqali
-
-* **Qabul:** bitta tugma bilan yopiq repo yaratiladi va Vercel'da ishga tushadi; push qilinganda avtomatik qayta deploy bo'ladi.
-
-### 5-bosqich. Moslash
+### 4-bosqich. Moslash
 
 - [ ] Brend muharriri, jonli ko'rinish, rang shkalasi va kontrast tekshiruvi
 - [ ] Bo'limlar: bog'liqliklar bilan yoqish/o'chirish, Bo'limlar xaritasi sahifasi
@@ -501,16 +480,16 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 * **Qabul:** rang yoki bo'lim o'zgarishi mijoz saytida 1 daqiqa ichida deploysiz ko'rinadi; o'chirilgan bo'lim API'si 404 qaytaradi; Baza tabida o'zgartirilgan qator mijoz tizimida ko'rinadi va o'zgarish audit jurnalida turadi.
 
-### 6-bosqich. Audit, monitoring, ogohlantirishlar
+### 5-bosqich. Audit, monitoring, ogohlantirishlar
 
 - [ ] Audit sahifasi: filtr, tafsilot, CSV eksport
-- [ ] GitHub, Vercel va SSH drayveri hodisalarini qabul qilish
+- [ ] GitHub (asosiy repo) va SSH drayveri hodisalarini qabul qilish
 - [ ] Uptime, SSL, disk/RAM tekshiruvlari, SSH kirishlarni kuzatish
 - [ ] Telegram ogohlantirishlar va qoidalar sahifasi
 
 * **Qabul:** 10-bo'limdagi jadvaldagi har bir hodisa jurnalda ko'rinadi va kerakli joyda Telegram xabari keladi.
 
-### 7-bosqich. Zahira va xavfli hudud
+### 6-bosqich. Zahira va xavfli hudud
 
 - [ ] Avtomatik zahira, tashqi saqlash, oylik tiklash testi
 - [ ] "Zahiradan tiklash" tugmasi
@@ -518,7 +497,7 @@ Har bosqich alohida PR. Keyingi bosqich faqat oldingisining barcha mezonlari baj
 
 * **Qabul:** test loyihasi o'chirib, zahiradan 1 soat ichida to'liq tiklanadi.
 
-### 8-bosqich. Ikkinchi shablon (pilorama)
+### 7-bosqich. Ikkinchi shablon (pilorama)
 
 - [ ] `apps/sawmill` va uning bo'limlar manifesti
 
@@ -541,7 +520,7 @@ Bu hujjatni repoda `docs/SPEC.md` sifatida saqlang. Quyidagi qoidalarni `CLAUDE.
 - Har tashqi kirish (forma, API, webhook) Zod bilan tekshiriladi.
 - Sirlar, kalitlar va baza faqat server kodida. Client komponentga hech qachon tushmaydi.
 - Baza o'zgarishi faqat Drizzle migratsiyasi orqali (drizzle-kit generate). Bazani qo'lda o'zgartirma.
-- Tashqi API'lar (GitHub, Vercel, Cloudflare, Telegram) faqat packages/integrations orqali chaqiriladi.
+- Tashqi API'lar (GitHub, Cloudflare, Telegram) faqat packages/integrations orqali chaqiriladi.
 - Deploy, tekshiruv, zahira faqat pg-boss fon vazifasi sifatida. So'rov ichida uzoq ish qilma.
 - Har o'zgartiruvchi amal audit.record() chaqiradi.
 - Mijozga xos farq faqat bo'lim (hasFeature) yoki sozlama orqali. `if (tenant.slug === ...)` taqiqlangan.
@@ -583,4 +562,4 @@ Qolgan ochiq savollar:
 - [ ] O'zbekistondagi qaysi provayder va qaysi tarif (CPU, RAM, disk)?
 - [ ] `ventura.uz` DNS'ini Cloudflare'ga o'tkazish. 2026-10-11 holatiga DNS ahost'da (`rdns1–3.ahost.uz`); Cloudflare Tunnel uchun kerak
 - [ ] Uydagi kompyuter: hozircha ishlab chiqish kompyuterining o'zi (Windows, WSL orqali). Internet tezligi, UPS, 24/7 yoqiq turishi aniqlanmagan
-- [ ] Shaxsiy ma'lumotlar qonuni bo'yicha yurist bilan aniqlashtirish (Vercel'dan foydalanish chegarasi).
+- [ ] Shaxsiy ma'lumotlar qonuni bo'yicha yurist bilan aniqlashtirish.

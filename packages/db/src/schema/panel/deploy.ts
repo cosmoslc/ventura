@@ -33,7 +33,7 @@ export const deployments = pgTable(
       .references(() => projects.id, { onDelete: "cascade" }),
     /** Loyiha ichidagi tartib raqami (#1, #2, ...) */
     number: integer("number").notNull(),
-    /** Qaysi drayver bajargan: `sim`, `ssh`, `vercel` */
+    /** Qaysi drayver bajargan: `sim`, `ssh` */
     provider: text("provider").notNull(),
     status: text("status", { enum: DEPLOY_STATUSES }).notNull().default("queued"),
     trigger: text("trigger", { enum: DEPLOY_TRIGGERS }).notNull().default("manual"),
@@ -235,7 +235,7 @@ export const serverMetrics = pgTable(
 
 /**
  * Serverdagi bitta ilova nusxasi. `shared` rejimda bitta shablon ilovasi shu serverdagi hamma mijozga
- * xizmat qiladi (mijoz domen bo'yicha aniqlanadi); `dedicated` rejimda (3-bosqich) har loyihaning o'zi.
+ * xizmat qiladi (mijoz domen bo'yicha aniqlanadi); `dedicated` rejimda har loyihaning o'zi (`<shablon>-<slug>`, ADR 0048).
  */
 export const apps = pgTable(
   "apps",

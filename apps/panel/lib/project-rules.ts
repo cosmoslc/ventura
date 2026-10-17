@@ -44,6 +44,23 @@ export function contrastWithWhite(hex: string): number {
 
 export const BRAND_PRESETS = ["#3f6df6", "#4f46e5", "#7c3aed", "#0891b2", "#059669", "#d97706", "#dc2626", "#db2777"];
 
+/* ---------- Deploy rejimi va baza strategiyasi (ADR 0048) ---------- */
+
+type DeployMode = (typeof DEPLOY_MODES)[number];
+type DbStrategy = (typeof DB_STRATEGIES)[number];
+
+/**
+ * Rejimga mos baza strategiyalari: umumiy baza — faqat umumiy ilovada (bitta baza ko'p mijoz); alohida server —
+ * faqat alohida deploy'da (server butunlay shu mijozniki: ilova va baza bitta VPS'da).
+ */
+export function dbOptionsFor(mode: DeployMode): readonly DbStrategy[] {
+  return mode === "shared" ? ["shared_db", "db_per_tenant"] : ["db_per_tenant", "dedicated_server"];
+}
+
+export function deployProblem(mode: DeployMode, dbStrategy: DbStrategy): string | null {
+  return dbOptionsFor(mode).includes(dbStrategy) ? null : uz.projects.dbModeMismatch;
+}
+
 /* ---------- Server tomonidagi to'liq sxema ---------- */
 
 export const projectInputSchema = z
@@ -68,11 +85,12 @@ export const projectInputSchema = z
     target: z.enum(TARGET_KINDS),
     dbStrategy: z.enum(DB_STRATEGIES),
     telegramToken: z.string().trim(),
-    githubRepo: z.string().trim(),
   })
   .superRefine((v, ctx) => {
     const sp = slugProblem(v.slug);
     if (sp) ctx.addIssue({ code: "custom", path: ["slug"], message: sp });
+    const dp = deployProblem(v.mode, v.dbStrategy);
+    if (dp) ctx.addIssue({ code: "custom", path: ["dbStrategy"], message: dp });
     if (v.domainKind === "custom" && !HOST_RE.test(v.customDomain))
       ctx.addIssue({ code: "custom", path: ["customDomain"], message: uz.projects.hostInvalid });
     if (!v.clientId && !v.newClient)

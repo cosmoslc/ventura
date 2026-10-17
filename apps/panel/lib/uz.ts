@@ -143,21 +143,22 @@ export const uz = {
     statusLabels: { draft: "Qoralama", active: "Faol", paused: "To'xtatilgan" },
     modeHints: {
       shared: "Bitta ilova, ko'p mijoz (standart)",
-      dedicated: "Kod umumiy, mijozga alohida deploy",
-      fork: "Alohida GitHub repo — juda katta moslash uchun",
+      dedicated: "Mijozga o'z ilovasi: alohida jarayon va port",
     },
-    targetLabels: { home: "Uydagi server", vps: "Online VPS", vercel: "Vercel" },
+    targetLabels: { home: "Uydagi server", vps: "Online VPS" },
     targetHints: {
       home: "Cloudflare Tunnel orqali (2-bosqich)",
-      vps: "O'zbekistondagi VPS (3-bosqich)",
-      vercel: "GitHub + Vercel (4-bosqich)",
+      vps: "O'zbekistondagi VPS: ilova va baza shu serverda",
     },
     dbLabels: { db_per_tenant: "Alohida baza", shared_db: "Umumiy baza", dedicated_server: "Alohida server" },
     dbHints: {
       db_per_tenant: "Standart: to'liq ajratilgan, alohida zahira",
       shared_db: "Eng arzon: tenant_id + RLS",
-      dedicated_server: "Katta mijoz yoki qonun talabi bo'lsa",
+      dedicated_server: "Baza mijozning o'z serverida; server faqat shu mijozga",
     },
+    dbModeMismatch: "Umumiy baza faqat shared rejimda, alohida server faqat dedicated rejimda tanlanadi",
+    dbChangeLocked:
+      "Deploy qilingan loyihada umumiy va alohida baza o'rtasida o'tib bo'lmaydi: ma'lumot avval ko'chirilishi kerak",
     tabs: {
       overview: "Umumiy",
       deploys: "Deploylar",
@@ -273,8 +274,6 @@ export const uz = {
     ownerHint:
       "Birinchi deploy'da mijoz tizimida shu odam direktor bo'ladi: telefon va vaqtinchalik parol bilan kiradi, keyin parolni almashtiradi va markaz botini ulaydi. Parol shifrlangan holda saqlanadi.",
     integrationsHint: "Ixtiyoriy. Kalitlar shifrlangan holda saqlanadi va qayta ko'rsatilmaydi.",
-    githubRepo: "GitHub repo nomi",
-    githubHint: "Faqat fork rejimida",
     review: "Hammasini tekshiring",
     createAndSave: "Yaratish (deploysiz)",
     created: "Loyiha yaratildi",

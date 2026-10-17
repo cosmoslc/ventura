@@ -385,6 +385,36 @@ jobs:
           # Deploy logida sir yo'q
           if grep -E "postgres://[^:]+:[A-Za-z0-9_-]{20,}@" "$RUNNER_TEMP"/deploy-*.txt; then echo "logda baza paroli"; exit 1; fi
 
+      - name: Alohida deploy (dedicated) va rejim almashishi
+        run: |
+          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-c --name "Demo C" --color "#d97706" --mode dedicated --owner-phone +998901112233
+          pnpm --silent deploy:run -- --project demo-c | tee "$RUNNER_TEMP/deploy-c.txt"
+          grep -q "Deploy tayyor" "$RUNNER_TEMP/deploy-c.txt"
+          grep -q "alohida ilova edu-crm-demo-c" "$RUNNER_TEMP/deploy-c.txt"
+          curl -fsS -H "Host: demo-c.localhost" http://127.0.0.1/health | grep '"tenant":"demo-c"'
+          curl -fsS -H "Host: demo-c.ventura.uz" http://127.0.0.1/login | grep -q "Demo C"
+          # O'z jarayoni (umumiy ilova + alohida), o'z ro'yxati va maxfiy fayli — faqat demo-c; umumiy ilovada u yo'q
+          test "$(sudo -u deploy -i pm2 jlist | python3 -c 'import json,sys; print(sorted(p["name"] for p in json.load(sys.stdin)))')" = "['edu-crm', 'edu-crm-demo-c']"
+          sudo python3 -c 'import json; t=json.load(open("/home/deploy/apps/edu-crm-demo-c/shared/tenants.json"))["tenants"]; assert [x["slug"] for x in t]==["demo-c"], t'
+          sudo python3 -c 'import json; t=json.load(open("/home/deploy/apps/edu-crm-demo-c/shared/tenant-secrets.json"))["tenants"]; assert sorted(t)==["demo-c"], t'
+          sudo python3 -c 'import json; t=json.load(open("/home/deploy/apps/edu-crm/shared/tenants.json"))["tenants"]; assert "demo-c" not in [x["slug"] for x in t], t'
+          test "$(sudo -u postgres psql -XAtd edu_crm_demo_c -c "select tenant_id||'|'||role from users")" = "demo-c|director"
+          # Boshqa mijozlar ishlashda davom etadi
+          curl -fsS -H "Host: demo-a.localhost" http://127.0.0.1/health | grep '"tenant":"demo-a"'
+          curl -fsS -H "Host: demo-b.localhost" http://127.0.0.1/health | grep '"tenant":"demo-b"'
+          # Band serverga alohida server bazali loyiha qo'yib bo'lmaydi (build boshlanmasdan to'xtaydi)
+          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-d --name "Demo D" --mode dedicated --db dedicated_server
+          if pnpm --silent deploy:run -- --project demo-d > "$RUNNER_TEMP/deploy-d.txt" 2>&1; then echo "band serverga dedicated_server qo'yildi"; exit 1; fi
+          grep -q "server bo'sh bo'lishi kerak\|Bo'sh online VPS yo'q\|Bo'sh uydagi server yo'q" "$RUNNER_TEMP/deploy-d.txt"
+          # dedicated → shared: umumiy ilovaga qaytadi (qayta build yo'q), alohida jarayon to'xtaydi, baza o'sha
+          pnpm --silent --filter @ventura/scripts e2e:project -- --slug demo-c --mode shared
+          pnpm --silent deploy:run -- --project demo-c | tee "$RUNNER_TEMP/deploy-c2.txt"
+          grep -q "kod va build qayta bajarilmaydi" "$RUNNER_TEMP/deploy-c2.txt"
+          grep -q "Alohida ilova (edu-crm-demo-c) to'xtatildi" "$RUNNER_TEMP/deploy-c2.txt"
+          curl -fsS -H "Host: demo-c.localhost" http://127.0.0.1/health | grep '"tenant":"demo-c"'
+          test "$(sudo -u deploy -i pm2 jlist | python3 -c 'import json,sys; print(sorted(p["name"] for p in json.load(sys.stdin)))')" = "['edu-crm']"
+          test "$(sudo -u postgres psql -XAtd edu_crm_demo_c -c "select count(*) from users")" = "1"
+
       - name: Yiqilganda tafsilot
         if: failure()
         run: |

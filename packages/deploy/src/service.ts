@@ -12,7 +12,7 @@ import { STEPS } from "./types";
 
 export const WORKER_ACTOR: AuditActor = { type: "system", name: "deploy-worker" };
 
-/** Hozircha bitta drayver; SSH va Vercel qo'shilgach loyihaning manziliga qarab tanlanadi. */
+/** Drayver muhitdan: `ssh` (haqiqiy serverlar) yoki `sim` (sinov). Vercel rejadan olib tashlangan (ADR 0048). */
 export function providerFor(): string {
   return process.env.DEPLOY_DRIVER || "sim";
 }

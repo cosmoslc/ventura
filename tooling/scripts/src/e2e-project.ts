@@ -1,11 +1,12 @@
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { clients, domains, projectFeatures, projects } from "@ventura/db/schema/panel";
 import { putSecret } from "@ventura/security";
 import { context, done, fail } from "./lib";
 
 /*
  * pnpm --filter @ventura/scripts e2e:project -- --slug demo-a --name "Demo A" [--color #059669]
- *   [--db shared_db|db_per_tenant] [--owner-phone +998901234567]
+ *   [--db shared_db|db_per_tenant|dedicated_server] [--mode shared|dedicated] [--owner-phone +998901234567]
+ * Loyiha bor bo'lsa va --mode berilsa — faqat rejimi o'zgartiriladi (rejim almashishini sinash uchun).
  * Sinov loyihasi (CI'dagi haqiqiy deploy sinovi uchun). Faqat test bazasida ishlaydi:
  * E2E_DATABASE_URL bo'lmasa to'xtaydi, shuning uchun haqiqiy bazaga tegmaydi.
  */
@@ -24,11 +25,24 @@ const name = flag("name") ?? slug;
 const color = flag("color") ?? "#3f6df6";
 if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug)) fail("--slug noto'g'ri");
 if (!/^#[0-9a-f]{6}$/i.test(color)) fail("--color noto'g'ri");
-if (!["shared_db", "db_per_tenant", undefined].includes(flag("db"))) fail("--db: shared_db yoki db_per_tenant");
+const DB = ["shared_db", "db_per_tenant", "dedicated_server"] as const;
+const MODES = ["shared", "dedicated"] as const;
+const dbStrategy = (flag("db") ?? "db_per_tenant") as (typeof DB)[number];
+const mode = flag("mode") as (typeof MODES)[number] | undefined;
+if (!DB.includes(dbStrategy)) fail("--db: shared_db, db_per_tenant yoki dedicated_server");
+if (mode && !MODES.includes(mode)) fail("--mode: shared yoki dedicated");
 
 const { db } = context();
-const [existing] = await db.select({ id: projects.id }).from(projects).where(eq(projects.slug, slug)).limit(1);
-if (existing) done(`Loyiha bor: ${slug}`);
+const [existing] = await db
+  .select({ id: projects.id })
+  .from(projects)
+  .where(and(eq(projects.slug, slug), isNull(projects.deletedAt)))
+  .limit(1);
+if (existing) {
+  if (!mode) done(`Loyiha bor: ${slug}`);
+  await db.update(projects).set({ mode }).where(eq(projects.id, existing.id));
+  done(`Loyiha rejimi o'zgardi: ${slug} → ${mode}`);
+}
 
 const [client] = await db
   .insert(clients)
@@ -44,7 +58,8 @@ const [project] = await db
     brand: { primary: color, appearance: "light" },
     ownerName: `Direktor ${name}`,
     ownerPhone: flag("owner-phone") ?? "+998901234567",
-    dbStrategy: (flag("db") ?? "db_per_tenant") as "shared_db" | "db_per_tenant",
+    dbStrategy,
+    mode: mode ?? "shared",
   })
   .returning({ id: projects.id });
 await db

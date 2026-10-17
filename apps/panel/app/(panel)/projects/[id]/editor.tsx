@@ -4,7 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import {
-  DB_STRATEGIES,
+  type DB_STRATEGIES,
   DEPLOY_MODES,
   PROJECT_STATUSES,
   type ProjectBrand,
@@ -21,6 +21,7 @@ import { ConfirmModal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
+import { dbOptionsFor } from "@/lib/project-rules";
 import { uz } from "@/lib/uz";
 import { trashProjectAction, updateBrandAction, updateFeaturesAction, updateProjectAction } from "../actions";
 import type { DeploymentRow } from "@/lib/server/deployments-query";
@@ -184,9 +185,17 @@ export function ProjectEditor({
                 <ChoiceCards
                   label={uz.projects.mode}
                   value={general.mode}
-                  onChange={(mode) => setGeneral({ ...general, mode })}
+                  onChange={(mode) =>
+                    setGeneral({
+                      ...general,
+                      mode,
+                      dbStrategy: dbOptionsFor(mode).includes(general.dbStrategy)
+                        ? general.dbStrategy
+                        : "db_per_tenant",
+                    })
+                  }
                   options={DEPLOY_MODES}
-                  labels={{ shared: "shared", dedicated: "dedicated", fork: "fork" }}
+                  labels={{ shared: "shared", dedicated: "dedicated" }}
                   hints={uz.projects.modeHints}
                 />
                 <ChoiceCards
@@ -201,7 +210,7 @@ export function ProjectEditor({
                   label={uz.projects.db}
                   value={general.dbStrategy}
                   onChange={(dbStrategy) => setGeneral({ ...general, dbStrategy })}
-                  options={DB_STRATEGIES}
+                  options={dbOptionsFor(general.mode)}
                   labels={uz.projects.dbLabels}
                   hints={uz.projects.dbHints}
                 />
