@@ -4,12 +4,12 @@ import type { TenantDb } from "@ventura/db";
 import { smsMessages } from "@ventura/db/schema/tenant";
 import { eskizPhone } from "@ventura/integrations/eskiz";
 import { type SmsTemplateKind, smsParts } from "@/lib/sms-text";
-import type { DeliveryState, SmsSender } from "./sender";
+import { type DeliveryState, type SmsSender, SmsRejected } from "./sender";
 
 /*
  * SMS navbati (docs/EDU-CRM-SMS.md, 4.3). `enqueue` — biznes amal ichida (tashqi so'rovsiz) qator yozadi;
  * `flush` — fon jarayoni navbatdagilarni oladi (FOR UPDATE SKIP LOCKED: ikki jarayon bir xabarni olmaydi), yuboradi,
- * xatoda 1 / 5 / 15 daqiqadan keyin qayta urinadi, 3-xatodan keyin `failed`. `poll` — callback kelmagan xabarlar
+ * xatoda 1 / 5 / 15 daqiqadan keyin qayta urinadi, 3-xatodan keyin `failed` (provayder rad etsa — darhol). `poll` — callback kelmagan xabarlar
  * holatini Eskiz'dan so'raydi. Jarayon yuborish o'rtasida to'xtasa, 10 daqiqadan keyin xabar navbatga qaytadi.
  */
 
@@ -135,7 +135,7 @@ export async function flush(db: TenantDb, sender: SmsSender, at?: Date): Promise
       result.sent++;
     } catch (e) {
       const error = (e instanceof Error ? e.message : String(e)).slice(0, 500);
-      const final = m.attempts >= MAX_ATTEMPTS;
+      const final = e instanceof SmsRejected || m.attempts >= MAX_ATTEMPTS;
       const wait = RETRY_MINUTES[Math.min(m.attempts, RETRY_MINUTES.length) - 1] ?? 15;
       await db
         .update(smsMessages)

@@ -1905,6 +1905,26 @@ export const uz = {
     notFound: "Shablon topilmadi",
   },
 
+  /** So'nggi SMS xabarlari (S3): /sms */
+  smsMessages: {
+    title: "So'nggi xabarlar",
+    empty: "Hali SMS yuborilmagan",
+    emptyHint: "O'quvchilar, qarzdorlar yoki guruh sahifasidan yuboring.",
+    colTime: "Vaqt",
+    colTo: "Kimga",
+    colText: "Matn",
+    colStatus: "Holat",
+    recipients: { student: "O'quvchi", parent: "Ota-ona", staff: "Xodim", other: "Boshqa" } as Record<string, string>,
+    statuses: {
+      queued: "Navbatda",
+      sending: "Yuborilmoqda",
+      sent: "Yuborildi",
+      delivered: "Yetkazildi",
+      failed: "Yuborilmadi",
+      cancelled: "Bekor qilindi",
+    } as Record<string, string>,
+  },
+
   /** Qo'lda SMS yuborish oynasi (S3) */
   smsSend: {
     title: "SMS yuborish",

@@ -5,7 +5,7 @@ import { type TenantDb, createTenantDb } from "@ventura/db";
 import { migrateTenantDb } from "@ventura/db/migrate";
 import { smsMessages } from "@ventura/db/schema/tenant";
 import { applyDelivery, enqueue, flush, poll } from "./outbox";
-import type { DeliveryState, SmsSender } from "./sender";
+import { type DeliveryState, type SmsSender, SmsRejected } from "./sender";
 
 /*
  * SMS navbati haqiqiy PostgreSQL'da (S3, ADR 0055): raqam formatlanadi, noto'g'risi va takror (dedupe) tashlanadi;
@@ -114,6 +114,23 @@ describe.skipIf(!ADMIN_URL)("SMS navbati (haqiqiy PostgreSQL)", () => {
     expect(await flush(db, sender, later(20))).toMatchObject({ failed: 1 });
     rows = await rowsOf(db);
     expect(rows[1]).toMatchObject({ status: "failed", attempts: 3 });
+  });
+
+  it("provayder rad etsa qayta urinmaydi", async () => {
+    await enqueue(db, [{ kind: "custom", recipient: "student", phone: "901110040", text: "x" }]);
+    const sender: SmsSender = {
+      from: null,
+      send: async () => {
+        throw new SmsRejected("Test holatida faqat test matni");
+      },
+      status: async () => ({ state: "pending", parts: null, cost: null }),
+    };
+    expect(await flush(db, sender)).toEqual({ sent: 0, failed: 1, retried: 0 });
+    expect((await rowsOf(db))[0]).toMatchObject({
+      status: "failed",
+      attempts: 1,
+      error: "Test holatida faqat test matni",
+    });
   });
 
   it("yetkazish natijasi: delivered narx bilan; yakuniy holat qayta yozilmaydi", async () => {

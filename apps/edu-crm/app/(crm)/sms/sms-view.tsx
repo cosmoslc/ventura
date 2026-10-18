@@ -7,6 +7,8 @@ import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
 import { money } from "@/lib/format";
 import { uz } from "@/lib/uz";
+import type { SmsMessageRow } from "@/lib/server/sms/messages";
+import { RecentMessages } from "./recent-messages";
 import { SmsNav } from "./sms-nav";
 
 const t = uz.sms;
@@ -18,12 +20,14 @@ export function SmsView({
   sender,
   accountStatus,
   error,
+  messages,
 }: {
   connected: boolean;
   balance: number | null;
   sender: string;
   accountStatus: string | null;
   error: string | null;
+  messages: SmsMessageRow[];
 }) {
   const settings = (
     <Button asChild variant="ghost">
@@ -64,6 +68,7 @@ export function SmsView({
           value={accountStatus == null ? "—" : accountStatus === "active" ? t.accountActive : accountStatus}
         />
       </div>
+      <RecentMessages rows={messages} />
     </div>
   );
 }

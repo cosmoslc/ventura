@@ -1,7 +1,7 @@
 import "server-only";
 import { createHmac } from "node:crypto";
 import type { TenantDb } from "@ventura/db";
-import { eskizDeliveryState } from "@ventura/integrations/eskiz";
+import { EskizError, eskizDeliveryState } from "@ventura/integrations/eskiz";
 import type { Tenant } from "@ventura/tenants";
 import { eskizFor, getProviderRow } from "./provider";
 
@@ -12,6 +12,14 @@ import { eskizFor, getProviderRow } from "./provider";
  */
 
 export type DeliveryState = "delivered" | "failed" | "pending";
+
+/** Provayder xabarni qabul qilmadi (masalan test holatida boshqa matn, noto'g'ri raqam): qayta urinish befoyda */
+export class SmsRejected extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "SmsRejected";
+  }
+}
 
 export interface SmsSender {
   /** Yuboruvchi nomi (nikneym); null — standart */
@@ -44,8 +52,16 @@ export async function senderFor(
   return {
     from,
     async send(msg) {
-      const res = await eskiz.send({ phone: msg.phone, text: msg.text, from: from ?? undefined, callbackUrl: cb });
-      return { providerId: res.id };
+      try {
+        const res = await eskiz.send({ phone: msg.phone, text: msg.text, from: from ?? undefined, callbackUrl: cb });
+        return { providerId: res.id };
+      } catch (e) {
+        // 4xx (401 — kirish, 429 — tezlik cheklovidan tashqari): so'rovning o'zi rad etilgan
+        const s = e instanceof EskizError ? e.status : undefined;
+        if (s && s >= 400 && s < 500 && s !== 401 && s !== 429)
+          throw new SmsRejected(e instanceof Error ? e.message : String(e));
+        throw e;
+      }
     },
     async status(providerId) {
       const s = await eskiz.status(providerId);

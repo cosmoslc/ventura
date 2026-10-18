@@ -1,5 +1,6 @@
 import { ESKIZ_DEFAULT_SENDER } from "@ventura/integrations/eskiz";
 import { getTenantDb, tenantDeps } from "@/lib/server/deps";
+import { recentMessages } from "@/lib/server/sms/messages";
 import { getProviderRow, providerView, smsOverview } from "@/lib/server/sms/provider";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -14,7 +15,10 @@ export default async function SmsPage() {
   const secret = tenantDeps(tenant)!.secret;
   const row = await getProviderRow(db);
   const provider = providerView(row, secret);
-  const overview = provider.connected ? await smsOverview(db, row, secret) : null;
+  const [overview, messages] = await Promise.all([
+    provider.connected ? smsOverview(db, row, secret) : null,
+    provider.connected ? recentMessages(db) : [],
+  ]);
   return (
     <SmsView
       connected={provider.connected}
@@ -22,6 +26,7 @@ export default async function SmsPage() {
       sender={provider.sender ?? uz.sms.senderDefault(ESKIZ_DEFAULT_SENDER)}
       accountStatus={overview?.accountStatus ?? null}
       error={overview?.error ?? null}
+      messages={messages}
     />
   );
 }
