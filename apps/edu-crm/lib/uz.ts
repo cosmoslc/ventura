@@ -1840,6 +1840,37 @@ export const uz = {
     testSent: "Test SMS yuborildi",
     phoneInvalid: "Telefon raqami to'liq emas",
     notConnected: "Avval Eskiz'ni ulang",
+    // Ventura paketi (ADR 0056)
+    venturaBalance: "SMS qoldig'i",
+    venturaPending: "To'lov kutilmoqda",
+    venturaError: (msg: string) => `Ventura SMS xizmati javob bermadi: ${msg}`,
+    venturaUnavailableTitle: "Ventura SMS hali sozlanmagan",
+    venturaUnavailableText: "Bu serverda Ventura SMS paketi hali yoqilmagan. O'z Eskiz hisobingizni ulashingiz mumkin.",
+    smsCount: (n: number) => `${n.toLocaleString("ru-RU").replace(/,/g, " ")} SMS`,
+    perSms: (price: string) => `1 SMS ≈ ${price} so'm`,
+    packagesTitle: "SMS paketlari",
+    noPackages: "Hozircha sotuvda paket yo'q.",
+    buy: "Sotib olish",
+    buyTitle: "Paket sotib olinsinmi?",
+    buyText: (name: string, sms: string, price: string) =>
+      `"${name}" — ${sms}, ${price} so'm. So'rov Ventura'ga yuboriladi; to'lov tasdiqlangach SMS hisobingizga tushadi.`,
+    buyRequested: "So'rov yuborildi",
+    buyRequestedHint: "To'lov tasdiqlangach SMS hisobingizga tushadi",
+    pendingRequest: (name: string, price: string) =>
+      `"${name}" paketi so'raldi (${price} so'm) — to'lov tasdiqlanishi kutilmoqda.`,
+    modeTitle: "SMS qayerdan yuboriladi",
+    modeDescription:
+      "Ventura paketi — tayyor xizmat, shartnoma kerak emas. O'z Eskiz hisobi — faqat yuridik shaxslar uchun.",
+    modes: {
+      ventura: "Ventura paketi",
+      own: "O'z Eskiz hisobim",
+    } as Record<string, string>,
+    modeHints: {
+      ventura: "SMS'larni Ventura yuboradi. Paketni SMS sahifasida sotib olasiz.",
+      own: "Markazning Eskiz hisobi orqali: balans va shartnoma Eskiz'da.",
+    } as Record<string, string>,
+    modeSaved: "Rejim saqlandi",
+    modeResetHint: "Rejim almashganda shablonlar yangi hisobda qayta moderatsiyadan o'tadi.",
   },
 
   /** SMS shablonlari (S2): /sms/templates */

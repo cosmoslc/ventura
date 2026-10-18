@@ -1,0 +1,1 @@
+ALTER TABLE "sms_provider" ALTER COLUMN "mode" SET DEFAULT 'ventura';

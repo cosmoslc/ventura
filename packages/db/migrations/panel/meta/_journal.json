@@ -71,6 +71,13 @@
       "when": 1791953553578,
       "tag": "0009_servers_wsl",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1792310046072,
+      "tag": "0010_sms_paketi",
+      "breakpoints": true
     }
   ]
 }

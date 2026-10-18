@@ -350,6 +350,13 @@ const REGISTRY: Record<string, Def> = {
     (i) => parts(str(i.m.title), num(i.m.queued) !== null ? `${num(i.m.queued)} ta` : null),
     () => null,
   ),
+  "sms.mode": simple(
+    "settings",
+    "SMS rejimini o'zgartirdi",
+    (i) => (str(i.m.after) === "own" ? "o'z Eskiz hisobi" : "Ventura paketi"),
+    () => null,
+  ),
+  "sms.purchase": simple("settings", "SMS paket so'radi", undefined, () => null),
   "sms.test": simple(
     "settings",
     "test SMS yubordi",

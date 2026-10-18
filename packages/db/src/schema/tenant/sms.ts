@@ -30,8 +30,8 @@ export const smsProvider = pgTable(
   "sms_provider",
   {
     tenantId: tenantId(),
-    /** own — markazning o'z Eskiz hisobi; ventura — Ventura paketi (S6) */
-    mode: text("mode", { enum: SMS_MODES }).notNull().default("own"),
+    /** ventura — Ventura paketi (standart, ADR 0056); own — markazning o'z Eskiz hisobi */
+    mode: text("mode", { enum: SMS_MODES }).notNull().default("ventura"),
     provider: text("provider", { enum: ["eskiz"] })
       .notNull()
       .default("eskiz"),

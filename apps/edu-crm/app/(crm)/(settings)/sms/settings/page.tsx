@@ -1,22 +1,20 @@
 import { ESKIZ_DEFAULT_SENDER, ESKIZ_TEST_MESSAGE } from "@ventura/integrations/eskiz";
-import { getTenantDb, tenantDeps } from "@/lib/server/deps";
-import { getProviderRow, providerView, smsOverview } from "@/lib/server/sms/provider";
+import { smsContext } from "@/lib/server/sms/context";
+import { smsOverview } from "@/lib/server/sms/provider";
 import { requirePage } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { SmsSettingsView } from "./sms-settings-view";
 
 export const metadata = { title: uz.sms.settingsTitle };
 
-/** SMS sozlamalari (docs/EDU-CRM-SMS.md, S1): Eskiz ulash, yuboruvchi nomi, tinch soatlar, test SMS. */
+/** SMS sozlamalari: rejim (Ventura paketi / o'z Eskiz), Eskiz ulash, yuboruvchi nomi, tinch soatlar, test SMS. */
 export default async function SmsSettingsPage() {
   const { tenant } = await requirePage("sms", "/sms/settings");
-  const db = getTenantDb(tenant);
-  const secret = tenantDeps(tenant)!.secret;
-  const row = await getProviderRow(db);
-  const overview = await smsOverview(db, row, secret);
+  const ctx = await smsContext(tenant);
+  const overview = ctx.view.mode === "own" ? await smsOverview(ctx.db, ctx.row, ctx.secret) : null;
   return (
     <SmsSettingsView
-      provider={providerView(row, secret)}
+      provider={ctx.view}
       nicks={overview?.nicks ?? []}
       eskizError={overview?.error ?? null}
       defaultSender={ESKIZ_DEFAULT_SENDER}

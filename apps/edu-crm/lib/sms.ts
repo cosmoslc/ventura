@@ -28,12 +28,23 @@ export const smsPrefsInput = z
   .refine((v) => v.quietFrom !== v.quietTo, { message: t.quietSame, path: ["quietTo"] });
 export type SmsPrefsInput = z.input<typeof smsPrefsInput>;
 
+export const smsModeInput = z.object({ mode: z.enum(["ventura", "own"]) });
+
 /** Test SMS: 9 ta mahalliy raqam */
 export const smsTestInput = z.object({ phone: z.string().regex(/^\d{9}$/, t.phoneInvalid) });
 
+export type SmsMode = "ventura" | "own";
+
 /** Brauzerga boradigan holat: sirlarsiz */
 export interface SmsProviderView {
+  /** ventura — Ventura paketi (standart); own — markazning o'z Eskiz hisobi */
+  mode: SmsMode;
+  /** Joriy rejimda yuborish mumkinmi (ventura — relay sozlangan; own — Eskiz ulangan) */
   connected: boolean;
+  /** O'z Eskiz hisobi ulangan (rejimdan qat'i nazar) */
+  ownConnected: boolean;
+  /** Ventura paketi shu serverda sozlangan (panel manzili va kaliti deploy'da yozilgan) */
+  relayReady: boolean;
   /** Kalit saqlangan, lekin ochilmadi (server kaliti almashgan) — qayta ulash kerak */
   broken: boolean;
   email: string | null;

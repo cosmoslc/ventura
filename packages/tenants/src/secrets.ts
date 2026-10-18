@@ -16,6 +16,16 @@ export const tenantSecretSchema = z.object({
     .string()
     .regex(/^\d+:[\w-]{20,}$/, "telegramBotToken: @BotFather bergan token")
     .optional(),
+  /**
+   * Ventura SMS paketi (ADR 0056): panel manzili va shu loyihaning relay kaliti (so'rovlarni imzolash uchun).
+   * Ventura'ning Eskiz kaliti markaz serveriga tushmaydi — SMS panel orqali ketadi.
+   */
+  smsRelay: z
+    .object({
+      url: z.string().regex(/^https?:\/\/\S+$/, "smsRelay.url: http(s):// manzil"),
+      key: z.string().min(32, "smsRelay.key: kamida 32 belgi"),
+    })
+    .optional(),
 });
 
 export const tenantSecretsSchema = z.object({

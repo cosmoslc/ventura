@@ -4,8 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { EskizError } from "@ventura/integrations/eskiz";
 import { type ActionResult, crmAction } from "@/lib/server/action";
-import { tenantDeps } from "@/lib/server/deps";
-import { eskizFor, getProviderRow } from "@/lib/server/sms/provider";
+import { moderatorFor, smsContext } from "@/lib/server/sms/context";
 import { addPresets, archiveTemplate, saveTemplate, submitTemplate, syncTemplates } from "@/lib/server/sms/templates";
 import { firstError } from "@/lib/rules";
 import { smsTemplateInput } from "@/lib/sms-text";
@@ -13,7 +12,7 @@ import { uz } from "@/lib/uz";
 
 /*
  * SMS shablonlari (docs/EDU-CRM-SMS.md, S2): "SMS provayder va avto-SMS shablonlari" ruxsati bilan. Har o'zgarish
- * jurnalga (matni bilan); Eskiz'ga yuborish va sinxronlash ulangan hisob orqali.
+ * jurnalga (matni bilan); moderatsiya joriy rejim hisobida (Ventura paketi yoki o'z Eskiz hisobi).
  */
 
 const PERM = "settings.sms_gateways";
@@ -63,10 +62,10 @@ export async function submitSmsTemplateAction(id: unknown): Promise<ActionResult
   return crmAction("sms", PERM, async ({ tenant, db, audit }) => {
     const parsed = idInput.safeParse(id);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
-    const eskiz = eskizFor(db, await getProviderRow(db), tenantDeps(tenant)!.secret);
-    if (!eskiz) return { ok: false, error: uz.sms.notConnected };
+    const moderator = moderatorFor(await smsContext(tenant));
+    if (!moderator) return { ok: false, error: uz.sms.notConnected };
     try {
-      const res = await submitTemplate(db, eskiz, parsed.data);
+      const res = await submitTemplate(db, moderator, parsed.data);
       if (!res) return { ok: false, error: t.notFound };
       await audit("sms_template.submit", { type: "sms_template", id: parsed.data }, { name: res.name });
     } catch (e) {
@@ -79,10 +78,10 @@ export async function submitSmsTemplateAction(id: unknown): Promise<ActionResult
 
 export async function syncSmsTemplatesAction(): Promise<ActionResult<{ changed: number }>> {
   return crmAction<{ changed: number }>("sms", PERM, async ({ tenant, db }) => {
-    const eskiz = eskizFor(db, await getProviderRow(db), tenantDeps(tenant)!.secret);
-    if (!eskiz) return { ok: false, error: uz.sms.notConnected };
+    const moderator = moderatorFor(await smsContext(tenant));
+    if (!moderator) return { ok: false, error: uz.sms.notConnected };
     try {
-      const changed = await syncTemplates(db, eskiz);
+      const changed = await syncTemplates(db, moderator);
       revalidatePath("/sms/templates");
       return { ok: true, changed };
     } catch (e) {

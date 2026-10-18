@@ -2,7 +2,7 @@ import "server-only";
 import type { TenantDb } from "@ventura/db";
 import { smsProvider } from "@ventura/db/schema/tenant";
 import { type Eskiz, EskizError, createEskiz } from "@ventura/integrations/eskiz";
-import type { SmsProviderView } from "@/lib/sms";
+import type { SmsMode, SmsProviderView } from "@/lib/sms";
 import { openSecret, sealSecret } from "./secret";
 
 /*
@@ -20,11 +20,18 @@ export async function getProviderRow(db: TenantDb): Promise<Row | null> {
   return row ?? null;
 }
 
-export function providerView(row: Row | null, authSecret: string): SmsProviderView {
+/** Qator yo'q — Ventura paketi (standart) */
+export const modeOf = (row: Row | null): SmsMode => row?.mode ?? "ventura";
+
+export function providerView(row: Row | null, authSecret: string, relayReady: boolean): SmsProviderView {
   const hasSecret = !!row?.secretEnc;
   const opened = hasSecret && openSecret(row.secretEnc, authSecret) !== null;
+  const mode = modeOf(row);
   return {
-    connected: opened,
+    mode,
+    connected: mode === "ventura" ? relayReady : opened,
+    ownConnected: opened,
+    relayReady,
     broken: hasSecret && !opened,
     email: row?.email ?? null,
     sender: row?.sender ?? null,
@@ -74,6 +81,7 @@ export async function connectEskiz(
   }
   const before = (await getProviderRow(db))?.email ?? null;
   const values = {
+    mode: "own" as const,
     email: input.email,
     secretEnc: sealSecret(input.secret, authSecret),
     tokenEnc: sealSecret(token, authSecret),
@@ -86,9 +94,10 @@ export async function connectEskiz(
   return { ok: true, before };
 }
 
-/** Kalit va tokenni o'chiradi; sozlamalar (yuboruvchi, tinch soatlar) qoladi */
+/** Kalit va tokenni o'chiradi, Ventura paketiga qaytadi; sozlamalar (yuboruvchi, tinch soatlar) qoladi */
 export async function disconnectEskiz(db: TenantDb, staffId: string) {
   await db.update(smsProvider).set({
+    mode: "ventura",
     secretEnc: null,
     tokenEnc: null,
     tokenExpiresAt: null,
@@ -97,6 +106,11 @@ export async function disconnectEskiz(db: TenantDb, staffId: string) {
     updatedBy: staffId,
     updatedAt: new Date(),
   });
+}
+
+export async function setSmsMode(db: TenantDb, mode: SmsMode, staffId: string) {
+  const values = { mode, updatedBy: staffId, updatedAt: new Date() };
+  await db.insert(smsProvider).values(values).onConflictDoUpdate({ target: smsProvider.tenantId, set: values });
 }
 
 export async function saveSmsPrefs(

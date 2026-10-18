@@ -3,12 +3,13 @@ import { createHmac } from "node:crypto";
 import type { TenantDb } from "@ventura/db";
 import { EskizError, eskizDeliveryState } from "@ventura/integrations/eskiz";
 import type { Tenant } from "@ventura/tenants";
-import { eskizFor, getProviderRow } from "./provider";
+import { type Relay, RelayError } from "@ventura/integrations/relay";
+import { relayFor } from "./context";
+import { eskizFor, getProviderRow, modeOf } from "./provider";
 
 /*
  * SMS yuboruvchi (docs/EDU-CRM-SMS.md, S3): navbat (outbox.ts) provayderni bilmaydi — faqat shu interfeys.
- * Hozir markazning o'z Eskiz hisobi (A rejim); Ventura paketi (B rejim, standart) panel relay orqali shu interfeysni
- * amalga oshiradi.
+ * Ventura paketi (standart) — panel relay orqali; markazning o'z Eskiz hisobi — to'g'ridan-to'g'ri.
  */
 
 export type DeliveryState = "delivered" | "failed" | "pending";
@@ -39,12 +40,13 @@ export function callbackUrl(tenant: Pick<Tenant, "hosts">, authSecret: string): 
   return host ? `https://${host}/api/sms/eskiz/${callbackToken(authSecret)}` : undefined;
 }
 
-export async function senderFor(
-  db: TenantDb,
-  tenant: Pick<Tenant, "hosts">,
-  authSecret: string,
-): Promise<SmsSender | null> {
+/** Joriy rejim yuboruvchisi: Ventura paketi (panel relay) yoki markazning o'z Eskiz hisobi; sozlanmagan — null */
+export async function senderFor(tenant: Tenant, db: TenantDb, authSecret: string): Promise<SmsSender | null> {
   const row = await getProviderRow(db);
+  if (modeOf(row) === "ventura") {
+    const relay = relayFor(tenant);
+    return relay ? relaySender(relay) : null;
+  }
   const eskiz = eskizFor(db, row, authSecret);
   if (!eskiz) return null;
   const from = row?.sender ?? null;
@@ -66,6 +68,28 @@ export async function senderFor(
     async status(providerId) {
       const s = await eskiz.status(providerId);
       return { state: eskizDeliveryState(s.status), parts: s.parts, cost: s.cost };
+    },
+  };
+}
+
+/** Ventura paketi: qism yetmasa yoki Eskiz rad etsa — qayta urinish befoyda */
+function relaySender(relay: Relay): SmsSender {
+  return {
+    from: null,
+    async send(msg) {
+      try {
+        const res = await relay.send(msg.phone, msg.text);
+        return { providerId: res.providerId };
+      } catch (e) {
+        if (e instanceof RelayError && (e.code === "rejected" || e.code === "insufficient" || e.code === "invalid")) {
+          throw new SmsRejected(e.message);
+        }
+        throw e;
+      }
+    },
+    async status(providerId) {
+      const s = await relay.status(providerId);
+      return { state: s.state, parts: s.parts, cost: null };
     },
   };
 }

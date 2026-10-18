@@ -27,7 +27,7 @@ export async function flushTenant(tenant: Parameters<typeof tenantDeps>[0]): Pro
   if (!deps) return;
   busy.add(tenant.slug);
   try {
-    const sender = await senderFor(deps.db, tenant, deps.secret);
+    const sender = await senderFor(tenant, deps.db, deps.secret);
     if (!sender) return;
     await flush(deps.db, sender);
     await poll(deps.db, sender);

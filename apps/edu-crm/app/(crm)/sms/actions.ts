@@ -5,9 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { Permission } from "@ventura/auth/staff/policy";
 import { type ActionResult, crmAction } from "@/lib/server/action";
-import { tenantDeps } from "@/lib/server/deps";
 import { sendManualSms } from "@/lib/server/sms/manual";
-import { getProviderRow, providerView } from "@/lib/server/sms/provider";
+import { smsContext } from "@/lib/server/sms/context";
 import { flushTenant } from "@/lib/server/sms/scheduler";
 import { listTemplates } from "@/lib/server/sms/templates";
 import type { SmsTemplateKind, SmsModeration } from "@/lib/sms-text";
@@ -50,10 +49,10 @@ export async function smsSendOptionsAction(): Promise<
     "sms",
     Object.values(SOURCE_PERM),
     async ({ tenant, db }) => {
-      const [row, rows] = await Promise.all([getProviderRow(db), listTemplates(db)]);
+      const [ctx, rows] = await Promise.all([smsContext(tenant), listTemplates(db)]);
       return {
         ok: true,
-        connected: providerView(row, tenantDeps(tenant)!.secret).connected,
+        connected: ctx.view.connected,
         templates: rows
           .filter((r) => r.moderation !== "rejected")
           .map(({ id, name, kind, body, moderation }) => ({ id, name, kind, body, moderation })),
@@ -71,7 +70,7 @@ export async function sendSmsAction(input: unknown): Promise<ActionResult<{ queu
       if (!parsed.success) return { ok: false, error: uz.common.invalid };
       const denied = await requireAny([SOURCE_PERM[parsed.data.source]]);
       if (denied) return denied;
-      if (!providerView(await getProviderRow(db), tenantDeps(tenant)!.secret).connected) {
+      if (!(await smsContext(tenant)).view.connected) {
         return { ok: false, error: uz.sms.notConnected };
       }
       const res = await sendManualSms(db, { ...parsed.data, createdBy: staff.id }, tenant.name);
@@ -87,4 +86,22 @@ export async function sendSmsAction(input: unknown): Promise<ActionResult<{ queu
       return { ok: true, queued: res.queued, skipped: res.skipped };
     },
   );
+}
+
+/** Ventura paketini so'rash (ADR 0056): panelda to'lov so'rovi; to'lov tasdiqlangach qismlar hisobga tushadi */
+export async function buySmsPackageAction(packageId: unknown): Promise<ActionResult> {
+  return crmAction("sms", "settings.sms_gateways", async ({ tenant, staff, audit }) => {
+    const parsed = z.uuid().safeParse(packageId);
+    if (!parsed.success) return { ok: false, error: uz.common.invalid };
+    const ctx = await smsContext(tenant);
+    if (ctx.view.mode !== "ventura" || !ctx.relay) return { ok: false, error: uz.sms.venturaUnavailableTitle };
+    try {
+      const res = await ctx.relay.purchase(parsed.data, staff.name);
+      await audit("sms.purchase", { type: "sms_purchase", id: res.id }, { packageId: parsed.data });
+    } catch (e) {
+      return { ok: false, error: uz.sms.venturaError((e as Error).message) };
+    }
+    revalidatePath("/sms");
+    return { ok: true };
+  });
 }

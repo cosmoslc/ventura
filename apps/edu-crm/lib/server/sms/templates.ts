@@ -2,7 +2,6 @@ import "server-only";
 import { and, asc, eq, isNull } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { smsTemplates } from "@ventura/db/schema/tenant";
-import type { Eskiz } from "@ventura/integrations/eskiz";
 import {
   SMS_PRESETS,
   type SmsModeration,
@@ -11,6 +10,7 @@ import {
   sampleParts,
 } from "@/lib/sms-text";
 import { uz } from "@/lib/uz";
+import type { TemplateModerator } from "./context";
 
 /*
  * SMS shablonlari (docs/EDU-CRM-SMS.md, S2). Matn o'zgarsa moderatsiya holati "yuborilmagan"ga qaytadi (Eskiz eski
@@ -94,6 +94,16 @@ export async function archiveTemplate(db: TenantDb, id: string): Promise<string 
   return existing.name;
 }
 
+/**
+ * SMS rejimi almashdi (Ventura paketi ↔ o'z Eskiz hisobi): tasdiq boshqa hisobda edi — hammasi qaytadan "yuborilmagan".
+ */
+export async function resetModeration(db: TenantDb): Promise<void> {
+  await db
+    .update(smsTemplates)
+    .set({ moderation: "draft", providerTemplateId: null, submittedBody: null, submittedAt: null })
+    .where(isNull(smsTemplates.archivedAt));
+}
+
 /** Hali yo'q turlar uchun tayyor andozalar (har tur bittadan) */
 export async function addPresets(db: TenantDb, centerName: string, staffId: string): Promise<number> {
   const have = new Set((await listTemplates(db)).map((t) => t.kind));
@@ -112,10 +122,14 @@ export async function addPresets(db: TenantDb, centerName: string, staffId: stri
 }
 
 /** Eskiz moderatsiyasiga yuboradi; matn shu holicha saqlanadi (keyin o'zgarsa — qayta) */
-export async function submitTemplate(db: TenantDb, eskiz: Eskiz, id: string): Promise<{ name: string } | null> {
+export async function submitTemplate(
+  db: TenantDb,
+  moderator: TemplateModerator,
+  id: string,
+): Promise<{ name: string } | null> {
   const existing = await findTemplate(db, id);
   if (!existing) return null;
-  await eskiz.submitTemplate(existing.body);
+  await moderator.submit(existing.body);
   await db
     .update(smsTemplates)
     .set({ moderation: "moderation", submittedBody: existing.body, submittedAt: new Date(), providerTemplateId: null })
@@ -127,8 +141,14 @@ export async function submitTemplate(db: TenantDb, eskiz: Eskiz, id: string): Pr
  * Eskiz ro'yxatidan holatlarni oladi: yuborilgan matni (`submitted_body`) Eskiz'dagi matnga teng shablonlar
  * yangilanadi. Bir matn bir necha marta yuborilgan bo'lsa — eng oxirgisi (id kattasi). O'zgarganlar soni qaytadi.
  */
-export async function syncTemplates(db: TenantDb, eskiz: Eskiz): Promise<number> {
-  const remote = await eskiz.templates();
+export async function syncTemplates(db: TenantDb, moderator: TemplateModerator): Promise<number> {
+  const submitted = await db
+    .select({ body: smsTemplates.submittedBody })
+    .from(smsTemplates)
+    .where(isNull(smsTemplates.archivedAt));
+  const texts = submitted.flatMap((r) => (r.body ? [r.body] : []));
+  if (!texts.length) return 0;
+  const remote = await moderator.statuses(texts);
   const byText = new Map<string, { id: number; status: string }>();
   for (const r of remote) {
     const prev = byText.get(r.text.trim());

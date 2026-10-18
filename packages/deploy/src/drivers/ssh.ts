@@ -475,6 +475,11 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const project = { type: "project", id: p.projectId };
     const databaseUrl = `postgres://${dbName}:${dbPassword}@127.0.0.1:5432/${dbName}`;
     const authSecret = await ensureSecret(project, "auth_secret");
+    // Ventura SMS paketi (ADR 0056): markaz panelga imzolangan so'rov yuboradi — panel manzili va loyiha kaliti
+    const panelUrl = process.env.VENTURA_PANEL_URL || process.env.BETTER_AUTH_URL || "";
+    const smsRelay = /^https?:\/\//.test(panelUrl)
+      ? { url: panelUrl.replace(/\/+$/, ""), key: await ensureSecret(project, "sms_relay_key") }
+      : null;
     const [ownerPassword, botToken] = await Promise.all([
       readSecret(db, project, "owner_password"),
       readSecret(db, project, "telegram_bot_token"),
@@ -503,12 +508,18 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
         );
       }
     }
-    secrets.tenants[p.slug] = { databaseUrl, authSecret, ...(botToken ? { telegramBotToken: botToken } : {}) };
+    secrets.tenants[p.slug] = {
+      databaseUrl,
+      authSecret,
+      ...(botToken ? { telegramBotToken: botToken } : {}),
+      ...(smsRelay ? { smsRelay } : {}),
+    };
     await p.session.writeFile(`${file}.tmp`, `${JSON.stringify(secrets, null, 2)}\n`, 0o600);
     await remote(log, `chmod 600 ${sh(`${file}.tmp`)} && mv -f ${sh(`${file}.tmp`)} ${sh(file)}`);
     p.provisioned = true;
     log("Maxfiy sozlamalar yozildi: baza, sessiya kaliti, bot (qiymatlar ko'rsatilmaydi)", "info");
     if (!botToken) log("Diqqat: loyihada Telegram bot tokeni yo'q — xodimlar tizimga kira olmaydi.", "info");
+    if (!smsRelay) log("Diqqat: VENTURA_PANEL_URL berilmagan — Ventura SMS paketi bu markazda ishlamaydi.", "info");
     if (!owner) log("Diqqat: ega (telefon, ism, parol) to'liq emas — direktor yaratilmadi.", "info");
 
     // Yangi kod shu serverdagi hamma mijozga birdan tushadi (bitta ilova): ularning bazalari ham yangilanadi.

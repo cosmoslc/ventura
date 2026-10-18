@@ -1,10 +1,12 @@
 "use client";
 
+import { Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
+import { cn } from "@ventura/ui/lib/utils";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
@@ -13,9 +15,15 @@ import { PhoneInput } from "@ventura/ui/phone-input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { toast } from "@ventura/ui/toast";
 import { firstError } from "@/lib/rules";
-import { type SmsProviderView, hourLabel, smsConnectInput, smsPrefsInput, smsTestInput } from "@/lib/sms";
+import { type SmsMode, type SmsProviderView, hourLabel, smsConnectInput, smsPrefsInput, smsTestInput } from "@/lib/sms";
 import { uz } from "@/lib/uz";
-import { connectSmsAction, disconnectSmsAction, saveSmsPrefsAction, sendTestSmsAction } from "./actions";
+import {
+  connectSmsAction,
+  disconnectSmsAction,
+  saveSmsPrefsAction,
+  sendTestSmsAction,
+  setSmsModeAction,
+} from "./actions";
 
 const t = uz.sms;
 const HOURS = Array.from({ length: 24 }, (_, h) => h);
@@ -37,8 +45,8 @@ const when = (iso: string) =>
   new Date(iso).toLocaleString("uz-UZ", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 /**
- * SMS sozlamalari (docs/EDU-CRM-SMS.md, S1). Maxfiy kalit faqat yuboriladi — sahifaga qaytmaydi; ulangan holatda
- * faqat email va oxirgi tekshiruv vaqti ko'rinadi.
+ * SMS sozlamalari (docs/EDU-CRM-SMS.md). Rejim: Ventura paketi (standart) yoki o'z Eskiz hisobi (ADR 0056). Maxfiy
+ * kalit faqat yuboriladi — sahifaga qaytmaydi; ulangan holatda faqat email va oxirgi tekshiruv vaqti ko'rinadi.
  */
 export function SmsSettingsView({
   provider,
@@ -54,7 +62,8 @@ export function SmsSettingsView({
   testMessage: string;
 }) {
   const router = useRouter();
-  const [replacing, setReplacing] = React.useState(!provider.connected);
+  const [replacing, setReplacing] = React.useState(!provider.ownConnected);
+  const own = provider.mode === "own";
   const [confirm, setConfirm] = React.useState(false);
   const [disconnecting, startDisconnect] = React.useTransition();
 
@@ -72,41 +81,45 @@ export function SmsSettingsView({
     <div className="space-y-section">
       <PageHeader title={t.settingsTitle} description={t.settingsDescription} />
       {provider.broken ? <Notice tone="warning">{t.broken}</Notice> : null}
-      {provider.connected && eskizError ? <Notice tone="danger">{t.eskizError(eskizError)}</Notice> : null}
+      {own && provider.connected && eskizError ? <Notice tone="danger">{t.eskizError(eskizError)}</Notice> : null}
 
-      <Section title={t.connectTitle} description={t.connectDescription}>
-        {provider.connected && !replacing ? (
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="min-w-0">
-              <div className="text-body font-semibold text-foreground">{t.connectedAs(provider.email ?? "")}</div>
-              {provider.checkedAt ? (
-                <div className="text-body text-muted-foreground">{t.checkedAt(when(provider.checkedAt))}</div>
-              ) : null}
+      <ModeSection provider={provider} />
+
+      {own ? (
+        <Section title={t.connectTitle} description={t.connectDescription}>
+          {provider.ownConnected && !replacing ? (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-body font-semibold text-foreground">{t.connectedAs(provider.email ?? "")}</div>
+                {provider.checkedAt ? (
+                  <div className="text-body text-muted-foreground">{t.checkedAt(when(provider.checkedAt))}</div>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="ghost" onClick={() => setReplacing(true)}>
+                  {t.replace}
+                </Button>
+                <Button variant="ghost" onClick={() => setConfirm(true)} disabled={disconnecting}>
+                  {t.disconnect}
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="ghost" onClick={() => setReplacing(true)}>
-                {t.replace}
-              </Button>
-              <Button variant="ghost" onClick={() => setConfirm(true)} disabled={disconnecting}>
-                {t.disconnect}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <ConnectForm
-            email={provider.email ?? ""}
-            onCancel={provider.connected ? () => setReplacing(false) : null}
-            onDone={() => {
-              setReplacing(false);
-              router.refresh();
-            }}
-          />
-        )}
-      </Section>
+          ) : (
+            <ConnectForm
+              email={provider.email ?? ""}
+              onCancel={provider.ownConnected ? () => setReplacing(false) : null}
+              onDone={() => {
+                setReplacing(false);
+                router.refresh();
+              }}
+            />
+          )}
+        </Section>
+      ) : null}
 
       {provider.connected ? (
         <>
-          <PrefsForm provider={provider} nicks={nicks} defaultSender={defaultSender} />
+          <PrefsForm provider={provider} nicks={nicks} defaultSender={defaultSender} showSender={own} />
           <TestForm testMessage={testMessage} />
         </>
       ) : null}
@@ -120,6 +133,60 @@ export function SmsSettingsView({
         onConfirm={disconnect}
       />
     </div>
+  );
+}
+
+/** Rejim tanlash: ikki karta (radio). Almashsa shablonlar yangi hisobda qayta moderatsiyadan o'tadi */
+function ModeSection({ provider }: { provider: SmsProviderView }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const choose = (mode: SmsMode) => {
+    if (mode === provider.mode) return;
+    startTransition(async () => {
+      const res = await setSmsModeAction({ mode });
+      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      toast({ tone: "success", title: t.modeSaved, description: t.modeResetHint });
+      router.refresh();
+    });
+  };
+  return (
+    <Section title={t.modeTitle} description={t.modeDescription}>
+      <div role="radiogroup" aria-label={t.modeTitle} className="grid gap-3 sm:grid-cols-2">
+        {(["ventura", "own"] as const).map((m) => {
+          const on = provider.mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              disabled={pending}
+              onClick={() => choose(m)}
+              className={cn(
+                "flex items-start gap-3 rounded-card border p-4 text-left transition-colors disabled:opacity-60",
+                on ? "border-primary bg-primary-soft" : "border-border hover:bg-muted/50",
+              )}
+            >
+              <span
+                className={cn(
+                  "mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border [&_svg]:size-3",
+                  on ? "border-primary bg-primary text-primary-foreground" : "border-border",
+                )}
+              >
+                {on ? <Check /> : null}
+              </span>
+              <span className="min-w-0">
+                <span className="block text-body font-semibold text-foreground">{t.modes[m]}</span>
+                <span className="mt-0.5 block text-body text-muted-foreground">{t.modeHints[m]}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {provider.mode === "ventura" && !provider.relayReady ? (
+        <Notice tone="warning">{t.venturaUnavailableText}</Notice>
+      ) : null}
+    </Section>
   );
 }
 
@@ -217,10 +284,12 @@ function PrefsForm({
   provider,
   nicks,
   defaultSender,
+  showSender,
 }: {
   provider: SmsProviderView;
   nicks: string[];
   defaultSender: string;
+  showSender: boolean;
 }) {
   const router = useRouter();
   const [form, setForm] = React.useState({
@@ -250,26 +319,28 @@ function PrefsForm({
     <form onSubmit={submit}>
       <Section title={t.prefsTitle} description={t.prefsDescription}>
         {error ? <Notice tone="danger">{error}</Notice> : null}
-        <div>
-          <Label htmlFor="sms-sender">{t.sender}</Label>
-          <Select
-            value={form.sender || DEFAULT}
-            onValueChange={(v) => setForm((f) => ({ ...f, sender: v === DEFAULT ? "" : v }))}
-          >
-            <SelectTrigger id="sms-sender">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={DEFAULT}>{t.senderDefault(defaultSender)}</SelectItem>
-              {options.map((n) => (
-                <SelectItem key={n} value={n}>
-                  {n}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <FieldHint>{t.senderHint}</FieldHint>
-        </div>
+        {showSender ? (
+          <div>
+            <Label htmlFor="sms-sender">{t.sender}</Label>
+            <Select
+              value={form.sender || DEFAULT}
+              onValueChange={(v) => setForm((f) => ({ ...f, sender: v === DEFAULT ? "" : v }))}
+            >
+              <SelectTrigger id="sms-sender">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={DEFAULT}>{t.senderDefault(defaultSender)}</SelectItem>
+                {options.map((n) => (
+                  <SelectItem key={n} value={n}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <FieldHint>{t.senderHint}</FieldHint>
+          </div>
+        ) : null}
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <Label htmlFor="sms-quiet-from">{t.quietFrom}</Label>

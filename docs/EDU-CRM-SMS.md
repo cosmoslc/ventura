@@ -1,6 +1,6 @@
 # SMS (Eskiz) — to'liq reja
 
-2026-10-17 · holat: **S1–S3 bajarildi** (ADR 0053–0055), keyingisi — Ventura paketi · bo'lim: `sms` (`apps/edu-crm/features.ts`, menyu `/sms`) · ruxsatlar:
+2026-10-17 · holat: **S1–S4 bajarildi** (ADR 0053–0056), keyingisi — avto-qoidalar · bo'lim: `sms` (`apps/edu-crm/features.ts`, menyu `/sms`) · ruxsatlar:
 `settings.sms_gateways`, `students.sms_send`, `finance.debtors_remind` (bor)
 
 Maqsad: markaz o'z Eskiz hisobini ulaydi, CRM o'zi kerakli paytda SMS yuboradi (to'lov qabul qilindi, to'lov eslatmasi,
@@ -169,7 +169,7 @@ Komponentlar: mavjud `StatCard`, `FilterBar`, `StudentsTable`, `GroupChip`, `Dro
 | S1 ✓ | `sms_provider` migratsiyasi (tinch soatlar 21–08, avto-SMS o'chiq), Eskiz klienti (+ soxta fetch bilan testlar), sirlarni shifrlash, `/sms/settings`, `/sms` balans kartalari. Qolgan jadvallar va "Qolgan SMS" kartasi o'z bosqichida (ADR 0053) | markaz ulanadi, balans ko'rinadi |
 | S2 ✓ | Shablonlar: CRUD, `render`, qism hisoblagich, Eskiz moderatsiyasi va sinxron, tayyor andozalar (ADR 0054) | shablonlar tayyor |
 | S3 ✓ | Outbox, fon vazifasi (ilova ichida), callback, qo'lda yuborish (o'quvchilar, qarzdorlar, guruh) (ADR 0055) | SMS haqiqatda ketadi |
-| S4 | **Ventura paketi (standart)**: panel relay, `sms_wallets` va paketlar, CRM ichida paket sotib olish, panel "SMS" sahifasi, rejim tanlash | Ventura SMS sotadi |
+| S4 ✓ | **Ventura paketi (standart)**: panel relay, SMS hisobi va paketlar, CRM ichida paket so'rash, panel "SMS paketi" sahifasi (to'lovni tasdiqlash), rejim tanlash, shablon moderatsiyasi relay orqali (ADR 0056) | Ventura SMS sotadi |
 | S5 | Avto-qoidalar: to'lov qabul qilindi, eslatma, qarz, kelmadi, maosh, tug'ilgan kun | avto-SMS |
 | S6 | `/sms/report` hisobot sahifasi, o'quvchi profilidagi SMS tabi | hisobot |
 
