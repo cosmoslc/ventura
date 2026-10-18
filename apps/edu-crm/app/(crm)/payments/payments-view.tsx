@@ -133,7 +133,7 @@ export function PaymentsView({
   ].sort((a, b) => a[1].localeCompare(b[1]));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={t.title}
         description={t.description}
@@ -146,7 +146,7 @@ export function PaymentsView({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-grid sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={<Banknote />} tone={2} label={t.kpiIncome} value={`${money(incomeSum)} ${uz.common.som}`} />
         <StatCard icon={<Undo2 />} tone={4} label={t.kpiRefunds} value={`${money(refundSum)} ${uz.common.som}`} />
         <StatCard

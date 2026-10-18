@@ -75,7 +75,7 @@ export default async function HomePage({
       )
     : null;
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       {notice}
       <DashboardView
         data={finance ? data : withoutMoney(data)}
@@ -136,7 +136,7 @@ function SimpleHome({ tenant, staff, notice }: { tenant: Tenant; staff: Staff; n
   const branches = staff.scope === "all" ? uz.home.allBranches : uz.home.branchCount(staff.scope.length);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader title={uz.home.greeting(staff.name)} description={tenant.name} />
       {notice}
 

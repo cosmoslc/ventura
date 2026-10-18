@@ -100,7 +100,7 @@ export function IncomesView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={t.title}
         description={t.description}
@@ -121,7 +121,7 @@ export function IncomesView({
       {rangeInvalid ? <Notice tone="warning">{uz.expenses.rangeInvalid}</Notice> : null}
       {canWrite && !categories.some((c) => c.active) ? <Notice tone="warning">{t.noCategories}</Notice> : null}
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-grid sm:grid-cols-3">
         <StatCard
           icon={<PiggyBank />}
           tone={2}

@@ -106,7 +106,7 @@ export function CoursesView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={uz.courses.title}
         actions={
@@ -173,7 +173,7 @@ export function CoursesView({
       </FilterBar>
 
       {sorted.length ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-grid md:grid-cols-2 lg:grid-cols-3">
           {sorted.map((c) => (
             <CourseCard
               key={c.id}

@@ -76,7 +76,7 @@ export function MoneyAuditView({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader title={t.title} description={t.description} />
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 

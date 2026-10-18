@@ -140,7 +140,7 @@ export function CategoriesTab({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <FilterBar standalone>
         <FilterSearch placeholder={t.categoriesSearch} value={query} onChange={(e) => setQuery(e.target.value)} />
       </FilterBar>

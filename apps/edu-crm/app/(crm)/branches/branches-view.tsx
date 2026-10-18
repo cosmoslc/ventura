@@ -74,7 +74,7 @@ export function BranchesView({
       </FilterBar>
 
       {visible.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-grid md:grid-cols-2 xl:grid-cols-3">
           {visible.map((b) => (
             <BranchCard
               key={b.id}

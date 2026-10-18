@@ -45,7 +45,7 @@ export function StaffDetail({
   const canEdit = perms.edit && row.manageable;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Button variant="icon" size="icon" asChild title={uz.staff.back} aria-label={uz.staff.back}>

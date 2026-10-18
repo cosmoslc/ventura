@@ -76,7 +76,7 @@ export function HolidaysView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={uz.holidays.title}
         actions={
@@ -103,7 +103,7 @@ export function HolidaysView({
       </FilterBar>
 
       {visible.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-grid md:grid-cols-2 xl:grid-cols-3">
           {visible.map((h) => {
             const n = dayCount(h.startDate, h.endDate);
             const past = h.endDate < today;

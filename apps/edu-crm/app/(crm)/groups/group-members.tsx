@@ -98,7 +98,7 @@ export function MembersTab({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <FilterBar standalone>
         <FilterSearch placeholder={uz.groups.studentSearch} value={query} onChange={(e) => setQuery(e.target.value)} />
         <FilterSelect

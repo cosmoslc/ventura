@@ -251,6 +251,11 @@ Rol bir nechta xususiyatni birga beradi; qiymatlar tokenlarda.
 | Modal | sarlavha va pastki qism `20 × 16px` (≥640px: `24 × 20px`), tana 20 / 24px | Barcha modallar |
 | Jadval | sarlavha katagi `16 × 10px`, katak `16 × 12px` | `Th`, `Td` |
 | Stat panjarasi | 1 → 2 (≥560px) → 4 ustun (≥1200px), oraliq 14px | Stat-card'lar |
+| `--spacing-section` | 16px (`space-y-section`) | Sahifa yoki tab ildizidagi bloklar orasi |
+| `--spacing-grid` | 16px (`gap-grid`) | Ko'rsatkich kartalari va kartochkalar to'ri |
+| `--spacing-header` | 20px (`mb-header`) | `PageHeader`dan keyingi bo'shliq |
+
+Sahifa zichligi faqat shu uch token orqali o'zgaradi (`packages/config/theme.css`): sahifa ildiziga `space-y-4`, kartalar to'riga `gap-4` qo'lda yozilmaydi. Forma va dialog ichidagi oraliqlar bu tokenlarga kirmaydi.
 
 **Breakpoint'lar:** shell uchun 900px (sidebar drawer bo'ladi, topbar 56px); qolganlari Tailwind standarti — `sm` 640, `md` 768, `lg` 1024, `xl` 1280px.
 

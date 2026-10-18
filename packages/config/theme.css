@@ -72,6 +72,13 @@
   --text-title: 0.9375rem; /* 15px — kartochka sarlavhasi */
 }
 
+/* Sahifa zichligi — bloklar orasidagi bo'shliq shu yerda bir marta beriladi (space-y-section, gap-grid, mb-header) */
+@theme {
+  --spacing-section: 1rem; /* sahifa yoki tab ichidagi bloklar orasi */
+  --spacing-grid: 1rem; /* ko'rsatkich va kartochkalar to'ri orasi */
+  --spacing-header: 1.25rem; /* sahifa sarlavhasidan keyingi bo'shliq */
+}
+
 /* Qatlamlar (z-index) shkalasi — docs/design/STYLE.md, 8-bo'lim */
 :root {
   --z-raised: 1; /* jadvaldagi yopishqoq (sticky) ustun — qo'shni kataklar ustida */

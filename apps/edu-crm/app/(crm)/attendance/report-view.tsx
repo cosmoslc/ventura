@@ -122,12 +122,12 @@ export function AttendanceReportView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader title={uz.attendance.title} description={t.description} />
 
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-grid sm:grid-cols-2 lg:grid-cols-5">
         {KPIS.map((k) => (
           <button
             key={k.filter}

@@ -69,7 +69,7 @@ export function RoomsView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={uz.rooms.title}
         actions={
@@ -91,7 +91,7 @@ export function RoomsView({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-grid sm:grid-cols-3">
         <StatCard tone={1} icon={<DoorOpen />} label={uz.rooms.total} value={uz.rooms.roomsUnit(rows.length)} />
         <StatCard tone={2} icon={<Users />} label={uz.rooms.big} value={uz.rooms.roomsUnit(bigRooms)} />
         <StatCard tone={3} icon={<LayoutGrid />} label={uz.rooms.capacity} value={uz.rooms.seatsUnit(totalCapacity)} />
@@ -159,7 +159,7 @@ export function RoomsView({
           </TableWrap>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((r) => (
             <Card key={r.id} className="flex flex-col gap-4 p-5">
               <div className="flex items-start gap-3">

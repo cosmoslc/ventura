@@ -40,7 +40,7 @@ export function StudentDiscountsTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="text-body font-bold text-foreground">{t.discountsTitle}</div>
         {perms.discount ? (

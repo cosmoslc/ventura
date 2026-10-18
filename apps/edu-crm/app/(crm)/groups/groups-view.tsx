@@ -110,7 +110,7 @@ export function GroupsView({
   const missing = !courses.length ? "courses" : !teachers.length ? "teachers" : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={uz.groups.title}
         actions={
@@ -165,7 +165,7 @@ export function GroupsView({
           />
         </Card>
       ) : visible.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div className="grid gap-grid md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {visible.map((g) => {
             const count = g.studentIds.length;
             const cap = g.roomCapacity;

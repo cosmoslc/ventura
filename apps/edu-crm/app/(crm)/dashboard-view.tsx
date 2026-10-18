@@ -345,7 +345,7 @@ export function DashboardView({
     : "";
 
   return (
-    <div className="space-y-4 pb-6 [container-type:inline-size]">
+    <div className="space-y-section pb-6 [container-type:inline-size]">
       {/* Yuqori qator */}
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

@@ -93,8 +93,8 @@ export function PlansTab({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-3">
+    <div className="space-y-section">
+      <div className="grid gap-grid sm:grid-cols-3">
         <StatCard
           icon={<Target />}
           tone={1}
