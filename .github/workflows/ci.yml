@@ -288,6 +288,28 @@ jobs:
             if echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH "sudo -n /usr/local/sbin/ventura-db $bad" 2>/dev/null; then echo "rad etilmadi: $bad"; exit 1; fi
           done
           if echo "qisqa" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_probe edu_ci_probe' 2>/dev/null; then exit 1; fi
+          # Bazalar ro'yxati (ADR 0057): yaratilgan baza TAB bilan ajratilgan qatorda, tizim bazasi yo'q
+          echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_list edu_ci_list'
+          LIST=$($SSH 'sudo -n /usr/local/sbin/ventura-db list')
+          echo "$LIST" | grep -qP '^edu_ci_list\tedu_ci_list\t\d+\t\d+$' || { echo "ro'yxatda yo'q: $LIST"; exit 1; }
+          if echo "$LIST" | grep -q '^postgres'; then echo "tizim bazasi ro'yxatda"; exit 1; fi
+          # O'chirish (ADR 0058): tizim bazasi rad etiladi; yaratilgan baza va roli yo'qoladi
+          if $SSH 'sudo -n /usr/local/sbin/ventura-db drop postgres' 2>/dev/null; then echo "tizim bazasi o'chdi"; exit 1; fi
+          $SSH 'sudo -n /usr/local/sbin/ventura-db drop edu_ci_list'
+          if $SSH 'sudo -n /usr/local/sbin/ventura-db list' | grep -q '^edu_ci_list'; then echo "baza o'chmadi"; exit 1; fi
+          # Umumiy bazadan bitta mijoz: boshqa mijoz qatorlari qoladi
+          echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_purge edu_ci_purge'
+          sudo -u postgres psql -Xq -d edu_ci_purge -c "CREATE TABLE t (tenant_id text); INSERT INTO t VALUES ('alfa'), ('alfa'), ('beta');"
+          $SSH 'sudo -n /usr/local/sbin/ventura-db purge edu_ci_purge alfa'
+          LEFT=$(sudo -u postgres psql -XAtq -d edu_ci_purge -c "SELECT string_agg(tenant_id, ',') FROM t")
+          [ "$LEFT" = "beta" ] || { echo "purge noto'g'ri: $LEFT"; exit 1; }
+          # Mijozlar hajmi va boshqa bazaga ko'chirish (ADR 0059)
+          $SSH 'sudo -n /usr/local/sbin/ventura-db tenant-sizes edu_ci_purge' | grep -qP '^beta\t\d+$' || { echo "tenant-sizes"; exit 1; }
+          echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_dst edu_ci_dst'
+          sudo -u postgres psql -Xq -d edu_ci_dst -c "CREATE TABLE t (tenant_id text); INSERT INTO t VALUES ('gamma'), ('beta');"
+          $SSH 'sudo -n /usr/local/sbin/ventura-db copy-tenant edu_ci_purge edu_ci_dst beta'
+          GOT=$(sudo -u postgres psql -XAtq -d edu_ci_dst -c "SELECT string_agg(tenant_id, ',' ORDER BY tenant_id) FROM t")
+          [ "$GOT" = "beta,gamma" ] || { echo "copy-tenant noto'g'ri: $GOT"; exit 1; }
 
       - name: nginx yordamchisi (ventura-site)
         run: |

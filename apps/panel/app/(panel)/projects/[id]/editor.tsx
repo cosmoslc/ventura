@@ -26,6 +26,7 @@ import { uz } from "@/lib/uz";
 import { trashProjectAction, updateBrandAction, updateFeaturesAction, updateProjectAction } from "../actions";
 import type { DeploymentRow } from "@/lib/server/deployments-query";
 import { BrandPicker, ChoiceCards, FeaturePicker } from "../parts";
+import { SecretsTab } from "./secrets-tab";
 import { DeploysTab } from "./deploys-tab";
 
 type Status = (typeof PROJECT_STATUSES)[number];
@@ -54,6 +55,8 @@ interface EditorProps {
   enabled: string[];
   domains: { hostname: string; kind: "subdomain" | "custom"; isPrimary: boolean; status: string }[];
   secrets: { ownerPassword: boolean; telegramToken: boolean };
+  /** Faqat super admin: saqlangan sirlar nomlari ("Sirlar" tabi); null — tab ko'rinmaydi */
+  secretNames: string[] | null;
   deploys: { rows: DeploymentRow[]; workerAlive: boolean; simulated: boolean; canDeploy: boolean };
 }
 
@@ -75,6 +78,7 @@ export function ProjectEditor({
   enabled,
   domains,
   secrets,
+  secretNames,
   deploys,
 }: EditorProps) {
   const router = useRouter();
@@ -118,6 +122,7 @@ export function ProjectEditor({
               </TabsTrigger>
               <TabsTrigger value="domains">{uz.projects.tabs.domains}</TabsTrigger>
               <TabsTrigger value="owner">{uz.projects.tabs.owner}</TabsTrigger>
+              {secretNames ? <TabsTrigger value="secrets">{uz.projects.tabs.secrets}</TabsTrigger> : null}
               {canWrite ? <TabsTrigger value="danger">{uz.projects.tabs.danger}</TabsTrigger> : null}
             </TabsList>
 
@@ -282,6 +287,16 @@ export function ProjectEditor({
               </dl>
               <p className="mt-3 text-caption text-muted-foreground">{uz.projects.ownerSaved}</p>
             </TabsContent>
+
+            {secretNames ? (
+              <TabsContent value="secrets">
+                <SecretsTab
+                  projectId={project.id}
+                  present={secretNames}
+                  sharedDb={project.dbStrategy === "shared_db"}
+                />
+              </TabsContent>
+            ) : null}
 
             {canWrite ? (
               <TabsContent value="danger">

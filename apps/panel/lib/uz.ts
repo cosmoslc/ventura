@@ -21,6 +21,7 @@ export const uz = {
     servers: "Serverlar",
     audit: "Audit jurnali",
     sms: "SMS paketi",
+    databases: "Bazalar",
     settings: "Sozlamalar",
     security: "Xavfsizlik",
     admins: "Adminlar",
@@ -167,11 +168,26 @@ export const uz = {
       features: "Bo'limlar",
       domains: "Domenlar",
       owner: "Ega va sirlar",
+      secrets: "Sirlar",
       danger: "Xavfli hudud",
     },
     trash: "Savatga o'tkazish",
     trashConfirmTitle: "Loyihani savatga o'tkazasizmi?",
     trashConfirmText: "Loyiha 30 kun savatda turadi, shu vaqt ichida tiklash mumkin. Ma'lumotlari o'chirilmaydi.",
+    purge: "Butunlay o'chirish",
+    purgeTitle: "Loyiha butunlay o'chirilsinmi?",
+    purgeText: (name: string) =>
+      `${name}: sayt, ilova va barcha ma'lumotlari serverdan o'chiriladi (alohida baza — butunlay, umumiy bazadan — shu markaz qatorlari). Qaytarib bo'lmaydi. Tasdiqlash uchun loyiha nomini (slug) yozing.`,
+    purgeMismatch: "Loyiha nomi mos kelmadi",
+    purgeQueued: "Loyiha o'chirilmoqda — serverdan tozalangach ro'yxatdan yo'qoladi",
+    purged: "Loyiha butunlay o'chirildi",
+    purgeQueueError: "Vazifani navbatga qo'yib bo'lmadi (ishchi jarayon ishlayaptimi?)",
+    purgeStatus: (name: string, status: string, message?: string) =>
+      status === "queued" || status === "running"
+        ? `${name} o'chirilmoqda...`
+        : status === "ok"
+          ? `${name} butunlay o'chirildi${message ? ` (${message})` : ""}`
+          : `${name}ni o'chirib bo'lmadi: ${message ?? ""}. Loyiha savatda qoldi — qayta urinish mumkin.`,
     restore: "Tiklash",
     restored: "Loyiha tiklandi",
     trashed: "Loyiha savatga o'tkazildi",
@@ -184,6 +200,7 @@ export const uz = {
     ownerPhone: "Ega telefoni",
     ownerNameInvalid: "Ega ismini kiriting (kamida 2 belgi)",
     ownerPhoneInvalid: "Ega telefoni noto'g'ri: 9 ta raqam, masalan 90 123 45 67",
+    telegramTokenInvalid: "Bot tokeni noto'g'ri: @BotFather bergan to'liq token, masalan 123456789:AAH...",
     ownerLegacy: "Eski loyiha: ega telefoni kiritilmagan — direktor deploy paytida yaratilmaydi",
     ownerPassword: "Vaqtinchalik parol",
     ownerSaved: "Parol shifrlangan holda saqlangan va bu yerda ko'rsatilmaydi",
@@ -330,6 +347,14 @@ export const uz = {
       "sms.purchase.paid": "SMS paket to'lovi tasdiqlandi",
       "sms.purchase.cancel": "SMS paket so'rovi bekor qilindi",
       "sms.wallet.adjust": "SMS hisobi qo'lda tuzatildi",
+      "database.create": "Baza yaratildi",
+      "database.reveal": "Baza manzili ko'rildi",
+      "secret.reveal": "Loyiha siri ko'rildi",
+      "project.quota": "Loyiha joy limiti o'zgartirildi",
+      "project.db_move": "Loyiha boshqa bazaga ko'chirildi",
+      "project.purge": "Loyiha butunlay o'chirildi",
+      "database.drop": "Baza o'chirildi",
+      "secret.update": "Loyiha siri o'zgartirildi",
     } as Record<string, string>,
   },
 
@@ -395,6 +420,160 @@ export const uz = {
     secretHint: "Kalit shifrlangan holda saqlanadi va qayta ko'rsatilmaydi. Markaz serverlariga tushmaydi.",
     sender: "Yuboruvchi nomi",
     save: "Saqlash",
+  },
+
+  /** Loyiha sirlari (ADR 0059) — faqat super admin */
+  projectSecrets: {
+    intro:
+      "Faqat super adminga ko'rinadi. Har ochish va o'zgarish audit jurnaliga yoziladi. Yangi qiymat serverga keyingi deploy'da yetadi.",
+    sharedDbHint: "Loyiha umumiy bazada: baza paroli serverga tegishli — Bazalar sahifasida.",
+    labels: {
+      telegram_bot_token: "Telegram bot tokeni",
+      owner_password: "Ega vaqtinchalik paroli",
+      db_password: "Baza paroli",
+      auth_secret: "Sessiya kaliti",
+      sms_relay_key: "SMS relay kaliti",
+    } as Record<string, string>,
+    hints: {
+      telegram_bot_token: "Markaz botining @BotFather tokeni — xodimlarga kirish kodi shu orqali",
+      owner_password: "Birinchi direktor yaratilganda beriladigan parol (keyin u o'zi almashtiradi)",
+      db_password: "Markazning alohida bazasi foydalanuvchisi paroli",
+      auth_secret: "Markaz sessiyalari va imzolar kaliti",
+      sms_relay_key: "Ventura SMS paketi so'rovlarini imzolash kaliti",
+    } as Record<string, string>,
+    effects: {
+      db_password:
+        "Yangi parol keyingi deploy'da bazaga ham, ilovaga ham yoziladi. Deploy'gacha ilova eski parol bilan ishlayveradi.",
+      auth_secret:
+        "Deploy'dan keyin markazdagi hamma xodim tizimdan chiqib ketadi, o'z Eskiz kaliti qayta ulanishi kerak bo'ladi.",
+      sms_relay_key: "Deploy'gacha markaz Ventura SMS paketidan foydalana olmaydi (imzo mos kelmaydi).",
+    } as Record<string, string>,
+    invalid: {
+      telegram_bot_token: "Token @BotFather bergan ko'rinishda bo'lishi kerak (123456:ABC...)",
+      owner_password: "Kamida 8 belgi, bo'shliqsiz",
+      db_password: "24–128 belgi: lotin harflari, raqam, _ va -",
+      auth_secret: "Kamida 32 belgi, bo'shliqsiz",
+      sms_relay_key: "Kamida 32 belgi, bo'shliqsiz",
+    } as Record<string, string>,
+    invalidDefault: "Qiymat noto'g'ri",
+    unknown: "Noma'lum sir",
+    danger: "Ehtiyot",
+    missing: "Saqlanmagan",
+    show: "Ko'rsatish",
+    hide: "Yashirish",
+    copy: "Nusxalash",
+    copied: "Nusxalandi",
+    editTitle: (label: string) => `${label}: yangi qiymat`,
+    newValue: "Yangi qiymat",
+    generate: "Tasodifiy yaratish",
+    deployHint: "Serverga keyingi deploy'da yoziladi",
+    dangerTitle: "Rostdan almashtirasizmi?",
+    saved: "Sir saqlandi",
+  },
+
+  /** Bazalar (ADR 0057) */
+  databases: {
+    title: "Bazalar",
+    description: "Serverlardagi PostgreSQL bazalari: qaysi loyihalar ishlatadi, hajmi va ulanishlar",
+    totalDbs: "Bazalar",
+    totalSize: "Umumiy hajm",
+    largeDbs: (limit: string) => `${limit} dan katta`,
+    noServers: "Server yo'q",
+    noServersHint: "Bazalar serverlarda turadi — avval server qo'shing.",
+    online: "Ishlayapti",
+    offline: "Javob bermayapti",
+    disk: (used: number, total: number, pct: number) => `disk ${used} / ${total} GB (${pct}%)`,
+    updated: (ago: string) => `yangilandi ${ago}`,
+    noList:
+      "Bazalar ro'yxatini olib bo'lmadi: serverdagi yordamchi eski. Server sahifasidagi \"Serverni yangilash\" buyrug'ini serverda bir marta ishga tushiring.",
+    actionStatus: (kind: string, name: string, status: string, message?: string) => {
+      const drop = kind === "db_drop";
+      if (status === "queued" || status === "running")
+        return `"${name}" bazasi ${drop ? "o'chirilmoqda" : "yaratilmoqda"}...`;
+      if (status === "ok") return `"${name}" bazasi ${drop ? "o'chirildi" : "yaratildi"}`;
+      return `"${name}" bazasini ${drop ? "o'chirib" : "yaratib"} bo'lmadi: ${message ?? ""}`;
+    },
+    colName: "Baza",
+    colProjects: "Loyihalar",
+    colSize: "Hajmi",
+    colConnections: "Ulanishlar",
+    kinds: {
+      shared: "Umumiy",
+      project: "Loyiha bazasi",
+      manual: "Qo'lda yaratilgan",
+      other: "Panelga noma'lum",
+    } as Record<string, string>,
+    missing: "Serverda yo'q",
+    noProjects: "Hech qaysi loyiha ishlatmaydi",
+    projectsCount: (n: number) => `${n} ta loyiha shu bazada`,
+    large: "Katta",
+    empty: "Serverda baza yo'q.",
+    reveal: "URL olish",
+    revealTitle: "Baza manzili ko'rsatilsinmi?",
+    revealText: (name: string) => `"${name}" bazasining paroli bilan manzili ochiladi. Bu audit jurnaliga yoziladi.`,
+    revealDescription: "Parol bilan — hech kimga yubormang",
+    urlServer: "Server ichida (ilova uchun)",
+    tunnelCommand: "SSH tunnel (o'z kompyuteringizda)",
+    urlTunnel: "Tunnel orqali (DBeaver, pgAdmin)",
+    tunnelHint:
+      "Baza faqat serverning o'zida ochiq. Avval tunnel buyrug'ini o'z SSH kalitingiz bilan ishga tushiring, keyin tunnel manzili bilan ulaning.",
+    copy: "Nusxalash",
+    copied: "Nusxalandi",
+    noPassword: "Bu bazaning paroli panelda yo'q",
+    create: "Yangi baza",
+    createDescription: "Bo'sh baza va uning foydalanuvchisi (nomi bir xil). Parol panelda shifrlangan holda saqlanadi.",
+    createSubmit: "Yaratish",
+    createQueued: "Baza yaratilmoqda",
+    server: "Server",
+    name: "Baza nomi",
+    nameHint: "Kichik lotin harflari, raqam va _ ; harf bilan boshlanadi, 3–63 belgi",
+    nameInvalid: "Baza nomi noto'g'ri",
+    exists: "Bu nomdagi baza serverda bor",
+    usedByProject: "Bu nomni loyiha ishlatadi",
+    queueError: "Vazifani navbatga qo'yib bo'lmadi (ishchi jarayon ishlayaptimi?)",
+    colProject: "Loyiha",
+    colUsage: "Egallagan joy",
+    colState: "Holat",
+    usageUnknown: "Hali o'lchanmagan",
+    usagePending: "Birinchi o'lchov bir soat ichida.",
+    noQuota: "limitsiz",
+    overQuota: "Limitdan oshgan",
+    sharedUsageHint:
+      "Umumiy bazada har markaz hajmi uning qatorlari bo'yicha hisoblanadi (indekslarsiz, taxminiy) va soatiga bir marta yangilanadi.",
+    noProjectsHint: "Bu bazani hech qaysi ishlab turgan loyiha ishlatmaydi.",
+    stateOk: "Joyida",
+    stateNear: "80% dan oshdi",
+    stateOver: "Limitdan oshdi",
+    quota: "Limit",
+    quotaTitle: "Joy limiti",
+    quotaGb: "Limit (GB)",
+    quotaHint: "Bo'sh qoldirilsa — limitsiz. Oshsa sizga Telegram ogohlantirishi keladi, markaz ishlashda davom etadi.",
+    quotaSaved: "Limit saqlandi",
+    quotaInvalid: "Limit 0.1 dan 10 000 GB gacha",
+    moveToOwn: "Alohida bazaga",
+    moveToShared: "Umumiy bazaga",
+    moveTitleOwn: "Alohida bazaga ko'chirilsinmi?",
+    moveTitleShared: "Umumiy bazaga ko'chirilsinmi?",
+    moveText: (name: string) =>
+      `${name}: ko'chirish paytida sayt bir necha daqiqa yopiq turadi. Ma'lumotlar bitta tranzaksiyada nusxalanadi va tekshiriladi; muvaffaqiyatli bo'lsa eski joydagisi tozalanadi. Tasdiqlash uchun loyiha nomini (slug) yozing.`,
+    moveQueued: "Ko'chirish boshlandi",
+    moveMismatch: "Loyiha nomi mos kelmadi",
+    moveSame: "Loyiha allaqachon shu turdagi bazada",
+    moveNoServer: "Loyiha hali serverga deploy qilinmagan",
+    moveStatus: (project: string, status: string, message?: string) =>
+      status === "queued" || status === "running"
+        ? `${project} ko'chirilmoqda — sayt vaqtincha yopiq...`
+        : status === "ok"
+          ? `${project} ko'chirildi: ${message ?? ""}`
+          : `${project}ni ko'chirib bo'lmadi: ${message ?? ""}. Sayt eski bazada ishlayapti.`,
+    drop: "O'chirish",
+    dropTitle: "Baza butunlay o'chirilsinmi?",
+    dropText: (name: string) =>
+      `"${name}" bazasi va undagi barcha ma'lumotlar serverdan o'chiriladi, foydalanuvchisi ham. Qaytarib bo'lmaydi. Tasdiqlash uchun baza nomini yozing.`,
+    dropQueued: "Baza o'chirilmoqda",
+    dropMismatch: "Baza nomi mos kelmadi",
+    dropShared: "Umumiy bazani o'chirib bo'lmaydi: avval undagi loyihalarni savatdan butunlay o'chiring",
+    dropInUse: "Bazani ishlab turgan loyiha ishlatadi — avval loyihani savatga o'tkazing",
   },
 
   settings: {
@@ -526,6 +705,10 @@ export const uz = {
       start: "Ishga tushirish",
       power_on: "Serverni yoqish",
       power_off: "Serverni o'chirish",
+      db_create: "Baza yaratish",
+      db_drop: "Bazani o'chirish",
+      project_purge: "Loyihani butunlay o'chirish",
+      db_move: "Bazaga ko'chirish",
     },
     powerOn: "Yoqish",
     powerOnHint: "WSL serverni yoqish: SSH, nginx, baza va ilovalar ishga tushadi",
@@ -584,6 +767,12 @@ export const uz = {
     setupStep2:
       "Quyidagi buyruqni nusxalab, server terminaliga qo'ying va Enter bosing. Skript Node.js, pnpm, PM2, nginx va PostgreSQL ni o'rnatadi va panel kalitini qo'yadi.",
     setupStep3: 'Skript tugagach shu sahifada "Tekshirish"ni bosing.',
+    updateTitle: "Serverni yangilash",
+    updateHint:
+      "setup.sh ning yangi versiyasini qayta ishga tushirish (masalan yangi yordamchilar uchun). Xavfsiz: bor narsa qayta o'rnatilmaydi, ilovalar to'xtamaydi.",
+    updateShow: "Ko'rsatish",
+    updateHide: "Yashirish",
+    updateStep3: "Skript tugagach bir daqiqa kuting — yangi ma'lumotlar (masalan bazalar) shu panelda paydo bo'ladi.",
     copyCommand: "Buyruqni nusxalash",
     copied: "Nusxalandi",
     publicKey: "Ochiq kalit",

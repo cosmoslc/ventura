@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DB_STRATEGIES, DEPLOY_MODES, TARGET_KINDS } from "@ventura/db/schema/panel";
+import { TELEGRAM_BOT_TOKEN_RE } from "@ventura/tenants";
 import { uz } from "./uz";
 
 /* Loyiha qoidalari — Yangi loyiha formasi (client) va server action bir xil tekshiradi. */
@@ -84,7 +85,10 @@ export const projectInputSchema = z
     mode: z.enum(DEPLOY_MODES),
     target: z.enum(TARGET_KINDS),
     dbStrategy: z.enum(DB_STRATEGIES),
-    telegramToken: z.string().trim(),
+    telegramToken: z
+      .string()
+      .trim()
+      .refine((t) => !t || TELEGRAM_BOT_TOKEN_RE.test(t), uz.projects.telegramTokenInvalid),
   })
   .superRefine((v, ctx) => {
     const sp = slugProblem(v.slug);
