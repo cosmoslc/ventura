@@ -1,4 +1,5 @@
-import { canAny } from "@ventura/auth/staff/policy";
+import { can, canAny } from "@ventura/auth/staff/policy";
+import { hasFeature } from "@ventura/tenants";
 import { getBranchContext } from "@/lib/server/branch";
 import { getTenantDb } from "@/lib/server/deps";
 import { ensurePaymentMethods, getFinanceSettings } from "@/lib/server/finance";
@@ -25,6 +26,11 @@ export default async function DebtorsPage() {
       canPay={financePerms(staff.access).create}
       canNote={canAny(staff.access, ["finance.debtors_remind", "students.edit"])}
       maxDiscountPercent={fs.maxDiscountPercent}
+      sms={
+        (await hasFeature(tenant, "sms")) && can(staff.access, "finance.debtors_remind")
+          ? { centerName: tenant.name }
+          : null
+      }
     />
   );
 }

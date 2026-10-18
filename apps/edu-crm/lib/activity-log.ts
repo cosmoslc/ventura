@@ -344,6 +344,12 @@ const REGISTRY: Record<string, Def> = {
     () => null,
   ),
   "sms.settings": simple("settings", "SMS sozlamalarini o'zgartirdi", undefined, () => null),
+  "sms.send": simple(
+    "settings",
+    "SMS yubordi",
+    (i) => parts(str(i.m.title), num(i.m.queued) !== null ? `${num(i.m.queued)} ta` : null),
+    () => null,
+  ),
   "sms.test": simple(
     "settings",
     "test SMS yubordi",

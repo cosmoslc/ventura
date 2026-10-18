@@ -566,7 +566,6 @@ export const uz = {
     bulkEnroll: "Guruhga qo'shish",
     bulkLeave: "Guruhdan chiqarish",
     bulkSms: "SMS yuborish",
-    bulkSmsSoon: "SMS ulanganda ishlaydi",
     bulkNoGroups: "Tanlanganlar hech qaysi guruhda emas",
     bulkTitle: (n: number) => `${n} ta o'quvchi`,
     bulkGroup: "Guruh",
@@ -1612,6 +1611,8 @@ export const uz = {
   },
 
   debtors: {
+    smsRemind: "SMS eslatma",
+    smsRemindAll: (n: number) => `SMS eslatma (${n})`,
     title: "Qarzdorlar",
     description: "Barcha oylar bo'yicha yig'ilgan qarz (to'lovlar − oylik hisoblar)",
     kpiCount: "Qarzdorlar",
@@ -1902,6 +1903,32 @@ export const uz = {
     archiveText: (name: string) => `"${name}" shablonlar ro'yxatidan olinadi.`,
     archived: "Shablon o'chirildi",
     notFound: "Shablon topilmadi",
+  },
+
+  /** Qo'lda SMS yuborish oynasi (S3) */
+  smsSend: {
+    title: "SMS yuborish",
+    recipients: (n: number) => `${n} ta o'quvchi`,
+    template: "Shablon",
+    audience: "Kimga",
+    audiences: {
+      parent: "Ota-onaga (raqami bo'lmasa — o'quvchiga)",
+      student: "O'quvchiga",
+      both: "O'quvchi va ota-onaga",
+    } as Record<string, string>,
+    preview: "Namuna",
+    notApproved: "Bu shablon Eskiz'da hali tasdiqlanmagan — Eskiz xabarni rad etishi mumkin.",
+    noTemplates: "Shablon yo'q.",
+    noTemplatesLink: "Shablon qo'shish",
+    notConnected: "Eskiz ulanmagan.",
+    notConnectedLink: "Ulash",
+    loading: "Yuklanmoqda...",
+    send: "Yuborish",
+    sent: (n: number) => `${n} ta SMS navbatga qo'yildi`,
+    skipped: (n: number) => `${n} ta raqam yo'q yoki noto'g'ri — o'tkazib yuborildi`,
+    titleStudents: (n: number) => `O'quvchilar ro'yxatidan: ${n} ta`,
+    titleDebtors: (n: number) => `Qarzdorlarga eslatma: ${n} ta`,
+    titleGroup: (name: string) => `Guruh: ${name}`,
   },
 
   financeSettings: {

@@ -1,6 +1,6 @@
 # SMS (Eskiz) — to'liq reja
 
-2026-10-17 · holat: **S1–S2 bajarildi** (ADR 0053, 0054), S3–S6 navbatda · bo'lim: `sms` (`apps/edu-crm/features.ts`, menyu `/sms`) · ruxsatlar:
+2026-10-17 · holat: **S1–S3 bajarildi** (ADR 0053–0055), keyingisi — Ventura paketi · bo'lim: `sms` (`apps/edu-crm/features.ts`, menyu `/sms`) · ruxsatlar:
 `settings.sms_gateways`, `students.sms_send`, `finance.debtors_remind` (bor)
 
 Maqsad: markaz o'z Eskiz hisobini ulaydi, CRM o'zi kerakli paytda SMS yuboradi (to'lov qabul qilindi, to'lov eslatmasi,
@@ -42,7 +42,7 @@ Muhim cheklovlar:
 
 | # | Savol | Qaror |
 | --- | --- | --- |
-| Q1 | Kimning Eskiz hisobi | **Ikkalasi ham.** Markaz tanlaydi: (A) o'z Eskiz hisobini ulaydi yoki (B) Ventura'dan SMS paket sotib oladi. Avval A, keyin B |
+| Q1 | Kimning Eskiz hisobi | **Ikkalasi ham, standart — Ventura paketi (B).** Eskiz faqat yuridik shaxslarga xizmat qiladi, shuning uchun markazlar paketni CRM ichida (o'z hisobi bilan kirib) sotib oladi. O'z Eskiz hisobini ulash (A) — qo'shimcha imkoniyat (2026-10-18) |
 | Q2 | Avto-SMS boshlang'ich holati | **O'chiq** — markaz o'zi yoqadi |
 | Q3 | Kimga | **Har qoidada tanlov**: o'quvchi / ota-ona / ikkalasi. Standart — ota-ona, raqami bo'lmasa o'quvchi |
 | Q4 | Tinch soatlar | **21:00–08:00** (sozlamada o'zgaradi); bu oraliqdagi avto-SMS 08:00 da ketadi. Qo'lda yuborish cheklanmaydi |
@@ -115,16 +115,16 @@ sahifaga faqat `connected: boolean`, `email`, `sender` qaytadi.
   yuboradi, `provider_id` va `sending` holatini yozadi. Xato: `attempts++`, 1/5/15 daqiqa kechikish, 3 urinishdan keyin
   `failed`. Tinch soatlarda (`quiet_from`–`quiet_to`, standart 21:00–08:00) avto-SMS ertalabga suriladi.
 
-### 4.4 Rejalashtiruvchi (worker)
+### 4.4 Rejalashtiruvchi (fon vazifasi)
 
-Hozir loyihada fon jarayoni yo'q. Yangi PM2 jarayoni `edu-worker` (`apps/edu-crm/scripts/worker.ts`):
+Alohida PM2 jarayoni o'rniga ilova jarayoni ichida (`instrumentation.ts` → `lib/server/sms/scheduler.ts`, ADR 0055):
 
-- har 60 soniyada: `tenants.json` dagi `sms` bo'limi yoqilgan har markaz uchun `flush`;
-- har 15 daqiqada: avto-qoidalar (`payment_reminder`, `debt_warning`, `birthday`) — qoidaning `send_at` soati
-  kelganda shu kun uchun navbat (dedupe kuniga bir marta);
-- shared va dedicated rejimda bir xil ishlaydi; deploy paketi (`packages/deploy`) PM2 konfiguratsiyasiga qo'shadi.
+- har 60 soniyada: `sms` bo'limi yoqilgan har markaz uchun `flush` va `poll`;
+- server amali yuborgandan keyin shu markaz uchun darhol (`after()`);
+- avto-qoidalar (`payment_reminder`, `debt_warning`, `birthday`) shu aylanishga qo'shiladi;
+- shared va dedicated rejimda bir xil; ikki nusxa bo'lsa ham `FOR UPDATE SKIP LOCKED` takror yubormaydi.
 
-### 4.5 Callback — `POST /api/sms/eskiz/callback/[tenantToken]`
+### 4.5 Callback — `POST /api/sms/eskiz/[token]`
 
 `tenantToken` — tenant `authSecret`idan HMAC (taxmin qilib bo'lmaydi). `request_id` bo'yicha qatorni topadi, `status`
 (`DELIVRD` → `delivered`, `REJECTD`/`UNDELIV`/`EXPIRED` → `failed`), `sms_count`, `status_date` ni yozadi. Callback
@@ -168,10 +168,10 @@ Komponentlar: mavjud `StatCard`, `FilterBar`, `StudentsTable`, `GroupChip`, `Dro
 | --- | --- | --- |
 | S1 ✓ | `sms_provider` migratsiyasi (tinch soatlar 21–08, avto-SMS o'chiq), Eskiz klienti (+ soxta fetch bilan testlar), sirlarni shifrlash, `/sms/settings`, `/sms` balans kartalari. Qolgan jadvallar va "Qolgan SMS" kartasi o'z bosqichida (ADR 0053) | markaz ulanadi, balans ko'rinadi |
 | S2 ✓ | Shablonlar: CRUD, `render`, qism hisoblagich, Eskiz moderatsiyasi va sinxron, tayyor andozalar (ADR 0054) | shablonlar tayyor |
-| S3 | Outbox, worker (`edu-worker`), callback, qo'lda yuborish (o'quvchilar, qarzdorlar, guruh) | SMS haqiqatda ketadi |
-| S4 | Avto-qoidalar: to'lov qabul qilindi, eslatma, qarz, kelmadi, maosh, tug'ilgan kun | avto-SMS |
-| S5 | `/sms/report` hisobot sahifasi, o'quvchi profilidagi SMS tabi | hisobot |
-| S6 | B rejim: panel relay, `sms_wallets` va paketlar, panel "SMS" sahifasi, tenant sozlamasida rejim tanlash | Ventura SMS sotadi |
+| S3 ✓ | Outbox, fon vazifasi (ilova ichida), callback, qo'lda yuborish (o'quvchilar, qarzdorlar, guruh) (ADR 0055) | SMS haqiqatda ketadi |
+| S4 | **Ventura paketi (standart)**: panel relay, `sms_wallets` va paketlar, CRM ichida paket sotib olish, panel "SMS" sahifasi, rejim tanlash | Ventura SMS sotadi |
+| S5 | Avto-qoidalar: to'lov qabul qilindi, eslatma, qarz, kelmadi, maosh, tug'ilgan kun | avto-SMS |
+| S6 | `/sms/report` hisobot sahifasi, o'quvchi profilidagi SMS tabi | hisobot |
 
 Har bosqich — alohida PR va ADR. Testlar: klient (soxta Eskiz), `render`, dedupe, worker qayta urinishi, callback
 imzosi, tinch soatlar, ruxsatlar.

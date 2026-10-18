@@ -10,7 +10,8 @@ import { tenantForHost } from "@/lib/server/tenant";
  * 2) sessiya cookie'si bo'lmasa — /login (optimistik; haqiqiy tekshiruv serverda: requireStaff, requireFeature).
  */
 
-const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/ariza"];
+// /api/sms/eskiz — Eskiz yetkazish xabari (sessiyasiz, manzildagi token bilan tekshiriladi)
+const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/ariza", "/api/sms/eskiz"];
 /** Boshqa saytga iframe qilib qo'yiladigan sahifalar (ADR 0026); qolganlari ramkada ochilmaydi (clickjacking) */
 const EMBEDDABLE = ["/ariza"];
 

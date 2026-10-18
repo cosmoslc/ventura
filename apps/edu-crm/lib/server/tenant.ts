@@ -51,6 +51,11 @@ export function tenantForHost(host: string | null): Tenant | null {
   return findTenant(loadRegistry(), host);
 }
 
+/** Ro'yxatdagi barcha mijozlar (fon vazifalari uchun: SMS navbati) */
+export function allTenants(): Tenant[] {
+  return loadRegistry().tenants;
+}
+
 /** Joriy so'rov mijozi (bir so'rov ichida bir marta). */
 export const currentTenant = cache(async (): Promise<Tenant | null> => tenantForHost((await headers()).get("host")));
 

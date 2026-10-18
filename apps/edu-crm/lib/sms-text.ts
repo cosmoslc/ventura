@@ -142,6 +142,12 @@ export function unknownVars(body: string, kind: SmsTemplateKind): string[] {
   return templateVars(body).filter((v) => !allowed.has(v));
 }
 
+/** "Ism familiya" (o'quvchi va xodim formalaridagi tartib): birinchi so'z — ism, qolgani — familiya */
+export function splitName(name: string): { first: string; last: string } {
+  const [first = "", ...rest] = name.trim().split(/\s+/);
+  return { first, last: rest.join(" ") };
+}
+
 /** O'zgaruvchilarni qiymat bilan almashtiradi; qiymati yo'q o'zgaruvchi bo'sh qoladi */
 export function renderSms(body: string, vars: Partial<Record<SmsVar, string>>): string {
   return normalizeSms(body.replace(/\{([^{}\s]+)\}/g, (_, k: string) => vars[k as SmsVar] ?? ""))

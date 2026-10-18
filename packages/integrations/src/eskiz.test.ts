@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { EskizError, createEskiz, eskizPhone } from "./eskiz";
+import { EskizError, createEskiz, eskizDeliveryState, eskizPhone } from "./eskiz";
 
 /* Eskiz klienti soxta fetch bilan: login, token yangilash (401), xato matnida sir yo'qligi, telefon formati. */
 
@@ -132,5 +132,27 @@ describe("createEskiz", () => {
     await eskiz.submitTemplate("Salom {ism}");
     expect(calls[0]!.body).toEqual({ template: "Salom {ism}" });
     expect(await eskiz.templates()).toEqual([{ id: 1, text: "Salom {ism}", status: "service" }]);
+  });
+
+  it("xabar holatini o'qiydi", async () => {
+    fakeEskiz({
+      "GET /message/sms/status_by_id/abc-1": () => ({
+        json: { status: "success", data: { status: "DELIVERED", parts_count: 2, total_price: 190 } },
+      }),
+    });
+    const eskiz = createEskiz({ email: "a@b.uz", secret: "K", token: "T", api: API });
+    expect(await eskiz.status("abc-1")).toEqual({ status: "DELIVERED", parts: 2, cost: 190 });
+  });
+});
+
+describe("eskizDeliveryState", () => {
+  it("yakuniy va oraliq holatlar", () => {
+    expect(eskizDeliveryState("DELIVERED")).toBe("delivered");
+    expect(eskizDeliveryState("DELIVRD")).toBe("delivered");
+    expect(eskizDeliveryState("REJECTD")).toBe("failed");
+    expect(eskizDeliveryState("UNDELIV")).toBe("failed");
+    expect(eskizDeliveryState("EXPIRED")).toBe("failed");
+    expect(eskizDeliveryState("WAITING")).toBe("pending");
+    expect(eskizDeliveryState("TRANSMITTED")).toBe("pending");
   });
 });

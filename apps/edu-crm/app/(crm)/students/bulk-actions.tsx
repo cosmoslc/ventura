@@ -14,6 +14,7 @@ import { toast } from "@ventura/ui/toast";
 import { uz } from "@/lib/uz";
 import { type BulkResult, enrollStudentsAction, leaveStudentsAction } from "../groups/actions";
 import { LeaveReasonFields } from "../groups/leave-reason-fields";
+import { SendSmsModal } from "../sms/send-sms-modal";
 import type { StudentRow } from "./data";
 
 const t = uz.students;
@@ -27,6 +28,8 @@ export interface BulkPerms {
   enroll: BulkGroupOption[] | null;
   /** Guruhdan chiqarish ruxsati */
   remove: boolean;
+  /** SMS yuborish (bo'lim yoqilgan va ruxsat bor); null — tugma ko'rinmaydi */
+  sms?: { centerName: string } | null;
 }
 
 const todayLocal = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tashkent" });
@@ -44,7 +47,7 @@ export function StudentsBulkBar({
   onClear: () => void;
   perms: BulkPerms;
 }) {
-  const [dialog, setDialog] = React.useState<"enroll" | "leave" | null>(null);
+  const [dialog, setDialog] = React.useState<"enroll" | "leave" | "sms" | null>(null);
   // Chiqarish uchun: tanlanganlar a'zo bo'lgan guruhlar (nechta o'quvchi bilan)
   const memberGroups = React.useMemo(() => {
     const map = new Map<string, { id: string; name: string; teacher: string | null; n: number }>();
@@ -75,9 +78,11 @@ export function StudentsBulkBar({
             {t.bulkLeave}
           </SelectionBarAction>
         ) : null}
-        <SelectionBarAction icon={<MessageSquareText />} disabled title={t.bulkSmsSoon}>
-          {t.bulkSms}
-        </SelectionBarAction>
+        {perms.sms ? (
+          <SelectionBarAction icon={<MessageSquareText />} onClick={() => setDialog("sms")}>
+            {t.bulkSms}
+          </SelectionBarAction>
+        ) : null}
       </SelectionBar>
       {perms.enroll ? (
         <EnrollDialog
@@ -86,6 +91,17 @@ export function StudentsBulkBar({
           selected={selected}
           groups={perms.enroll}
           onDone={onClear}
+        />
+      ) : null}
+      {perms.sms ? (
+        <SendSmsModal
+          open={dialog === "sms"}
+          onOpenChange={(o) => setDialog(o ? "sms" : null)}
+          source="students"
+          studentIds={selected.map((s) => s.id)}
+          title={uz.smsSend.titleStudents(selected.length)}
+          centerName={perms.sms.centerName}
+          onSent={onClear}
         />
       ) : null}
       {perms.remove ? (

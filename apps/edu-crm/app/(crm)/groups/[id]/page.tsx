@@ -1,3 +1,5 @@
+import { can } from "@ventura/auth/staff/policy";
+import { hasFeature } from "@ventura/tenants";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { getBranchContext } from "@/lib/server/branch";
@@ -33,5 +35,8 @@ export default async function GroupPage({
   if (!props) notFound();
   // Filial qatori — faqat tepada "Barcha filiallar" tanlanganda (bitta filial tanlansa ma'lumot ortiqcha)
   const showBranch = branch.enabled && branch.selected === "all" && branch.options.length > 1;
-  return <GroupProfile {...props} showBranch={showBranch} />;
+  // SMS (S3): bo'lim yoqilgan va "Shaxsiy SMS xabar yuborish" ruxsati bor
+  const sms =
+    (await hasFeature(tenant, "sms")) && can(staff.access, "students.sms_send") ? { centerName: tenant.name } : null;
+  return <GroupProfile {...props} showBranch={showBranch} sms={sms} />;
 }

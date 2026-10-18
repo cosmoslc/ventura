@@ -50,6 +50,22 @@ export interface EskizTemplate {
   status: string;
 }
 
+export interface EskizStatus {
+  /** Eskiz holati as-is: DELIVERED, WAITING, REJECTED ... */
+  status: string;
+  parts: number | null;
+  /** So'm */
+  cost: number | null;
+}
+
+/** Eskiz (va callback) holati → yakuniy natija; oraliq holat — pending */
+export function eskizDeliveryState(status: string): "delivered" | "failed" | "pending" {
+  const s = status.toUpperCase();
+  if (s === "DELIVERED" || s === "DELIVRD") return "delivered";
+  if (/^(REJECTE?D?|UNDELIV(ERABLE|ERED)?|EXPIRED|FAILED|ERROR|DELETED)$/.test(s)) return "failed";
+  return "pending";
+}
+
 export interface EskizSendResult {
   id: string;
   status: string;
@@ -171,6 +187,12 @@ export function createEskiz(config: EskizConfig) {
         const text = str(t.original_text) ?? str(t.template);
         return typeof t.id === "number" && text ? [{ id: t.id, text, status: str(t.status) ?? "moderation" }] : [];
       });
+    },
+    /** Xabar holati (Eskiz 30 kun saqlaydi) */
+    async status(id: string): Promise<EskizStatus> {
+      const d = ((await call("GET", `/message/sms/status_by_id/${encodeURIComponent(id)}`)).data ?? {}) as Json;
+      const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : null);
+      return { status: str(d.status) ?? "", parts: num(d.parts_count), cost: num(d.total_price) };
     },
     async send(input: { phone: string; text: string; from?: string; callbackUrl?: string }): Promise<EskizSendResult> {
       const phone = eskizPhone(input.phone);

@@ -10,6 +10,7 @@ import {
   sampleParts,
   smsParts,
   smsTemplateInput,
+  splitName,
   templateVars,
   unknownVars,
 } from "./sms-text";
@@ -63,5 +64,10 @@ describe("SMS matni", () => {
   it("turlar va holatlar bazadagi ro'yxat bilan bir xil", () => {
     expect([...SMS_TEMPLATE_KINDS]).toEqual([...SMS_TEMPLATE_KIND_VALUES]);
     expect([...SMS_MODERATION]).toEqual([...SMS_MODERATION_VALUES]);
+  });
+
+  it("ism va familiya", () => {
+    expect(splitName(" Aziz  Karimov Olimovich ")).toEqual({ first: "Aziz", last: "Karimov Olimovich" });
+    expect(splitName("Aziz")).toEqual({ first: "Aziz", last: "" });
   });
 });
