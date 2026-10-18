@@ -17,6 +17,7 @@ import {
 import { openSession } from "../servers";
 import { type SshSession, sh } from "../ssh";
 import { type DeployContext, type DeployDriver, StepError, type StepKey, type StepLog } from "../types";
+import { DB_NAME_RE, DB_PASSWORD_RE, dbNameFor, dbPasswordOwner } from "../databases";
 
 /*
  * SSH drayveri (SPEC 6: "SSH drayveri: bitta deploy qadamlari"). Ikki rejim (ADR 0048):
@@ -40,8 +41,6 @@ const APP_PATH_RE = /^apps\/[a-z0-9][a-z0-9-]*$/;
 const ROOT_RE = /^\/[A-Za-z0-9._/-]+$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 const RELEASE_RE = /^\d{14}-[0-9a-f]{7}$/;
-const DB_NAME_RE = /^[a-z][a-z0-9_]{2,62}$/;
-const DB_PASSWORD_RE = /^[A-Za-z0-9_-]{24,128}$/;
 /** Shablon o'z bazasini tayyorlaydigan skript (bo'lmasa, baza qadami o'tkazib yuboriladi) */
 const PROVISION_SCRIPT = "scripts/provision.ts";
 const FIRST_PORT = 4100;
@@ -520,14 +519,9 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   function dbFor(strategy: string, slug: string, projectId: string) {
     const p = plan!;
     const shared = strategy === "shared_db";
-    const base = p.templateKey.replace(/-/g, "_");
-    const dbName = must(shared ? `${base}_shared` : `${base}_${slug.replace(/-/g, "_")}`, DB_NAME_RE, "Baza nomi");
-    return {
-      shared,
-      dbName,
-      passwordOwner: shared ? { type: "server", id: p.serverId } : { type: "project", id: projectId },
-      passwordName: shared ? `db:${dbName}` : "db_password",
-    };
+    const dbName = must(dbNameFor(p.templateKey, slug, strategy), DB_NAME_RE, "Baza nomi");
+    const pw = dbPasswordOwner(shared ? "shared" : "project", { serverId: p.serverId, projectId }, dbName);
+    return { shared, dbName, passwordOwner: pw.owner, passwordName: pw.name };
   }
 
   async function migrateOthers(log: StepLog, appDir: string) {

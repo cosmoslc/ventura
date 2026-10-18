@@ -11,7 +11,18 @@ import {
 } from "@ventura/db/schema/panel";
 import { notifySuperAdmins } from "@ventura/auth";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
-import { type AuditActor, audit, deleteSecrets } from "@ventura/security";
+import { randomBytes } from "node:crypto";
+import { type AuditActor, audit, deleteSecrets, putSecret, readSecret } from "@ventura/security";
+import {
+  DB_LIST_COMMAND,
+  DB_NAME_RE,
+  DB_PASSWORD_RE,
+  SYSTEM_DATABASES,
+  dbNameFor,
+  dbPasswordOwner,
+  nextDbAlerts,
+  parseDbList,
+} from "./databases";
 import { type AlertEvent, METRICS_SCRIPT, nextAlerts, parseMetrics } from "./metrics";
 import { type Queue, SERVER_QUEUE } from "./queue";
 import { type ServerRow, checkServer, openSession } from "./servers";
@@ -31,6 +42,8 @@ export interface ServerJobData {
   serverId: string;
   kind: ServerActionKind;
   app?: string;
+  /** db_create: yangi baza nomi */
+  database?: string;
   actor: AuditActor;
 }
 
@@ -43,7 +56,16 @@ export async function probeServer(db: PanelDb, server: ServerRow): Promise<Probe
     session = await openSession(db, server);
     const out = await session.exec(`bash -lc ${sh(METRICS_SCRIPT)}`, { timeoutMs: 20_000 });
     if (out.code !== 0) return { ok: false, error: out.stderr.trim().split("\n").pop() || `Kod ${out.code}` };
-    return { ok: true, metrics: parseMetrics(out.stdout), hostKey: session.hostKey };
+    const metrics = parseMetrics(out.stdout);
+    // Bazalar (ADR 0057): yordamchi eski bo'lsa metrika baribir saqlanadi, sababi ko'rsatiladi
+    const dbs = await session.exec(`bash -lc ${sh(DB_LIST_COMMAND)}`, { timeoutMs: 20_000 }).catch((e: Error) => ({
+      code: 1,
+      stdout: "",
+      stderr: e.message,
+    }));
+    if (dbs.code === 0) metrics.databases = parseDbList(dbs.stdout);
+    else metrics.databasesError = dbs.stderr.trim().split("\n").pop() || `Kod ${dbs.code}`;
+    return { ok: true, metrics, hostKey: session.hostKey };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
   } finally {
@@ -65,12 +87,16 @@ const ALERT_TEXT: Record<AlertEvent, (name: string, m?: ServerMetrics) => string
   memory: (n, m) => `🧠 <b>Xotira to'lmoqda</b>: ${n} — ${m?.memUsedMb} / ${m?.memTotalMb} MB`,
 };
 
+const gb = (bytes: number) => (bytes / 1024 ** 3).toFixed(2);
+
 /** So'rov natijasini saqlaydi: joriy holat, tarix qatori va ogohlantirishlar (faqat holat o'zgarganda). */
 export async function recordProbe(db: PanelDb, server: ServerRow, result: ProbeResult, notify?: Notify) {
-  const { alerts, events } = nextAlerts(
-    server.alerts,
-    result.ok ? { ok: true, metrics: result.metrics } : { ok: false },
-  );
+  const next = nextAlerts(server.alerts, result.ok ? { ok: true, metrics: result.metrics } : { ok: false });
+  const { events } = next;
+  // Bazalar hajmi: ro'yxat kelmagan bo'lsa oldingi holat saqlanadi
+  const dbAlert =
+    result.ok && result.metrics.databases ? nextDbAlerts(server.alerts.databases, result.metrics.databases) : null;
+  const alerts = { ...next.alerts, databases: dbAlert ? dbAlert.over : server.alerts.databases };
   const now = new Date();
   await db
     .update(servers)
@@ -101,10 +127,14 @@ export async function recordProbe(db: PanelDb, server: ServerRow, result: ProbeR
       load1: m.load[0],
     });
   }
-  if (events.length && notify) {
-    const text = events
-      .map((e) => ALERT_TEXT[e](escapeHtml(server.name), result.ok ? result.metrics : undefined))
-      .join("\n");
+  const dbLines = (dbAlert?.newly ?? []).map(
+    (d) => `🗄 <b>Baza kattalashdi</b>: ${escapeHtml(server.name)} — ${escapeHtml(d.name)}, ${gb(d.sizeBytes)} GB`,
+  );
+  if ((events.length || dbLines.length) && notify) {
+    const text = [
+      ...events.map((e) => ALERT_TEXT[e](escapeHtml(server.name), result.ok ? result.metrics : undefined)),
+      ...dbLines,
+    ].join("\n");
     await notify(text).catch((e: Error) => console.error("[monitor] telegram:", e.message));
   }
   return events;
@@ -138,11 +168,14 @@ export async function enqueueServerJob(db: PanelDb, queue: Queue, data: ServerJo
   await setLastAction(db, data.serverId, {
     kind: data.kind,
     ...(data.app ? { app: data.app } : {}),
+    ...(data.database ? { database: data.database } : {}),
     status: "queued",
     by: data.actor.name ?? undefined,
     at: new Date().toISOString(),
   });
-  const id = await queue.send(SERVER_QUEUE, data, { singletonKey: `${data.serverId}:${data.kind}:${data.app ?? ""}` });
+  const id = await queue.send(SERVER_QUEUE, data, {
+    singletonKey: `${data.serverId}:${data.kind}:${data.app ?? data.database ?? ""}`,
+  });
   if (!id) throw new Error("Vazifa navbatga qo'shilmadi");
 }
 
@@ -152,6 +185,7 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
   const base = {
     kind: data.kind,
     ...(data.app ? { app: data.app } : {}),
+    ...(data.database ? { database: data.database } : {}),
     by: data.actor.name ?? undefined,
   };
   if (!server) return { ...base, status: "error", message: "Server topilmadi", at: new Date().toISOString() };
@@ -167,6 +201,20 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
     }
     const [fresh] = await db.select().from(servers).where(eq(servers.id, server.id));
     await recordProbe(db, fresh ?? server, await probeServer(db, fresh ?? server), notify);
+  } else if (data.kind === "db_create") {
+    const res = await createDatabase(db, server, data.database ?? "");
+    if (!res.ok) {
+      status = "error";
+      message = res.error;
+    }
+    await audit.record(db, {
+      actor: data.actor,
+      action: "database.create",
+      target: { type: "server", id: server.id },
+      metadata: { database: data.database, ok: res.ok, ...(res.ok ? {} : { error: res.error }) },
+    });
+    // Ro'yxat va hajm darhol yangilansin
+    if (res.ok) await recordProbe(db, server, await probeServer(db, server), notify);
   } else if (data.kind === "power_on" || data.kind === "power_off") {
     // Uydagi WSL server (ADR 0025): faqat shu Windows kompyuteridagi ishchi boshqaradi
     const blocked = wslControlError(server);
@@ -198,6 +246,7 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
     // Holat darhol yangilansin (yoqilgan bo'lsa — metrika, o'chirilgan bo'lsa — oflayn)
     if (status === "ok") await recordProbe(db, server, await probeServer(db, server), notify);
   } else {
+    const kind = data.kind;
     const app = data.app ?? "";
     const [known] = APP_NAME.test(app)
       ? await db
@@ -212,7 +261,7 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
       let session;
       try {
         session = await openSession(db, server);
-        const out = await session.exec(`bash -lc ${sh(COMMANDS[data.kind](app))}`, { timeoutMs: 60_000 });
+        const out = await session.exec(`bash -lc ${sh(COMMANDS[kind](app))}`, { timeoutMs: 60_000 });
         if (out.code !== 0) {
           status = "error";
           message = out.stderr.trim().split("\n").pop() || `Kod ${out.code}`;
@@ -225,7 +274,7 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
       }
       await audit.record(db, {
         actor: data.actor,
-        action: `server.app_${data.kind}`,
+        action: `server.app_${kind}`,
         target: { type: "server", id: server.id },
         metadata: { app, ok: status === "ok", ...(message ? { error: message } : {}) },
       });
@@ -236,6 +285,50 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
   const result: ServerLastAction = { ...base, status, ...(message ? { message } : {}), at: new Date().toISOString() };
   await setLastAction(db, server.id, result);
   return result;
+}
+
+/* ---------- Bazalar (ADR 0057) ---------- */
+
+/**
+ * Yangi bo'sh baza va uning roli (nomi bir xil). `ventura-db ensure` bor bazaning parolini paneldagi qiymatga
+ * tenglashtiradi — shuning uchun serverda bor yoki loyiha ishlatadigan nom rad etiladi (ishlab turgan ilovaning
+ * paroli buzilmasin). Parol server sirlarida (`db:<nom>`).
+ */
+export async function createDatabase(
+  db: PanelDb,
+  server: ServerRow,
+  name: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!DB_NAME_RE.test(name) || SYSTEM_DATABASES.has(name)) return { ok: false, error: "Baza nomi noto'g'ri" };
+  const used = await db
+    .select({ slug: projects.slug, templateKey: projects.templateKey, dbStrategy: projects.dbStrategy })
+    .from(projects)
+    .where(eq(projects.serverId, server.id));
+  if (used.some((p) => dbNameFor(p.templateKey, p.slug, p.dbStrategy) === name)) {
+    return { ok: false, error: "Bu nomdagi bazani loyiha ishlatadi" };
+  }
+  const pw = dbPasswordOwner("manual", { serverId: server.id }, name);
+  let session;
+  try {
+    session = await openSession(db, server);
+    const list = await session.exec(`bash -lc ${sh(DB_LIST_COMMAND)}`, { timeoutMs: 20_000 });
+    if (list.code !== 0) return { ok: false, error: "Serverdagi ventura-db eski: setup.sh ni qayta ishga tushiring" };
+    if (parseDbList(list.stdout).some((d) => d.name === name))
+      return { ok: false, error: "Bu nomdagi baza serverda bor" };
+    const password = (await readSecret(db, pw.owner, pw.name)) ?? randomBytes(32).toString("base64url");
+    if (!DB_PASSWORD_RE.test(password)) return { ok: false, error: "Baza paroli noto'g'ri" };
+    await putSecret(db, pw.owner, pw.name, password);
+    const out = await session.exec(`bash -lc ${sh(`sudo -n /usr/local/sbin/ventura-db ensure ${name} ${name}`)}`, {
+      timeoutMs: 60_000,
+      input: `${password}\n`,
+    });
+    if (out.code !== 0) return { ok: false, error: out.stderr.trim().split("\n").pop() || `Kod ${out.code}` };
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  } finally {
+    session?.close();
+  }
 }
 
 /* ---------- O'chirish ---------- */

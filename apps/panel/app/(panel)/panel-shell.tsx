@@ -3,6 +3,7 @@
 import {
   Activity,
   Blocks,
+  Database,
   FolderKanban,
   KeyRound,
   LayoutDashboard,
@@ -39,6 +40,7 @@ const HREF: Record<string, string> = {
   templates: "/templates",
   servers: "/servers",
   audit: "/audit",
+  databases: "/databases",
   "settings-security": "/settings/security",
   "settings-admins": "/settings/admins",
 };
@@ -63,6 +65,7 @@ function sections(role: Role): NavSection[] {
       title: uz.nav.control,
       items: [
         { id: "servers", label: uz.nav.servers, icon: Server, color: "var(--nav-hue-sky)" },
+        { id: "databases", label: uz.nav.databases, icon: Database, color: "#14b8a6" },
         { id: "audit", label: uz.nav.audit, icon: Activity, color: "#ec4899" },
       ],
     },

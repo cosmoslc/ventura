@@ -288,6 +288,11 @@ jobs:
             if echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH "sudo -n /usr/local/sbin/ventura-db $bad" 2>/dev/null; then echo "rad etilmadi: $bad"; exit 1; fi
           done
           if echo "qisqa" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_probe edu_ci_probe' 2>/dev/null; then exit 1; fi
+          # Bazalar ro'yxati (ADR 0057): yaratilgan baza TAB bilan ajratilgan qatorda, tizim bazasi yo'q
+          echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_list edu_ci_list'
+          LIST=$($SSH 'sudo -n /usr/local/sbin/ventura-db list')
+          echo "$LIST" | grep -qP '^edu_ci_list\tedu_ci_list\t\d+\t\d+$' || { echo "ro'yxatda yo'q: $LIST"; exit 1; }
+          if echo "$LIST" | grep -q '^postgres'; then echo "tizim bazasi ro'yxatda"; exit 1; fi
 
       - name: nginx yordamchisi (ventura-site)
         run: |

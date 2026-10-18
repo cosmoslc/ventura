@@ -223,6 +223,7 @@ cat > /usr/local/sbin/ventura-db <<'HELPER'
 # Ventura: mijoz bazasi va uning foydalanuvchisi. Faqat `deploy` foydalanuvchisi sudo orqali chaqiradi.
 #   ventura-db check
 #   ventura-db ensure <baza> <rol>     # parol stdin'dan (bitta qator)
+#   ventura-db list                    # bazalar: nom, egasi, hajm (bayt), ulanishlar — TAB bilan
 # Rol superuser emas, RLS'ni chetlab o'tolmaydi, yangi baza yaratolmaydi. Bazaga faqat o'z roli ulanadi.
 # Qayta chaqirish xavfsiz: bor narsa qayta yaratilmaydi, parol paneldagi qiymatga tenglashtiriladi.
 set -euo pipefail
@@ -253,7 +254,13 @@ SELECT format('REVOKE ALL ON DATABASE %I FROM PUBLIC', :'db') \gexec
 SQL
     echo "ventura-db: $db (egasi $role) tayyor"
     ;;
-  *) fail "buyruq: check | ensure" ;;
+  list)
+    runuser -u postgres -- psql -XAtq -F "$(printf '\t')" -d postgres -c "
+      SELECT d.datname, pg_get_userbyid(d.datdba), pg_database_size(d.datname),
+             (SELECT count(*) FROM pg_stat_activity a WHERE a.datname = d.datname)
+      FROM pg_database d WHERE NOT d.datistemplate AND d.datname <> 'postgres' ORDER BY 1"
+    ;;
+  *) fail "buyruq: check | ensure | list" ;;
 esac
 HELPER
 chown root:root /usr/local/sbin/ventura-db

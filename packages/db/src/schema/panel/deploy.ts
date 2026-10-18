@@ -132,6 +132,14 @@ export interface ServerProcess {
   startedAt: number | null;
 }
 
+/** Serverdagi PostgreSQL bazasi (`ventura-db list`, ADR 0057) */
+export interface ServerDatabase {
+  name: string;
+  owner: string;
+  sizeBytes: number;
+  connections: number;
+}
+
 /** Oxirgi metrika: serverning joriy holati */
 export interface ServerMetrics {
   cpuPercent: number;
@@ -143,6 +151,10 @@ export interface ServerMetrics {
   diskUsedGb: number;
   uptimeSec: number;
   processes: ServerProcess[];
+  /** Bazalar; yo'q — serverdagi yordamchi eski (setup.sh qayta ishga tushirilmagan) */
+  databases?: ServerDatabase[];
+  /** Bazalar ro'yxatini olib bo'lmagan sabab */
+  databasesError?: string;
 }
 
 /** Ogohlantirish holati: Telegram faqat o'zgarganda yuboriladi (SPEC 10: disk 85%, RAM 90%) */
@@ -152,13 +164,15 @@ export interface ServerAlerts {
   offline?: boolean;
   disk?: boolean;
   memory?: boolean;
+  /** Hajm chegarasidan oshgan bazalar (ADR 0057) */
+  databases?: string[];
 }
 
 /**
  * Server buyruqlari: `check` — tekshirish; `reload` / `stop` / `start` — ilova (PM2); `power_on` / `power_off` — uydagi
- * WSL serverni yoqish va o'chirish (ishchi shu Windows kompyuterida ishlaganda).
+ * WSL serverni yoqish va o'chirish (ishchi shu Windows kompyuterida ishlaganda); `db_create` — yangi bo'sh baza.
  */
-export const SERVER_ACTIONS = ["check", "reload", "stop", "start", "power_on", "power_off"] as const;
+export const SERVER_ACTIONS = ["check", "reload", "stop", "start", "power_on", "power_off", "db_create"] as const;
 export type ServerActionKind = (typeof SERVER_ACTIONS)[number];
 
 /** Paneldan berilgan oxirgi buyruq (fon vazifasi) va uning natijasi — sahifada ko'rsatiladi */
@@ -166,6 +180,8 @@ export interface ServerLastAction {
   kind: ServerActionKind;
   /** reload/stop/start uchun ilova nomi */
   app?: string;
+  /** db_create uchun baza nomi */
+  database?: string;
   status: "queued" | "running" | "ok" | "error";
   message?: string;
   by?: string;
