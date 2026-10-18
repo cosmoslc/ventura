@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, Database, FolderKanban, HardDrive, Pencil, Plug } from "lucide-react";
+import { ArrowRightLeft, ChevronLeft, Database, FolderKanban, HardDrive, Pencil, Plug } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -10,7 +10,7 @@ import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { cn } from "@ventura/ui/lib/utils";
-import { Modal } from "@ventura/ui/modal";
+import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { Notice } from "@ventura/ui/notice";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
@@ -18,7 +18,8 @@ import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
 import { toast } from "@ventura/ui/toast";
 import { formatBytes, timeAgo } from "@/lib/format";
 import { uz } from "@/lib/uz";
-import { setProjectQuotaAction } from "../../actions";
+import type { ServerLastAction } from "@ventura/db/schema/panel";
+import { moveProjectDbAction, setProjectQuotaAction } from "../../actions";
 
 const t = uz.databases;
 
@@ -64,6 +65,8 @@ export function DatabaseProfile({
   database: d,
   projects,
   canEdit,
+  canMove,
+  moveAction,
 }: {
   server: { id: string; name: string };
   database: {
@@ -75,8 +78,14 @@ export function DatabaseProfile({
   };
   projects: ProjectRow[];
   canEdit: boolean;
+  /** Ko'chirish — faqat super admin (ADR 0059) */
+  canMove: boolean;
+  moveAction: ServerLastAction | null;
 }) {
+  const router = useRouter();
   const [quotaFor, setQuotaFor] = React.useState<ProjectRow | null>(null);
+  const [moving, setMoving] = React.useState<ProjectRow | null>(null);
+  const showActions = canEdit || canMove;
   const over = projects.filter((p) => p.quotaBytes && p.usage != null && p.usage >= p.quotaBytes).length;
   return (
     <div className="space-y-section">
@@ -114,6 +123,12 @@ export function DatabaseProfile({
         </p>
       ) : null}
 
+      {moveAction ? (
+        <Notice tone={moveAction.status === "error" ? "danger" : moveAction.status === "ok" ? "success" : "warning"}>
+          {t.moveStatus(moveAction.project ?? "", moveAction.status, moveAction.message)}
+        </Notice>
+      ) : null}
+
       {projects.length ? (
         <TableWrap>
           <Table className="min-w-[720px]">
@@ -122,7 +137,7 @@ export function DatabaseProfile({
                 <Th>{t.colProject}</Th>
                 <Th>{t.colUsage}</Th>
                 <Th>{t.colState}</Th>
-                {canEdit ? <Th className="text-right">{uz.common.actions}</Th> : null}
+                {showActions ? <Th className="text-right">{uz.common.actions}</Th> : null}
               </Tr>
             </THead>
             <TBody>
@@ -149,11 +164,20 @@ export function DatabaseProfile({
                         <Badge tone="success">{t.stateOk}</Badge>
                       )}
                     </Td>
-                    {canEdit ? (
+                    {showActions ? (
                       <Td className="text-right">
-                        <Button size="sm" variant="ghost" onClick={() => setQuotaFor(p)}>
-                          <Pencil /> {t.quota}
-                        </Button>
+                        <div className="flex justify-end gap-1.5">
+                          {canEdit ? (
+                            <Button size="sm" variant="ghost" onClick={() => setQuotaFor(p)}>
+                              <Pencil /> {t.quota}
+                            </Button>
+                          ) : null}
+                          {canMove ? (
+                            <Button size="sm" variant="ghost" onClick={() => setMoving(p)}>
+                              <ArrowRightLeft /> {p.dbStrategy === "shared_db" ? t.moveToOwn : t.moveToShared}
+                            </Button>
+                          ) : null}
+                        </div>
                       </Td>
                     ) : null}
                   </Tr>
@@ -169,6 +193,24 @@ export function DatabaseProfile({
       )}
 
       {canEdit ? <QuotaModal project={quotaFor} onClose={() => setQuotaFor(null)} /> : null}
+      {canMove ? (
+        <ConfirmModal
+          open={moving !== null}
+          onOpenChange={(o) => !o && setMoving(null)}
+          title={moving?.dbStrategy === "shared_db" ? t.moveTitleOwn : t.moveTitleShared}
+          message={moving ? t.moveText(moving.name) : ""}
+          confirmLabel={moving?.dbStrategy === "shared_db" ? t.moveToOwn : t.moveToShared}
+          requireText={moving?.slug}
+          onConfirm={async () => {
+            if (!moving) return;
+            const target = moving.dbStrategy === "shared_db" ? "own" : "shared";
+            const res = await moveProjectDbAction({ projectId: moving.id, target }, moving.slug);
+            if (!res.ok) return void toast({ tone: "danger", title: res.error });
+            toast({ tone: "success", title: t.moveQueued, description: moving.name });
+            router.refresh();
+          }}
+        />
+      ) : null}
     </div>
   );
 }

@@ -166,3 +166,44 @@ export async function setProjectQuotaAction(input: unknown): Promise<CreateResul
   revalidatePath("/databases", "layout");
   return { ok: true };
 }
+
+const moveInput = z.object({ projectId: z.uuid(), target: z.enum(["own", "shared"]) });
+
+/**
+ * Markazni boshqa bazaga ko'chirish (ADR 0059) — faqat super admin, loyiha slug'ini yozib tasdiqlash bilan. Ishchi
+ * jarayon bajaradi; ko'chirish paytida sayt bir necha daqiqa yopiq turadi.
+ */
+export async function moveProjectDbAction(input: unknown, confirm: string): Promise<CreateResult> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const parsed = moveInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: uz.common.loadError };
+  const { db } = deps();
+  const [p] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      slug: projects.slug,
+      serverId: projects.serverId,
+      dbStrategy: projects.dbStrategy,
+    })
+    .from(projects)
+    .where(and(eq(projects.id, parsed.data.projectId), isNull(projects.deletedAt)));
+  if (!p?.serverId) return { ok: false, error: t.moveNoServer };
+  if (confirm.trim() !== p.slug) return { ok: false, error: t.moveMismatch };
+  if ((parsed.data.target === "shared") === (p.dbStrategy === "shared_db")) return { ok: false, error: t.moveSame };
+  try {
+    await enqueueServerJob(db, await queue(), {
+      serverId: p.serverId,
+      kind: "db_move",
+      projectId: p.id,
+      project: p.name,
+      target: parsed.data.target,
+      actor: { type: "user", id: viewer.id, name: viewer.name },
+    });
+  } catch {
+    return { ok: false, error: t.queueError };
+  }
+  revalidatePath("/databases", "layout");
+  return { ok: true };
+}

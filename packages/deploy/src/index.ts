@@ -78,6 +78,7 @@ export {
 } from "./databases";
 
 export { activeProjectsOn, dropDatabase, purgeProject, trashedProject } from "./purge";
+export { moveProjectDb } from "./move";
 
 /** Har deploy uchun yangi drayver beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
 export function createDrivers(deps: SshDriverDeps): DriverFactory {

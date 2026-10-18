@@ -175,7 +175,8 @@ export interface ServerAlerts {
 /**
  * Server buyruqlari: `check` — tekshirish; `reload` / `stop` / `start` — ilova (PM2); `power_on` / `power_off` — uydagi
  * WSL serverni yoqish va o'chirish (ishchi shu Windows kompyuterida ishlaganda); `db_create` — yangi bo'sh baza;
- * `db_drop` — bazani o'chirish; `project_purge` — savatdagi loyihani serverdan va paneldan butunlay o'chirish (ADR 0058).
+ * `db_drop` — bazani o'chirish; `project_purge` — savatdagi loyihani serverdan va paneldan butunlay o'chirish (ADR 0058);
+ * `db_move` — markazni umumiy ↔ alohida bazaga ko'chirish (ADR 0059).
  */
 export const SERVER_ACTIONS = [
   "check",
@@ -187,6 +188,7 @@ export const SERVER_ACTIONS = [
   "db_create",
   "db_drop",
   "project_purge",
+  "db_move",
 ] as const;
 export type ServerActionKind = (typeof SERVER_ACTIONS)[number];
 

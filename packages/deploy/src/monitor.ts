@@ -30,6 +30,7 @@ import {
   tenantSizesCommand,
 } from "./databases";
 import { type AlertEvent, METRICS_SCRIPT, nextAlerts, parseMetrics } from "./metrics";
+import { moveProjectDb } from "./move";
 import { dropDatabase, purgeProject } from "./purge";
 import { type Queue, SERVER_QUEUE } from "./queue";
 import { type ServerRow, checkServer, openSession } from "./servers";
@@ -51,9 +52,11 @@ export interface ServerJobData {
   app?: string;
   /** db_create / db_drop: baza nomi */
   database?: string;
-  /** project_purge: savatdagi loyiha id si va nomi */
+  /** project_purge / db_move: loyiha id si va nomi */
   projectId?: string;
   project?: string;
+  /** db_move: qayerga — alohida baza yoki umumiy */
+  target?: "own" | "shared";
   actor: AuditActor;
 }
 
@@ -278,6 +281,25 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
     });
     // Ro'yxat va hajm darhol yangilansin
     if (res.ok) await recordProbe(db, server, await probeServer(db, server), notify);
+  } else if (data.kind === "db_move") {
+    const res = await moveProjectDb(db, server, data.projectId ?? "", data.target === "shared" ? "shared" : "own");
+    if (!res.ok) {
+      status = "error";
+      message = res.error;
+    } else message = res.detail;
+    await audit.record(db, {
+      actor: data.actor,
+      action: "project.db_move",
+      target: { type: "project", id: data.projectId ?? "" },
+      metadata: {
+        server: server.name,
+        project: data.project,
+        target: data.target,
+        ok: res.ok,
+        ...(res.ok ? { detail: res.detail } : { error: res.error }),
+      },
+    });
+    await recordProbe(db, server, await probeServer(db, server), notify);
   } else if (data.kind === "db_drop" || data.kind === "project_purge") {
     // Qaytarib bo'lmaydigan amallar (ADR 0058): faqat super admin navbatga qo'yadi
     const res =

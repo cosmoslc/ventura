@@ -344,6 +344,9 @@ export const uz = {
       "database.reveal": "Baza manzili ko'rildi",
       "secret.reveal": "Loyiha siri ko'rildi",
       "project.quota": "Loyiha joy limiti o'zgartirildi",
+      "project.db_move": "Loyiha boshqa bazaga ko'chirildi",
+      "project.purge": "Loyiha butunlay o'chirildi",
+      "database.drop": "Baza o'chirildi",
       "secret.update": "Loyiha siri o'zgartirildi",
     } as Record<string, string>,
   },
@@ -476,6 +479,22 @@ export const uz = {
     quotaHint: "Bo'sh qoldirilsa — limitsiz. Oshsa sizga Telegram ogohlantirishi keladi, markaz ishlashda davom etadi.",
     quotaSaved: "Limit saqlandi",
     quotaInvalid: "Limit 0.1 dan 10 000 GB gacha",
+    moveToOwn: "Alohida bazaga",
+    moveToShared: "Umumiy bazaga",
+    moveTitleOwn: "Alohida bazaga ko'chirilsinmi?",
+    moveTitleShared: "Umumiy bazaga ko'chirilsinmi?",
+    moveText: (name: string) =>
+      `${name}: ko'chirish paytida sayt bir necha daqiqa yopiq turadi. Ma'lumotlar bitta tranzaksiyada nusxalanadi va tekshiriladi; muvaffaqiyatli bo'lsa eski joydagisi tozalanadi. Tasdiqlash uchun loyiha nomini (slug) yozing.`,
+    moveQueued: "Ko'chirish boshlandi",
+    moveMismatch: "Loyiha nomi mos kelmadi",
+    moveSame: "Loyiha allaqachon shu turdagi bazada",
+    moveNoServer: "Loyiha hali serverga deploy qilinmagan",
+    moveStatus: (project: string, status: string, message?: string) =>
+      status === "queued" || status === "running"
+        ? `${project} ko'chirilmoqda — sayt vaqtincha yopiq...`
+        : status === "ok"
+          ? `${project} ko'chirildi: ${message ?? ""}`
+          : `${project}ni ko'chirib bo'lmadi: ${message ?? ""}. Sayt eski bazada ishlayapti.`,
     drop: "O'chirish",
     dropTitle: "Baza butunlay o'chirilsinmi?",
     dropText: (name: string) =>
@@ -618,6 +637,7 @@ export const uz = {
       db_create: "Baza yaratish",
       db_drop: "Bazani o'chirish",
       project_purge: "Loyihani butunlay o'chirish",
+      db_move: "Bazaga ko'chirish",
     },
     powerOn: "Yoqish",
     powerOnHint: "WSL serverni yoqish: SSH, nginx, baza va ilovalar ishga tushadi",

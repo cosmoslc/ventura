@@ -60,6 +60,8 @@ export default async function DatabaseProfilePage({ params }: { params: Promise<
         quotaBytes: quotaBytesOf(p.settings),
       }))}
       canEdit={can(viewer.role, "projects.write")}
+      canMove={viewer.role === "super_admin"}
+      moveAction={server.lastAction?.kind === "db_move" ? server.lastAction : null}
     />
   );
 }
