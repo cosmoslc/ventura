@@ -1,7 +1,7 @@
 import { and, asc, eq, isNull } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { can } from "@ventura/auth";
-import { clients, domains, projectFeatures, projects, templates } from "@ventura/db/schema/panel";
+import { clients, domains, projectFeatures, projects, secrets, templates } from "@ventura/db/schema/panel";
 import { providerFor } from "@ventura/deploy";
 import { hasSecret } from "@ventura/security";
 import type { Feature } from "@ventura/tenants";
@@ -40,6 +40,16 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     workerAlive(),
   ]);
   const primary = doms.find((d) => d.isPrimary) ?? doms[0];
+  // Sirlar tabi — faqat super admin (ADR 0059): nomlar, qiymatsiz
+  const secretNames =
+    viewer.role === "super_admin"
+      ? (
+          await db
+            .select({ name: secrets.name })
+            .from(secrets)
+            .where(and(eq(secrets.ownerType, "project"), eq(secrets.ownerId, id)))
+        ).map((r) => r.name)
+      : null;
 
   return (
     <>
@@ -73,6 +83,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         enabled={feats.filter((f) => f.enabled).map((f) => f.featureKey)}
         domains={doms.map((d) => ({ hostname: d.hostname, kind: d.kind, isPrimary: d.isPrimary, status: d.status }))}
         secrets={{ ownerPassword, telegramToken }}
+        secretNames={secretNames}
         deploys={{
           rows: deployRows,
           workerAlive: alive,

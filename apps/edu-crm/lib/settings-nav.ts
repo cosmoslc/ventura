@@ -5,7 +5,7 @@
  */
 
 export type SettingsIcon =
-  "center" | "courses" | "rooms" | "holidays" | "payments" | "notifications" | "profile" | "security";
+  "center" | "courses" | "rooms" | "holidays" | "payments" | "notifications" | "sms" | "profile" | "security";
 
 export interface SettingsItem {
   href: string;
@@ -39,7 +39,10 @@ export const SETTINGS_NAV: SettingsGroup[] = [
   },
   {
     title: "Aloqa",
-    items: [{ href: "/notifications", label: "Bildirishnomalar", feature: null, icon: "notifications" }],
+    items: [
+      { href: "/notifications", label: "Bildirishnomalar", feature: null, icon: "notifications" },
+      { href: "/sms/settings", label: "SMS (Eskiz)", feature: "sms", icon: "sms" },
+    ],
   },
   {
     title: "Hisob",

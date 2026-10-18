@@ -185,39 +185,61 @@ export function FeaturePicker({
       {groups.map(([group, list]) => (
         <div key={group}>
           <div className="type-eyebrow mb-2 text-muted-foreground">{group}</div>
-          <ul className="divide-y divide-border-soft rounded-card border border-border">
+          {/* Ikki ustun: har bo'lim — o'z kartochkasi (nomi, tavsifi, ochadigan sahifalari, kaliti) */}
+          <ul className="grid gap-2 md:grid-cols-2">
             {list.map((f) => {
               const locked = f.type === "permanent";
               const isMode = f.type === "mode";
+              const on = value.has(f.key);
+              const pages = f.nav.map((n) => n.label).filter((l) => l !== f.name);
               return (
-                <li key={f.key} className="flex items-center justify-between gap-4 px-4 py-3">
+                <li
+                  key={f.key}
+                  className={cn(
+                    "flex items-start justify-between gap-3 rounded-card border px-4 py-3",
+                    on || locked ? "border-border bg-card" : "border-border-soft bg-muted/30",
+                  )}
+                >
                   <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 text-body font-semibold text-foreground">
+                    <div className="flex flex-wrap items-center gap-1.5 text-body font-semibold text-foreground">
                       {f.name}
                       {f.type !== "regular" ? (
                         <Badge tone={f.type === "core" ? "warning" : f.type === "permanent" ? "info" : "neutral"}>
                           {FEATURE_TYPE_LABELS[f.type]}
                         </Badge>
                       ) : null}
+                      {f.status === "soon" ? <Badge tone="neutral">{uz.projects.featureSoon}</Badge> : null}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="mt-0.5 text-caption text-muted-foreground">
                       {locked
                         ? uz.projects.featureLockedHint
                         : isMode
                           ? uz.projects.featureModeHint
-                          : f.requires.length
-                            ? `${uz.templates.requires}: ${f.requires.map((r) => names.get(r) ?? r).join(", ")}`
-                            : (f.description ?? "")}
+                          : (f.description ?? "")}
                     </div>
+                    {pages.length ? (
+                      <div className="mt-1 text-caption text-muted-foreground">
+                        {uz.projects.featurePages}: {pages.join(", ")}
+                      </div>
+                    ) : null}
+                    {f.requires.length && !locked ? (
+                      <div className="mt-1 text-caption text-muted-foreground">
+                        {uz.templates.requires}: {f.requires.map((r) => names.get(r) ?? r).join(", ")}
+                      </div>
+                    ) : null}
                   </div>
                   {isMode ? null : locked ? (
-                    <Lock className="size-4 text-muted-foreground" aria-label={uz.projects.featureLockedHint} />
+                    <Lock
+                      className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                      aria-label={uz.projects.featureLockedHint}
+                    />
                   ) : (
                     <Switch
                       aria-label={f.name}
-                      checked={value.has(f.key)}
+                      checked={on}
                       disabled={disabled}
-                      onCheckedChange={(on) => toggle(f, on)}
+                      onCheckedChange={(next) => toggle(f, next)}
+                      className="mt-0.5 shrink-0"
                     />
                   )}
                 </li>

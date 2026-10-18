@@ -55,6 +55,7 @@ export {
   type DeleteServerResult,
   type Notify,
   type ServerJobData,
+  createDatabase,
   createServerNotifier,
   deleteServer,
   enqueueServerJob,
@@ -63,6 +64,21 @@ export {
   recordProbe,
   runServerJob,
 } from "./monitor";
+
+export {
+  DB_NAME_RE,
+  DB_SIZE_ALERT_BYTES,
+  SYSTEM_DATABASES,
+  dbNameFor,
+  dbPasswordOwner,
+  nextDbAlerts,
+  parseDbList,
+  projectUsage,
+  quotaBytesOf,
+} from "./databases";
+
+export { activeProjectsOn, dropDatabase, purgeProject, trashedProject } from "./purge";
+export { moveProjectDb } from "./move";
 
 /** Har deploy uchun yangi drayver beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
 export function createDrivers(deps: SshDriverDeps): DriverFactory {

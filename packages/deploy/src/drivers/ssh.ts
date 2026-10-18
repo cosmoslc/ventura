@@ -6,6 +6,7 @@ import type { PanelDb } from "@ventura/db";
 import { apps, domains, projectFeatures, projects, servers, templates } from "@ventura/db/schema/panel";
 import { readSecret, putSecret } from "@ventura/security";
 import {
+  TELEGRAM_BOT_TOKEN_RE,
   type Tenant,
   emptyRegistry,
   emptySecrets,
@@ -17,6 +18,7 @@ import {
 import { openSession } from "../servers";
 import { type SshSession, sh } from "../ssh";
 import { type DeployContext, type DeployDriver, StepError, type StepKey, type StepLog } from "../types";
+import { DB_NAME_RE, DB_PASSWORD_RE, dbNameFor, dbPasswordOwner } from "../databases";
 
 /*
  * SSH drayveri (SPEC 6: "SSH drayveri: bitta deploy qadamlari"). Ikki rejim (ADR 0048):
@@ -40,8 +42,6 @@ const APP_PATH_RE = /^apps\/[a-z0-9][a-z0-9-]*$/;
 const ROOT_RE = /^\/[A-Za-z0-9._/-]+$/;
 const SHA_RE = /^[0-9a-f]{40}$/;
 const RELEASE_RE = /^\d{14}-[0-9a-f]{7}$/;
-const DB_NAME_RE = /^[a-z][a-z0-9_]{2,62}$/;
-const DB_PASSWORD_RE = /^[A-Za-z0-9_-]{24,128}$/;
 /** Shablon o'z bazasini tayyorlaydigan skript (bo'lmasa, baza qadami o'tkazib yuboriladi) */
 const PROVISION_SCRIPT = "scripts/provision.ts";
 const FIRST_PORT = 4100;
@@ -475,7 +475,12 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const project = { type: "project", id: p.projectId };
     const databaseUrl = `postgres://${dbName}:${dbPassword}@127.0.0.1:5432/${dbName}`;
     const authSecret = await ensureSecret(project, "auth_secret");
-    const [ownerPassword, botToken] = await Promise.all([
+    // Ventura SMS paketi (ADR 0056): markaz panelga imzolangan so'rov yuboradi — panel manzili va loyiha kaliti
+    const panelUrl = process.env.VENTURA_PANEL_URL || process.env.BETTER_AUTH_URL || "";
+    const smsRelay = /^https?:\/\//.test(panelUrl)
+      ? { url: panelUrl.replace(/\/+$/, ""), key: await ensureSecret(project, "sms_relay_key") }
+      : null;
+    const [ownerPassword, storedBotToken] = await Promise.all([
       readSecret(db, project, "owner_password"),
       readSecret(db, project, "telegram_bot_token"),
     ]);
@@ -503,12 +508,23 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
         );
       }
     }
-    secrets.tenants[p.slug] = { databaseUrl, authSecret, ...(botToken ? { telegramBotToken: botToken } : {}) };
+    // Noto'g'ri token yozilmaydi: ilova faylni butunlay rad etadi va shu serverdagi HAMMA mijoz ishlamay qoladi
+    const botToken = storedBotToken && TELEGRAM_BOT_TOKEN_RE.test(storedBotToken) ? storedBotToken : null;
+    if (storedBotToken && !botToken) {
+      log("Diqqat: loyihadagi Telegram bot tokeni noto'g'ri (@BotFather formati emas) — yozilmadi.", "info");
+    }
+    secrets.tenants[p.slug] = {
+      databaseUrl,
+      authSecret,
+      ...(botToken ? { telegramBotToken: botToken } : {}),
+      ...(smsRelay ? { smsRelay } : {}),
+    };
     await p.session.writeFile(`${file}.tmp`, `${JSON.stringify(secrets, null, 2)}\n`, 0o600);
     await remote(log, `chmod 600 ${sh(`${file}.tmp`)} && mv -f ${sh(`${file}.tmp`)} ${sh(file)}`);
     p.provisioned = true;
     log("Maxfiy sozlamalar yozildi: baza, sessiya kaliti, bot (qiymatlar ko'rsatilmaydi)", "info");
     if (!botToken) log("Diqqat: loyihada Telegram bot tokeni yo'q — xodimlar tizimga kira olmaydi.", "info");
+    if (!smsRelay) log("Diqqat: VENTURA_PANEL_URL berilmagan — Ventura SMS paketi bu markazda ishlamaydi.", "info");
     if (!owner) log("Diqqat: ega (telefon, ism, parol) to'liq emas — direktor yaratilmadi.", "info");
 
     // Yangi kod shu serverdagi hamma mijozga birdan tushadi (bitta ilova): ularning bazalari ham yangilanadi.
@@ -520,14 +536,9 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
   function dbFor(strategy: string, slug: string, projectId: string) {
     const p = plan!;
     const shared = strategy === "shared_db";
-    const base = p.templateKey.replace(/-/g, "_");
-    const dbName = must(shared ? `${base}_shared` : `${base}_${slug.replace(/-/g, "_")}`, DB_NAME_RE, "Baza nomi");
-    return {
-      shared,
-      dbName,
-      passwordOwner: shared ? { type: "server", id: p.serverId } : { type: "project", id: projectId },
-      passwordName: shared ? `db:${dbName}` : "db_password",
-    };
+    const dbName = must(dbNameFor(p.templateKey, slug, strategy), DB_NAME_RE, "Baza nomi");
+    const pw = dbPasswordOwner(shared ? "shared" : "project", { serverId: p.serverId, projectId }, dbName);
+    return { shared, dbName, passwordOwner: pw.owner, passwordName: pw.name };
   }
 
   async function migrateOthers(log: StepLog, appDir: string) {

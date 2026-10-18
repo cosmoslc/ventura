@@ -6,7 +6,8 @@ import { type NextRequest, NextResponse } from "next/server";
  * Haqiqiy tekshiruv (muddat, bloklash, 2FA, rol) server tomonida — requireViewer().
  */
 
-const PUBLIC = ["/login", "/ui-preview", "/preview"];
+// /api/sms/relay — markaz ilovalaridan imzolangan so'rovlar (sessiyasiz, imzo route ichida tekshiriladi)
+const PUBLIC = ["/login", "/ui-preview", "/preview", "/api/sms/relay"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

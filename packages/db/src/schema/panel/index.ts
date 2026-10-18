@@ -4,3 +4,4 @@
 export * from "./auth";
 export * from "./core";
 export * from "./deploy";
+export * from "./sms";

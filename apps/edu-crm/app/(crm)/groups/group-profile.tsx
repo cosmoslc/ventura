@@ -5,6 +5,7 @@ import {
   ChevronLeft,
   CircleDollarSign,
   ClipboardCheck,
+  MessageSquareText,
   MoreVertical,
   Pencil,
   Trash2,
@@ -45,6 +46,7 @@ import { type CourseOption, GroupForm, type RoomOption, type TeacherOption } fro
 import { LeftTab, MembersTab } from "./group-members";
 import { daysLabel, type GroupPerms } from "./groups-view";
 import { ActivateDialog, EnrollDialog, LeaveDialog, type MembershipTarget, phoneLabel } from "./membership-dialogs";
+import { SendSmsModal } from "../sms/send-sms-modal";
 
 type Tab = "students" | "left" | "attendance";
 
@@ -139,6 +141,7 @@ export function GroupProfile({
   initialTab,
   payment,
   showBranch = false,
+  sms = null,
 }: {
   group: GroupRow;
   members: { open: MemberRow[]; left: MemberRow[] };
@@ -164,6 +167,8 @@ export function GroupProfile({
   payment: { methods: MethodOption[]; maxDiscountPercent: number } | null;
   /** Filial qatori: tepadagi tanlovda "Barcha filiallar" bo'lsa */
   showBranch?: boolean;
+  /** Guruhga SMS (bo'lim yoqilgan va ruxsat bor) */
+  sms?: { centerName: string } | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>(initialTab);
@@ -174,6 +179,7 @@ export function GroupProfile({
   const [activate, setActivate] = React.useState<MembershipTarget | null>(null);
   const [leave, setLeave] = React.useState<MembershipTarget | null>(null);
   const [pay, setPay] = React.useState<{ open: boolean; student?: { id: string; name: string } }>({ open: false });
+  const [smsOpen, setSmsOpen] = React.useState(false);
 
   const t = uz.groupProfile;
   const { finance } = stats;
@@ -196,7 +202,8 @@ export function GroupProfile({
 
   const branchName = branches.find((b) => b.id === g.branchId)?.name ?? null;
   const canEdit = perms.edit || perms.changeTeacher;
-  const hasMenu = canEdit || canArchive || payment !== null;
+  const smsReady = !!sms && count > 0;
+  const hasMenu = canEdit || canArchive || payment !== null || smsReady;
 
   return (
     <div className="grid items-start gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
@@ -221,6 +228,11 @@ export function GroupProfile({
                     <Wallet /> {t.payTitle}
                   </DropdownMenuItem>
                 ) : null}
+                {smsReady ? (
+                  <DropdownMenuItem onSelect={() => setSmsOpen(true)}>
+                    <MessageSquareText /> {uz.smsSend.title}
+                  </DropdownMenuItem>
+                ) : null}
                 {canEdit ? (
                   <DropdownMenuItem onSelect={() => setFormOpen(true)}>
                     <Pencil /> {uz.groups.formEdit}
@@ -228,7 +240,7 @@ export function GroupProfile({
                 ) : null}
                 {canArchive ? (
                   <>
-                    {payment || canEdit ? <DropdownMenuSeparator /> : null}
+                    {payment || canEdit || smsReady ? <DropdownMenuSeparator /> : null}
                     <DropdownMenuItem danger onSelect={() => setArchiveOpen(true)}>
                       <Trash2 /> {t.archiveTooltip}
                     </DropdownMenuItem>
@@ -444,6 +456,17 @@ export function GroupProfile({
 
       <ActivateDialog target={activate} onOpenChange={(o) => !o && setActivate(null)} />
       <LeaveDialog target={leave} onOpenChange={(o) => !o && setLeave(null)} />
+      {sms ? (
+        <SendSmsModal
+          open={smsOpen}
+          onOpenChange={setSmsOpen}
+          source="group"
+          studentIds={members.open.map((m) => m.studentId)}
+          groupId={g.id}
+          title={uz.smsSend.titleGroup(g.name)}
+          centerName={sms.centerName}
+        />
+      ) : null}
     </div>
   );
 }

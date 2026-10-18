@@ -223,6 +223,11 @@ cat > /usr/local/sbin/ventura-db <<'HELPER'
 # Ventura: mijoz bazasi va uning foydalanuvchisi. Faqat `deploy` foydalanuvchisi sudo orqali chaqiradi.
 #   ventura-db check
 #   ventura-db ensure <baza> <rol>     # parol stdin'dan (bitta qator)
+#   ventura-db list                    # bazalar: nom, egasi, hajm (bayt), ulanishlar — TAB bilan
+#   ventura-db drop <baza>             # bazani va shu nomdagi rolni butunlay o'chiradi (ulanishlar uziladi)
+#   ventura-db purge <baza> <mijoz>    # umumiy bazadan bitta mijozning barcha qatorlari (tenant_id)
+#   ventura-db tenant-sizes <baza>     # umumiy bazada har mijoz egallagan joy: mijoz, bayt — TAB bilan
+#   ventura-db copy-tenant <manba> <maqsad> <mijoz>  # mijoz qatorlarini boshqa bazaga (bitta tranzaksiya, sonlar tekshiriladi)
 # Rol superuser emas, RLS'ni chetlab o'tolmaydi, yangi baza yaratolmaydi. Bazaga faqat o'z roli ulanadi.
 # Qayta chaqirish xavfsiz: bor narsa qayta yaratilmaydi, parol paneldagi qiymatga tenglashtiriladi.
 set -euo pipefail
@@ -253,7 +258,119 @@ SELECT format('REVOKE ALL ON DATABASE %I FROM PUBLIC', :'db') \gexec
 SQL
     echo "ventura-db: $db (egasi $role) tayyor"
     ;;
-  *) fail "buyruq: check | ensure" ;;
+  list)
+    runuser -u postgres -- psql -XAtq -F "$(printf '\t')" -d postgres -c "
+      SELECT d.datname, pg_get_userbyid(d.datdba), pg_database_size(d.datname),
+             (SELECT count(*) FROM pg_stat_activity a WHERE a.datname = d.datname)
+      FROM pg_database d WHERE NOT d.datistemplate AND d.datname <> 'postgres' ORDER BY 1"
+    ;;
+  drop)
+    [[ $# -eq 2 ]] || fail "drop <baza>"
+    db="$2"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    [[ "$db" != postgres && "$db" != template0 && "$db" != template1 ]] || fail "tizim bazasi"
+    runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -v db="$db" -d postgres <<'SQL'
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :'db' AND pid <> pg_backend_pid();
+SELECT format('DROP DATABASE IF EXISTS %I', :'db') \gexec
+SELECT format('DROP ROLE %I', :'db') WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'db') \gexec
+SQL
+    echo "ventura-db: $db o'chirildi"
+    ;;
+  purge)
+    [[ $# -eq 3 ]] || fail "purge <baza> <mijoz>"
+    db="$2"; tenant="$3"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    [[ "$tenant" =~ ^[a-z0-9][a-z0-9-]{1,62}$ ]] || fail "mijoz nomi noto'g'ri"
+    runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -v tenant="$tenant" -d "$db" <<'SQL'
+-- Faqat shu mijoz qatorlari, bitta tranzaksiyada. Bog'lanishlar va o'chmas jurnal triggeri vaqtincha o'chiriladi
+-- (qatorlarni bog'lanish tartibida o'chirish shart bo'lmasin); boshqa mijozlarga tegilmaydi.
+BEGIN;
+SET LOCAL session_replication_role = replica;
+SELECT set_config('ventura.purge_tenant', :'tenant', true);
+DO $$
+DECLARE r record; n bigint; total bigint := 0;
+BEGIN
+  FOR r IN SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+           WHERE c.table_schema = 'public' AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'
+  LOOP
+    EXECUTE format('DELETE FROM public.%I WHERE tenant_id = %L', r.table_name, current_setting('ventura.purge_tenant'));
+    GET DIAGNOSTICS n = ROW_COUNT;
+    total := total + n;
+  END LOOP;
+  RAISE NOTICE 'ventura-db: % qator', total;
+END $$;
+COMMIT;
+SQL
+    echo "ventura-db: $tenant ($db) tozalandi"
+    ;;
+  tenant-sizes)
+    # Umumiy bazada har mijoz qancha joy egallaydi (qatorlar hajmi, indekslarsiz — taxminiy): mijoz<TAB>bayt
+    [[ $# -eq 2 ]] || fail "tenant-sizes <baza>"
+    db="$2"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    runuser -u postgres -- psql -XAtq -F "$(printf '\t')" -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+CREATE TEMP TABLE ventura_sizes (tenant text, bytes bigint);
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+           WHERE c.table_schema = 'public' AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'
+  LOOP
+    EXECUTE format('INSERT INTO ventura_sizes SELECT tenant_id, sum(pg_column_size(x.*)) FROM public.%I x GROUP BY 1', r.table_name);
+  END LOOP;
+END $$;
+SELECT tenant, sum(bytes)::bigint FROM ventura_sizes GROUP BY 1 ORDER BY 1;
+SQL
+    ;;
+  copy-tenant)
+    # Bitta mijoz qatorlarini bir bazadan ikkinchisiga (umumiy <-> alohida, ADR 0059). Maqsad bazada sxema tayyor
+    # bo'lishi kerak (deploy'dagi migratsiya). Hammasi maqsad bazada bitta tranzaksiyada: avval maqsaddagi shu mijoz
+    # qatorlari o'chadi, keyin nusxa, har jadvalda soni manba bilan solishtiriladi — mos kelmasa hech narsa yozilmaydi.
+    # Ketma-ket raqamli ustun (masalan audit seq) boshqa mijozlar bor bazada qaytadan beriladi (tartib saqlanadi).
+    [[ $# -eq 4 ]] || fail "copy-tenant <manba> <maqsad> <mijoz>"
+    src="$2"; dst="$3"; tenant="$4"
+    [[ "$src" =~ $NAME_RE && "$dst" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    [[ "$src" != "$dst" ]] || fail "manba va maqsad bir xil"
+    [[ "$tenant" =~ ^[a-z0-9][a-z0-9-]{1,62}$ ]] || fail "mijoz nomi noto'g'ri"
+    q() { runuser -u postgres -- psql -XAtq -v ON_ERROR_STOP=1 -d "$1" -c "$2"; }
+    work=$(mktemp -d); chown postgres "$work"; trap 'rm -rf "$work"' EXIT
+    load="$work/load.sql"
+    printf 'BEGIN;\nSET LOCAL session_replication_role = replica;\n' > "$load"
+    tables=$(q "$src" "SELECT c.table_name FROM information_schema.columns c JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name WHERE c.table_schema = 'public' AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE' ORDER BY 1")
+    total=0
+    for tbl in $tables; do
+      [[ "$tbl" =~ ^[a-z_][a-z0-9_]*$ ]] || fail "jadval nomi noto'g'ri: $tbl"
+      [[ "$(q "$dst" "SELECT to_regclass('public.$tbl') IS NOT NULL")" == t ]] || fail "maqsad bazada $tbl jadvali yo'q (sxema eski?)"
+      serial=$(q "$dst" "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '$tbl' AND column_default LIKE 'nextval(%' LIMIT 1")
+      others=$(q "$dst" "SELECT EXISTS (SELECT 1 FROM public.$tbl WHERE tenant_id <> '$tenant')")
+      renumber=0; [[ -n "$serial" && "$others" == t ]] && renumber=1
+      if [[ $renumber -eq 1 ]]; then
+        cols=$(q "$dst" "SELECT string_agg(quote_ident(column_name), ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '$tbl' AND column_name <> '$serial'")
+        order="ORDER BY $serial"
+      else
+        cols=$(q "$dst" "SELECT string_agg(quote_ident(column_name), ',' ORDER BY ordinal_position) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '$tbl'")
+        order=""
+      fi
+      n=$(q "$src" "SELECT count(*) FROM public.$tbl WHERE tenant_id = '$tenant'")
+      total=$((total + n))
+      runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -d "$src" -c "\\copy (SELECT $cols FROM public.$tbl WHERE tenant_id = '$tenant' $order) TO '$work/$tbl.csv' WITH (FORMAT csv)"
+      {
+        echo "DELETE FROM public.$tbl WHERE tenant_id = '$tenant';"
+        echo "\\copy public.$tbl ($cols) FROM '$work/$tbl.csv' WITH (FORMAT csv)"
+        echo "DO \$\$ BEGIN IF (SELECT count(*) FROM public.$tbl WHERE tenant_id = '$tenant') <> $n THEN RAISE EXCEPTION '$tbl: qatorlar soni mos emas'; END IF; END \$\$;"
+        if [[ -n "$serial" && $renumber -eq 0 ]]; then
+          echo "SELECT setval(pg_get_serial_sequence('public.$tbl', '$serial'), GREATEST((SELECT max($serial) FROM public.$tbl), 1));"
+        fi
+      } >> "$load"
+    done
+    echo "COMMIT;" >> "$load"
+    chown postgres "$work"/*
+    runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -d "$dst" -f "$load" >/dev/null
+    echo "ventura-db: $tenant $src -> $dst ko'chirildi ($total qator)"
+    ;;
+  *) fail "buyruq: check | ensure | list | drop | purge | tenant-sizes | copy-tenant" ;;
 esac
 HELPER
 chown root:root /usr/local/sbin/ventura-db

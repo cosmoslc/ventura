@@ -33,6 +33,8 @@ export default async function StudentsPage() {
   const groupsOn = await hasFeature(tenant, "groups");
   const canEnroll = groupsOn && can(staff.access, "groups.add_student");
   const canRemove = groupsOn && can(staff.access, "groups.remove_student");
+  // SMS (S3): bo'lim yoqilgan va "Shaxsiy SMS xabar yuborish" ruxsati bor
+  const canSms = (await hasFeature(tenant, "sms")) && can(staff.access, "students.sms_send");
   const [byStudent, accounts, enrollGroups] = await Promise.all([
     openGroupsByStudent(db, ids),
     withFinance ? loadAccounts(db, ids, todayTashkent()) : Promise.resolve(null),
@@ -53,7 +55,7 @@ export default async function StudentsPage() {
       fields={fields}
       groupChoices={choices.filter((g) => !g.archived)}
       perms={studentPerms(staff.access)}
-      bulk={{ enroll: enrollGroups, remove: canRemove }}
+      bulk={{ enroll: enrollGroups, remove: canRemove, sms: canSms ? { centerName: tenant.name } : null }}
     />
   );
 }

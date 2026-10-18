@@ -1,6 +1,6 @@
 "use client";
 
-import { AlarmClock, CircleDollarSign, MessageSquarePlus, UserX, Users, Wallet } from "lucide-react";
+import { AlarmClock, CircleDollarSign, MessageSquarePlus, MessageSquareText, UserX, Users, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -16,6 +16,7 @@ import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatMonth, money } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { type MethodOption, PaymentDialog } from "../payments/payment-dialog";
+import { SendSmsModal } from "../sms/send-sms-modal";
 import { GroupChip, MoreRows, StudentsTable } from "../student-table";
 import { addDebtorNoteAction } from "./actions";
 import type { DebtorNote, DebtorRow } from "./data";
@@ -153,12 +154,15 @@ export function DebtorsView({
   canPay,
   canNote = false,
   maxDiscountPercent,
+  sms = null,
 }: {
   rows: DebtorRow[];
   methods: MethodOption[];
   canPay: boolean;
   canNote?: boolean;
   maxDiscountPercent: number;
+  /** SMS eslatma (bo'lim yoqilgan va ruxsat bor) */
+  sms?: { centerName: string } | null;
 }) {
   const [query, setQuery] = React.useState("");
   const [group, setGroup] = React.useState(ALL);
@@ -169,6 +173,8 @@ export function DebtorsView({
   const [noting, setNoting] = React.useState<DebtorRow | null>(null);
   const [noteOpen, setNoteOpen] = React.useState(false);
   const [noteSeq, setNoteSeq] = React.useState(0);
+  // SMS eslatma: bitta qarzdorga (qatordan) yoki filtrdagi hammasiga (sarlavhadan)
+  const [smsTo, setSmsTo] = React.useState<DebtorRow[] | null>(null);
   const groupOptions = [...new Map(rows.flatMap((r) => r.groups.map((g) => [g.id, g.name] as const))).entries()].sort(
     (a, b) => a[1].localeCompare(b[1]),
   );
@@ -215,7 +221,17 @@ export function DebtorsView({
 
   return (
     <div className="space-y-section">
-      <PageHeader title={t.title} description={t.description} />
+      <PageHeader
+        title={t.title}
+        description={t.description}
+        actions={
+          sms && visible.length ? (
+            <Button variant="ghost" onClick={() => setSmsTo(visible)}>
+              <MessageSquareText /> {t.smsRemindAll(visible.length)}
+            </Button>
+          ) : null
+        }
+      />
 
       <div className="grid gap-grid sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={<Users />} tone={4} label={t.kpiCount} value={String(rows.length)} />
@@ -346,8 +362,19 @@ export function DebtorsView({
               header: uz.common.actions,
               align: "right",
               cell: (r) =>
-                canPay || canNote ? (
+                canPay || canNote || sms ? (
                   <div className="flex items-center justify-end gap-1">
+                    {sms ? (
+                      <Button
+                        variant="icon"
+                        size="icon"
+                        title={t.smsRemind}
+                        aria-label={t.smsRemind}
+                        onClick={() => setSmsTo([r])}
+                      >
+                        <MessageSquareText />
+                      </Button>
+                    ) : null}
                     {canNote ? (
                       <Button
                         variant="icon"
@@ -392,6 +419,16 @@ export function DebtorsView({
         maxDiscountPercent={maxDiscountPercent}
       />
       <NoteDialog key={noteSeq} debtor={noting} open={noteOpen} onOpenChange={setNoteOpen} />
+      {sms ? (
+        <SendSmsModal
+          open={smsTo !== null}
+          onOpenChange={(o) => !o && setSmsTo(null)}
+          source="debtors"
+          studentIds={(smsTo ?? []).map((r) => r.studentId)}
+          title={uz.smsSend.titleDebtors(smsTo?.length ?? 0)}
+          centerName={sms.centerName}
+        />
+      ) : null}
     </div>
   );
 }

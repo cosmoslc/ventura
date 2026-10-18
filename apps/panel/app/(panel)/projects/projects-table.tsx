@@ -24,7 +24,7 @@ import { EmptyState } from "@ventura/ui/page-header";
 import { daysLeft, formatDate } from "@/lib/format";
 import type { ProjectListRow } from "@/lib/server/projects-query";
 import { uz } from "@/lib/uz";
-import { restoreProjectAction, trashProjectAction } from "./actions";
+import { purgeProjectAction, restoreProjectAction, trashProjectAction } from "./actions";
 
 const STATUS_TONE = { draft: "neutral", active: "success", paused: "warning" } as const;
 const PAGE = 10;
@@ -33,10 +33,13 @@ export function ProjectsTable({
   rows,
   canWrite,
   mode,
+  canPurge = false,
 }: {
   rows: ProjectListRow[];
   canWrite: boolean;
   mode: "active" | "trash";
+  /** Savatdan butunlay o'chirish — faqat super admin (ADR 0058) */
+  canPurge?: boolean;
 }) {
   const router = useRouter();
   const [query, setQuery] = React.useState("");
@@ -44,6 +47,7 @@ export function ProjectsTable({
   const [page, setPage] = React.useState(1);
   const [toTrash, setToTrash] = React.useState<ProjectListRow | null>(null);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [toPurge, setToPurge] = React.useState<ProjectListRow | null>(null);
 
   const q = query.trim().toLowerCase();
   const filtered = rows.filter(
@@ -172,9 +176,16 @@ export function ProjectsTable({
                     {canWrite ? (
                       <Td className="text-right">
                         {mode === "trash" ? (
-                          <Button variant="ghost" size="sm" onClick={() => void restore(r)}>
-                            <RotateCcw /> {uz.projects.restore}
-                          </Button>
+                          <div className="flex justify-end gap-1.5">
+                            <Button variant="ghost" size="sm" onClick={() => void restore(r)}>
+                              <RotateCcw /> {uz.projects.restore}
+                            </Button>
+                            {canPurge ? (
+                              <Button variant="danger" size="sm" onClick={() => setToPurge(r)}>
+                                <Trash2 /> {uz.projects.purge}
+                              </Button>
+                            ) : null}
+                          </div>
                         ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -242,6 +253,28 @@ export function ProjectsTable({
           } else toast({ tone: "danger", title: res.error });
         }}
       />
+      {canPurge ? (
+        <ConfirmModal
+          open={toPurge !== null}
+          onOpenChange={(o) => !o && setToPurge(null)}
+          title={uz.projects.purgeTitle}
+          message={toPurge ? uz.projects.purgeText(toPurge.name) : ""}
+          confirmLabel={uz.projects.purge}
+          requireText={toPurge?.slug}
+          onConfirm={async () => {
+            if (!toPurge) return;
+            const res = await purgeProjectAction(toPurge.id, toPurge.slug);
+            if (res.ok) {
+              toast({
+                tone: "success",
+                title: res.queued ? uz.projects.purgeQueued : uz.projects.purged,
+                description: toPurge.name,
+              });
+              router.refresh();
+            } else toast({ tone: "danger", title: res.error });
+          }}
+        />
+      ) : null}
     </>
   );
 }

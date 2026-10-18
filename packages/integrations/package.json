@@ -10,7 +10,10 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./telegram": "./src/telegram.ts"
+    "./telegram": "./src/telegram.ts",
+    "./eskiz": "./src/eskiz.ts",
+    "./sms-parts": "./src/sms-parts.ts",
+    "./relay": "./src/relay.ts"
   },
   "dependencies": {},
   "devDependencies": {

@@ -162,6 +162,34 @@
       "when": 1792227818160,
       "tag": "0022_leave_with_debt",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792287594463,
+      "tag": "0023_s1_sms_provider",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792307307775,
+      "tag": "0024_s2_sms_templates",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792308130885,
+      "tag": "0025_s3_sms_messages",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1792310311002,
+      "tag": "0026_s4_sms_mode_default",
+      "breakpoints": true
     }
   ]
 }
