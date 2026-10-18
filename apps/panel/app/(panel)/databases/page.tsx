@@ -48,17 +48,26 @@ export default async function DatabasesPage() {
     const rows: DbRow[] = (live ?? []).map((d) => {
       seen.add(d.name);
       const users = byDb.get(d.name) ?? [];
+      // Umumiy baza loyihasiz qolsa ham "Umumiy" (nomi bo'yicha) — unda eski markazlar qatorlari bo'lishi mumkin
       const kind: DbRow["kind"] = users.length
         ? users.some((p) => p.dbStrategy === "shared_db")
           ? "shared"
           : "project"
-        : manual.has(d.name)
-          ? "manual"
-          : "other";
+        : d.name.endsWith("_shared")
+          ? "shared"
+          : manual.has(d.name)
+            ? "manual"
+            : "other";
+      // Bazada qatorlari bor, lekin panelda loyihasi yo'q markazlar (o'chirishdan oldin ogohlantirish uchun)
+      const slugs = new Set(users.map((p) => p.slug));
+      const orphans = Object.keys(s.metrics?.tenantUsage?.find((u) => u.db === d.name)?.tenants ?? {}).filter(
+        (x) => !slugs.has(x),
+      );
       return {
         name: d.name,
         kind,
         projects: users.map((p) => ({ id: p.id, name: p.name })),
+        orphans,
         sizeBytes: d.sizeBytes,
         connections: d.connections,
         missing: false,
@@ -73,6 +82,7 @@ export default async function DatabasesPage() {
           name,
           kind: users.some((p) => p.dbStrategy === "shared_db") ? "shared" : "project",
           projects: users.map((p) => ({ id: p.id, name: p.name })),
+          orphans: [],
           sizeBytes: 0,
           connections: 0,
           missing: true,

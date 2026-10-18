@@ -574,8 +574,16 @@ export const uz = {
       `"${name}" bazasi va undagi barcha ma'lumotlar serverdan o'chiriladi, foydalanuvchisi ham. Qaytarib bo'lmaydi. Tasdiqlash uchun baza nomini yozing.`,
     dropQueued: "Baza o'chirilmoqda",
     dropMismatch: "Baza nomi mos kelmadi",
-    dropShared: "Umumiy bazani o'chirib bo'lmaydi: avval undagi loyihalarni savatdan butunlay o'chiring",
+    dropShared: "Umumiy bazada loyihalar bor: avval ularni savatdan butunlay o'chiring",
     dropInUse: "Bazani ishlab turgan loyiha ishlatadi — avval loyihani savatga o'tkazing",
+    dropBlockedShared:
+      "Umumiy bazani o'chirib bo'lmaydi: unda markazlar ishlaydi. Markaz loyihasi savatdan butunlay o'chirilsa, faqat uning qatorlari tozalanadi.",
+    dropBlockedUsed:
+      "Bu bazani ishlab turgan loyiha ishlatadi. Loyihani savatga o'tkazib, savatdan \"Butunlay o'chirish\" — baza ham o'chadi.",
+    notDeployed: "Deploy qilinmagan",
+    dropOrphans: (names: string[]) =>
+      `Diqqat: bazada panelda yo'q eski markazlar ma'lumoti bor (${names.join(", ")}) — ular ham o'chadi. Shu bazaga ulangan ilova ham ishlamay qoladi.`,
+    missingHint: "Loyiha bu bazani kutadi, lekin u serverda yo'q. Loyihani qayta deploy qilsangiz baza yaratiladi.",
   },
 
   settings: {

@@ -29,6 +29,8 @@ export interface DbRow {
   /** shared — umumiy (bir nechta mijoz); project — loyihaning o'z bazasi; manual — paneldan yaratilgan; other — panel bilmaydi */
   kind: "shared" | "project" | "manual" | "other";
   projects: { id: string; name: string }[];
+  /** Bazada qatorlari bor, lekin panelda loyihasi yo'q markazlar (umumiy bazada) */
+  orphans: string[];
   sizeBytes: number;
   connections: number;
   /** Loyiha kutadi, serverda yo'q */
@@ -73,7 +75,7 @@ export function DatabasesView({
   const [createOpen, setCreateOpen] = React.useState(false);
   const router = useRouter();
   const [reveal, setReveal] = React.useState<{ serverId: string; name: string } | null>(null);
-  const [drop, setDrop] = React.useState<{ serverId: string; name: string } | null>(null);
+  const [drop, setDrop] = React.useState<{ serverId: string; name: string; orphans: string[] } | null>(null);
   const all = servers.flatMap((s) => s.rows.filter((r) => !r.missing));
   const total = all.reduce((sum, r) => sum + r.sizeBytes, 0);
   const large = all.filter((r) => r.large).length;
@@ -105,7 +107,7 @@ export function DatabasesView({
             server={s}
             canReveal={canReveal}
             onReveal={(name) => setReveal({ serverId: s.id, name })}
-            onDrop={(name) => setDrop({ serverId: s.id, name })}
+            onDrop={(name, orphans) => setDrop({ serverId: s.id, name, orphans })}
           />
         ))
       ) : (
@@ -121,12 +123,14 @@ export function DatabasesView({
           open={drop !== null}
           onOpenChange={(o) => !o && setDrop(null)}
           title={t.dropTitle}
-          message={drop ? t.dropText(drop.name) : ""}
+          message={
+            drop ? `${t.dropText(drop.name)}${drop.orphans.length ? ` ${t.dropOrphans(drop.orphans)}` : ""}` : ""
+          }
           confirmLabel={t.drop}
           requireText={drop?.name}
           onConfirm={async () => {
             if (!drop) return;
-            const res = await dropDatabaseAction(drop, drop.name);
+            const res = await dropDatabaseAction({ serverId: drop.serverId, name: drop.name }, drop.name);
             if (!res.ok) return void toast({ tone: "danger", title: res.error });
             toast({ tone: "success", title: t.dropQueued, description: drop.name });
             router.refresh();
@@ -146,7 +150,7 @@ function ServerSection({
   server: ServerBlock;
   canReveal: boolean;
   onReveal: (name: string) => void;
-  onDrop: (name: string) => void;
+  onDrop: (name: string, orphans: string[]) => void;
 }) {
   const disk =
     s.diskUsedGb != null && s.diskTotalGb
@@ -247,18 +251,33 @@ function ServerSection({
                             <KeyRound /> {t.reveal}
                           </Button>
                         ) : null}
-                        {/* O'chirish: hech qaysi ishlab turgan loyiha ishlatmaydi va umumiy baza emas (ADR 0058) */}
-                        {!r.missing && !r.projects.length && !r.name.endsWith("_shared") ? (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            title={t.drop}
-                            aria-label={`${r.name} — ${t.drop}`}
-                            onClick={() => onDrop(r.name)}
-                          >
-                            <Trash2 />
-                          </Button>
-                        ) : null}
+                        {/* O'chirish (ADR 0058): mumkin bo'lmasa tugma o'chiq turadi va sababini aytadi */}
+                        {r.missing ? (
+                          <span className="text-caption text-muted-foreground" title={t.missingHint}>
+                            {t.notDeployed}
+                          </span>
+                        ) : (
+                          (() => {
+                            const blocked = !r.projects.length
+                              ? null
+                              : r.kind === "shared"
+                                ? t.dropBlockedShared
+                                : t.dropBlockedUsed;
+                            return (
+                              <span title={blocked ?? t.drop}>
+                                <Button
+                                  size="icon-sm"
+                                  variant="ghost"
+                                  disabled={!!blocked}
+                                  aria-label={`${r.name} — ${blocked ?? t.drop}`}
+                                  onClick={() => onDrop(r.name, r.orphans)}
+                                >
+                                  <Trash2 />
+                                </Button>
+                              </span>
+                            );
+                          })()
+                        )}
                       </div>
                     </Td>
                   ) : null}
