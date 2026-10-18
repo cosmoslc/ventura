@@ -247,18 +247,33 @@ function ServerSection({
                             <KeyRound /> {t.reveal}
                           </Button>
                         ) : null}
-                        {/* O'chirish: hech qaysi ishlab turgan loyiha ishlatmaydi va umumiy baza emas (ADR 0058) */}
-                        {!r.missing && !r.projects.length && !r.name.endsWith("_shared") ? (
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            title={t.drop}
-                            aria-label={`${r.name} — ${t.drop}`}
-                            onClick={() => onDrop(r.name)}
-                          >
-                            <Trash2 />
-                          </Button>
-                        ) : null}
+                        {/* O'chirish (ADR 0058): mumkin bo'lmasa tugma o'chiq turadi va sababini aytadi */}
+                        {r.missing ? (
+                          <span className="text-caption text-muted-foreground" title={t.missingHint}>
+                            {t.notDeployed}
+                          </span>
+                        ) : (
+                          (() => {
+                            const blocked = r.name.endsWith("_shared")
+                              ? t.dropBlockedShared
+                              : r.projects.length
+                                ? t.dropBlockedUsed
+                                : null;
+                            return (
+                              <span title={blocked ?? t.drop}>
+                                <Button
+                                  size="icon-sm"
+                                  variant="ghost"
+                                  disabled={!!blocked}
+                                  aria-label={`${r.name} — ${blocked ?? t.drop}`}
+                                  onClick={() => onDrop(r.name)}
+                                >
+                                  <Trash2 />
+                                </Button>
+                              </span>
+                            );
+                          })()
+                        )}
                       </div>
                     </Td>
                   ) : null}

@@ -576,6 +576,12 @@ export const uz = {
     dropMismatch: "Baza nomi mos kelmadi",
     dropShared: "Umumiy bazani o'chirib bo'lmaydi: avval undagi loyihalarni savatdan butunlay o'chiring",
     dropInUse: "Bazani ishlab turgan loyiha ishlatadi — avval loyihani savatga o'tkazing",
+    dropBlockedShared:
+      "Umumiy bazani o'chirib bo'lmaydi: unda markazlar ishlaydi. Markaz loyihasi savatdan butunlay o'chirilsa, faqat uning qatorlari tozalanadi.",
+    dropBlockedUsed:
+      "Bu bazani ishlab turgan loyiha ishlatadi. Loyihani savatga o'tkazib, savatdan \"Butunlay o'chirish\" — baza ham o'chadi.",
+    notDeployed: "Deploy qilinmagan",
+    missingHint: "Loyiha bu bazani kutadi, lekin u serverda yo'q. Loyihani qayta deploy qilsangiz baza yaratiladi.",
   },
 
   settings: {
