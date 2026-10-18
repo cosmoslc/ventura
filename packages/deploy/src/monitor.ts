@@ -1,4 +1,4 @@
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, isNull, lt } from "drizzle-orm";
 import type { PanelDb } from "@ventura/db";
 import {
   type ServerActionKind,
@@ -20,8 +20,14 @@ import {
   SYSTEM_DATABASES,
   dbNameFor,
   dbPasswordOwner,
+  TENANT_USAGE_MAX_AGE_MS,
   nextDbAlerts,
+  nextQuotaAlerts,
   parseDbList,
+  parseTenantSizes,
+  projectUsage,
+  quotaBytesOf,
+  tenantSizesCommand,
 } from "./databases";
 import { type AlertEvent, METRICS_SCRIPT, nextAlerts, parseMetrics } from "./metrics";
 import { dropDatabase, purgeProject } from "./purge";
@@ -69,6 +75,25 @@ export async function probeServer(db: PanelDb, server: ServerRow): Promise<Probe
     }));
     if (dbs.code === 0) metrics.databases = parseDbList(dbs.stdout);
     else metrics.databasesError = dbs.stderr.trim().split("\n").pop() || `Kod ${dbs.code}`;
+    // Umumiy bazalarda mijozlar hajmi (ADR 0059): soatiga bir marta, oradagi so'rovlarda oldingisi saqlanadi
+    if (metrics.databases) {
+      const prev = server.metrics?.tenantUsage ?? [];
+      const usage: NonNullable<ServerMetrics["tenantUsage"]> = [];
+      for (const d of metrics.databases.filter((x) => x.name.endsWith("_shared"))) {
+        const old = prev.find((u) => u.db === d.name);
+        if (old && Date.now() - Date.parse(old.at) < TENANT_USAGE_MAX_AGE_MS) {
+          usage.push(old);
+          continue;
+        }
+        const out = await session
+          .exec(`bash -lc ${sh(tenantSizesCommand(d.name))}`, { timeoutMs: 120_000 })
+          .catch(() => null);
+        if (out?.code === 0)
+          usage.push({ db: d.name, at: new Date().toISOString(), tenants: parseTenantSizes(out.stdout) });
+        else if (old) usage.push(old);
+      }
+      metrics.tenantUsage = usage;
+    }
     return { ok: true, metrics, hostKey: session.hostKey };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
@@ -100,7 +125,35 @@ export async function recordProbe(db: PanelDb, server: ServerRow, result: ProbeR
   // Bazalar hajmi: ro'yxat kelmagan bo'lsa oldingi holat saqlanadi
   const dbAlert =
     result.ok && result.metrics.databases ? nextDbAlerts(server.alerts.databases, result.metrics.databases) : null;
-  const alerts = { ...next.alerts, databases: dbAlert ? dbAlert.over : server.alerts.databases };
+  // Loyihalar joy limiti (ADR 0059): limit loyiha sozlamasida (`settings.dbQuotaGb`)
+  let quotaAlert: { over: string[]; newly: string[] } | null = null;
+  let quotaNames = new Map<string, string>();
+  if (result.ok && result.metrics.databases) {
+    const list = await db
+      .select({
+        slug: projects.slug,
+        name: projects.name,
+        templateKey: projects.templateKey,
+        dbStrategy: projects.dbStrategy,
+        settings: projects.settings,
+      })
+      .from(projects)
+      .where(and(eq(projects.serverId, server.id), isNull(projects.deletedAt)));
+    quotaNames = new Map(list.map((p) => [p.slug, p.name]));
+    quotaAlert = nextQuotaAlerts(
+      server.alerts.quotas,
+      list.map((p) => ({
+        slug: p.slug,
+        usage: projectUsage(p, result.metrics.databases, result.metrics.tenantUsage),
+        quotaBytes: quotaBytesOf(p.settings),
+      })),
+    );
+  }
+  const alerts = {
+    ...next.alerts,
+    databases: dbAlert ? dbAlert.over : server.alerts.databases,
+    quotas: quotaAlert ? quotaAlert.over : server.alerts.quotas,
+  };
   const now = new Date();
   await db
     .update(servers)
@@ -134,10 +187,14 @@ export async function recordProbe(db: PanelDb, server: ServerRow, result: ProbeR
   const dbLines = (dbAlert?.newly ?? []).map(
     (d) => `🗄 <b>Baza kattalashdi</b>: ${escapeHtml(server.name)} — ${escapeHtml(d.name)}, ${gb(d.sizeBytes)} GB`,
   );
-  if ((events.length || dbLines.length) && notify) {
+  const quotaLines = (quotaAlert?.newly ?? []).map(
+    (s) => `📦 <b>Loyiha joy limitidan oshdi</b>: ${escapeHtml(quotaNames.get(s) ?? s)} (${escapeHtml(server.name)})`,
+  );
+  if ((events.length || dbLines.length || quotaLines.length) && notify) {
     const text = [
       ...events.map((e) => ALERT_TEXT[e](escapeHtml(server.name), result.ok ? result.metrics : undefined)),
       ...dbLines,
+      ...quotaLines,
     ].join("\n");
     await notify(text).catch((e: Error) => console.error("[monitor] telegram:", e.message));
   }

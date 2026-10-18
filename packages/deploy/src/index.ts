@@ -73,6 +73,8 @@ export {
   dbPasswordOwner,
   nextDbAlerts,
   parseDbList,
+  projectUsage,
+  quotaBytesOf,
 } from "./databases";
 
 export { activeProjectsOn, dropDatabase, purgeProject, trashedProject } from "./purge";

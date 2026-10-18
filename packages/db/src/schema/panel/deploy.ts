@@ -155,6 +155,8 @@ export interface ServerMetrics {
   databases?: ServerDatabase[];
   /** Bazalar ro'yxatini olib bo'lmagan sabab */
   databasesError?: string;
+  /** Umumiy bazalarda har mijoz egallagan joy (bayt), soatiga bir marta (ADR 0059) */
+  tenantUsage?: { db: string; at: string; tenants: Record<string, number> }[];
 }
 
 /** Ogohlantirish holati: Telegram faqat o'zgarganda yuboriladi (SPEC 10: disk 85%, RAM 90%) */
@@ -166,6 +168,8 @@ export interface ServerAlerts {
   memory?: boolean;
   /** Hajm chegarasidan oshgan bazalar (ADR 0057) */
   databases?: string[];
+  /** Joy limitidan oshgan loyihalar (slug, ADR 0059) */
+  quotas?: string[];
 }
 
 /**

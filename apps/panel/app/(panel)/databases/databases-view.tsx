@@ -199,7 +199,16 @@ function ServerSection({
               {s.rows.map((r) => (
                 <Tr key={r.name}>
                   <Td>
-                    <div className="font-mono font-semibold text-foreground">{r.name}</div>
+                    {r.missing ? (
+                      <div className="font-mono font-semibold text-foreground">{r.name}</div>
+                    ) : (
+                      <Link
+                        href={`/databases/${s.id}/${r.name}`}
+                        className="font-mono font-semibold text-foreground hover:underline"
+                      >
+                        {r.name}
+                      </Link>
+                    )}
                     <div className="mt-1 flex flex-wrap gap-1">
                       <Badge tone={KIND_TONE[r.kind]}>{t.kinds[r.kind]}</Badge>
                       {r.missing ? <Badge tone="danger">{t.missing}</Badge> : null}

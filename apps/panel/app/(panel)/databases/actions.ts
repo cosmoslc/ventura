@@ -137,3 +137,32 @@ export async function dropDatabaseAction(input: unknown, confirm: string): Promi
   revalidatePath("/databases");
   return { ok: true };
 }
+
+const quotaInput = z.object({ projectId: z.uuid(), gb: z.number().min(0.1).max(10_000).nullable() });
+
+/** Loyiha joy limiti (ADR 0059): `settings.dbQuotaGb`; null — limitsiz. Oshsa faqat ogohlantiriladi. */
+export async function setProjectQuotaAction(input: unknown): Promise<CreateResult> {
+  const viewer = await requireViewer("projects.write");
+  const parsed = quotaInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: t.quotaInvalid };
+  const { db } = deps();
+  const [p] = await db
+    .select({ id: projects.id, settings: projects.settings })
+    .from(projects)
+    .where(and(eq(projects.id, parsed.data.projectId), isNull(projects.deletedAt)));
+  if (!p) return { ok: false, error: uz.common.loadError };
+  const before = (p.settings as Record<string, unknown>).dbQuotaGb ?? null;
+  const settings = { ...(p.settings as Record<string, unknown>) };
+  if (parsed.data.gb == null) delete settings.dbQuotaGb;
+  else settings.dbQuotaGb = Math.round(parsed.data.gb * 10) / 10;
+  await db.update(projects).set({ settings }).where(eq(projects.id, p.id));
+  await audit.record(db, {
+    actor: { type: "user", id: viewer.id, name: viewer.name },
+    action: "project.quota",
+    target: { type: "project", id: p.id },
+    ...(await requestMeta()),
+    metadata: { before, after: settings.dbQuotaGb ?? null },
+  });
+  revalidatePath("/databases", "layout");
+  return { ok: true };
+}

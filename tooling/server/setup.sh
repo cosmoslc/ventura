@@ -226,6 +226,7 @@ cat > /usr/local/sbin/ventura-db <<'HELPER'
 #   ventura-db list                    # bazalar: nom, egasi, hajm (bayt), ulanishlar — TAB bilan
 #   ventura-db drop <baza>             # bazani va shu nomdagi rolni butunlay o'chiradi (ulanishlar uziladi)
 #   ventura-db purge <baza> <mijoz>    # umumiy bazadan bitta mijozning barcha qatorlari (tenant_id)
+#   ventura-db tenant-sizes <baza>     # umumiy bazada har mijoz egallagan joy: mijoz, bayt — TAB bilan
 # Rol superuser emas, RLS'ni chetlab o'tolmaydi, yangi baza yaratolmaydi. Bazaga faqat o'z roli ulanadi.
 # Qayta chaqirish xavfsiz: bor narsa qayta yaratilmaydi, parol paneldagi qiymatga tenglashtiriladi.
 set -euo pipefail
@@ -302,7 +303,27 @@ COMMIT;
 SQL
     echo "ventura-db: $tenant ($db) tozalandi"
     ;;
-  *) fail "buyruq: check | ensure | list | drop | purge" ;;
+  tenant-sizes)
+    # Umumiy bazada har mijoz qancha joy egallaydi (qatorlar hajmi, indekslarsiz — taxminiy): mijoz<TAB>bayt
+    [[ $# -eq 2 ]] || fail "tenant-sizes <baza>"
+    db="$2"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    runuser -u postgres -- psql -XAtq -F "$(printf '\t')" -v ON_ERROR_STOP=1 -d "$db" <<'SQL'
+CREATE TEMP TABLE ventura_sizes (tenant text, bytes bigint);
+DO $$
+DECLARE r record;
+BEGIN
+  FOR r IN SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+           WHERE c.table_schema = 'public' AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'
+  LOOP
+    EXECUTE format('INSERT INTO ventura_sizes SELECT tenant_id, sum(pg_column_size(x.*)) FROM public.%I x GROUP BY 1', r.table_name);
+  END LOOP;
+END $$;
+SELECT tenant, sum(bytes)::bigint FROM ventura_sizes GROUP BY 1 ORDER BY 1;
+SQL
+    ;;
+  *) fail "buyruq: check | ensure | list | drop | purge | tenant-sizes" ;;
 esac
 HELPER
 chown root:root /usr/local/sbin/ventura-db

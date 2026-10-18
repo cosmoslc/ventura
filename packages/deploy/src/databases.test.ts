@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { dbNameFor, dbPasswordOwner, nextDbAlerts, parseDbList } from "./databases";
+import {
+  dbNameFor,
+  dbPasswordOwner,
+  nextDbAlerts,
+  nextQuotaAlerts,
+  parseDbList,
+  parseTenantSizes,
+  projectUsage,
+  quotaBytesOf,
+} from "./databases";
 
 /* Bazalar (ADR 0057): nomlash deploy bilan bir xil, `ventura-db list` o'qiladi, hajm ogohlantirishi faqat o'zgarganda. */
 
@@ -38,5 +47,25 @@ describe("bazalar", () => {
     expect(nextDbAlerts(undefined, dbs, 5)).toEqual({ over: ["a"], newly: [dbs[0]] });
     expect(nextDbAlerts(["a"], dbs, 5)).toEqual({ over: ["a"], newly: [] });
     expect(nextDbAlerts(["a"], [{ ...dbs[0]!, sizeBytes: 1 }], 5)).toEqual({ over: [], newly: [] });
+  });
+
+  it("mijozlar hajmi, loyiha egallagan joy va limit", () => {
+    expect(parseTenantSizes("alfa\t1024\nbeta\t2048\nYomon\t1\n")).toEqual({ alfa: 1024, beta: 2048 });
+    const dbs = [{ name: "edu_crm_ali", owner: "x", sizeBytes: 500, connections: 0 }];
+    const usage = [{ db: "edu_crm_shared", tenants: { alfa: 300 } }];
+    expect(projectUsage({ slug: "ali", templateKey: "edu-crm", dbStrategy: "db_per_tenant" }, dbs, usage)).toBe(500);
+    expect(projectUsage({ slug: "alfa", templateKey: "edu-crm", dbStrategy: "shared_db" }, dbs, usage)).toBe(300);
+    expect(projectUsage({ slug: "beta", templateKey: "edu-crm", dbStrategy: "shared_db" }, dbs, usage)).toBe(0);
+    expect(projectUsage({ slug: "beta", templateKey: "edu-crm", dbStrategy: "shared_db" }, dbs, undefined)).toBeNull();
+    expect(quotaBytesOf({ dbQuotaGb: 2 })).toBe(2 * 1024 ** 3);
+    expect(quotaBytesOf({})).toBeNull();
+    expect(quotaBytesOf({ dbQuotaGb: 0 })).toBeNull();
+    const rows = [
+      { slug: "a", usage: 10, quotaBytes: 5 },
+      { slug: "b", usage: 1, quotaBytes: 5 },
+      { slug: "c", usage: 99, quotaBytes: null },
+    ];
+    expect(nextQuotaAlerts(undefined, rows)).toEqual({ over: ["a"], newly: ["a"] });
+    expect(nextQuotaAlerts(["a"], rows)).toEqual({ over: ["a"], newly: [] });
   });
 });
