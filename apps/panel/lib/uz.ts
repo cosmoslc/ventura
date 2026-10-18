@@ -192,6 +192,8 @@ export const uz = {
     domainsNote: "Mijozning o'z domenini ulash va SSL — 3-bosqichda.",
     primary: "Asosiy",
     featureLockedHint: "Doimiy bo'lim — o'chmaydi",
+    featureSoon: "Tez kunda",
+    featurePages: "Sahifalar",
     featureModeHint: "Rejim — loyiha sozlamasi boshqaradi",
     alsoEnabled: (names: string) => `Avtomatik yoqiladi: ${names}`,
     alsoDisabled: (names: string) => `Bularga ham ta'sir qiladi va o'chadi: ${names}`,
