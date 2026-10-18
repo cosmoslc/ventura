@@ -90,7 +90,7 @@ export default async function DatabasesPage() {
       diskTotalGb: s.metrics?.diskTotalGb ?? null,
       listError: live ? null : (s.metrics?.databasesError ?? null),
       hasList: !!live,
-      lastAction: s.lastAction?.kind === "db_create" ? s.lastAction : null,
+      lastAction: s.lastAction?.kind === "db_create" || s.lastAction?.kind === "db_drop" ? s.lastAction : null,
       rows: rows.sort((a, b) => b.sizeBytes - a.sizeBytes || a.name.localeCompare(b.name)),
     };
   });

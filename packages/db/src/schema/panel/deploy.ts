@@ -170,9 +170,20 @@ export interface ServerAlerts {
 
 /**
  * Server buyruqlari: `check` — tekshirish; `reload` / `stop` / `start` — ilova (PM2); `power_on` / `power_off` — uydagi
- * WSL serverni yoqish va o'chirish (ishchi shu Windows kompyuterida ishlaganda); `db_create` — yangi bo'sh baza.
+ * WSL serverni yoqish va o'chirish (ishchi shu Windows kompyuterida ishlaganda); `db_create` — yangi bo'sh baza;
+ * `db_drop` — bazani o'chirish; `project_purge` — savatdagi loyihani serverdan va paneldan butunlay o'chirish (ADR 0058).
  */
-export const SERVER_ACTIONS = ["check", "reload", "stop", "start", "power_on", "power_off", "db_create"] as const;
+export const SERVER_ACTIONS = [
+  "check",
+  "reload",
+  "stop",
+  "start",
+  "power_on",
+  "power_off",
+  "db_create",
+  "db_drop",
+  "project_purge",
+] as const;
 export type ServerActionKind = (typeof SERVER_ACTIONS)[number];
 
 /** Paneldan berilgan oxirgi buyruq (fon vazifasi) va uning natijasi — sahifada ko'rsatiladi */
@@ -180,8 +191,10 @@ export interface ServerLastAction {
   kind: ServerActionKind;
   /** reload/stop/start uchun ilova nomi */
   app?: string;
-  /** db_create uchun baza nomi */
+  /** db_create / db_drop uchun baza nomi */
   database?: string;
+  /** project_purge: loyiha nomi (loyiha o'chgandan keyin ham natija ko'rinsin) */
+  project?: string;
   status: "queued" | "running" | "ok" | "error";
   message?: string;
   by?: string;

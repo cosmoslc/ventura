@@ -15,11 +15,12 @@ import {
   projects,
   templates,
 } from "@ventura/db/schema/panel";
+import { enqueueServerJob, purgeProject, trashedProject } from "@ventura/deploy";
 import { escapeHtml } from "@ventura/integrations";
 import { audit, putSecret } from "@ventura/security";
 import { type Feature, withRequirements } from "@ventura/tenants";
 import { BASE_DOMAIN, deployProblem, projectInputSchema, slugProblem } from "@/lib/project-rules";
-import { deps } from "@/lib/server/deps";
+import { deps, queue } from "@/lib/server/deps";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -284,6 +285,51 @@ export async function restoreProjectAction(id: string): Promise<Result> {
   if (!p) return { ok: false, error: uz.common.loadError };
   await audit.record(db, { actor, action: "project.restore", target: { type: "project", id }, ...meta, metadata: p });
   revalidatePath("/projects");
+  revalidatePath("/projects/trash");
+  return { ok: true };
+}
+
+/**
+ * Savatdagi loyihani butunlay o'chirish (ADR 0058) — faqat super admin, loyiha nomini (slug) yozib tasdiqlash bilan.
+ * Serverga deploy qilingan bo'lsa ishchi jarayon serverni tozalaydi (sayt, ilova, ma'lumotlar), keyin paneldan
+ * o'chiradi; hech qachon deploy qilinmagan bo'lsa — darhol paneldan.
+ */
+export async function purgeProjectAction(id: string, confirm: string): Promise<Result & { queued?: boolean }> {
+  const { viewer, actor, meta, db, telegram } = await ctx();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const p = await trashedProject(db, id);
+  if (!p) return { ok: false, error: uz.common.loadError };
+  if (confirm.trim() !== p.slug) return { ok: false, error: uz.projects.purgeMismatch };
+
+  if (p.serverId) {
+    try {
+      await enqueueServerJob(db, await queue(), {
+        serverId: p.serverId,
+        kind: "project_purge",
+        projectId: p.id,
+        project: p.name,
+        actor,
+      });
+    } catch {
+      return { ok: false, error: uz.projects.purgeQueueError };
+    }
+    revalidatePath("/projects/trash");
+    return { ok: true, queued: true };
+  }
+
+  const res = await purgeProject(db, null, p.id);
+  if (!res.ok) return { ok: false, error: res.error };
+  await audit.record(db, {
+    actor,
+    action: "project.purge",
+    target: { type: "project", id: p.id },
+    ...meta,
+    metadata: { project: p.name, slug: p.slug, ok: true, detail: res.detail },
+  });
+  await notifySuperAdmins(
+    { db, telegram },
+    `❌ <b>Loyiha butunlay o'chirildi</b>: ${escapeHtml(p.name)} (<code>${escapeHtml(p.slug)}</code>)\nKim: ${escapeHtml(viewer.name)}`,
+  );
   revalidatePath("/projects/trash");
   return { ok: true };
 }

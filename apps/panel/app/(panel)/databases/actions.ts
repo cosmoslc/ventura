@@ -4,7 +4,14 @@ import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { projects, servers } from "@ventura/db/schema/panel";
-import { DB_NAME_RE, SYSTEM_DATABASES, dbNameFor, dbPasswordOwner, enqueueServerJob } from "@ventura/deploy";
+import {
+  DB_NAME_RE,
+  SYSTEM_DATABASES,
+  activeProjectsOn,
+  dbNameFor,
+  dbPasswordOwner,
+  enqueueServerJob,
+} from "@ventura/deploy";
 import { audit, readSecret } from "@ventura/security";
 import { deps, queue } from "@/lib/server/deps";
 import { requestMeta } from "@/lib/server/request";
@@ -98,4 +105,35 @@ export async function revealDatabaseUrlAction(input: unknown): Promise<RevealRes
     tunnelUrl: `postgres://${auth}@localhost:${TUNNEL_PORT}/${name}`,
     tunnelCommand: `ssh -N -L ${TUNNEL_PORT}:127.0.0.1:5432 -p ${server.sshPort} ${server.sshUser}@${server.host}`,
   };
+}
+
+/**
+ * Bazani o'chirish (ADR 0058) — faqat super admin, nomini yozib tasdiqlash bilan. Ishlab turgan loyiha ishlatadigan
+ * baza va umumiy baza rad etiladi (panelda va ishchi jarayonda serverning jonli ro'yxati bilan yana tekshiriladi).
+ */
+export async function dropDatabaseAction(input: unknown, confirm: string): Promise<CreateResult> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const parsed = target.safeParse(input);
+  if (!parsed.success) return { ok: false, error: t.nameInvalid };
+  const { serverId, name } = parsed.data;
+  if (confirm.trim() !== name) return { ok: false, error: t.dropMismatch };
+  if (SYSTEM_DATABASES.has(name) || name.endsWith("_shared")) return { ok: false, error: t.dropShared };
+  const { db } = deps();
+  const active = await activeProjectsOn(db, serverId);
+  if (active.some((p) => dbNameFor(p.templateKey, p.slug, p.dbStrategy) === name)) {
+    return { ok: false, error: t.dropInUse };
+  }
+  try {
+    await enqueueServerJob(db, await queue(), {
+      serverId,
+      kind: "db_drop",
+      database: name,
+      actor: { type: "user", id: viewer.id, name: viewer.name },
+    });
+  } catch {
+    return { ok: false, error: t.queueError };
+  }
+  revalidatePath("/databases");
+  return { ok: true };
 }

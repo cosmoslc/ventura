@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Copy, Database, HardDrive, KeyRound, Plus, Server } from "lucide-react";
+import { AlertTriangle, Copy, Database, HardDrive, KeyRound, Plus, Server, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -20,7 +20,7 @@ import { toast } from "@ventura/ui/toast";
 import { formatBytes, timeAgo } from "@/lib/format";
 import { uz } from "@/lib/uz";
 import { useAutoRefresh } from "../servers/use-auto-refresh";
-import { type RevealResult, createDatabaseAction, revealDatabaseUrlAction } from "./actions";
+import { type RevealResult, createDatabaseAction, dropDatabaseAction, revealDatabaseUrlAction } from "./actions";
 
 const t = uz.databases;
 
@@ -71,7 +71,9 @@ export function DatabasesView({
 }) {
   useAutoRefresh(30_000);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const router = useRouter();
   const [reveal, setReveal] = React.useState<{ serverId: string; name: string } | null>(null);
+  const [drop, setDrop] = React.useState<{ serverId: string; name: string } | null>(null);
   const all = servers.flatMap((s) => s.rows.filter((r) => !r.missing));
   const total = all.reduce((sum, r) => sum + r.sizeBytes, 0);
   const large = all.filter((r) => r.large).length;
@@ -103,6 +105,7 @@ export function DatabasesView({
             server={s}
             canReveal={canReveal}
             onReveal={(name) => setReveal({ serverId: s.id, name })}
+            onDrop={(name) => setDrop({ serverId: s.id, name })}
           />
         ))
       ) : (
@@ -113,6 +116,23 @@ export function DatabasesView({
 
       {canCreate ? <CreateModal open={createOpen} onOpenChange={setCreateOpen} servers={servers} /> : null}
       <RevealModal target={reveal} onClose={() => setReveal(null)} />
+      {canReveal ? (
+        <ConfirmModal
+          open={drop !== null}
+          onOpenChange={(o) => !o && setDrop(null)}
+          title={t.dropTitle}
+          message={drop ? t.dropText(drop.name) : ""}
+          confirmLabel={t.drop}
+          requireText={drop?.name}
+          onConfirm={async () => {
+            if (!drop) return;
+            const res = await dropDatabaseAction(drop, drop.name);
+            if (!res.ok) return void toast({ tone: "danger", title: res.error });
+            toast({ tone: "success", title: t.dropQueued, description: drop.name });
+            router.refresh();
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -121,10 +141,12 @@ function ServerSection({
   server: s,
   canReveal,
   onReveal,
+  onDrop,
 }: {
   server: ServerBlock;
   canReveal: boolean;
   onReveal: (name: string) => void;
+  onDrop: (name: string) => void;
 }) {
   const disk =
     s.diskUsedGb != null && s.diskTotalGb
@@ -151,7 +173,7 @@ function ServerSection({
 
       {action ? (
         <Notice tone={action.status === "error" ? "danger" : action.status === "ok" ? "success" : "info"}>
-          {t.actionStatus(action.database ?? "", action.status, action.message)}
+          {t.actionStatus(action.kind, action.database ?? "", action.status, action.message)}
         </Notice>
       ) : null}
       {!s.hasList ? (
@@ -210,11 +232,25 @@ function ServerSection({
                   <Td className="text-right">{r.missing ? "—" : r.connections}</Td>
                   {canReveal ? (
                     <Td className="text-right">
-                      {!r.missing && r.kind !== "other" ? (
-                        <Button size="sm" variant="ghost" onClick={() => onReveal(r.name)}>
-                          <KeyRound /> {t.reveal}
-                        </Button>
-                      ) : null}
+                      <div className="flex justify-end gap-1.5">
+                        {!r.missing && r.kind !== "other" ? (
+                          <Button size="sm" variant="ghost" onClick={() => onReveal(r.name)}>
+                            <KeyRound /> {t.reveal}
+                          </Button>
+                        ) : null}
+                        {/* O'chirish: hech qaysi ishlab turgan loyiha ishlatmaydi va umumiy baza emas (ADR 0058) */}
+                        {!r.missing && !r.projects.length && !r.name.endsWith("_shared") ? (
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            title={t.drop}
+                            aria-label={`${r.name} — ${t.drop}`}
+                            onClick={() => onDrop(r.name)}
+                          >
+                            <Trash2 />
+                          </Button>
+                        ) : null}
+                      </div>
                     </Td>
                   ) : null}
                 </Tr>

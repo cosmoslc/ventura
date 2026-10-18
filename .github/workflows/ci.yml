@@ -293,6 +293,16 @@ jobs:
           LIST=$($SSH 'sudo -n /usr/local/sbin/ventura-db list')
           echo "$LIST" | grep -qP '^edu_ci_list\tedu_ci_list\t\d+\t\d+$' || { echo "ro'yxatda yo'q: $LIST"; exit 1; }
           if echo "$LIST" | grep -q '^postgres'; then echo "tizim bazasi ro'yxatda"; exit 1; fi
+          # O'chirish (ADR 0058): tizim bazasi rad etiladi; yaratilgan baza va roli yo'qoladi
+          if $SSH 'sudo -n /usr/local/sbin/ventura-db drop postgres' 2>/dev/null; then echo "tizim bazasi o'chdi"; exit 1; fi
+          $SSH 'sudo -n /usr/local/sbin/ventura-db drop edu_ci_list'
+          if $SSH 'sudo -n /usr/local/sbin/ventura-db list' | grep -q '^edu_ci_list'; then echo "baza o'chmadi"; exit 1; fi
+          # Umumiy bazadan bitta mijoz: boshqa mijoz qatorlari qoladi
+          echo "abcdefghijklmnopqrstuvwxyz012345" | $SSH 'sudo -n /usr/local/sbin/ventura-db ensure edu_ci_purge edu_ci_purge'
+          sudo -u postgres psql -Xq -d edu_ci_purge -c "CREATE TABLE t (tenant_id text); INSERT INTO t VALUES ('alfa'), ('alfa'), ('beta');"
+          $SSH 'sudo -n /usr/local/sbin/ventura-db purge edu_ci_purge alfa'
+          LEFT=$(sudo -u postgres psql -XAtq -d edu_ci_purge -c "SELECT string_agg(tenant_id, ',') FROM t")
+          [ "$LEFT" = "beta" ] || { echo "purge noto'g'ri: $LEFT"; exit 1; }
 
       - name: nginx yordamchisi (ventura-site)
         run: |

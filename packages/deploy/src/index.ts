@@ -75,6 +75,8 @@ export {
   parseDbList,
 } from "./databases";
 
+export { activeProjectsOn, dropDatabase, purgeProject, trashedProject } from "./purge";
+
 /** Har deploy uchun yangi drayver beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
 export function createDrivers(deps: SshDriverDeps): DriverFactory {
   return (kind) => {

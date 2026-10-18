@@ -172,6 +172,20 @@ export const uz = {
     trash: "Savatga o'tkazish",
     trashConfirmTitle: "Loyihani savatga o'tkazasizmi?",
     trashConfirmText: "Loyiha 30 kun savatda turadi, shu vaqt ichida tiklash mumkin. Ma'lumotlari o'chirilmaydi.",
+    purge: "Butunlay o'chirish",
+    purgeTitle: "Loyiha butunlay o'chirilsinmi?",
+    purgeText: (name: string) =>
+      `${name}: sayt, ilova va barcha ma'lumotlari serverdan o'chiriladi (alohida baza — butunlay, umumiy bazadan — shu markaz qatorlari). Qaytarib bo'lmaydi. Tasdiqlash uchun loyiha nomini (slug) yozing.`,
+    purgeMismatch: "Loyiha nomi mos kelmadi",
+    purgeQueued: "Loyiha o'chirilmoqda — serverdan tozalangach ro'yxatdan yo'qoladi",
+    purged: "Loyiha butunlay o'chirildi",
+    purgeQueueError: "Vazifani navbatga qo'yib bo'lmadi (ishchi jarayon ishlayaptimi?)",
+    purgeStatus: (name: string, status: string, message?: string) =>
+      status === "queued" || status === "running"
+        ? `${name} o'chirilmoqda...`
+        : status === "ok"
+          ? `${name} butunlay o'chirildi${message ? ` (${message})` : ""}`
+          : `${name}ni o'chirib bo'lmadi: ${message ?? ""}. Loyiha savatda qoldi — qayta urinish mumkin.`,
     restore: "Tiklash",
     restored: "Loyiha tiklandi",
     trashed: "Loyiha savatga o'tkazildi",
@@ -345,12 +359,13 @@ export const uz = {
     updated: (ago: string) => `yangilandi ${ago}`,
     noList:
       "Bazalar ro'yxatini olib bo'lmadi: serverdagi yordamchi eski. Server sahifasidagi \"Serverni yangilash\" buyrug'ini serverda bir marta ishga tushiring.",
-    actionStatus: (name: string, status: string, message?: string) =>
-      status === "queued" || status === "running"
-        ? `"${name}" bazasi yaratilmoqda...`
-        : status === "ok"
-          ? `"${name}" bazasi yaratildi`
-          : `"${name}" bazasini yaratib bo'lmadi: ${message ?? ""}`,
+    actionStatus: (kind: string, name: string, status: string, message?: string) => {
+      const drop = kind === "db_drop";
+      if (status === "queued" || status === "running")
+        return `"${name}" bazasi ${drop ? "o'chirilmoqda" : "yaratilmoqda"}...`;
+      if (status === "ok") return `"${name}" bazasi ${drop ? "o'chirildi" : "yaratildi"}`;
+      return `"${name}" bazasini ${drop ? "o'chirib" : "yaratib"} bo'lmadi: ${message ?? ""}`;
+    },
     colName: "Baza",
     colProjects: "Loyihalar",
     colSize: "Hajmi",
@@ -389,6 +404,14 @@ export const uz = {
     exists: "Bu nomdagi baza serverda bor",
     usedByProject: "Bu nomni loyiha ishlatadi",
     queueError: "Vazifani navbatga qo'yib bo'lmadi (ishchi jarayon ishlayaptimi?)",
+    drop: "O'chirish",
+    dropTitle: "Baza butunlay o'chirilsinmi?",
+    dropText: (name: string) =>
+      `"${name}" bazasi va undagi barcha ma'lumotlar serverdan o'chiriladi, foydalanuvchisi ham. Qaytarib bo'lmaydi. Tasdiqlash uchun baza nomini yozing.`,
+    dropQueued: "Baza o'chirilmoqda",
+    dropMismatch: "Baza nomi mos kelmadi",
+    dropShared: "Umumiy bazani o'chirib bo'lmaydi: avval undagi loyihalarni savatdan butunlay o'chiring",
+    dropInUse: "Bazani ishlab turgan loyiha ishlatadi — avval loyihani savatga o'tkazing",
   },
 
   settings: {
@@ -521,6 +544,8 @@ export const uz = {
       power_on: "Serverni yoqish",
       power_off: "Serverni o'chirish",
       db_create: "Baza yaratish",
+      db_drop: "Bazani o'chirish",
+      project_purge: "Loyihani butunlay o'chirish",
     },
     powerOn: "Yoqish",
     powerOnHint: "WSL serverni yoqish: SSH, nginx, baza va ilovalar ishga tushadi",

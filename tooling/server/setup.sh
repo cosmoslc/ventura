@@ -224,6 +224,8 @@ cat > /usr/local/sbin/ventura-db <<'HELPER'
 #   ventura-db check
 #   ventura-db ensure <baza> <rol>     # parol stdin'dan (bitta qator)
 #   ventura-db list                    # bazalar: nom, egasi, hajm (bayt), ulanishlar — TAB bilan
+#   ventura-db drop <baza>             # bazani va shu nomdagi rolni butunlay o'chiradi (ulanishlar uziladi)
+#   ventura-db purge <baza> <mijoz>    # umumiy bazadan bitta mijozning barcha qatorlari (tenant_id)
 # Rol superuser emas, RLS'ni chetlab o'tolmaydi, yangi baza yaratolmaydi. Bazaga faqat o'z roli ulanadi.
 # Qayta chaqirish xavfsiz: bor narsa qayta yaratilmaydi, parol paneldagi qiymatga tenglashtiriladi.
 set -euo pipefail
@@ -260,7 +262,47 @@ SQL
              (SELECT count(*) FROM pg_stat_activity a WHERE a.datname = d.datname)
       FROM pg_database d WHERE NOT d.datistemplate AND d.datname <> 'postgres' ORDER BY 1"
     ;;
-  *) fail "buyruq: check | ensure | list" ;;
+  drop)
+    [[ $# -eq 2 ]] || fail "drop <baza>"
+    db="$2"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    [[ "$db" != postgres && "$db" != template0 && "$db" != template1 ]] || fail "tizim bazasi"
+    runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -v db="$db" -d postgres <<'SQL'
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = :'db' AND pid <> pg_backend_pid();
+SELECT format('DROP DATABASE IF EXISTS %I', :'db') \gexec
+SELECT format('DROP ROLE %I', :'db') WHERE EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'db') \gexec
+SQL
+    echo "ventura-db: $db o'chirildi"
+    ;;
+  purge)
+    [[ $# -eq 3 ]] || fail "purge <baza> <mijoz>"
+    db="$2"; tenant="$3"
+    [[ "$db" =~ $NAME_RE ]] || fail "baza nomi noto'g'ri"
+    [[ "$tenant" =~ ^[a-z0-9][a-z0-9-]{1,62}$ ]] || fail "mijoz nomi noto'g'ri"
+    runuser -u postgres -- psql -Xq -v ON_ERROR_STOP=1 -v tenant="$tenant" -d "$db" <<'SQL'
+-- Faqat shu mijoz qatorlari, bitta tranzaksiyada. Bog'lanishlar va o'chmas jurnal triggeri vaqtincha o'chiriladi
+-- (qatorlarni bog'lanish tartibida o'chirish shart bo'lmasin); boshqa mijozlarga tegilmaydi.
+BEGIN;
+SET LOCAL session_replication_role = replica;
+SELECT set_config('ventura.purge_tenant', :'tenant', true);
+DO $$
+DECLARE r record; n bigint; total bigint := 0;
+BEGIN
+  FOR r IN SELECT c.table_name FROM information_schema.columns c
+           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+           WHERE c.table_schema = 'public' AND c.column_name = 'tenant_id' AND t.table_type = 'BASE TABLE'
+  LOOP
+    EXECUTE format('DELETE FROM public.%I WHERE tenant_id = %L', r.table_name, current_setting('ventura.purge_tenant'));
+    GET DIAGNOSTICS n = ROW_COUNT;
+    total := total + n;
+  END LOOP;
+  RAISE NOTICE 'ventura-db: % qator', total;
+END $$;
+COMMIT;
+SQL
+    echo "ventura-db: $tenant ($db) tozalandi"
+    ;;
+  *) fail "buyruq: check | ensure | list | drop | purge" ;;
 esac
 HELPER
 chown root:root /usr/local/sbin/ventura-db

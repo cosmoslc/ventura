@@ -24,6 +24,7 @@ import {
   parseDbList,
 } from "./databases";
 import { type AlertEvent, METRICS_SCRIPT, nextAlerts, parseMetrics } from "./metrics";
+import { dropDatabase, purgeProject } from "./purge";
 import { type Queue, SERVER_QUEUE } from "./queue";
 import { type ServerRow, checkServer, openSession } from "./servers";
 import { sh } from "./ssh";
@@ -42,8 +43,11 @@ export interface ServerJobData {
   serverId: string;
   kind: ServerActionKind;
   app?: string;
-  /** db_create: yangi baza nomi */
+  /** db_create / db_drop: baza nomi */
   database?: string;
+  /** project_purge: savatdagi loyiha id si va nomi */
+  projectId?: string;
+  project?: string;
   actor: AuditActor;
 }
 
@@ -169,12 +173,13 @@ export async function enqueueServerJob(db: PanelDb, queue: Queue, data: ServerJo
     kind: data.kind,
     ...(data.app ? { app: data.app } : {}),
     ...(data.database ? { database: data.database } : {}),
+    ...(data.project ? { project: data.project } : {}),
     status: "queued",
     by: data.actor.name ?? undefined,
     at: new Date().toISOString(),
   });
   const id = await queue.send(SERVER_QUEUE, data, {
-    singletonKey: `${data.serverId}:${data.kind}:${data.app ?? data.database ?? ""}`,
+    singletonKey: `${data.serverId}:${data.kind}:${data.app ?? data.database ?? data.projectId ?? ""}`,
   });
   if (!id) throw new Error("Vazifa navbatga qo'shilmadi");
 }
@@ -186,6 +191,7 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
     kind: data.kind,
     ...(data.app ? { app: data.app } : {}),
     ...(data.database ? { database: data.database } : {}),
+    ...(data.project ? { project: data.project } : {}),
     by: data.actor.name ?? undefined,
   };
   if (!server) return { ...base, status: "error", message: "Server topilmadi", at: new Date().toISOString() };
@@ -214,6 +220,30 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
       metadata: { database: data.database, ok: res.ok, ...(res.ok ? {} : { error: res.error }) },
     });
     // Ro'yxat va hajm darhol yangilansin
+    if (res.ok) await recordProbe(db, server, await probeServer(db, server), notify);
+  } else if (data.kind === "db_drop" || data.kind === "project_purge") {
+    // Qaytarib bo'lmaydigan amallar (ADR 0058): faqat super admin navbatga qo'yadi
+    const res =
+      data.kind === "db_drop"
+        ? await dropDatabase(db, server, data.database ?? "")
+        : await purgeProject(db, server, data.projectId ?? "");
+    if (!res.ok) {
+      status = "error";
+      message = res.error;
+    } else if (res.detail) message = res.detail;
+    await audit.record(db, {
+      actor: data.actor,
+      action: data.kind === "db_drop" ? "database.drop" : "project.purge",
+      target:
+        data.kind === "db_drop" ? { type: "server", id: server.id } : { type: "project", id: data.projectId ?? "" },
+      metadata: {
+        server: server.name,
+        ...(data.database ? { database: data.database } : {}),
+        ...(data.project ? { project: data.project } : {}),
+        ok: res.ok,
+        ...(res.ok ? { detail: res.detail } : { error: res.error }),
+      },
+    });
     if (res.ok) await recordProbe(db, server, await probeServer(db, server), notify);
   } else if (data.kind === "power_on" || data.kind === "power_off") {
     // Uydagi WSL server (ADR 0025): faqat shu Windows kompyuteridagi ishchi boshqaradi
