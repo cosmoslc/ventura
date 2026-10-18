@@ -118,8 +118,17 @@ export async function dropDatabaseAction(input: unknown, confirm: string): Promi
   if (!parsed.success) return { ok: false, error: t.nameInvalid };
   const { serverId, name } = parsed.data;
   if (confirm.trim() !== name) return { ok: false, error: t.dropMismatch };
-  if (SYSTEM_DATABASES.has(name) || name.endsWith("_shared")) return { ok: false, error: t.dropShared };
+  if (SYSTEM_DATABASES.has(name)) return { ok: false, error: t.nameInvalid };
   const { db } = deps();
+  // Umumiy bazani hech qaysi loyiha (savatdagisi ham) ishlatmasa o'chirish mumkin (ishchi jarayon yana tekshiradi)
+  if (name.endsWith("_shared")) {
+    const all = await db
+      .select({ slug: projects.slug, templateKey: projects.templateKey, dbStrategy: projects.dbStrategy })
+      .from(projects)
+      .where(eq(projects.serverId, serverId));
+    if (all.some((p) => dbNameFor(p.templateKey, p.slug, p.dbStrategy) === name))
+      return { ok: false, error: t.dropShared };
+  }
   const active = await activeProjectsOn(db, serverId);
   if (active.some((p) => dbNameFor(p.templateKey, p.slug, p.dbStrategy) === name)) {
     return { ok: false, error: t.dropInUse };
