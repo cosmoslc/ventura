@@ -62,7 +62,7 @@ describe("createEskiz", () => {
       "PATCH /auth/refresh": () => ({ json: { data: { token: "T2" } } }),
       "GET /nick/me": (c) =>
         c.auth === "Bearer T2"
-          ? { json: { data: [{ nickname: "MARKAZ" }, "4546", "MARKAZ"] } }
+          ? { json: ["MARKAZ", "4546", "MARKAZ"] }
           : { status: 401, json: { message: "Unauthenticated." } },
     });
     const onToken = vi.fn();

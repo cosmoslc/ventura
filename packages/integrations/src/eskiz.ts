@@ -143,8 +143,10 @@ export function createEskiz(config: EskizConfig) {
     },
     /** Tasdiqlangan yuboruvchi nomlari (nikneymlar) */
     async nicks(): Promise<string[]> {
-      const d = (await call("GET", "/nick/me")).data;
-      const list = Array.isArray(d) ? d : [];
+      // Hujjat bo'yicha javob — to'g'ridan-to'g'ri massiv (`["Eskiz.uz"]`); `data` ichida kelsa ham qabul qilamiz
+      const r: unknown = await call("GET", "/nick/me");
+      const d = Array.isArray(r) ? r : (r as Json).data;
+      const list: unknown[] = Array.isArray(d) ? d : [];
       const names = list
         .map((x) => (typeof x === "string" ? x : (str((x as Json)?.nickname) ?? str((x as Json)?.name))))
         .filter((x): x is string => !!x);
