@@ -134,10 +134,7 @@ export function TeachersView({
   const visible = filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
 
   // Ko'rsatkichlar faqat haqiqiy ma'lumotdan
-  const withGroups = mains.filter((t) => t.groups > 0).length;
   const totalStudents = mains.reduce((s, t) => s + t.students, 0);
-  const totalGroups = mains.reduce((s, t) => s + t.groups, 0);
-  const period = periodLabel();
   // Joriy oy: ulush — ish haqi hisobidan (ruxsat bo'lmasa null), retention — barcha o'qituvchilar sanoqlaridan
   const canShare = mains.some((t) => t.share !== null);
   const totalShare = mains.reduce((s, t) => s + (t.share ?? 0), 0);
@@ -219,7 +216,7 @@ export function TeachersView({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={uz.teachers.title}
         actions={
@@ -258,33 +255,24 @@ export function TeachersView({
             icon={<GraduationCap />}
             label={uz.teachers.statTeachers}
             value={uz.common.count(mains.length)}
-            hint={
-              <>
-                <div>{uz.teachers.withGroups(withGroups)}</div>
-                <div>{uz.teachers.withoutGroups(mains.length - withGroups)}</div>
-              </>
-            }
           />
           <StatCard
             tone={2}
             icon={<Wallet />}
             label={uz.teachers.statShare}
             value={canShare ? `${money(totalShare)} ${uz.common.som}` : uz.teachers.noData}
-            hint={<div>{uz.teachers.shareFor(period)}</div>}
           />
           <StatCard
             tone={3}
             icon={<Users />}
             label={uz.teachers.statStudents}
             value={uz.teachers.studentsUnit(totalStudents)}
-            hint={<div>{uz.teachers.acrossGroups(totalGroups)}</div>}
           />
           <StatCard
             tone={4}
             icon={<TrendingUp />}
             label={uz.teachers.statRetention}
             value={retBase ? `${Math.round((retKept / retBase) * 100)}%` : uz.teachers.noData}
-            hint={<div>{uz.teachers.retentionFor(period)}</div>}
           />
         </div>
       ) : null}

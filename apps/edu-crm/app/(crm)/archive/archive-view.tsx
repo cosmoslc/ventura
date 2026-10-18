@@ -128,7 +128,7 @@ export function ArchiveView({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={uz.archive.title} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>

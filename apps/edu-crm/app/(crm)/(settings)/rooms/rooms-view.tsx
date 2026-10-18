@@ -1,18 +1,24 @@
 "use client";
 
-import { Calendar, Clock, DoorOpen, LayoutGrid, List, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { DoorOpen, Layers, LayoutGrid, MoreHorizontal, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { FilterBar, FilterSearch } from "@ventura/ui/filter-bar";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
 import { TBody, THead, Table, TableWrap, Td, Th, Tr } from "@ventura/ui/table";
-import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
+import { ListGridSwitch } from "@ventura/ui/view-switch";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../../branch-picker";
 import { deleteRoomAction } from "./actions";
@@ -63,21 +69,19 @@ export function RoomsView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={uz.rooms.title}
         actions={
           <>
-            <Tabs value={view} onValueChange={(v) => setView(v as "list" | "grid")}>
-              <TabsList>
-                <TabsTrigger value="list" title={uz.rooms.listHint}>
-                  <List className="size-4" /> {uz.rooms.list}
-                </TabsTrigger>
-                <TabsTrigger value="grid" title={uz.rooms.gridHint}>
-                  <LayoutGrid className="size-4" /> {uz.rooms.grid}
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
+            <ListGridSwitch
+              value={view}
+              onValueChange={setView}
+              listLabel={uz.rooms.list}
+              gridLabel={uz.rooms.grid}
+              listTitle={uz.rooms.listHint}
+              gridTitle={uz.rooms.gridHint}
+            />
             {canWrite ? (
               <Button onClick={() => openForm(null)}>
                 <Plus /> {uz.rooms.add}
@@ -119,10 +123,9 @@ export function RoomsView({
               <THead>
                 <Tr>
                   <Th>{uz.rooms.colName}</Th>
-                  <Th>{uz.rooms.colGroups}</Th>
-                  <Th>{uz.rooms.colSchedule}</Th>
-                  <Th className="text-center">{uz.rooms.colLoad}</Th>
-                  {canWrite ? <Th className="text-right">{uz.common.actions}</Th> : null}
+                  <Th>{uz.rooms.colCapacity}</Th>
+                  <Th>{uz.rooms.colGroupsCount}</Th>
+                  {canWrite ? <Th className="w-12" /> : null}
                 </Tr>
               </THead>
               <TBody>
@@ -133,77 +136,20 @@ export function RoomsView({
                         <div className="grid size-9 shrink-0 place-items-center rounded-stat-icon bg-muted text-muted-foreground [&_svg]:size-4">
                           <DoorOpen />
                         </div>
-                        <div className="min-w-0">
-                          <div className="truncate font-bold text-foreground">{r.name}</div>
-                          <div className="text-caption text-muted-foreground">{uz.rooms.seats(r.capacity)}</div>
-                        </div>
+                        <span className="truncate font-bold text-foreground">{r.name}</span>
                       </div>
                     </Td>
                     <Td>
-                      {r.groups.length ? (
-                        <div className="flex flex-wrap gap-1">
-                          {r.groups.map((g) => (
-                            <Badge key={g.id} tone="info">
-                              {g.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground italic">{uz.rooms.noGroups}</span>
-                      )}
+                      <b className="font-bold text-foreground">{r.capacity}</b>{" "}
+                      <span className="text-muted-foreground">{uz.rooms.seatsWord}</span>
                     </Td>
                     <Td>
-                      {r.groups.length ? (
-                        <div className="space-y-1">
-                          {r.groups.map((g) => (
-                            <div
-                              key={g.id}
-                              className="flex flex-wrap items-center gap-2 text-caption text-muted-foreground"
-                            >
-                              <span className="flex items-center gap-1">
-                                <Calendar className="size-3" />{" "}
-                                {g.days
-                                  .map((d) => uz.weekdays.short[d as keyof typeof uz.weekdays.short] ?? d)
-                                  .join(", ")}
-                              </span>
-                              {g.time ? (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="size-3" /> {g.time}
-                                </span>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </Td>
-                    <Td className="text-center">
-                      <LoadBadge groups={r.groups.length} />
+                      <b className="font-bold text-foreground">{r.groups.length}</b>{" "}
+                      <span className="text-muted-foreground">{uz.rooms.groupsWord}</span>
                     </Td>
                     {canWrite ? (
-                      <Td>
-                        <div className="flex justify-end gap-1.5">
-                          <Button
-                            variant="icon"
-                            size="icon-sm"
-                            title={uz.common.edit}
-                            aria-label={uz.common.edit}
-                            onClick={() => openForm(r)}
-                          >
-                            <Pencil />
-                          </Button>
-                          <Button
-                            variant="icon"
-                            size="icon-sm"
-                            title={uz.common.delete}
-                            aria-label={uz.common.delete}
-                            onClick={() => askDelete(r)}
-                            className="text-destructive-text"
-                          >
-                            <Trash2 />
-                          </Button>
-                        </div>
+                      <Td className="text-right">
+                        <RoomMenu room={r} onEdit={() => openForm(r)} onDelete={() => askDelete(r)} />
                       </Td>
                     ) : null}
                   </Tr>
@@ -215,48 +161,29 @@ export function RoomsView({
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((r) => (
-            <Card key={r.id} className="flex flex-col gap-3 p-5">
-              <div className="flex items-center gap-3">
+            <Card key={r.id} className="flex flex-col gap-4 p-5">
+              <div className="flex items-start gap-3">
                 <div className="grid size-10 shrink-0 place-items-center rounded-stat-icon bg-muted text-muted-foreground [&_svg]:size-5">
                   <DoorOpen />
                 </div>
-                <div className="min-w-0">
-                  <div className="truncate text-body font-bold text-foreground">{r.name}</div>
-                  <div className="text-caption text-muted-foreground">{uz.rooms.roomKind}</div>
+                <div
+                  className="min-w-0 flex-1 truncate pt-2 text-body leading-snug font-bold text-foreground"
+                  title={r.name}
+                >
+                  {r.name}
                 </div>
+                {canWrite ? <RoomMenu room={r} onEdit={() => openForm(r)} onDelete={() => askDelete(r)} /> : null}
               </div>
-              <div className="flex items-center justify-between gap-2">
-                <Badge tone="success">{uz.rooms.seatsShort(r.capacity)}</Badge>
-                <LoadBadge groups={r.groups.length} />
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-body text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                  <Users className="size-4" aria-hidden />
+                  <b className="font-bold text-foreground">{r.capacity}</b> {uz.rooms.seatsWord}
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <Layers className="size-4" aria-hidden />
+                  <b className="font-bold text-foreground">{r.groups.length}</b> {uz.rooms.groupsWord}
+                </span>
               </div>
-              {r.groups.length ? (
-                <ul className="space-y-1 text-caption text-muted-foreground">
-                  {r.groups.slice(0, 3).map((g) => (
-                    <li key={g.id} className="flex justify-between gap-2">
-                      <span className="truncate">{g.name}</span>
-                      {g.time ? <span className="font-mono">{g.time}</span> : null}
-                    </li>
-                  ))}
-                  {r.groups.length > 3 ? <li>+{r.groups.length - 3}</li> : null}
-                </ul>
-              ) : null}
-              {canWrite ? (
-                <div className="mt-auto flex gap-2 border-t border-border-soft pt-3">
-                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => openForm(r)}>
-                    <Pencil /> {uz.common.edit}
-                  </Button>
-                  <Button
-                    variant="icon"
-                    size="icon-sm"
-                    title={uz.common.delete}
-                    aria-label={uz.common.delete}
-                    onClick={() => askDelete(r)}
-                    className="text-destructive-text"
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
-              ) : null}
             </Card>
           ))}
         </div>
@@ -286,6 +213,29 @@ export function RoomsView({
   );
 }
 
-function LoadBadge({ groups }: { groups: number }) {
-  return groups ? <Badge tone="warning">{uz.rooms.busy(groups)}</Badge> : <Badge tone="success">{uz.rooms.free}</Badge>;
+function RoomMenu({ room, onEdit, onDelete }: { room: RoomRow; onEdit: () => void; onDelete: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="subtle"
+          size="icon-sm"
+          className="-my-1 shrink-0"
+          title={uz.common.actions}
+          aria-label={`${room.name} — ${uz.common.actions}`}
+        >
+          <MoreHorizontal />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuItem onSelect={onEdit}>
+          <Pencil /> {uz.common.edit}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem danger onSelect={onDelete}>
+          <Trash2 /> {uz.common.delete}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }

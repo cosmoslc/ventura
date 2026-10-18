@@ -1,19 +1,37 @@
 "use client";
 
-import { ArrowLeft, Pencil, Trash2, Wallet } from "lucide-react";
+import {
+  CalendarCheck,
+  ChevronLeft,
+  CircleDollarSign,
+  ClipboardCheck,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Users,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { initials } from "@ventura/ui/avatar";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { cn } from "@ventura/ui/lib/utils";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import type { SearchSelectOption } from "@ventura/ui/search-select";
 import { formatDate, money } from "@/lib/format";
 import type { FormField } from "@/lib/form-fields";
-import { collectedPercent, groupEndDate, lessonMinutes } from "@/lib/group-profile";
+import { groupEndDate, lessonMinutes } from "@/lib/group-profile";
 import { uz } from "@/lib/uz";
 import type { GroupAttendance } from "@/lib/server/attendance";
 import type { PickerBranch } from "../branch-picker";
@@ -54,36 +72,50 @@ export function MembershipBadge({
   );
 }
 
-/** Yorliq + qiymat + bitta xira qator: sarlavha kartasidagi bitta ma'lumot */
-function Fact({
+/** Chap kartadagi bitta ma'lumot: yorliq, qiymat va ixtiyoriy xira qator */
+function Fact({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-body text-muted-foreground">{label}</dt>
+      <dd className="mt-0.5 text-[0.9375rem] font-semibold break-words text-foreground">{children}</dd>
+      {hint ? <div className="text-body text-muted-foreground">{hint}</div> : null}
+    </div>
+  );
+}
+
+/** Yuqoridagi ko'rsatkich kartasi: yorliq, katta qiymat, izoh; ikonka o'ng tepada */
+function Kpi({
+  icon,
+  hue,
   label,
-  hint,
-  tone,
-  big,
-  className,
+  value,
+  danger,
   children,
 }: {
+  icon: React.ReactNode;
+  /** Ikonka rangi; fon — shu rangning och (yarim shaffof) tusi */
+  hue: string;
   label: string;
-  hint?: React.ReactNode;
-  tone?: "danger";
-  big?: boolean;
-  className?: string;
-  children: React.ReactNode;
+  value: string;
+  danger?: boolean;
+  children?: React.ReactNode;
 }) {
   return (
-    <div className={cn("min-w-0", className)}>
-      <dt className="truncate text-caption font-semibold text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "mt-1 truncate font-semibold text-foreground",
-          big ? "type-stat leading-tight" : "text-body",
-          tone === "danger" && "text-(--danger-fg)",
-        )}
+    <Card className="flex items-start justify-between gap-3 p-4 sm:p-5">
+      <div className="min-w-0">
+        <div className="text-body text-muted-foreground">{label}</div>
+        <div className={cn("mt-1 type-stat leading-tight font-bold text-foreground", danger && "text-(--danger-fg)")}>
+          {value}
+        </div>
+        {children ? <div className="mt-1.5 text-body text-muted-foreground">{children}</div> : null}
+      </div>
+      <div
+        className="grid size-10 shrink-0 place-items-center rounded-stat-icon [&_svg]:size-[18px]"
+        style={{ background: `color-mix(in oklab, ${hue} 14%, transparent)`, color: hue }}
       >
-        {children}
-      </dd>
-      {hint ? <div className="mt-0.5 text-caption break-words text-muted-foreground">{hint}</div> : null}
-    </div>
+        {icon}
+      </div>
+    </Card>
   );
 }
 
@@ -106,6 +138,7 @@ export function GroupProfile({
   canEditPast,
   initialTab,
   payment,
+  showBranch = false,
 }: {
   group: GroupRow;
   members: { open: MemberRow[]; left: MemberRow[] };
@@ -129,6 +162,8 @@ export function GroupProfile({
   initialTab: Tab;
   /** To'lov qabul qilish oynasi uchun; null — to'lov yozish ruxsati yoki bo'limi yo'q */
   payment: { methods: MethodOption[]; maxDiscountPercent: number } | null;
+  /** Filial qatori: tepadagi tanlovda "Barcha filiallar" bo'lsa */
+  showBranch?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>(initialTab);
@@ -159,79 +194,101 @@ export function GroupProfile({
   const fill = cap ? count / cap : null;
   const canArchive = perms.delete;
 
+  const branchName = branches.find((b) => b.id === g.branchId)?.name ?? null;
+  const canEdit = perms.edit || perms.changeTeacher;
+  const hasMenu = canEdit || canArchive || payment !== null;
+
   return (
-    <div className="space-y-6">
-      {/* Sarlavha */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <Button variant="icon" size="icon" asChild title={uz.groups.back} aria-label={uz.groups.back}>
+    <div className="grid items-start gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
+      {/* Chap ustun: guruh kartasi */}
+      <Card className="p-5 xl:sticky xl:top-[calc(var(--topbar-h)+1.5rem)]">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="icon-sm" asChild title={uz.groups.back} aria-label={uz.groups.back}>
             <Link href="/groups">
-              <ArrowLeft />
+              <ChevronLeft />
             </Link>
           </Button>
-          <span className="size-3 shrink-0 rounded-full" style={{ background: g.color }} aria-hidden />
-          <div className="min-w-0">
-            <h1 className="type-heading text-title break-words text-foreground">{g.name}</h1>
-            <div className="text-caption text-muted-foreground">{g.courseName}</div>
-          </div>
+          {hasMenu ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" title={uz.common.actions} aria-label={uz.common.actions}>
+                  <MoreVertical />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                {payment ? (
+                  <DropdownMenuItem onSelect={() => setPay({ open: true })}>
+                    <Wallet /> {t.payTitle}
+                  </DropdownMenuItem>
+                ) : null}
+                {canEdit ? (
+                  <DropdownMenuItem onSelect={() => setFormOpen(true)}>
+                    <Pencil /> {uz.groups.formEdit}
+                  </DropdownMenuItem>
+                ) : null}
+                {canArchive ? (
+                  <>
+                    {payment || canEdit ? <DropdownMenuSeparator /> : null}
+                    <DropdownMenuItem danger onSelect={() => setArchiveOpen(true)}>
+                      <Trash2 /> {t.archiveTooltip}
+                    </DropdownMenuItem>
+                  </>
+                ) : null}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {payment ? (
-            <Button onClick={() => setPay({ open: true })}>
-              <Wallet /> {t.payTitle}
-            </Button>
-          ) : null}
-          {perms.edit || perms.changeTeacher ? (
-            <Button variant="ghost" onClick={() => setFormOpen(true)}>
-              <Pencil /> {uz.groups.formEdit}
-            </Button>
-          ) : null}
-          {canArchive ? (
-            <Button
-              variant="icon"
-              size="icon"
-              className="text-destructive-text"
-              title={t.archiveTooltip}
-              aria-label={t.archiveTooltip}
-              onClick={() => setArchiveOpen(true)}
-            >
-              <Trash2 />
-            </Button>
-          ) : null}
-        </div>
-      </div>
 
-      {/* Ma'lumot va ko'rsatkichlar — bitta karta */}
-      <Card className="space-y-5 p-5">
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 xl:grid-cols-6">
+        <div className="mt-2 flex flex-col items-center text-center">
+          <div className="grid size-22 place-items-center rounded-full bg-primary-soft text-2xl font-bold text-(--primary-text)">
+            {initials(g.name)}
+          </div>
+          <h1 className="mt-4 type-heading text-lg leading-tight break-words text-foreground">{g.name}</h1>
+          <div className="mt-1 text-body text-muted-foreground">{g.courseName}</div>
+        </div>
+
+        <dl className="mt-5 grid gap-x-6 gap-y-3.5 border-t border-border-soft pt-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1">
           <Fact label={uz.groups.teacherCard}>
-            <Link href={`/teachers/${g.teacherId}`} className="hover:text-primary" title={g.teacherName}>
+            <Link
+              href={`/teachers/${g.teacherId}`}
+              className="text-(--primary-text) hover:underline"
+              title={g.teacherName}
+            >
               {g.teacherName}
             </Link>
           </Fact>
+          <Fact label={t.schedule} hint={uz.groups.minutes(lessonMinutes(g.startTime, g.endTime))}>
+            {daysLabel(g.days)} · {g.startTime}–{g.endTime}
+          </Fact>
           <Fact label={uz.groups.roomCard}>{g.roomName ?? uz.groups.noRoom}</Fact>
-          <Fact label={uz.groups.daysCard} hint={uz.groups.perWeek(g.days.length)}>
-            {daysLabel(g.days)}
-          </Fact>
-          <Fact label={uz.groups.timeCard} hint={uz.groups.minutes(lessonMinutes(g.startTime, g.endTime))}>
-            <span className="font-mono">
-              {g.startTime} – {g.endTime}
-            </span>
-          </Fact>
-          <Fact label={t.period} hint={t.months(g.durationMonths)} className="col-span-2 sm:col-span-1">
-            <span className="font-mono">
-              {t.periodValue(formatDate(g.startDate), formatDate(groupEndDate(g.startDate, g.durationMonths)))}
-            </span>
+          <Fact label={t.period} hint={t.months(g.durationMonths)}>
+            {t.periodValue(formatDate(g.startDate), formatDate(groupEndDate(g.startDate, g.durationMonths)))}
           </Fact>
           <Fact label={t.price}>{t.priceValue(money(g.price))}</Fact>
+          {showBranch && branchName ? <Fact label={t.branch}>{branchName}</Fact> : null}
+          {g.note ? (
+            <Fact label={t.note}>
+              <span className="whitespace-pre-line">{g.note}</span>
+            </Fact>
+          ) : null}
         </dl>
 
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border-soft pt-5 sm:grid-cols-4">
-          <div className="min-w-0">
-            <dt className="truncate text-caption font-semibold text-muted-foreground">{t.kpiStudents}</dt>
-            <dd className="type-stat mt-1 leading-tight font-semibold text-foreground">
-              {cap !== null ? `${count} / ${cap}` : count}
-            </dd>
+        {attendance ? (
+          <Button className="mt-5 w-full" onClick={() => setTab("attendance")}>
+            <ClipboardCheck /> {t.takeAttendance}
+          </Button>
+        ) : null}
+      </Card>
+
+      {/* O'ng ustun: ko'rsatkichlar va bo'limlar */}
+      <div className="min-w-0 space-y-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Kpi
+            icon={<Users />}
+            hue="var(--nav-hue-violet)"
+            label={t.kpiStudents}
+            value={cap !== null ? `${count} / ${cap}` : String(count)}
+          >
             {fill !== null ? (
               <div
                 role="meter"
@@ -239,7 +296,7 @@ export function GroupProfile({
                 aria-valuemin={0}
                 aria-valuemax={cap ?? 0}
                 aria-valuenow={count}
-                className="mt-1.5 h-1.5 overflow-hidden rounded-full"
+                className="mb-1 h-1.5 overflow-hidden rounded-full"
                 style={{ background: "color-mix(in oklab, var(--primary) 16%, transparent)" }}
               >
                 <div
@@ -251,83 +308,72 @@ export function GroupProfile({
                 />
               </div>
             ) : null}
-            <div className="mt-1 text-caption break-words text-muted-foreground">
-              {t.breakdown(g.members.active, g.members.trial, g.members.paused)}
-            </div>
-          </div>
+            {t.breakdown(g.members.active, g.members.trial, g.members.paused)}
+          </Kpi>
+          {attendance ? (
+            <Kpi
+              icon={<CalendarCheck />}
+              hue="var(--nav-hue-emerald)"
+              label={t.kpiAttendance}
+              value={groupRate !== null ? uz.attendance.rate(groupRate) : "—"}
+            >
+              {t.kpiAttendanceHint(30)}
+            </Kpi>
+          ) : null}
           {finance ? (
-            <>
-              <Fact
-                big
-                label={t.kpiCollected}
-                hint={t.kpiCollectedHint(money(finance.charged), collectedPercent(finance.charged, finance.collected))}
-              >
-                {money(finance.collected)}
-                <span className="ml-1 text-caption font-normal text-muted-foreground">{uz.common.som}</span>
-              </Fact>
-              <Fact big label={t.kpiDue} tone={finance.due > 0 ? "danger" : undefined} hint={t.kpiDueHint(debtors)}>
-                {money(finance.due)}
-                <span className="ml-1 text-caption font-normal text-muted-foreground">{uz.common.som}</span>
-              </Fact>
-            </>
+            <Kpi
+              icon={<CircleDollarSign />}
+              hue="var(--nav-hue-orange)"
+              label={t.kpiDue}
+              value={`${money(finance.due)} ${uz.common.som}`}
+              danger={finance.due > 0}
+            >
+              {t.debtorsCount(debtors, count)}
+            </Kpi>
           ) : null}
-          {attendance && groupRate !== null ? (
-            <Fact big label={t.kpiAttendance} hint={t.kpiAttendanceHint(30)}>
-              {uz.attendance.rate(groupRate)}
-            </Fact>
+        </div>
+
+        <Card className="space-y-5 p-4 sm:p-5">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+            <TabsList>
+              <TabsTrigger value="students">
+                {t.tabMembers} <TabCount n={count} />
+              </TabsTrigger>
+              <TabsTrigger value="left">
+                {t.tabLeft} <TabCount n={members.left.length} />
+              </TabsTrigger>
+              {attendance ? <TabsTrigger value="attendance">{t.tabAttendance}</TabsTrigger> : null}
+            </TabsList>
+          </Tabs>
+
+          {tab === "students" ? (
+            <MembersTab
+              group={g}
+              members={members.open}
+              stats={stats}
+              attendanceOn={attendance !== null}
+              perms={perms}
+              canCreateStudent={canCreateStudent}
+              onAdd={() => setAddOpen(true)}
+              onNew={() => setNewOpen(true)}
+              onActivate={setActivate}
+              onLeave={setLeave}
+            />
           ) : null}
-        </dl>
 
-        {g.note ? (
-          <div className="border-t border-border-soft pt-4">
-            <div className="text-caption font-semibold text-muted-foreground">{t.note}</div>
-            <p className="mt-1 text-body whitespace-pre-line text-foreground">{g.note}</p>
-          </div>
-        ) : null}
-      </Card>
+          {tab === "left" ? <LeftTab members={members.left} /> : null}
 
-      <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
-        <TabsList>
-          <TabsTrigger value="students">
-            {t.tabMembers} <TabCount n={count} />
-          </TabsTrigger>
-          <TabsTrigger value="left">
-            {t.tabLeft} <TabCount n={members.left.length} />
-          </TabsTrigger>
-          {attendance ? <TabsTrigger value="attendance">{t.tabAttendance}</TabsTrigger> : null}
-        </TabsList>
-      </Tabs>
-
-      {tab === "students" ? (
-        <MembersTab
-          group={g}
-          members={members.open}
-          stats={stats}
-          attendanceOn={attendance !== null}
-          perms={perms}
-          canCreateStudent={canCreateStudent}
-          canPay={payment !== null}
-          onAdd={() => setAddOpen(true)}
-          onNew={() => setNewOpen(true)}
-          onActivate={setActivate}
-          onLeave={setLeave}
-          onPay={(student) => setPay({ open: true, student })}
-        />
-      ) : null}
-
-      {tab === "left" ? <LeftTab members={members.left} /> : null}
-
-      {tab === "attendance" && attendance ? (
-        <Card className="p-5">
-          <AttendanceTab
-            groupId={g.id}
-            data={attendance}
-            today={today}
-            canMarkToday={canMarkToday}
-            canEditPast={canEditPast}
-          />
+          {tab === "attendance" && attendance ? (
+            <AttendanceTab
+              groupId={g.id}
+              data={attendance}
+              today={today}
+              canMarkToday={canMarkToday}
+              canEditPast={canEditPast}
+            />
+          ) : null}
         </Card>
-      ) : null}
+      </div>
 
       {perms.edit || perms.changeTeacher ? (
         <GroupForm

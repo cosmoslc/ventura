@@ -101,7 +101,7 @@ export function StudentFinanceTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {summary.otherDebt > 0 ? (
         <Notice tone="warning">{t.otherDebt(`${money(summary.otherDebt)} ${uz.common.som}`)}</Notice>
       ) : null}

@@ -69,21 +69,14 @@ export function StaffView({
 
   // Kartalar — faqat bazadagi qiymatlardan (KPI hisob-kitobi E3 da, bu yerda faqat asosiy oklad)
   const stats = React.useMemo(() => {
-    const kpi = rows.filter((r) => r.salaryType === "kpi");
-    const fixedFund = rows.filter((r) => r.salaryType === "fixed").reduce((s, r) => s + r.monthlySalary, 0);
-    const kpiFund = kpi.reduce((s, r) => s + r.monthlySalary, 0);
-    const done = rows.filter((r) => formCompletion(r.customData, fields).complete).length;
+    const fund = (type: StaffRow["salaryType"]) =>
+      rows.filter((r) => r.salaryType === type).reduce((s, r) => s + r.monthlySalary, 0);
+    const fixedFund = fund("fixed");
+    const kpiFund = fund("kpi");
     return {
-      male: rows.filter((r) => r.gender === "male").length,
-      female: rows.filter((r) => r.gender === "female").length,
-      kpi: kpi.length,
-      fixed: rows.length - kpi.length,
-      fixedFund,
       kpiFund,
       total: fixedFund + kpiFund,
-      avg: rows.length ? Math.round((fixedFund + kpiFund) / rows.length) : 0,
-      done,
-      pct: rows.length ? Math.round((done / rows.length) * 100) : 0,
+      done: rows.filter((r) => formCompletion(r.customData, fields).complete).length,
     };
   }, [rows, fields]);
 
@@ -111,7 +104,7 @@ export function StaffView({
   const canAdd = perms.create && perms.assign;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={uz.staff.title}
         description={uz.staff.subtitle}
@@ -130,36 +123,13 @@ export function StaffView({
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          tone={1}
-          icon={<Users />}
-          label={uz.staff.total}
-          value={uz.staff.totalUnit(rows.length)}
-          hint={
-            <>
-              <div>{uz.staff.genders(stats.male, stats.female)}</div>
-              <div>{uz.staff.salaryKinds(stats.fixed, stats.kpi)}</div>
-            </>
-          }
-        />
-        <StatCard
-          tone={2}
-          icon={<Wallet />}
-          label={uz.staff.fund}
-          value={`${money(stats.total)} ${uz.common.som}`}
-          hint={
-            <>
-              <div>{uz.staff.fundFixed(money(stats.fixedFund))}</div>
-              <div>{uz.staff.fundAvg(money(stats.avg))}</div>
-            </>
-          }
-        />
+        <StatCard tone={1} icon={<Users />} label={uz.staff.total} value={uz.staff.totalUnit(rows.length)} />
+        <StatCard tone={2} icon={<Wallet />} label={uz.staff.fund} value={`${money(stats.total)} ${uz.common.som}`} />
         <StatCard
           tone={3}
           icon={<Award />}
           label={uz.staff.kpiFund}
           value={`${money(stats.kpiFund)} ${uz.common.som}`}
-          hint={<div>{uz.staff.kpiFundHint(stats.kpi)}</div>}
         />
         <StatCard
           tone={4}
@@ -177,12 +147,6 @@ export function StaffView({
               setFormFilter((f) => (f === "completed" ? "all" : "completed"));
             }
           }}
-          hint={
-            <>
-              <div>{uz.staff.formDonePct(stats.pct)}</div>
-              <div>{uz.staff.formIncomplete(rows.length - stats.done)}</div>
-            </>
-          }
         />
       </div>
 

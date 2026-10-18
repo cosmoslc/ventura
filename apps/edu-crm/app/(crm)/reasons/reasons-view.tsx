@@ -59,7 +59,7 @@ export function ReasonsView({ categories, config }: { categories: Category[]; co
   return (
     <div>
       <PageHeader title={t.title} description={t.description} />
-      <div className="space-y-8">
+      <div className="space-y-5">
         {SECTIONS.map((section) => {
           const items = categories.filter((c) => c.feature === section);
           if (!items.length) return null;

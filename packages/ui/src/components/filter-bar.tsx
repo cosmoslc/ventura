@@ -60,6 +60,7 @@ export function FilterSelect({
   /** Kenglik (standart `sm:w-48`) */
   className?: string;
 }) {
+  // 12 tadan ko'p bandda qidiruv Select'ning o'zida chiqadi
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger className={cn("w-full sm:w-48", className)} aria-label={label} title={label}>

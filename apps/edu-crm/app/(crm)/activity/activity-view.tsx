@@ -146,7 +146,7 @@ export function ActivityView({
   const toggle = (id: string) => setOpen((cur) => (cur === id ? null : id));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={t.title} description={t.description} />
       <Integrity />
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}

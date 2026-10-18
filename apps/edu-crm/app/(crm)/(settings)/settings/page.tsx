@@ -6,9 +6,18 @@ import { CenterSettingsView } from "./settings-view";
 
 export const metadata = { title: uz.settingsCenter.title };
 
-/** Markaz sozlamalari (E6a, ADR 0036): aloqa, ijtimoiy tarmoqlar, ish vaqti. Nom va logotip — Ventura panelida. */
+/** Markaz ma'lumotlari (E6a, ADR 0036): brending (ko'rish uchun), aloqa, ish vaqti. Nom va logotip — Ventura panelida. */
 export default async function CenterSettingsPage() {
   const { tenant } = await requirePage("students", "/settings");
   const settings = await getCenterSettings(getTenantDb(tenant));
-  return <CenterSettingsView settings={settings} centerName={tenant.name} />;
+  // Platforma manzili: mijozning haqiqiy domeni (localhost emas), bo'lmasa — birinchisi
+  const host = tenant.hosts.find((h) => h.includes(".") && !/^\d/.test(h)) ?? tenant.hosts[0];
+  return (
+    <CenterSettingsView
+      settings={settings}
+      centerName={tenant.name}
+      platformUrl={host ? `https://${host}` : null}
+      logoUrl={tenant.brand.logoUrl ?? null}
+    />
+  );
 }

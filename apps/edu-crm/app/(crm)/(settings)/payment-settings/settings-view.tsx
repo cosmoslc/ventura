@@ -35,9 +35,9 @@ export function PaymentSettingsView({
   receipt: React.ComponentProps<typeof ReceiptCard>;
 }) {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader title={t.title} description={t.description} />
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <MethodsCard methods={methods} canEdit={canMethods} />
         <BillingCard settings={settings} canEdit={canBilling} />
       </div>

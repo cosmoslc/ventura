@@ -73,6 +73,7 @@ export function StudentsTable<R>({
   studentHeader,
   columns,
   selection,
+  numbered = false,
   minWidth = 860,
   header,
   footer,
@@ -86,6 +87,8 @@ export function StudentsTable<R>({
   studentHeader: React.ReactNode;
   columns: readonly StudentColumn<R>[];
   selection?: StudentSelection;
+  /** O'quvchidan oldin tartib raqami (№) ustuni */
+  numbered?: boolean;
   /** Jadvalning eng kichik kengligi (px): undan tor ekranda gorizontal siljiydi */
   minWidth?: number;
   /** Jadval ustidagi qism (sarlavha, tablar, filtr) — kartaning ichida */
@@ -119,6 +122,7 @@ export function StudentsTable<R>({
                       />
                     </Th>
                   ) : null}
+                  {numbered ? <Th className="w-12">№</Th> : null}
                   <Th>{studentHeader}</Th>
                   {columns.map((c) => (
                     <Th key={c.key} className={cn(c.align && ALIGN[c.align], c.headClassName)}>
@@ -143,6 +147,7 @@ export function StudentsTable<R>({
                           />
                         </Td>
                       ) : null}
+                      {numbered ? <Td className="w-12 font-mono text-muted-foreground">{i + 1}</Td> : null}
                       <Td>
                         <StudentCell {...s} />
                       </Td>
@@ -166,34 +171,29 @@ export function StudentsTable<R>({
   );
 }
 
-/** Guruh (yoki boshqa) bo'yicha ajratilgan qutining sarlavhasi: nom (ixtiyoriy havola), qisqa izoh, o'ngda jami */
-export function GroupBoxHeader({
-  title,
-  href,
+/** Guruh "qutichasi" (o'quvchilar jadvalidagi kabi): nom, ixtiyoriy izoh (o'qituvchi), guruh sahifasiga havola */
+export function GroupChip({
+  id,
+  name,
   sub,
-  aside,
+  muted,
 }: {
-  title: React.ReactNode;
-  href?: string;
-  sub?: React.ReactNode;
-  aside?: React.ReactNode;
+  id: string;
+  name: string;
+  sub?: string | null;
+  muted?: boolean;
 }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-border-soft px-5 py-3.5">
-      <div className="min-w-0">
-        <div className="truncate text-body font-bold text-foreground">
-          {href ? (
-            <Link href={href} className="hover:text-primary">
-              {title}
-            </Link>
-          ) : (
-            title
-          )}
-        </div>
-        {sub ? <div className="text-caption text-muted-foreground">{sub}</div> : null}
-      </div>
-      {aside ? <div className="text-right text-body font-bold whitespace-nowrap text-foreground">{aside}</div> : null}
-    </div>
+    <Link
+      href={`/groups/${id}`}
+      className={cn(
+        "inline-block max-w-full truncate rounded-badge border border-border-soft bg-muted px-2 py-0.5 text-caption hover:border-(--ring-border)",
+        muted && "opacity-60",
+      )}
+    >
+      <span className="font-semibold text-foreground">{name}</span>
+      {sub ? <span className="text-muted-foreground"> · {sub}</span> : null}
+    </Link>
   );
 }
 

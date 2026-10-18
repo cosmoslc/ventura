@@ -144,7 +144,7 @@ export function TeacherProfile({
         : tt.notSet;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft pb-5">
         <div className="flex min-w-0 items-center gap-3">

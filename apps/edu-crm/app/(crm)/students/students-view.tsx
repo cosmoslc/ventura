@@ -1,23 +1,25 @@
 "use client";
 
 import {
+  Archive,
   ArchiveRestore,
   ClipboardList,
   GraduationCap,
   Plus,
   RotateCcw,
   Search,
-  Snowflake,
   UserCheck,
+  UserX,
   Users,
+  Wallet,
 } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { FilterBar } from "@ventura/ui/filter-bar";
 import { Input } from "@ventura/ui/input";
+import { cn } from "@ventura/ui/lib/utils";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { Pagination } from "@ventura/ui/pagination";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
@@ -35,7 +37,7 @@ import { FieldsModal } from "../fields-modal";
 import { saveStudentFieldsAction } from "./actions";
 import { type BulkPerms, StudentsBulkBar } from "./bulk-actions";
 import type { StudentRow } from "./data";
-import { StudentsTable } from "../student-table";
+import { GroupChip, StudentsTable } from "../student-table";
 import { StatusBadge, StudentMenu, type StudentPerms } from "./student-dialogs";
 import { useQuickOpen } from "../use-quick-open";
 import { StudentForm } from "./student-form";
@@ -117,6 +119,14 @@ export function StudentsView({
 
   const count = (s: StudentRow["status"]) => rows.filter((r) => r.status === s).length;
   const withGroups = rows.filter((r) => r.groups.length > 0).length;
+  // Qarzdorlar: umumiy balansi manfiy (moliya ko'rinmasa — balans yo'q, karta chiqmaydi)
+  const debtors = rows.some((r) => r.balance !== null)
+    ? rows.reduce(
+        (acc, r) =>
+          r.balance !== null && r.balance < 0 ? { count: acc.count + 1, total: acc.total - r.balance } : acc,
+        { count: 0, total: 0 },
+      )
+    : null;
 
   const q = query.trim().toLowerCase();
   const digits = q.replace(/\D/g, "");
@@ -180,7 +190,7 @@ export function StudentsView({
   }
 
   return (
-    <div className={selectedRows.length ? "space-y-6 pb-20" : "space-y-6"}>
+    <div className={selectedRows.length ? "space-y-4 pb-20" : "space-y-4"}>
       <PageHeader
         title={uz.students.title}
         actions={
@@ -200,32 +210,36 @@ export function StudentsView({
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          tone={1}
-          icon={<Users />}
-          label={uz.students.statTotal}
-          value={uz.common.count(rows.length)}
-          hint={
-            <div>
-              {uz.students.withGroups(withGroups)} • {uz.students.withoutGroups(rows.length - withGroups)}
-            </div>
-          }
-        />
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-4 sm:grid-cols-2",
+          debtors !== null && archived ? "xl:grid-cols-5" : "lg:grid-cols-4",
+        )}
+      >
+        <StatCard tone={1} icon={<Users />} label={uz.students.statTotal} value={uz.common.count(rows.length)} />
         <StatCard
           tone={2}
           icon={<UserCheck />}
           label={uz.students.statActive}
           value={uz.common.count(count("active"))}
-          hint={<div>{uz.students.trialCount(count("trial"))}</div>}
         />
         <StatCard
           tone={4}
-          icon={<Snowflake />}
-          label={uz.students.statPaused}
-          value={uz.common.count(count("paused"))}
-          hint={<div>{uz.students.leftCount(count("left"))}</div>}
+          icon={<UserX />}
+          label={uz.students.statNoGroup}
+          value={uz.common.count(rows.length - withGroups)}
         />
+        {debtors !== null ? (
+          <StatCard tone={3} icon={<Wallet />} label={uz.students.statDebtors} value={uz.common.count(debtors.count)} />
+        ) : null}
+        {archived ? (
+          <StatCard
+            tone={1}
+            icon={<Archive />}
+            label={uz.students.statArchived}
+            value={uz.common.count(archived.length)}
+          />
+        ) : null}
       </div>
 
       <FilterBar standalone>
@@ -355,14 +369,7 @@ export function StudentsView({
               r.groups.length ? (
                 <div className="flex max-w-72 flex-wrap gap-1">
                   {r.groups.map((g) => (
-                    <Link
-                      key={g.id}
-                      href={`/groups/${g.id}`}
-                      className="rounded-badge border border-border-soft bg-muted px-2 py-0.5 text-caption hover:border-(--ring-border)"
-                    >
-                      <span className="font-semibold text-foreground">{g.name}</span>
-                      <span className="text-muted-foreground"> · {g.teacher ?? uz.students.noTeacher}</span>
-                    </Link>
+                    <GroupChip key={g.id} id={g.id} name={g.name} sub={g.teacher ?? uz.students.noTeacher} />
                   ))}
                 </div>
               ) : (

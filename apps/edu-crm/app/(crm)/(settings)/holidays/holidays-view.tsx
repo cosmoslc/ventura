@@ -76,7 +76,7 @@ export function HolidaysView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title={uz.holidays.title}
         actions={
