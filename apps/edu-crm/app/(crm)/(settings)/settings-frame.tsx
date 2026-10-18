@@ -7,6 +7,7 @@ import {
   CalendarOff,
   DoorOpen,
   type LucideIcon,
+  MessageSquareText,
   Search,
   ShieldCheck,
   UserRound,
@@ -26,6 +27,7 @@ const ICONS: Record<SettingsIcon, LucideIcon> = {
   holidays: CalendarOff,
   payments: Wallet,
   notifications: Bell,
+  sms: MessageSquareText,
   profile: UserRound,
   security: ShieldCheck,
 };

@@ -330,6 +330,26 @@ const REGISTRY: Record<string, Def> = {
     (i) => SETTING_LABEL[i.targetId ?? ""] ?? null,
     () => null,
   ),
+  // SMS (docs/EDU-CRM-SMS.md): kalit jurnalga yozilmaydi — faqat email, soatlar va test raqami
+  "sms.connect": simple(
+    "settings",
+    "Eskiz'ni uladi",
+    (i) => str(i.m.after),
+    () => null,
+  ),
+  "sms.disconnect": simple(
+    "settings",
+    "Eskiz'ni uzdi",
+    (i) => str(i.m.email),
+    () => null,
+  ),
+  "sms.settings": simple("settings", "SMS sozlamalarini o'zgartirdi", undefined, () => null),
+  "sms.test": simple(
+    "settings",
+    "test SMS yubordi",
+    (i) => str(i.m.phone),
+    () => null,
+  ),
   "finance_opening_balance.update": simple("settings", "boshlang'ich kapitalni o'zgartirdi", undefined, () => null),
   "finance_plan.update": simple(
     "settings",

@@ -162,6 +162,13 @@
       "when": 1792227818160,
       "tag": "0022_leave_with_debt",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792287594463,
+      "tag": "0023_s1_sms_provider",
+      "breakpoints": true
     }
   ]
 }
