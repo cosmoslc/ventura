@@ -167,6 +167,7 @@ export const uz = {
       features: "Bo'limlar",
       domains: "Domenlar",
       owner: "Ega va sirlar",
+      secrets: "Sirlar",
       danger: "Xavfli hudud",
     },
     trash: "Savatga o'tkazish",
@@ -341,7 +342,58 @@ export const uz = {
       "deploy.failed": "Deploy yiqildi",
       "database.create": "Baza yaratildi",
       "database.reveal": "Baza manzili ko'rildi",
+      "secret.reveal": "Loyiha siri ko'rildi",
+      "secret.update": "Loyiha siri o'zgartirildi",
     } as Record<string, string>,
+  },
+
+  /** Loyiha sirlari (ADR 0059) — faqat super admin */
+  projectSecrets: {
+    intro:
+      "Faqat super adminga ko'rinadi. Har ochish va o'zgarish audit jurnaliga yoziladi. Yangi qiymat serverga keyingi deploy'da yetadi.",
+    sharedDbHint: "Loyiha umumiy bazada: baza paroli serverga tegishli — Bazalar sahifasida.",
+    labels: {
+      telegram_bot_token: "Telegram bot tokeni",
+      owner_password: "Ega vaqtinchalik paroli",
+      db_password: "Baza paroli",
+      auth_secret: "Sessiya kaliti",
+      sms_relay_key: "SMS relay kaliti",
+    } as Record<string, string>,
+    hints: {
+      telegram_bot_token: "Markaz botining @BotFather tokeni — xodimlarga kirish kodi shu orqali",
+      owner_password: "Birinchi direktor yaratilganda beriladigan parol (keyin u o'zi almashtiradi)",
+      db_password: "Markazning alohida bazasi foydalanuvchisi paroli",
+      auth_secret: "Markaz sessiyalari va imzolar kaliti",
+      sms_relay_key: "Ventura SMS paketi so'rovlarini imzolash kaliti",
+    } as Record<string, string>,
+    effects: {
+      db_password:
+        "Yangi parol keyingi deploy'da bazaga ham, ilovaga ham yoziladi. Deploy'gacha ilova eski parol bilan ishlayveradi.",
+      auth_secret:
+        "Deploy'dan keyin markazdagi hamma xodim tizimdan chiqib ketadi, o'z Eskiz kaliti qayta ulanishi kerak bo'ladi.",
+      sms_relay_key: "Deploy'gacha markaz Ventura SMS paketidan foydalana olmaydi (imzo mos kelmaydi).",
+    } as Record<string, string>,
+    invalid: {
+      telegram_bot_token: "Token @BotFather bergan ko'rinishda bo'lishi kerak (123456:ABC...)",
+      owner_password: "Kamida 8 belgi, bo'shliqsiz",
+      db_password: "24–128 belgi: lotin harflari, raqam, _ va -",
+      auth_secret: "Kamida 32 belgi, bo'shliqsiz",
+      sms_relay_key: "Kamida 32 belgi, bo'shliqsiz",
+    } as Record<string, string>,
+    invalidDefault: "Qiymat noto'g'ri",
+    unknown: "Noma'lum sir",
+    danger: "Ehtiyot",
+    missing: "Saqlanmagan",
+    show: "Ko'rsatish",
+    hide: "Yashirish",
+    copy: "Nusxalash",
+    copied: "Nusxalandi",
+    editTitle: (label: string) => `${label}: yangi qiymat`,
+    newValue: "Yangi qiymat",
+    generate: "Tasodifiy yaratish",
+    deployHint: "Serverga keyingi deploy'da yoziladi",
+    dangerTitle: "Rostdan almashtirasizmi?",
+    saved: "Sir saqlandi",
   },
 
   /** Bazalar (ADR 0057) */
