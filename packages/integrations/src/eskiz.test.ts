@@ -114,4 +114,23 @@ describe("createEskiz", () => {
     await expect(eskiz.send({ phone: "123", text: "x" })).rejects.toThrow("Telefon raqami noto'g'ri");
     expect(calls).toHaveLength(0);
   });
+
+  it("shablon yuboradi va ro'yxatini o'qiydi", async () => {
+    const calls = fakeEskiz({
+      "POST /user/template": () => ({ json: { template: "Salom {ism}" } }),
+      "GET /user/templates": () => ({
+        json: {
+          success: true,
+          result: [
+            { id: 1, template: "", original_text: "Salom {ism}", status: "service" },
+            { id: 2, template: "", original_text: "", status: "moderation" },
+          ],
+        },
+      }),
+    });
+    const eskiz = createEskiz({ email: "a@b.uz", secret: "K", token: "T", api: API });
+    await eskiz.submitTemplate("Salom {ism}");
+    expect(calls[0]!.body).toEqual({ template: "Salom {ism}" });
+    expect(await eskiz.templates()).toEqual([{ id: 1, text: "Salom {ism}", status: "service" }]);
+  });
 });

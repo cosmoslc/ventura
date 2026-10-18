@@ -43,6 +43,13 @@ export interface EskizUser {
   status: string | null;
 }
 
+/** Eskiz'dagi shablon: `status` — moderation, inproccess, service, reklama, rejected */
+export interface EskizTemplate {
+  id: number;
+  text: string;
+  status: string;
+}
+
 export interface EskizSendResult {
   id: string;
   status: string;
@@ -151,6 +158,19 @@ export function createEskiz(config: EskizConfig) {
         .map((x) => (typeof x === "string" ? x : (str((x as Json)?.nickname) ?? str((x as Json)?.name))))
         .filter((x): x is string => !!x);
       return [...new Set(names)];
+    },
+    /** Shablonni moderatsiyaga yuboradi. Javobda id yo'q — keyin `templates()` dan matni bo'yicha topiladi */
+    async submitTemplate(text: string): Promise<void> {
+      await call("POST", "/user/template", { template: text });
+    },
+    async templates(): Promise<EskizTemplate[]> {
+      const r = (await call("GET", "/user/templates")).result;
+      const list: unknown[] = Array.isArray(r) ? r : [];
+      return list.flatMap((x) => {
+        const t = x as Json;
+        const text = str(t.original_text) ?? str(t.template);
+        return typeof t.id === "number" && text ? [{ id: t.id, text, status: str(t.status) ?? "moderation" }] : [];
+      });
     },
     async send(input: { phone: string; text: string; from?: string; callbackUrl?: string }): Promise<EskizSendResult> {
       const phone = eskizPhone(input.phone);

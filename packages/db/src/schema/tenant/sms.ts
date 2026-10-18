@@ -1,5 +1,16 @@
 import { sql } from "drizzle-orm";
-import { boolean, check, pgTable, primaryKey, smallint, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  check,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  smallint,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { tenantId, tenantPolicy } from "./columns";
 
@@ -43,5 +54,54 @@ export const smsProvider = pgTable(
     check("sms_provider_email_len", sql`${t.email} is null or length(${t.email}) between 3 and 200`),
     check("sms_provider_sender_len", sql`${t.sender} is null or length(${t.sender}) between 1 and 20`),
     tenantPolicy("sms_provider"),
+  ],
+);
+
+/*
+ * SMS shablonlari (S2). `kind` — qaysi avto-SMS uchun (S4); `moderation` — Eskiz holati: avto-SMS faqat `approved`
+ * shablon bilan ketadi. Eskiz yuborishda id qaytarmaydi — sinxronlashda matni bo'yicha topilib `provider_template_id`
+ * yoziladi. O'chirilgan shablon arxivlanadi (yuborilgan xabarlar unga bog'liq bo'ladi — S3).
+ */
+
+export const SMS_TEMPLATE_KIND_VALUES = [
+  "payment_received",
+  "payment_reminder",
+  "debt_warning",
+  "absence",
+  "salary_paid",
+  "birthday",
+  "custom",
+] as const;
+
+export const SMS_MODERATION_VALUES = ["draft", "moderation", "approved", "advert", "rejected"] as const;
+
+export const smsTemplates = pgTable(
+  "sms_templates",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tenantId: tenantId(),
+    kind: text("kind", { enum: SMS_TEMPLATE_KIND_VALUES }).notNull(),
+    name: text("name").notNull(),
+    body: text("body").notNull(),
+    /** Namunadagi qismlar soni (ro'yxatda ko'rsatish uchun) */
+    parts: smallint("parts").notNull().default(1),
+    providerTemplateId: integer("provider_template_id"),
+    moderation: text("moderation", { enum: SMS_MODERATION_VALUES }).notNull().default("draft"),
+    /** Eskiz'ga yuborilgan matn — keyin o'zgarsa qayta moderatsiya kerak */
+    submittedBody: text("submitted_body"),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }),
+    createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("sms_templates_kind_idx")
+      .on(t.kind)
+      .where(sql`${t.archivedAt} is null`),
+    check("sms_templates_name_len", sql`length(${t.name}) between 1 and 80`),
+    check("sms_templates_body_len", sql`length(${t.body}) between 1 and 1000`),
+    check("sms_templates_parts", sql`${t.parts} between 1 and 20`),
+    tenantPolicy("sms_templates"),
   ],
 );

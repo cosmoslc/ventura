@@ -7,6 +7,7 @@ import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
 import { money } from "@/lib/format";
 import { uz } from "@/lib/uz";
+import { SmsNav } from "./sms-nav";
 
 const t = uz.sms;
 
@@ -51,6 +52,7 @@ export function SmsView({
   return (
     <div className="space-y-section">
       <PageHeader title={t.title} description={t.description} actions={settings} />
+      <SmsNav />
       {error ? <Notice tone="danger">{t.eskizError(error)}</Notice> : null}
       <div className="grid gap-grid sm:grid-cols-3">
         <StatCard icon={<Wallet />} tone={1} label={t.balance} value={balance == null ? "—" : money(balance)} />

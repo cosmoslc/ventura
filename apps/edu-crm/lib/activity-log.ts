@@ -350,6 +350,31 @@ const REGISTRY: Record<string, Def> = {
     (i) => str(i.m.phone),
     () => null,
   ),
+  "sms_template.create": simple(
+    "settings",
+    "SMS shablon qo'shdi",
+    (i) => str(i.m.name),
+    () => null,
+  ),
+  "sms_template.update": simple(
+    "settings",
+    "SMS shablonni tahrirladi",
+    (i) => str(i.m.name),
+    () => null,
+  ),
+  "sms_template.archive": simple(
+    "settings",
+    "SMS shablonni o'chirdi",
+    (i) => str(i.m.name),
+    () => null,
+  ),
+  "sms_template.submit": simple(
+    "settings",
+    "SMS shablonni moderatsiyaga yubordi",
+    (i) => str(i.m.name),
+    () => null,
+  ),
+  "sms_template.presets": simple("settings", "tayyor SMS andozalarni qo'shdi", undefined, () => null),
   "finance_opening_balance.update": simple("settings", "boshlang'ich kapitalni o'zgartirdi", undefined, () => null),
   "finance_plan.update": simple(
     "settings",

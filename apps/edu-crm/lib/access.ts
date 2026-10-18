@@ -68,6 +68,7 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/coins": ["bonuses.manage"],
   "/sms": ["settings.sms_gateways"],
   "/sms/settings": ["settings.sms_gateways"],
+  "/sms/templates": ["settings.sms_gateways"],
   "/reports": ["dashboard.view", "dashboard.financial_stats", "dashboard.conversion_stats"],
   // Bugungi ishlar (ADR 0027): bloklaridan birortasini ko'ra oladigan xodimga ochiq
   "/bugun": [

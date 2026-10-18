@@ -169,6 +169,13 @@
       "when": 1792287594463,
       "tag": "0023_s1_sms_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792307307775,
+      "tag": "0024_s2_sms_templates",
+      "breakpoints": true
     }
   ]
 }
