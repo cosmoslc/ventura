@@ -343,7 +343,7 @@ export const uz = {
     disk: (used: number, total: number, pct: number) => `disk ${used} / ${total} GB (${pct}%)`,
     updated: (ago: string) => `yangilandi ${ago}`,
     noList:
-      "Bazalar ro'yxatini olib bo'lmadi: serverdagi yordamchi eski. Serverda setup.sh ni qayta ishga tushiring — u ventura-db ni yangilaydi.",
+      "Bazalar ro'yxatini olib bo'lmadi: serverdagi yordamchi eski. Server sahifasidagi \"Serverni yangilash\" buyrug'ini serverda bir marta ishga tushiring.",
     actionStatus: (name: string, status: string, message?: string) =>
       status === "queued" || status === "running"
         ? `"${name}" bazasi yaratilmoqda...`
@@ -578,6 +578,12 @@ export const uz = {
     setupStep2:
       "Quyidagi buyruqni nusxalab, server terminaliga qo'ying va Enter bosing. Skript Node.js, pnpm, PM2, nginx va PostgreSQL ni o'rnatadi va panel kalitini qo'yadi.",
     setupStep3: 'Skript tugagach shu sahifada "Tekshirish"ni bosing.',
+    updateTitle: "Serverni yangilash",
+    updateHint:
+      "setup.sh ning yangi versiyasini qayta ishga tushirish (masalan yangi yordamchilar uchun). Xavfsiz: bor narsa qayta o'rnatilmaydi, ilovalar to'xtamaydi.",
+    updateShow: "Ko'rsatish",
+    updateHide: "Yashirish",
+    updateStep3: "Skript tugagach bir daqiqa kuting — yangi ma'lumotlar (masalan bazalar) shu panelda paydo bo'ladi.",
     copyCommand: "Buyruqni nusxalash",
     copied: "Nusxalandi",
     publicKey: "Ochiq kalit",

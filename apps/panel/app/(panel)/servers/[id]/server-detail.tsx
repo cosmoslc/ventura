@@ -167,7 +167,7 @@ export function ServerDetailView({
         <Notice tone="warning">{s.lastError}</Notice>
       ) : null}
 
-      {canManage && (neverOnline || s.status !== "ready") ? <SetupCard server={s} /> : null}
+      {canManage ? <SetupCard server={s} update={!neverOnline && s.status === "ready"} /> : null}
 
       {m ? (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -423,8 +423,12 @@ function ProcessRow({
   );
 }
 
-/** Yangi yoki sozlanmagan server: bir martalik o'rnatish ko'rsatmasi va nusxalanadigan buyruq */
-function SetupCard({ server: s }: { server: ServerDetail }) {
+/**
+ * Yangi yoki sozlanmagan server: bir martalik o'rnatish ko'rsatmasi va nusxalanadigan buyruq. Tayyor serverda —
+ * yig'ilgan holda "Yangilash": setup.sh yangi versiyasini qayta ishga tushirish (masalan ventura-db yangilanganda).
+ */
+function SetupCard({ server: s, update = false }: { server: ServerDetail; update?: boolean }) {
+  const [open, setOpen] = React.useState(!update);
   const [copied, setCopied] = React.useState(false);
   const [pending, startTransition] = React.useTransition();
 
@@ -442,35 +446,42 @@ function SetupCard({ server: s }: { server: ServerDetail }) {
     <Card>
       <CardHeader>
         <div>
-          <CardTitle>{uz.servers.setupTitle}</CardTitle>
-          <CardDescription>{uz.servers.setupHint}</CardDescription>
+          <CardTitle>{update ? uz.servers.updateTitle : uz.servers.setupTitle}</CardTitle>
+          <CardDescription>{update ? uz.servers.updateHint : uz.servers.setupHint}</CardDescription>
         </div>
+        {update ? (
+          <Button variant="ghost" size="sm" onClick={() => setOpen((o) => !o)}>
+            {open ? uz.servers.updateHide : uz.servers.updateShow}
+          </Button>
+        ) : null}
       </CardHeader>
-      <CardContent className="space-y-4">
-        <ol className="list-decimal space-y-3 pl-5 text-body text-foreground">
-          <li>
-            {uz.servers.setupStep1}{" "}
-            <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-caption">
-              ssh root@{s.host}
-              {s.sshPort !== 22 ? ` -p ${s.sshPort}` : ""}
+      {open ? (
+        <CardContent className="space-y-4">
+          <ol className="list-decimal space-y-3 pl-5 text-body text-foreground">
+            <li>
+              {uz.servers.setupStep1}{" "}
+              <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-caption">
+                ssh root@{s.host}
+                {s.sshPort !== 22 ? ` -p ${s.sshPort}` : ""}
+              </code>
+            </li>
+            <li className="space-y-2">
+              <p>{uz.servers.setupStep2}</p>
+              <Button onClick={copy} disabled={pending}>
+                {copied ? <Check /> : <Copy />} {copied ? uz.servers.copied : uz.servers.copyCommand}
+              </Button>
+            </li>
+            <li>{update ? uz.servers.updateStep3 : uz.servers.setupStep3}</li>
+          </ol>
+          <div>
+            <div className="mb-1 text-caption font-semibold text-muted-foreground">{uz.servers.publicKey}</div>
+            <code className="block rounded-control border border-border-soft bg-muted px-3 py-2 font-mono text-caption break-all text-foreground">
+              {s.publicKey}
             </code>
-          </li>
-          <li className="space-y-2">
-            <p>{uz.servers.setupStep2}</p>
-            <Button onClick={copy} disabled={pending}>
-              {copied ? <Check /> : <Copy />} {copied ? uz.servers.copied : uz.servers.copyCommand}
-            </Button>
-          </li>
-          <li>{uz.servers.setupStep3}</li>
-        </ol>
-        <div>
-          <div className="mb-1 text-caption font-semibold text-muted-foreground">{uz.servers.publicKey}</div>
-          <code className="block rounded-control border border-border-soft bg-muted px-3 py-2 font-mono text-caption break-all text-foreground">
-            {s.publicKey}
-          </code>
-        </div>
-        <p className="text-caption text-muted-foreground">{uz.servers.firewall}</p>
-      </CardContent>
+          </div>
+          <p className="text-caption text-muted-foreground">{uz.servers.firewall}</p>
+        </CardContent>
+      ) : null}
     </Card>
   );
 }
