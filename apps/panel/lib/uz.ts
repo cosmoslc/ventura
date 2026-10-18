@@ -184,6 +184,7 @@ export const uz = {
     ownerPhone: "Ega telefoni",
     ownerNameInvalid: "Ega ismini kiriting (kamida 2 belgi)",
     ownerPhoneInvalid: "Ega telefoni noto'g'ri: 9 ta raqam, masalan 90 123 45 67",
+    telegramTokenInvalid: "Bot tokeni noto'g'ri: @BotFather bergan to'liq token, masalan 123456789:AAH...",
     ownerLegacy: "Eski loyiha: ega telefoni kiritilmagan — direktor deploy paytida yaratilmaydi",
     ownerPassword: "Vaqtinchalik parol",
     ownerSaved: "Parol shifrlangan holda saqlangan va bu yerda ko'rsatilmaydi",

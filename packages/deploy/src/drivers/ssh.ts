@@ -6,6 +6,7 @@ import type { PanelDb } from "@ventura/db";
 import { apps, domains, projectFeatures, projects, servers, templates } from "@ventura/db/schema/panel";
 import { readSecret, putSecret } from "@ventura/security";
 import {
+  TELEGRAM_BOT_TOKEN_RE,
   type Tenant,
   emptyRegistry,
   emptySecrets,
@@ -474,7 +475,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     const project = { type: "project", id: p.projectId };
     const databaseUrl = `postgres://${dbName}:${dbPassword}@127.0.0.1:5432/${dbName}`;
     const authSecret = await ensureSecret(project, "auth_secret");
-    const [ownerPassword, botToken] = await Promise.all([
+    const [ownerPassword, storedBotToken] = await Promise.all([
       readSecret(db, project, "owner_password"),
       readSecret(db, project, "telegram_bot_token"),
     ]);
@@ -501,6 +502,11 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
           "Serverdagi maxfiy sozlamalar fayli (tenant-secrets.json) buzilgan — qo'lda tekshirish kerak",
         );
       }
+    }
+    // Noto'g'ri token yozilmaydi: ilova faylni butunlay rad etadi va shu serverdagi HAMMA mijoz ishlamay qoladi
+    const botToken = storedBotToken && TELEGRAM_BOT_TOKEN_RE.test(storedBotToken) ? storedBotToken : null;
+    if (storedBotToken && !botToken) {
+      log("Diqqat: loyihadagi Telegram bot tokeni noto'g'ri (@BotFather formati emas) — yozilmadi.", "info");
     }
     secrets.tenants[p.slug] = { databaseUrl, authSecret, ...(botToken ? { telegramBotToken: botToken } : {}) };
     await p.session.writeFile(`${file}.tmp`, `${JSON.stringify(secrets, null, 2)}\n`, 0o600);
