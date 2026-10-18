@@ -9,7 +9,7 @@ export const template = {
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.5.0",
+  version: "0.6.0",
 } satisfies TemplateInfo;
 
 export const features = [
@@ -19,6 +19,7 @@ export const features = [
     name: "O'quvchilar",
     group: "Asos",
     type: "permanent",
+    description: "O'quvchilar bazasi, bugungi ishlar, arxiv, faoliyat jurnali va markaz sozlamalari",
     routes: ["/api/students"],
     nav: [
       // Bugungi ishlar (ADR 0027) — bir nechta bo'lim bloklari; har blok o'z ruxsati va bo'limi bilan
@@ -36,6 +37,7 @@ export const features = [
     name: "Kurslar",
     group: "Asos",
     type: "core",
+    description: "Kurslar katalogi va narxlar",
     routes: ["/api/courses"],
     nav: [{ label: "Kurslar", href: "/courses", section: "O'quv" }],
   },
@@ -44,6 +46,7 @@ export const features = [
     name: "O'qituvchilar",
     group: "Asos",
     type: "core",
+    description: "O'qituvchilar, xodimlar va lavozimlar (ruxsatlar)",
     routes: ["/api/teachers"],
     nav: [
       { label: "O'qituvchilar", href: "/teachers" },
@@ -56,6 +59,7 @@ export const features = [
     name: "Guruhlar",
     group: "Asos",
     type: "core",
+    description: "Guruhlar, a'zolik, dars jadvali va xonalar",
     requires: ["students", "courses", "teachers"],
     routes: ["/api/groups"],
     nav: [
@@ -78,6 +82,7 @@ export const features = [
     name: "Dam olish kunlari",
     group: "Davomat",
     type: "regular",
+    description: "Bayram va dam olish kunlari — dars bo'lmaydigan kunlar",
     routes: ["/api/holidays"],
     nav: [{ label: "Dam olish kunlari", href: "/holidays", section: "Ofis" }],
   },
@@ -86,6 +91,7 @@ export const features = [
     name: "Davomat",
     group: "Davomat",
     type: "regular",
+    description: "O'quvchilar va xodimlar davomati",
     requires: ["groups", "holidays"],
     routes: ["/api/attendance", "/api/attendance-settings"],
     nav: [
@@ -100,6 +106,7 @@ export const features = [
     name: "To'lovlar",
     group: "Moliya",
     type: "core",
+    description: "To'lovlar, chegirmalar, chek, to'lov sozlamalari va pul amallari tarixi",
     requires: ["students"],
     routes: ["/api/payments"],
     nav: [
@@ -113,6 +120,7 @@ export const features = [
     name: "Qarzdorlar",
     group: "Moliya",
     type: "regular",
+    description: "Qarzdorlar ro'yxati, eslatmalar va izohlar",
     requires: ["payments"],
     routes: ["/api/debtors"],
     nav: [{ label: "Qarzdorlar", href: "/debtors" }],
@@ -122,6 +130,7 @@ export const features = [
     name: "Xarajatlar",
     group: "Moliya",
     type: "regular",
+    description: "Xarajatlar, toifalar, xarajat rejasi va qo'shimcha daromadlar",
     routes: ["/api/expenses"],
     nav: [
       { label: "Xarajatlar", href: "/expenses" },
@@ -133,6 +142,7 @@ export const features = [
     name: "Ish haqi",
     group: "Moliya",
     type: "regular",
+    description: "O'qituvchi va xodimlar maoshi: hisob, avans, to'lov",
     requires: ["teachers", "payments"],
     routes: ["/api/salaries"],
     nav: [{ label: "Ish haqi", href: "/salaries" }],
@@ -144,6 +154,8 @@ export const features = [
     name: "Imtihonlar",
     group: "O'quv jarayoni",
     type: "regular",
+    status: "soon",
+    description: "Imtihonlar va natijalar",
     requires: ["groups"],
     routes: ["/api/exams"],
     nav: [{ label: "Imtihonlar", href: "/exams", section: "O'quv" }],
@@ -153,6 +165,7 @@ export const features = [
     name: "Coinlar",
     group: "O'quv jarayoni",
     type: "regular",
+    status: "soon",
     requires: ["students"],
     description: "O'quvchilarni rag'batlantirish",
     routes: ["/api/coins"],
@@ -165,6 +178,7 @@ export const features = [
     name: "Lidlar",
     group: "Sotuv va aloqa",
     type: "regular",
+    description: "Lidlar, birinchi dars, kutish ro'yxati va ariza sahifasi",
     routes: ["/api/leads"],
     nav: [{ label: "Lidlar", href: "/leads", section: "Asos" }],
   },
@@ -173,10 +187,19 @@ export const features = [
     name: "SMS xabarnomalar",
     group: "Sotuv va aloqa",
     type: "regular",
+    description: "Eskiz orqali SMS: Ventura paketi yoki o'z hisobi, shablonlar, qo'lda va avto-SMS",
     routes: ["/api/sms"],
     nav: [{ label: "SMS xabarnomalar", href: "/sms" }],
   },
-  { key: "telegram_bot", name: "Telegram bot", group: "Sotuv va aloqa", type: "regular", routes: ["/api/telegram"] },
+  {
+    key: "telegram_bot",
+    name: "Telegram bot",
+    group: "Sotuv va aloqa",
+    type: "regular",
+    description: "O'quvchi va ota-onalar uchun Telegram bot (xodimlar kirish kodi bo'limdan qat'i nazar ishlaydi)",
+    status: "soon",
+    routes: ["/api/telegram"],
+  },
 
   // Hisobotlar
   {
@@ -184,6 +207,7 @@ export const features = [
     name: "Hisobotlar",
     group: "Hisobotlar",
     type: "regular",
+    description: "Moliya, o'quv, lidlar va o'qituvchilar hisobotlari",
     requires: ["payments"],
     routes: ["/api/reports"],
     nav: [{ label: "Hisobotlar", href: "/reports" }],

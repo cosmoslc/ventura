@@ -21,6 +21,8 @@ export const featureSchema = z.object({
   group: z.string().min(1),
   type: z.enum(FEATURE_TYPES),
   description: z.string().optional(),
+  /** ready — ishlaydi; soon — hali qurilmagan (yoqilsa "Tez kunda" sahifasi), panelda belgilanadi */
+  status: z.enum(["ready", "soon"]).default("ready"),
   requires: z.array(z.string()).default([]),
   routes: z.array(z.string()).default([]),
   /** Menyu bandlari. `section` — menyudagi bo'lim sarlavhasi (berilmasa `group`): bitta bo'lim bandlari turli joyda bo'lishi mumkin. */
