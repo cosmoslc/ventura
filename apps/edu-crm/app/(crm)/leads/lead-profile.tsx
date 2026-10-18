@@ -472,7 +472,7 @@ function NotesTab({ leadId, notes, canWrite }: { leadId: string; notes: LeadNote
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       {canWrite ? (
         <div className="flex justify-end">
           <Button

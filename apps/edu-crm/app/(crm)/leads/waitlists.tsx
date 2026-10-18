@@ -414,7 +414,7 @@ export function WaitlistsPanel({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       {perms.edit ? (
         <div className="flex justify-end">
           <Button onClick={() => setEditing(null)}>

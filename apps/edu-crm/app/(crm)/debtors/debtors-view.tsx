@@ -214,10 +214,10 @@ export function DebtorsView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader title={t.title} description={t.description} />
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-grid sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={<Users />} tone={4} label={t.kpiCount} value={String(rows.length)} />
         <StatCard icon={<CircleDollarSign />} tone={3} label={t.kpiSum} value={`${money(total)} ${uz.common.som}`} />
         <StatCard

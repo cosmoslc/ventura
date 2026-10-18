@@ -98,7 +98,7 @@ export default async function ReportPage({
     report === "leaves" && can(staff.access, "groups.edit") ? await getLeaveReasons(getTenantDb(tenant)) : null;
 
   const page = (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <div>
         <Link
           href="/reports"

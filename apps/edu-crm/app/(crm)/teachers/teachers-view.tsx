@@ -216,7 +216,7 @@ export function TeachersView({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={uz.teachers.title}
         actions={

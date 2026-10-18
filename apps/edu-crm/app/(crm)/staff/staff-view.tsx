@@ -104,7 +104,7 @@ export function StaffView({
   const canAdd = perms.create && perms.assign;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={uz.staff.title}
         description={uz.staff.subtitle}

@@ -79,7 +79,7 @@ export function ExpensesView(props: ExpensesViewProps) {
   const listTab = tab === "variable" || tab === "fixed";
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={t.title}
         description={t.description}
@@ -210,7 +210,7 @@ function ExpenseList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       {rangeInvalid ? <Notice tone="warning">{t.rangeInvalid}</Notice> : null}
 
       <FilterBar standalone>

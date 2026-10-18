@@ -190,7 +190,7 @@ export function StudentsView({
   }
 
   return (
-    <div className={selectedRows.length ? "space-y-4 pb-20" : "space-y-4"}>
+    <div className={selectedRows.length ? "space-y-section pb-20" : "space-y-section"}>
       <PageHeader
         title={uz.students.title}
         actions={

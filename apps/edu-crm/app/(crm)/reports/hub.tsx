@@ -23,7 +23,7 @@ export function ReportsHub({ items }: { items: HubItem[] }) {
     (s) => s.items.length,
   );
   return (
-    <div className="space-y-5">
+    <div className="space-y-section">
       <PageHeader title={t.title} description={t.description} />
       {sections.length ? (
         <div className="space-y-5">

@@ -144,7 +144,7 @@ export function TeacherProfile({
         : tt.notSet;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       {/* Sarlavha */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-soft pb-5">
         <div className="flex min-w-0 items-center gap-3">
@@ -450,7 +450,7 @@ function StudentsTab({ students }: { students: TeacherOverview["students"] }) {
       (!q || s.name.toLowerCase().includes(q) || (!!digits && s.phone.includes(digits))),
   );
   return (
-    <div className="space-y-3">
+    <div className="space-y-section">
       <FilterBar>
         <FilterSearch placeholder={tt.studentsSearch} value={query} onChange={(e) => setQuery(e.target.value)} />
         <FilterSelect

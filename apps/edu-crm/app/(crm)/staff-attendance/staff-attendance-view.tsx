@@ -118,7 +118,7 @@ export function StaffAttendanceView({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader title={t.title} description={t.description} />
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as "day" | "ranking" | "month")}>
@@ -131,7 +131,7 @@ export function StaffAttendanceView({
 
       {tab === "day" ? (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-grid sm:grid-cols-2 lg:grid-cols-4">
             <StatCard icon={<CircleCheck />} tone={2} label={t.statPresent} value={String(count("present"))} />
             <StatCard icon={<Clock />} tone={1} label={t.statLate} value={String(count("late"))} />
             <StatCard icon={<UserX />} tone={3} label={t.statAbsent} value={String(count("absent"))} />

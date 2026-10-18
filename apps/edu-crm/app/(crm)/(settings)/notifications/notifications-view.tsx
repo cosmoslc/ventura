@@ -51,7 +51,7 @@ export function NotificationsView({ items }: { items: NotificationItem[] }) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <PageHeader
         title={t.title}
         description={t.description}

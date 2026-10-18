@@ -152,7 +152,7 @@ export function AttendanceTab({
   const monthLabel = `${uz.months[Number(data.month.slice(5, 7)) - 1]} ${data.month.slice(0, 4)}`;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-section">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
           <Button

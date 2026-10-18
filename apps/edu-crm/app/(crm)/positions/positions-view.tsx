@@ -123,7 +123,7 @@ export function PositionsView({
   const approvalCount = current.approvals.length;
 
   return (
-    <div className="space-y-4 pb-20">
+    <div className="space-y-section pb-20">
       <PageHeader
         title={uz.positions.title}
         actions={
