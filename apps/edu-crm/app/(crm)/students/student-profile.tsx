@@ -30,6 +30,7 @@ import { toast } from "@ventura/ui/toast";
 import { displayPhone, formatDate } from "@/lib/format";
 import { type FormField, fieldText } from "@/lib/form-fields";
 import type { LedgerSummary } from "@/lib/ledger";
+import type { StudentGradeGroup } from "@/lib/server/grades";
 import { uz } from "@/lib/uz";
 import type { PickerBranch } from "../branch-picker";
 import type { StudentMembershipRow } from "../groups/data";
@@ -46,8 +47,9 @@ import { addStudentNoteAction, deleteStudentNoteAction } from "./actions";
 import type { GroupChoice, HistoryRow, StudentNoteRow, StudentRow } from "./data";
 import { StatusBadge, StudentMenu, type StudentPerms, TransferDialog } from "./student-dialogs";
 import { StudentForm } from "./student-form";
+import { StudentGradesTab } from "./student-grades-tab";
 
-type Tab = "groups" | "payments" | "discounts" | "notes" | "history";
+type Tab = "groups" | "grades" | "payments" | "discounts" | "notes" | "history";
 const NOTE_KINDS = ["call", "message", "parent", "result", "note", "warning"] as const;
 
 /** "2026-10-12T09:30:00Z" → "12.10.2026 • 14:30" (Toshkent vaqti) */
@@ -89,6 +91,7 @@ export function StudentProfile({
   groupPerms,
   finance,
   coins,
+  grades,
 }: {
   student: StudentRow;
   notes: StudentNoteRow[];
@@ -107,6 +110,8 @@ export function StudentProfile({
   finance: StudentFinance | null;
   /** Coin balansi; null — coin bo'limi o'chiq (ADR 0061) */
   coins: number | null;
+  /** Guruhlar bo'yicha baholar; null — Baholash bo'limi o'chiq */
+  grades: StudentGradeGroup[] | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("groups");
@@ -265,6 +270,7 @@ export function StudentProfile({
           <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
             <TabsList>
               <TabsTrigger value="groups">{uz.students.tabGroups}</TabsTrigger>
+              {grades ? <TabsTrigger value="grades">{uz.grades.studentTitle}</TabsTrigger> : null}
               {finance ? <TabsTrigger value="payments">{uz.students.tabPayments}</TabsTrigger> : null}
               {finance ? (
                 <TabsTrigger value="discounts">
@@ -288,6 +294,8 @@ export function StudentProfile({
               perms={groupPerms}
             />
           ) : null}
+
+          {tab === "grades" && grades ? <StudentGradesTab groups={grades} /> : null}
 
           {tab === "payments" && finance ? (
             <StudentFinanceTab

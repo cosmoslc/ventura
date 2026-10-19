@@ -5,6 +5,8 @@ import { type Tenant, hasFeature } from "@ventura/tenants";
 import { groupAttendance } from "@/lib/server/attendance";
 import { getTenantDb } from "@/lib/server/deps";
 import { ensurePaymentMethods, getFinanceSettings } from "@/lib/server/finance";
+import { getGradingSettings, groupGradeMarks } from "@/lib/server/grades";
+import { monthRange } from "@/lib/lessons";
 import { todayTashkent } from "@/lib/server/memberships";
 import type { PickerBranch } from "../branch-picker";
 import { financePerms } from "../payments/perms";
@@ -35,9 +37,10 @@ export async function loadGroupProfile(args: {
 
   const today = todayTashkent();
   const month = /^\d{4}-(0[1-9]|1[0-2])$/.test(args.month ?? "") ? args.month! : today.slice(0, 7);
-  const [attendanceOn, paymentsOn] = await Promise.all([
+  const [attendanceOn, paymentsOn, gradesOn] = await Promise.all([
     hasFeature(tenant, "attendance"),
     hasFeature(tenant, "payments"),
+    hasFeature(tenant, "grades"),
   ]);
   const fin = financePerms(access);
   const financeOn = fin.view && paymentsOn;
@@ -50,10 +53,35 @@ export async function loadGroupProfile(args: {
     studentCandidates(db, scope),
     groupFormOptions(db, scope),
     groupChoices(db, scope, studentFields),
-    attendanceOn ? groupAttendance(db, group, month) : Promise.resolve(null),
+    attendanceOn || gradesOn ? groupAttendance(db, group, month) : Promise.resolve(null),
     canPay ? ensurePaymentMethods(db) : Promise.resolve(null),
     canPay ? getFinanceSettings(db) : Promise.resolve(null),
   ]);
+
+  // Baholar (ADR 0061): dars kunlari, a'zolar va davomat belgilari davomat bilan umumiy
+  const [from, to] = monthRange(month);
+  const grades =
+    gradesOn && attendance
+      ? {
+          lessons: attendance,
+          marks: await groupGradeMarks(
+            db,
+            group.id,
+            from,
+            to,
+            attendance.members.map((m) => m.studentId),
+          ),
+          scale: (await getGradingSettings(db)).scale,
+        }
+      : null;
+  const initialTab =
+    args.tab === "attendance" && attendanceOn
+      ? "attendance"
+      : args.tab === "grades" && grades
+        ? "grades"
+        : args.tab === "left"
+          ? "left"
+          : "students";
 
   return {
     group,
@@ -68,11 +96,14 @@ export async function loadGroupProfile(args: {
     branches,
     perms: groupPerms(access),
     canCreateStudent: can(access, "students.create"),
-    attendance,
+    attendance: attendanceOn ? attendance : null,
+    grades,
+    canGradeToday: can(access, "grades.mark"),
+    canGradePast: can(access, "grades.edit_past"),
     today,
     canMarkToday: can(access, "attendance.student_mark"),
     canEditPast: can(access, "attendance.student_edit_past"),
-    initialTab: args.tab === "attendance" && attendanceOn ? "attendance" : args.tab === "left" ? "left" : "students",
+    initialTab,
     payment: methods && settings ? { methods, maxDiscountPercent: settings.maxDiscountPercent } : null,
   };
 }

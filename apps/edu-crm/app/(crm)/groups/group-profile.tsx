@@ -41,6 +41,7 @@ import { StudentForm } from "../students/student-form";
 import { enrollStudentAction } from "./actions";
 import { ArchiveGroupModal } from "./archive-group-modal";
 import { AttendanceTab } from "./attendance-tab";
+import { type GroupGrades, GradesTab } from "./grades-tab";
 import type { GroupProfileStats, GroupRow, MemberRow } from "./data";
 import { type CourseOption, GroupForm, type RoomOption, type TeacherOption } from "./group-form";
 import { LeftTab, MembersTab } from "./group-members";
@@ -48,7 +49,7 @@ import { daysLabel, type GroupPerms } from "./groups-view";
 import { ActivateDialog, EnrollDialog, LeaveDialog, type MembershipTarget, phoneLabel } from "./membership-dialogs";
 import { SendSmsModal } from "../sms/send-sms-modal";
 
-type Tab = "students" | "left" | "attendance";
+type Tab = "students" | "left" | "attendance" | "grades";
 
 const TONE = { trial: "info", active: "success", paused: "warning", left: "neutral" } as const;
 
@@ -135,6 +136,9 @@ export function GroupProfile({
   perms,
   canCreateStudent,
   attendance,
+  grades,
+  canGradeToday,
+  canGradePast,
   today,
   canMarkToday,
   canEditPast,
@@ -159,6 +163,10 @@ export function GroupProfile({
   canCreateStudent: boolean;
   /** null — Davomat bo'limi o'chirilgan */
   attendance: GroupAttendance | null;
+  /** null — Baholash bo'limi o'chirilgan (ADR 0061) */
+  grades: GroupGrades | null;
+  canGradeToday: boolean;
+  canGradePast: boolean;
   today: string;
   canMarkToday: boolean;
   canEditPast: boolean;
@@ -355,6 +363,7 @@ export function GroupProfile({
                 {t.tabLeft} <TabCount n={members.left.length} />
               </TabsTrigger>
               {attendance ? <TabsTrigger value="attendance">{t.tabAttendance}</TabsTrigger> : null}
+              {grades ? <TabsTrigger value="grades">{uz.grades.tab}</TabsTrigger> : null}
             </TabsList>
           </Tabs>
 
@@ -382,6 +391,16 @@ export function GroupProfile({
               today={today}
               canMarkToday={canMarkToday}
               canEditPast={canEditPast}
+            />
+          ) : null}
+
+          {tab === "grades" && grades ? (
+            <GradesTab
+              groupId={g.id}
+              data={grades}
+              today={today}
+              canMarkToday={canGradeToday}
+              canEditPast={canGradePast}
             />
           ) : null}
         </Card>

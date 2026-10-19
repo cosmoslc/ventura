@@ -17,6 +17,7 @@ import {
   type CoinSettings,
   attendanceEarns,
   attendanceKey,
+  homeworkKey,
   parseCoinSettings,
   prepayKey,
   prepayQualifies,
@@ -142,6 +143,28 @@ export async function awardAttendanceMany(
     })
     .returning({ id: coinEntries.id });
   return { count: rows.length, amount: rows.length * amount };
+}
+
+/* ---------- Uy vazifasi ---------- */
+
+/** Baholashdagi "bajardi" belgisi; "bajarmadi" yoki belgisiz — coin olinadi */
+export function syncHomeworkCoin(
+  db: Db,
+  rt: CoinRuntime,
+  mark: { studentId: string; groupId: string; date: string; homework: boolean | null },
+) {
+  return applyCoin(
+    db,
+    rt,
+    {
+      studentId: mark.studentId,
+      groupId: mark.groupId,
+      rule: "homework",
+      sourceKey: homeworkKey(mark.groupId, mark.date),
+      refDate: mark.date,
+    },
+    mark.homework === true,
+  );
 }
 
 /* ---------- Oldindan to'lov ---------- */

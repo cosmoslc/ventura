@@ -82,13 +82,16 @@ bo'yicha saqlanadi, nomini almashtirish ma'nosini buzadi.
 - `score` (`smallint`, ixtiyoriy) va `scale` (baho qo'yilgan paytdagi shkala: 5, 10 yoki 100), tekshiruv
   `0 < score <= scale`. Shkala keyin o'zgarsa, eski baholar o'z shkalasida qoladi ("4/5"); o'rtacha foizda;
 - `homework` (`boolean`, ixtiyoriy: null — belgilanmagan);
-- `comment` (≤ 500), `marked_by`, vaqt ustunlari;
+- `marked_by`, vaqt ustunlari (izoh ustuni birinchi versiyada yo'q);
 - baho ham, uy vazifasi ham bo'lmasa qator o'chiriladi (bo'sh qator saqlanmaydi).
 
 **Qoidalar** (davomat bilan bir xil, `lessonContext` qayta ishlatiladi): faqat dars kuni, kelajak emas, guruh
 a'zosi va muzlatilmagan. Bugun — `grades.mark`, o'tgan kun — `grades.edit_past` (yangi ruxsatlar; o'qituvchi
 lavozimiga `grades.mark` standart qo'shiladi). Davomatda "Yo'q" yoki "Sababli" bo'lsa baho qo'yilmaydi, uy
 vazifasi belgisi qo'yiladi.
+
+Baho va uy vazifasi bitta amal (`saveGradeAction`, tasdiq kaliti `grades.mark`), uy vazifasi coini bilan bitta
+tranzaksiyada. Audit — `grade.mark` (`from`/`to`: baho, shkala, uy vazifasi), sozlama — `grading_settings.update`.
 
 **UI**: guruh profilida "Baholar" tabi — `attendance-tab.tsx` uslubida oy jadvali (o'quvchi × dars kuni).
 Katakda baho va uy vazifasi belgisi; bosilganda kichik tanlov: shkala tugmalari (5/10 da raqamlar, 100 da maydon)

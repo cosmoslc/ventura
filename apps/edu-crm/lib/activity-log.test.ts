@@ -100,6 +100,26 @@ describe("describeAction", () => {
     ).toBe("Aziz Karimov to'lov qabul qildi: 300 000 so'm — Ali Valiyev");
   });
 
+  it("dars bahosi jumlasi", () => {
+    expect(
+      describeAction("grade.mark", "Aziz", {
+        metadata: {
+          group: "IELTS",
+          date: "2026-11-02",
+          to: { score: 4, scale: 5, homework: true },
+          coins: [{ action: "award", amount: 1 }],
+        },
+        targetName: "Ali",
+      }),
+    ).toBe("Aziz dars bahosini qo'ydi: IELTS, 02.11.2026, baho 4/5, uy vazifasi bajarildi, +1 coin — Ali");
+    expect(
+      describeAction("grade.mark", "Aziz", {
+        metadata: { group: "IELTS", date: "2026-11-02", to: null },
+        targetName: "Ali",
+      }),
+    ).toBe("Aziz dars bahosini qo'ydi: IELTS, 02.11.2026, tozalandi — Ali");
+  });
+
   it("coin amal bilan birga ko'rinadi (ADR 0061)", () => {
     expect(
       describeAction("payment.create", "Aziz", {

@@ -268,6 +268,12 @@ const REGISTRY: Record<string, Def> = {
   ),
   "finance_settings.update": simple("payment", "moliya sozlamalarini o'zgartirdi", undefined, () => null),
   "coin_settings.update": simple("settings", "coin qoidalarini o'zgartirdi", undefined, () => null),
+  "grading_settings.update": simple(
+    "settings",
+    "baholash shkalasini o'zgartirdi",
+    (i) => (num(obj(i.m.after)?.scale) ? `${num(obj(i.m.after)?.scale)} ballik` : null),
+    () => null,
+  ),
 
   // Xarajat, daromad, ish haqi
   "expense.create": { section: "finance", text: money2("xarajat kiritdi") },
@@ -306,6 +312,24 @@ const REGISTRY: Record<string, Def> = {
     "attendance",
     "o'quvchi davomatini belgiladi",
     (i) => parts(groupOf(i), day(i.m.date), LESSON_STATUS[str(i.m.to) ?? ""] ?? str(i.m.to), coinText(i)),
+    (i) => i.who,
+  ),
+  "grade.mark": simple(
+    "attendance",
+    "dars bahosini qo'ydi",
+    (i) => {
+      const to = obj(i.m.to);
+      const score = num(to?.score);
+      const hw = to?.homework;
+      return parts(
+        groupOf(i),
+        day(i.m.date),
+        to ? null : "tozalandi",
+        score !== null && `baho ${score}/${num(to?.scale) ?? "?"}`,
+        hw === true ? "uy vazifasi bajarildi" : hw === false ? "uy vazifasi bajarilmadi" : null,
+        coinText(i),
+      );
+    },
     (i) => i.who,
   ),
   "attendance.mark_all": simple(
