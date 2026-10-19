@@ -159,7 +159,8 @@ export function Sidebar({
       >
         <nav
           className={cn(
-            "flex-1 overflow-y-auto overflow-x-hidden",
+            // overscroll-contain: menyu oxiriga yetganda g'ildirak sahifani aylantirib yubormaydi
+            "flex-1 overflow-y-auto overflow-x-hidden overscroll-contain",
             collapsed ? "px-2 pt-3.5 pb-5" : "px-3.5 pt-5 pb-6",
           )}
         >
