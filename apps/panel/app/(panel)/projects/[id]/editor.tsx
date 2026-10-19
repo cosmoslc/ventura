@@ -55,7 +55,7 @@ interface EditorProps {
   enabled: string[];
   domains: { hostname: string; kind: "subdomain" | "custom"; isPrimary: boolean; status: string }[];
   secrets: { ownerPassword: boolean; telegramToken: boolean };
-  /** Faqat super admin: saqlangan sirlar nomlari ("Sirlar" tabi); null — tab ko'rinmaydi */
+  /** Faqat super admin: saqlangan sirlar nomlari ("Ega va sirlar" tabida boshqaruv); null — faqat bor/yo'qligi */
   secretNames: string[] | null;
   deploys: { rows: DeploymentRow[]; workerAlive: boolean; simulated: boolean; canDeploy: boolean };
 }
@@ -122,7 +122,6 @@ export function ProjectEditor({
               </TabsTrigger>
               <TabsTrigger value="domains">{uz.projects.tabs.domains}</TabsTrigger>
               <TabsTrigger value="owner">{uz.projects.tabs.owner}</TabsTrigger>
-              {secretNames ? <TabsTrigger value="secrets">{uz.projects.tabs.secrets}</TabsTrigger> : null}
               {canWrite ? <TabsTrigger value="danger">{uz.projects.tabs.danger}</TabsTrigger> : null}
             </TabsList>
 
@@ -256,7 +255,7 @@ export function ProjectEditor({
               <p className="mt-3 text-caption text-muted-foreground">{uz.projects.domainsNote}</p>
             </TabsContent>
 
-            <TabsContent value="owner">
+            <TabsContent value="owner" className="space-y-6">
               <dl className="max-w-lg divide-y divide-border-soft rounded-card border border-border text-body">
                 {[
                   [uz.projects.ownerName, project.ownerName ?? "—"],
@@ -270,14 +269,19 @@ export function ProjectEditor({
                       "—"
                     ),
                   ],
-                  [
-                    uz.projects.ownerPassword,
-                    secrets.ownerPassword ? uz.projects.secretStored : uz.projects.secretMissing,
-                  ],
-                  [
-                    uz.projects.telegramToken,
-                    secrets.telegramToken ? uz.projects.secretStored : uz.projects.secretMissing,
-                  ],
+                  // Super admin sirlarni pastdagi ro'yxatda boshqaradi; boshqalarga faqat bor/yo'qligi
+                  ...(secretNames
+                    ? []
+                    : [
+                        [
+                          uz.projects.ownerPassword,
+                          secrets.ownerPassword ? uz.projects.secretStored : uz.projects.secretMissing,
+                        ],
+                        [
+                          uz.projects.telegramToken,
+                          secrets.telegramToken ? uz.projects.secretStored : uz.projects.secretMissing,
+                        ],
+                      ]),
                 ].map(([k, v], i) => (
                   <div key={i} className="flex items-center justify-between gap-4 px-4 py-3">
                     <dt className="text-muted-foreground">{k}</dt>
@@ -285,18 +289,16 @@ export function ProjectEditor({
                   </div>
                 ))}
               </dl>
-              <p className="mt-3 text-caption text-muted-foreground">{uz.projects.ownerSaved}</p>
-            </TabsContent>
-
-            {secretNames ? (
-              <TabsContent value="secrets">
+              {secretNames ? (
                 <SecretsTab
                   projectId={project.id}
                   present={secretNames}
                   sharedDb={project.dbStrategy === "shared_db"}
                 />
-              </TabsContent>
-            ) : null}
+              ) : (
+                <p className="text-caption text-muted-foreground">{uz.projects.ownerSaved}</p>
+              )}
+            </TabsContent>
 
             {canWrite ? (
               <TabsContent value="danger">
