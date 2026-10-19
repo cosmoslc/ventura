@@ -100,7 +100,7 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
           </label>
           <nav
             aria-label={t.title}
-            className="-mr-2 min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-2 pb-4"
+            className="relative -mr-2 min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain pr-2 pb-4"
           >
             {shown.map((g) => (
               <div key={g.title}>
@@ -135,7 +135,8 @@ export function SettingsFrame({ groups, children }: { groups: SettingsGroup[]; c
         </div>
       </aside>
 
-      <div className="min-w-0 lg:-mr-3 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-3 lg:pb-4">
+      {/* relative: Radix'ning yashirin forma inputlari (absolute) shu yerda qoladi, hujjatni uzaytirmaydi */}
+      <div className="min-w-0 lg:relative lg:-mr-3 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain lg:pr-3 lg:pb-4">
         {children}
       </div>
     </div>
