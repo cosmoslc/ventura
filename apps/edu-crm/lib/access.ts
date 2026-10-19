@@ -67,6 +67,7 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/exams": ["settings.courses"],
   "/coins": ["bonuses.manage"],
   "/coin-settings": ["settings.coins"],
+  "/grading": ["settings.courses"],
   "/sms": ["settings.sms_gateways"],
   "/sms/settings": ["settings.sms_gateways"],
   "/sms/templates": ["settings.sms_gateways"],

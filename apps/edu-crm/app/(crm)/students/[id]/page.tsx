@@ -3,6 +3,7 @@ import { z } from "zod";
 import { hasFeature } from "@ventura/tenants";
 import { getBranchContext } from "@/lib/server/branch";
 import { coinBalance } from "@/lib/server/coins";
+import { studentGrades } from "@/lib/server/grades";
 import { ensurePaymentMethods, getFinanceSettings } from "@/lib/server/finance";
 import { todayTashkent } from "@/lib/server/memberships";
 import { getTenantDb } from "@/lib/server/deps";
@@ -32,9 +33,9 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   const withFinance = fperms.view && (await hasFeature(tenant, "payments"));
   const today = todayTashkent();
   const fields = await getStudentFields(db);
-  const withCoins = await hasFeature(tenant, "coins");
-  const [notes, history, courses, choices, memberships, groups, finance, methods, fsettings, coins] = await Promise.all(
-    [
+  const [withCoins, withGrades] = await Promise.all([hasFeature(tenant, "coins"), hasFeature(tenant, "grades")]);
+  const [notes, history, courses, choices, memberships, groups, finance, methods, fsettings, coins, grades] =
+    await Promise.all([
       studentNotesOf(db, student.id),
       studentHistory(db, student.id),
       courseOptions(db),
@@ -45,8 +46,8 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
       withFinance ? ensurePaymentMethods(db) : Promise.resolve([]),
       withFinance ? getFinanceSettings(db) : Promise.resolve(null),
       withCoins ? coinBalance(db, student.id) : Promise.resolve(null),
-    ],
-  );
+      withGrades ? studentGrades(db, student.id) : Promise.resolve(null),
+    ]);
   return (
     <StudentProfile
       student={student}
@@ -66,6 +67,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
       }))}
       groupPerms={groupPerms(staff.access)}
       coins={coins}
+      grades={grades}
       finance={
         finance && fsettings
           ? {

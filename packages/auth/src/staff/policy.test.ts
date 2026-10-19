@@ -14,10 +14,10 @@ import {
 } from "./policy";
 
 describe("ruxsatlar katalogi", () => {
-  it("11 toifa, 70 ruxsat (eski 69 + settings.coins, ADR 0061), takrorsiz", () => {
+  it("11 toifa, 72 ruxsat (eski 69 + settings.coins, grades.mark, grades.edit_past — ADR 0061), takrorsiz", () => {
     expect(PERMISSION_CATEGORIES).toHaveLength(11);
-    expect(ALL_PERMISSIONS).toHaveLength(70);
-    expect(new Set(ALL_PERMISSIONS).size).toBe(70);
+    expect(ALL_PERMISSIONS).toHaveLength(72);
+    expect(new Set(ALL_PERMISSIONS).size).toBe(72);
   });
 
   it("7 ta shablon; faqat Bosh Direktor tizim lavozimi va unda hamma ruxsat", () => {
@@ -31,8 +31,8 @@ describe("ruxsatlar katalogi", () => {
       "hr_manager",
     ]);
     expect(POSITION_TEMPLATES.filter((t) => t.system).map((t) => t.code)).toEqual(["super_admin"]);
-    expect(POSITION_TEMPLATES[0]!.permissions).toHaveLength(70);
-    expect(POSITION_TEMPLATES[1]!.permissions).toHaveLength(67);
+    expect(POSITION_TEMPLATES[0]!.permissions).toHaveLength(72);
+    expect(POSITION_TEMPLATES[1]!.permissions).toHaveLength(69);
     for (const t of POSITION_TEMPLATES) for (const p of t.permissions) expect(ALL_PERMISSIONS).toContain(p);
   });
 

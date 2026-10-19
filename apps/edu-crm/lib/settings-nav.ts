@@ -5,7 +5,17 @@
  */
 
 export type SettingsIcon =
-  "center" | "courses" | "rooms" | "holidays" | "coins" | "payments" | "notifications" | "sms" | "profile" | "security";
+  | "center"
+  | "courses"
+  | "rooms"
+  | "holidays"
+  | "grades"
+  | "coins"
+  | "payments"
+  | "notifications"
+  | "sms"
+  | "profile"
+  | "security";
 
 export interface SettingsItem {
   href: string;
@@ -31,6 +41,7 @@ export const SETTINGS_NAV: SettingsGroup[] = [
       { href: "/courses", label: "Kurslar", feature: "courses", icon: "courses" },
       { href: "/rooms", label: "Xonalar", feature: "groups", icon: "rooms" },
       { href: "/holidays", label: "Bayram kunlari", feature: "holidays", icon: "holidays" },
+      { href: "/grading", label: "Baholash", feature: "grades", icon: "grades" },
       { href: "/coin-settings", label: "Coinlar", feature: "coins", icon: "coins" },
     ],
   },

@@ -20,6 +20,7 @@ import {
   saveGroupAction,
 } from "@/app/(crm)/groups/actions";
 import { markAttendanceAction, markRestPresentAction } from "@/app/(crm)/groups/attendance-actions";
+import { saveGradeAction } from "@/app/(crm)/groups/grade-actions";
 import {
   archiveLeadAction,
   assignLeadsAction,
@@ -103,6 +104,7 @@ export const APPROVAL_ACTIONS = {
   "leads.waitlistActivate": activateWaitlistAction,
   "attendance.mark": markAttendanceAction,
   "attendance.markRest": markRestPresentAction,
+  "grades.mark": saveGradeAction,
   "staffAttendance.mark": markEmployeeAction,
   "staffAttendance.markRest": markEmployeesPresentAction,
 } as const;

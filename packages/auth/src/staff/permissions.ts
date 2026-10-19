@@ -69,6 +69,8 @@ export const PERMISSION_CATEGORIES = [
       { id: "attendance.employee_view", name: "Xodimlar davomatini ko'rish" },
       { id: "attendance.employee_mark", name: "Xodimlar davomatini belgilash" },
       { id: "attendance.export", name: "Davomat jurnalini yuklab olish" },
+      { id: "grades.mark", name: "Bugungi dars uchun baho va uy vazifasini qo'yish" },
+      { id: "grades.edit_past", name: "O'tgan darslar bahosini o'zgartirish" },
     ],
   },
   {
@@ -238,6 +240,7 @@ export const POSITION_TEMPLATES: readonly PositionTemplate[] = [
       "groups.view",
       "groups.attendance_view",
       "attendance.student_mark",
+      "grades.mark",
       "bonuses.manage",
     ],
   },

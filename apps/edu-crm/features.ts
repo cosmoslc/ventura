@@ -9,7 +9,7 @@ export const template = {
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.7.0",
+  version: "0.8.0",
 } satisfies TemplateInfo;
 
 export const features = [
@@ -159,6 +159,16 @@ export const features = [
     requires: ["groups"],
     routes: ["/api/exams"],
     nav: [{ label: "Imtihonlar", href: "/exams", section: "O'quv jarayoni" }],
+  },
+  {
+    key: "grades",
+    name: "Baholash",
+    group: "O'quv jarayoni",
+    type: "regular",
+    requires: ["groups"],
+    description: 'Har dars uchun baho va uy vazifasi belgisi (guruh profilidagi "Baholar" tabi)',
+    routes: ["/api/grades"],
+    nav: [{ label: "Baholash sozlamalari", href: "/grading", section: "Tizim" }],
   },
   {
     key: "coins",
