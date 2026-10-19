@@ -22,9 +22,24 @@ export const coinSettingsSchema = z.object({
   attendance: rule.default({ enabled: false, amount: 1 }),
   /** (c) uy vazifasini bajardi (baholash bo'limi bilan) */
   homework: rule.default({ enabled: false, amount: 1 }),
+  /** Qo'lda (ADR 0062): o'qituvchi sabab bilan beradi; bir o'quvchiga kuniga ko'pi bilan `dailyLimit` coin */
+  manual: z
+    .object({
+      enabled: z.boolean().default(false),
+      dailyLimit: z.number().int().min(1).max(COIN_AMOUNT_MAX).default(5),
+    })
+    .default({ enabled: false, dailyLimit: 5 }),
 });
 export type CoinSettings = z.infer<typeof coinSettingsSchema>;
-export type CoinRuleKey = keyof CoinSettings;
+/** Avtomatik qoidalar (miqdori sozlamada) */
+export type CoinRuleKey = "prepay" | "attendance" | "homework";
+/** Daftardagi har qanday qoida, qo'lda berilgani ham */
+export type CoinEntryRule = CoinRuleKey | "manual";
+
+export const MANUAL_REASON_MAX = 300;
+
+/** Qo'lda berish: shu o'quvchiga bugun berilganidan keyin qancha berish mumkin */
+export const manualRemaining = (dailyLimit: number, givenToday: number) => Math.max(0, dailyLimit - givenToday);
 
 export const coinSettingsInput = coinSettingsSchema.strict();
 export const DEFAULT_COINS: CoinSettings = coinSettingsSchema.parse({});
@@ -78,7 +93,7 @@ export function prepayQualifies(input: {
 /* ---------- Ko'rinish ---------- */
 
 export interface CoinChange {
-  rule: CoinRuleKey;
+  rule: CoinEntryRule;
   action: "award" | "revoke";
   amount: number;
 }

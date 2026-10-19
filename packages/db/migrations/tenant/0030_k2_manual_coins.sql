@@ -1,0 +1,4 @@
+ALTER TABLE "coin_entries" ADD COLUMN "note" text;--> statement-breakpoint
+ALTER TABLE "coin_entries" ADD COLUMN "created_by" uuid;--> statement-breakpoint
+ALTER TABLE "coin_entries" ADD CONSTRAINT "coin_entries_created_by_fk" FOREIGN KEY ("tenant_id","created_by") REFERENCES "public"."users"("tenant_id","id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "coin_entries" ADD CONSTRAINT "coin_entries_manual" CHECK ("coin_entries"."rule" <> 'manual' or ("coin_entries"."note" is not null and length("coin_entries"."note") between 1 and 300 and "coin_entries"."created_by" is not null));

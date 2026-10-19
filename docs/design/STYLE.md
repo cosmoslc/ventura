@@ -652,6 +652,24 @@ Qoidalar:
 - Qatorni tanlash — `Checkbox`; sarlavhadagi checkbox sahifadagilarni tanlaydi (`"indeterminate"` — bir qismi tanlangan).
   Tanlangan qator — `bg-primary-soft`.
 
+### 11.37 WeekSchedule — `week-schedule.tsx`
+
+- Haftalik dars jadvali (o'qituvchi kabineti, ADR 0062): tepada hafta kunlari (`today` — `primary-soft` fon), chapda
+  soatlar, kunlar ustunida dars qutilari.
+- Quti: chap chiziq guruh rangida (`color`), nom, vaqt va ixtiyoriy qisqa qator (`sub`, masalan xona).
+- Soat oralig'i darslardan olinadi (eng ertasi — eng kechi, butun soatga). Bir vaqtdagi darslar yonma-yon ustunlarga
+  bo'linadi. Hisob `lib/schedule.ts` da (toza funksiya, Vitest bilan).
+- Bir soat — 56px (joylashuv hisobi uchun, inline style). Tor ekranda jadval gorizontal siljiydi (`min-w-176`).
+- Bosish — `onSelect(id)`, havola ilovadan; komponent Next'ga bog'lanmaydi.
+
+### 11.38 RankList — `rank-list.tsx`
+
+- Qisqa reyting (top-3): o'rin doirasi, avatar, ism va ixtiyoriy qiymat. Rang faqat holat tokenlaridan:
+  1-o'rin — `warning`, 2-o'rin — `muted`, 3-o'rin — `info`.
+- `me` — xodimning o'zi (`primary-soft` fon, `--ring-border` chegara).
+- `self` — xodim ro'yxatda bo'lmasa, pastda o'z o'rni chiqadi ("3 / 12").
+- Qiymat berilmasa, faqat o'rin ko'rinadi. Masalan, boshqa o'qituvchilarning raqamlari yashiriladi.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.

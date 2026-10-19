@@ -100,6 +100,40 @@ Har biri alohida branch va PR:
 2. `edu/kabinet-guruhlar` — Bosh sahifa, Guruhlar (haftalik jadval), Guruh sahifasi (4 tab).
 3. `edu/kabinet-tahlil` — O'quvchilar, Statistika, Moliya.
 
+## 2-bosqichda amalga oshirilgani
+
+- **Bosh sahifa** — bitta qatorda uchta karta:
+  - balans (Ish haqi bo'limi yoqilgan bo'lsa);
+  - reytingdagi o'rni (joriy oy, ADR 0033 tartibi);
+  - bugungi darslar soni va ulardan davomat olinganlari.
+
+  Ostida ikkita reyting:
+  - top-3 o'qituvchi (`RankList`): faqat ism, o'z o'rni pastda;
+  - top-3 o'quvchi: o'z guruhlaridagi ochiq a'zolar, coin balansi bo'yicha.
+
+  Eng pastda bugungi guruhlar ("davomat olingan / olinmagan" belgisi bilan) va barcha guruhlar.
+- **Guruhlar** — haftalik jadval (`WeekSchedule`, hafta dushanbadan, `?hafta=`), shanba va yakshanba faqat dars
+  bo'lsa ko'rinadi. Ostida ro'yxat.
+- **Guruh sahifasi** (`/kabinet/guruhlar/[id]`, boshqa o'qituvchiniki — 404). Tablar:
+  - Davomat va Baholash — admin profilidagi jadvallar. O'quvchi nomi havolasiz, birinchi darsga kelgan lidlar
+    ko'rsatilmaydi.
+  - O'quvchilar — ochiq a'zolar, coin balansi va "Coin berish".
+  - Statistika — oy bo'yicha:
+    - o'zlashtirish (hamma baholarning o'rtachasi, %, daraja bilan);
+    - davomat va uy vazifasi foizi;
+    - eng yuqori va eng past o'quvchi;
+    - o'quvchilar jadvali.
+  - O'zlashtirish darajalari (`masteryLevel`): a'lo ≥ 85%, yaxshi ≥ 70%, qoniqarli ≥ 50%, past < 50%.
+- **Qo'lda coin** (`coin_entries.rule = 'manual'`, migratsiya 0030):
+  - yozuvda sabab (`note`, 1–300) va bergan xodim (`created_by`) bo'ladi, buni CHECK cheklovi talab qiladi;
+  - sozlama `coins.manual = { enabled, dailyLimit }`: bir o'quvchiga kuniga ko'pi bilan `dailyLimit` coin, kim
+    berganidan qat'i nazar;
+  - cheklov tranzaksiyada, o'quvchi qulfi bilan tekshiriladi;
+  - qo'lda berish uchun `bonuses.manage` ruxsati kerak (o'qituvchi lavozimida bor), o'qituvchi faqat o'z guruhidagi
+    o'quvchiga beradi;
+  - audit — `coin.manual`;
+  - qo'lda berilgan coinni bekor qilish bu bosqichda yo'q.
+
 ## Egasi javoblari
 
 1. **Coin berish** — o'qituvchi qo'lda bera oladi (2-bosqichda, guruhning "O'quvchilar" tabida). ADR 0061 ga yangi

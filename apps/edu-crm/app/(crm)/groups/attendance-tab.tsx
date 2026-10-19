@@ -57,12 +57,15 @@ export function AttendanceTab({
   today,
   canMarkToday,
   canEditPast,
+  studentLinks = true,
 }: {
   groupId: string;
   data: GroupAttendance;
   today: string;
   canMarkToday: boolean;
   canEditPast: boolean;
+  /** O'quvchi nomi profilga havola (o'qituvchi kabinetida — yo'q, ADR 0062) */
+  studentLinks?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -225,12 +228,16 @@ export function AttendanceTab({
               {rows.map(({ m, cells, rate }) => (
                 <Tr key={m.studentId}>
                   <Td className="sticky left-0 z-(--z-raised) max-w-52 bg-card">
-                    <Link
-                      href={`/students/${m.studentId}`}
-                      className="block truncate font-semibold text-foreground hover:text-primary"
-                    >
-                      {m.name}
-                    </Link>
+                    {studentLinks ? (
+                      <Link
+                        href={`/students/${m.studentId}`}
+                        className="block truncate font-semibold text-foreground hover:text-primary"
+                      >
+                        {m.name}
+                      </Link>
+                    ) : (
+                      <span className="block truncate font-semibold text-foreground">{m.name}</span>
+                    )}
                   </Td>
                   {cells.map((c) => {
                     const key = `${m.studentId}|${c.d}`;
