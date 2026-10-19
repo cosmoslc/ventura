@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { hasFeature } from "@ventura/tenants";
 import { getBranchContext } from "@/lib/server/branch";
+import { coinBalance } from "@/lib/server/coins";
 import { ensurePaymentMethods, getFinanceSettings } from "@/lib/server/finance";
 import { todayTashkent } from "@/lib/server/memberships";
 import { getTenantDb } from "@/lib/server/deps";
@@ -31,17 +32,21 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
   const withFinance = fperms.view && (await hasFeature(tenant, "payments"));
   const today = todayTashkent();
   const fields = await getStudentFields(db);
-  const [notes, history, courses, choices, memberships, groups, finance, methods, fsettings] = await Promise.all([
-    studentNotesOf(db, student.id),
-    studentHistory(db, student.id),
-    courseOptions(db),
-    groupChoices(db, scope, fields),
-    studentMemberships(db, student.id),
-    listGroups(db, [student.branchId]),
-    withFinance ? studentFinance(db, student.id, today) : Promise.resolve(null),
-    withFinance ? ensurePaymentMethods(db) : Promise.resolve([]),
-    withFinance ? getFinanceSettings(db) : Promise.resolve(null),
-  ]);
+  const withCoins = await hasFeature(tenant, "coins");
+  const [notes, history, courses, choices, memberships, groups, finance, methods, fsettings, coins] = await Promise.all(
+    [
+      studentNotesOf(db, student.id),
+      studentHistory(db, student.id),
+      courseOptions(db),
+      groupChoices(db, scope, fields),
+      studentMemberships(db, student.id),
+      listGroups(db, [student.branchId]),
+      withFinance ? studentFinance(db, student.id, today) : Promise.resolve(null),
+      withFinance ? ensurePaymentMethods(db) : Promise.resolve([]),
+      withFinance ? getFinanceSettings(db) : Promise.resolve(null),
+      withCoins ? coinBalance(db, student.id) : Promise.resolve(null),
+    ],
+  );
   return (
     <StudentProfile
       student={student}
@@ -60,6 +65,7 @@ export default async function StudentPage({ params }: { params: Promise<{ id: st
         subtitle: `${g.courseName} · ${g.teacherName} · ${g.startTime}`,
       }))}
       groupPerms={groupPerms(staff.access)}
+      coins={coins}
       finance={
         finance && fsettings
           ? {

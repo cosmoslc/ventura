@@ -100,6 +100,27 @@ describe("describeAction", () => {
     ).toBe("Aziz Karimov to'lov qabul qildi: 300 000 so'm — Ali Valiyev");
   });
 
+  it("coin amal bilan birga ko'rinadi (ADR 0061)", () => {
+    expect(
+      describeAction("payment.create", "Aziz", {
+        metadata: { amount: 300000, coins: [{ rule: "prepay", action: "award", amount: 10 }] },
+        targetName: "Ali",
+      }),
+    ).toBe("Aziz to'lov qabul qildi: 300 000 so'm, +10 coin — Ali");
+    expect(
+      describeAction("attendance.mark", "Aziz", {
+        metadata: { group: "IELTS", date: "2026-11-02", to: "absent", coins: [{ action: "revoke", amount: 1 }] },
+        targetName: "Ali",
+      }),
+    ).toBe("Aziz o'quvchi davomatini belgiladi: IELTS, 02.11.2026, kelmadi, −1 coin — Ali");
+    expect(
+      describeAction("attendance.mark_all", "Aziz", {
+        metadata: { group: "IELTS", date: "2026-11-02", marked: 3, coins: { action: "award", count: 3, amount: 3 } },
+        targetName: null,
+      }),
+    ).toBe("Aziz guruh davomatini belgiladi: 02.11.2026, 3 ta o'quvchi, +3 coin — IELTS");
+  });
+
   it("tizim amali (xodimsiz)", () => {
     expect(describeAction("lead.apply", null, { metadata: { name: "Vali" } })).toBe(
       "Tizim saytdan ariza qoldirdi — Vali",

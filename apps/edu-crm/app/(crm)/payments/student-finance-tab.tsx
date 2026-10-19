@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Printer, RotateCcw, Scale, Trash2, Wallet } from "lucide-react";
+import { Coins, Pencil, Printer, RotateCcw, Scale, Trash2, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -35,14 +35,36 @@ const KIND_TONE = {
 const effect = (e: PaymentRow) => (e.kind === "refund" ? -e.amount : e.amount);
 
 /**
- * Profil tablari ustidagi doimiy kartalar: balans va o'tgan oydan qarz. Coin kartasi yo'q — coin tizimi
- * birinchi versiyaga kirmaydi (EDU-CRM-PLAN, 10-qaror); tizim qo'shilganda karta qaytadi.
+ * Profil tablari ustidagi doimiy kartalar: balans, o'tgan oydan qarz va coin (faqat `coins` bo'limi yoqilganda,
+ * ADR 0061). Moliya ko'rinmasa ham coin kartasi o'zi chiqadi.
  */
-export function StudentMoneyCards({ summary, currentMonth }: { summary: LedgerSummary; currentMonth: string }) {
+export function StudentMoneyCards({
+  summary,
+  currentMonth,
+  coins,
+}: {
+  summary: LedgerSummary | null;
+  currentMonth: string;
+  /** null — coin bo'limi o'chiq */
+  coins: number | null;
+}) {
+  const cols = (summary ? 2 : 0) + (coins === null ? 0 : 1);
+  if (!cols) return null;
+  return (
+    <div className={cols === 3 ? "grid gap-3 sm:grid-cols-3" : cols === 2 ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
+      {summary ? <MoneyCards summary={summary} currentMonth={currentMonth} /> : null}
+      {coins !== null ? (
+        <StatCard icon={<Coins />} tone={1} label={uz.coins.cardTitle} value={money(coins)} hint={uz.coins.cardHint} />
+      ) : null}
+    </div>
+  );
+}
+
+function MoneyCards({ summary, currentMonth }: { summary: LedgerSummary; currentMonth: string }) {
   const past = pastDebt(summary, currentMonth);
   const shown = past.months.slice(0, 2).map(formatMonth).join(", ");
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <>
       <StatCard
         icon={<Wallet />}
         tone={summary.balance < 0 ? 3 : 2}
@@ -61,7 +83,7 @@ export function StudentMoneyCards({ summary, currentMonth }: { summary: LedgerSu
             : uz.students.pastDebtHint
         }
       />
-    </div>
+    </>
   );
 }
 

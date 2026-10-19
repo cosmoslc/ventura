@@ -13,7 +13,9 @@ import {
   students,
 } from "@ventura/db/schema/tenant";
 import { addDays } from "@/lib/billing";
+import { type CoinChange, coinMeta } from "@/lib/coins";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
+import { type CoinRuntime, coinRuntime, syncPrepayCoin } from "@/lib/server/coins";
 import { FINANCE_SETTINGS_KEY, financeSettingsSchema, loadAccount } from "@/lib/server/finance";
 import { lockStudent, settlePendingLeaves } from "@/lib/server/leave-debt";
 import { type Tx, todayTashkent } from "@/lib/server/memberships";
@@ -94,6 +96,26 @@ async function wasMember(ctx: ActionCtx, studentId: string, groupId: string) {
   return !!m;
 }
 
+/**
+ * Oldindan to'lov coini (ADR 0061): pul yozuvi tegib o'tgan guruh-oylar qayta ko'riladi (tranzaksiya ichida,
+ * o'quvchi qulfi bilan). Guruhsiz yoki oysiz yozuv coin bermaydi.
+ */
+async function syncPrepay(
+  tx: Tx,
+  rt: CoinRuntime,
+  studentId: string,
+  targets: readonly { groupId: string | null; month: string | null }[],
+): Promise<(CoinChange | null)[]> {
+  const seen = new Set<string>();
+  const out: (CoinChange | null)[] = [];
+  for (const t of targets) {
+    if (!t.groupId || !t.month || seen.has(`${t.groupId}|${t.month}`)) continue;
+    seen.add(`${t.groupId}|${t.month}`);
+    out.push(await syncPrepayCoin(tx, rt, { studentId, groupId: t.groupId, month: t.month }));
+  }
+  return out;
+}
+
 /* ---------- To'lov ---------- */
 
 const paymentInput = z.object({
@@ -127,8 +149,9 @@ export async function recordPaymentAction(input: unknown): Promise<ActionResult<
       if (v.groupId && !(await wasMember(ctx, s.id, v.groupId)))
         return { ok: false, error: uz.payments.groupNotMember };
       const tag = { groupId: v.groupId, month: v.groupId ? v.month : null };
+      const rt = await coinRuntime(ctx.tenant, ctx.db);
 
-      const result = await ctx.db.transaction(async (tx) => {
+      const { coins, ...result } = await ctx.db.transaction(async (tx) => {
         await lockStudent(tx, s.id);
         const receiptNo = await nextReceiptNo(tx);
         const [row] = await tx
@@ -156,7 +179,8 @@ export async function recordPaymentAction(input: unknown): Promise<ActionResult<
             createdBy: ctx.staff.id,
           });
         }
-        return { id: row!.id, receiptNo };
+        const coins = await syncPrepay(tx, rt, s.id, [tag]);
+        return { id: row!.id, receiptNo, coins };
       });
       await ctx.audit(
         "payment.create",
@@ -169,6 +193,7 @@ export async function recordPaymentAction(input: unknown): Promise<ActionResult<
           methodId: v.methodId,
           date: v.date,
           ...(v.discount ? { discount: v.discount.amount, discountReason: v.discount.reason } : {}),
+          ...coinMeta(coins),
         },
       );
       await settleAfter(ctx, s.id);
@@ -315,12 +340,14 @@ export async function voidEntryAction(input: unknown): Promise<ActionResult> {
       const gate = await ctx.requireAny([voidPermission(e.kind)]);
       if (gate) return gate;
       if (e.voidedAt) return { ok: true };
-      await ctx.db.transaction(async (tx) => {
+      const rt = await coinRuntime(ctx.tenant, ctx.db);
+      const coins = await ctx.db.transaction(async (tx) => {
         await lockStudent(tx, s.id);
         await tx
           .update(payments)
           .set({ voidedAt: new Date(), voidedBy: ctx.staff.id, voidReason: parsed.data.reason })
           .where(and(eq(payments.id, e.id), isNull(payments.voidedAt)));
+        return syncPrepay(tx, rt, s.id, [e]);
       });
       await ctx.audit(
         "payment.void",
@@ -331,6 +358,7 @@ export async function voidEntryAction(input: unknown): Promise<ActionResult> {
           amount: e.amount,
           receiptNo: e.receiptNo,
           reason: parsed.data.reason,
+          ...coinMeta(coins),
         },
       );
       await settleAfter(ctx, s.id);
@@ -354,6 +382,8 @@ export async function restoreEntryAction(id: unknown): Promise<ActionResult> {
       const gate = await ctx.requireAny([voidPermission(e.kind), "archive.restore"]);
       if (gate) return gate;
       if (!e.voidedAt) return { ok: true };
+      const rt = await coinRuntime(ctx.tenant, ctx.db);
+      let coins: (CoinChange | null)[] = [];
       const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
         await lockStudent(tx, s.id);
         // Qaytarishni tiklash balansni manfiyga olib kelmasin
@@ -365,13 +395,14 @@ export async function restoreEntryAction(id: unknown): Promise<ActionResult> {
           .update(payments)
           .set({ voidedAt: null, voidedBy: null, voidReason: null })
           .where(eq(payments.id, e.id));
+        coins = await syncPrepay(tx, rt, s.id, [e]);
         return { ok: true };
       });
       if (!result.ok) return result;
       await ctx.audit(
         "payment.restore",
         { type: "student", id: s.id },
-        { paymentId: e.id, kind: e.kind, amount: e.amount },
+        { paymentId: e.id, kind: e.kind, amount: e.amount, ...coinMeta(coins) },
       );
       await settleAfter(ctx, s.id);
       refresh(s.id);
@@ -425,6 +456,8 @@ export async function editEntryAction(input: unknown): Promise<ActionResult> {
         date: v.date,
         note: v.note || null,
       };
+      const rt = await coinRuntime(ctx.tenant, ctx.db);
+      let coins: (CoinChange | null)[] = [];
       const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
         await lockStudent(tx, s.id);
         // Qaytarish oshirilsa — balansda shuncha ortiqcha pul bo'lishi kerak
@@ -438,6 +471,7 @@ export async function editEntryAction(input: unknown): Promise<ActionResult> {
             };
         }
         await tx.update(payments).set(next).where(eq(payments.id, e.id));
+        coins = await syncPrepay(tx, rt, s.id, [e, next]);
         return { ok: true };
       });
       if (!result.ok) return result;
@@ -458,6 +492,7 @@ export async function editEntryAction(input: unknown): Promise<ActionResult> {
           kind: e.kind,
           receiptNo: e.receiptNo,
           changed: Object.fromEntries(changed.map((k) => [k, { from: before[k], to: next[k] }])),
+          ...coinMeta(coins),
         },
       );
       await settleAfter(ctx, s.id);
