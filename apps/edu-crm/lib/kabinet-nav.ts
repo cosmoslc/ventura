@@ -3,7 +3,7 @@
  * qo'shiladi: guruhlar, o'quvchilar, statistika va moliya keyingi bosqichlarda.
  */
 
-export type KabinetIcon = "home" | "groups" | "profile";
+export type KabinetIcon = "home" | "groups" | "students" | "stats" | "finance" | "profile";
 
 export interface KabinetItem {
   href: string;
@@ -16,6 +16,9 @@ export const KABINET_HOME = "/kabinet";
 export const KABINET_NAV: readonly KabinetItem[] = [
   { href: KABINET_HOME, label: "Bosh sahifa", icon: "home" },
   { href: "/kabinet/guruhlar", label: "Guruhlar", icon: "groups" },
+  { href: "/kabinet/oquvchilar", label: "O'quvchilar", icon: "students" },
+  { href: "/kabinet/statistika", label: "Statistika", icon: "stats" },
+  { href: "/kabinet/moliya", label: "Moliya", icon: "finance" },
   { href: "/kabinet/profil", label: "Profil", icon: "profile" },
 ];
 

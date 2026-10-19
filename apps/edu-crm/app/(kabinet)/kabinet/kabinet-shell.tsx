@@ -1,6 +1,16 @@
 "use client";
 
-import { House, KeyRound, LogOut, type LucideIcon, UserRound, UsersRound } from "lucide-react";
+import {
+  ChartColumn,
+  GraduationCap,
+  House,
+  KeyRound,
+  LogOut,
+  type LucideIcon,
+  UserRound,
+  UsersRound,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -23,7 +33,10 @@ import { signOutAction } from "../../(auth)/actions";
 const ICONS: Record<KabinetIcon, { icon: LucideIcon; hue: string }> = {
   home: { icon: House, hue: "blue" },
   groups: { icon: UsersRound, hue: "teal" },
-  profile: { icon: UserRound, hue: "violet" },
+  students: { icon: GraduationCap, hue: "sky" },
+  stats: { icon: ChartColumn, hue: "violet" },
+  finance: { icon: Wallet, hue: "green" },
+  profile: { icon: UserRound, hue: "slate" },
 };
 
 const SECTIONS: NavSection[] = [

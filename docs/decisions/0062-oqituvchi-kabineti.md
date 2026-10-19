@@ -134,6 +134,25 @@ Har biri alohida branch va PR:
   - audit — `coin.manual`;
   - qo'lda berilgan coinni bekor qilish bu bosqichda yo'q.
 
+## 3-bosqichda amalga oshirilgani
+
+- **O'quvchilar** (`/kabinet/oquvchilar`):
+  - admin jadvali uslubida (`StudentsTable`), faqat ko'rish;
+  - faqat o'z guruhlaridagi ochiq a'zolar, boshqa guruhlari ko'rinmaydi;
+  - kartalar: jami, faol, sinovda, o'zlashtirishi past;
+  - filtrlar: qidiruv, guruh, holat;
+  - ustunlar: guruhlari (kabinetdagi guruhga havola), joriy oy davomati, o'rtacha baho va daraja, coin, holat.
+- **Statistika** (`/kabinet/statistika`, `?oy=`):
+  - o'tkazilgan va o'tkazilmagan darslar: o'tgan dars kunlari bayramsiz; davomat olinmagan kun — o'tkazilmagan;
+  - soat, ushlab turish va davomat (o'qituvchi profili bilan bir hisob, ADR 0021);
+  - guruhlar bo'yicha darslar;
+  - o'quvchilar daraja taqsimoti (`DistributionBar`);
+  - avans, jarima va bonus, oy yozuvlari (Ish haqi bo'limi yoqilgan bo'lsa).
+- **Moliya** (`/kabinet/moliya`, `?oy=`) — Ish haqi bo'limi bilan bir manba, faqat ko'rish:
+  - kartalar: balans, hisoblangan, bonus, jarima, berilgan;
+  - guruhlar bo'yicha o'quvchilardan tushgan pul, shart va ulush;
+  - oy yozuvlari va "To'lovlardan hisoblangan ulush" (o'qituvchi profilidagi jadvallar, amallarsiz).
+
 ## Egasi javoblari
 
 1. **Coin berish** — o'qituvchi qo'lda bera oladi (2-bosqichda, guruhning "O'quvchilar" tabida). ADR 0061 ga yangi

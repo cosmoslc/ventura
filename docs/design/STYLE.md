@@ -670,6 +670,13 @@ Qoidalar:
 - `self` — xodim ro'yxatda bo'lmasa, pastda o'z o'rni chiqadi ("3 / 12").
 - Qiymat berilmasa, faqat o'rin ko'rinadi. Masalan, boshqa o'qituvchilarning raqamlari yashiriladi.
 
+### 11.39 DistributionBar — `distribution-bar.tsx`
+
+- Taqsimot: bitta gorizontal chiziq ulushlar bo'yicha bo'laklarga bo'linadi, ostida izoh — rang, nom, soni va foizi.
+  Masalan, o'qituvchi kabinetida o'quvchilar baho darajalari bo'yicha (ADR 0062).
+- Ohang faqat holat tokenlaridan: `success`, `info`, `warning`, `danger`, `neutral`, `primary`.
+- Chiziqqa `role="img"` va `aria-label` qo'yiladi (hamma bo'laklar matn bilan). Hammasi 0 bo'lsa — `emptyLabel`.
+
 ## 12. Fokus va qulaylik
 
 - Umumiy `:focus-visible`: 2px `--focus-outline` kontur, 2px masofa.
