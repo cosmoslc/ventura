@@ -55,6 +55,8 @@ CI server testi ham shuni tekshiradi.
 
 **Loyiha sirlari** — "Sirlar" tabi, faqat super admin.
 
+> 2026-10-19: alohida "Sirlar" tabi olib tashlandi — sirlar boshqaruvi "Ega va sirlar" tabida (super adminga; boshqalarga faqat bor/yo'qligi).
+
 - Sirlar: Telegram bot tokeni, ega paroli, baza paroli (alohida bazada), sessiya kaliti, SMS relay kaliti.
 - Ko'rish va o'zgartirish audit jurnaliga yoziladi (qiymat yozilmaydi). Kalitlar uchun tasodifiy qiymat yaratish bor.
 - Xavfli sirlarda (baza paroli, sessiya kaliti, SMS kaliti) alohida tasdiq va oqibati yoziladi.

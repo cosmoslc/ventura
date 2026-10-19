@@ -168,7 +168,6 @@ export const uz = {
       features: "Bo'limlar",
       domains: "Domenlar",
       owner: "Ega va sirlar",
-      secrets: "Sirlar",
       danger: "Xavfli hudud",
     },
     trash: "Savatga o'tkazish",
