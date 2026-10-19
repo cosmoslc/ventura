@@ -87,6 +87,7 @@ export async function globalSearch(
           .where(
             and(
               isNull(users.archivedAt),
+              eq(users.kind, "staff"),
               // Filial cheklovi bor xodim faqat o'z filialidagi xodimlarni ko'radi
               filter
                 ? sql`exists (select 1 from ${userBranches} where ${userBranches.userId} = ${users.id} and ${inArray(userBranches.branchId, [...filter])})`

@@ -136,7 +136,7 @@ export async function assignableStaff(db: TenantDb): Promise<BranchStaff[]> {
     db
       .select({ id: users.id, name: users.name, phone: users.phoneNumber })
       .from(users)
-      .where(and(ne(users.role, "director"), isNull(users.archivedAt)))
+      .where(and(ne(users.role, "director"), eq(users.kind, "staff"), isNull(users.archivedAt)))
       .orderBy(asc(users.name)),
     db.select().from(userBranches),
     positionNames(db),

@@ -46,6 +46,11 @@ export interface ActionCtx {
 export interface ActionOptions {
   /** Shu amal "tasdiq bilan" bo'lishi mumkin: reyestrdagi kaliti va xodim yuborgan kirish */
   approval?: { action: ApprovalKey; input: unknown };
+  /**
+   * O'qituvchi hisobi (ADR 0062) ham chaqira oladi. Bunday amal o'zi guruh egaligini tekshiradi
+   * (`lib/server/teacher-scope.ts`). Belgilanmagan amal o'qituvchiga yopiq.
+   */
+  teacher?: true;
 }
 
 /**
@@ -62,6 +67,7 @@ export async function crmAction<T extends object = object>(
   if (!tenant || !(await hasFeature(tenant, feature))) return { ok: false, error: uz.common.notFound };
   const staff = await getStaff();
   if (!staff || staff.state !== "ok") return { ok: false, error: uz.common.sessionGone };
+  if (staff.kind === "teacher" && !options.teacher) return { ok: false, error: uz.common.forbidden };
   const db = getTenantDb(tenant);
   const meta = await requestMeta();
   const branch = await getBranchContext();

@@ -30,6 +30,8 @@ export async function staffWithPermission(
     .where(
       and(
         isNull(users.archivedAt),
+        // O'qituvchi hisobi (ADR 0062) admin bildirishnomalarini olmaydi
+        eq(users.kind, "staff"),
         or(
           eq(users.role, "director"),
           and(

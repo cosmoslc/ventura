@@ -87,7 +87,12 @@ export async function listStaff(
   filter: readonly string[] | null,
   id?: string,
 ): Promise<StaffRow[]> {
-  const base = and(ne(users.role, "director"), isNull(users.archivedAt), id ? eq(users.id, id) : undefined);
+  const base = and(
+    ne(users.role, "director"),
+    eq(users.kind, "staff"),
+    isNull(users.archivedAt),
+    id ? eq(users.id, id) : undefined,
+  );
   const rows = await db.select().from(users).where(base).orderBy(asc(users.createdAt), asc(users.name));
   if (!rows.length) return [];
   const ids = rows.map((u) => u.id);
@@ -163,7 +168,7 @@ export async function archivedStaff(
   const rows = await db
     .select()
     .from(users)
-    .where(and(ne(users.role, "director"), isNotNull(users.archivedAt)))
+    .where(and(ne(users.role, "director"), eq(users.kind, "staff"), isNotNull(users.archivedAt)))
     .orderBy(desc(users.archivedAt));
   if (!rows.length) return [];
   const ids = rows.map((u) => u.id);

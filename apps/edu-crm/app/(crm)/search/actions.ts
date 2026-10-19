@@ -32,6 +32,8 @@ export async function globalSearchAction(q: unknown): Promise<ActionResult<{ hit
   if (!tenant) return { ok: false, error: uz.common.notFound };
   const staff = await getStaff();
   if (!staff || staff.state !== "ok") return { ok: false, error: uz.common.sessionGone };
+  // O'qituvchi hisobi (ADR 0062) markaz bo'yicha qidirmaydi
+  if (staff.kind === "teacher") return { ok: true, hits: [] };
 
   const kinds = new Set<SearchKind>();
   for (const kind of SEARCH_KINDS) {

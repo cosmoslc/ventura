@@ -12,6 +12,7 @@ import { groupAttendance } from "@/lib/server/attendance";
 import { coinRuntime, syncHomeworkCoin } from "@/lib/server/coins";
 import { getGradingSettings } from "@/lib/server/grades";
 import { todayTashkent } from "@/lib/server/memberships";
+import { ownsGroup } from "@/lib/server/teacher-scope";
 import { uz } from "@/lib/uz";
 
 /*
@@ -46,7 +47,8 @@ export async function saveGradeAction(input: unknown): Promise<ActionResult> {
         .select()
         .from(groups)
         .where(and(eq(groups.id, v.groupId), isNull(groups.archivedAt)));
-      if (!g || !ctx.branch.options.some((b) => b.id === g.branchId)) return { ok: false, error: uz.common.gone };
+      if (!g || !ctx.branch.options.some((b) => b.id === g.branchId) || !ownsGroup(ctx.staff, g))
+        return { ok: false, error: uz.common.gone };
       const today = todayTashkent();
       if (v.date > today) return { ok: false, error: uz.grades.future };
       if (v.date < today) {
@@ -113,6 +115,6 @@ export async function saveGradeAction(input: unknown): Promise<ActionResult> {
       revalidatePath(`/students/${v.studentId}`);
       return { ok: true };
     },
-    { approval: { action: "grades.mark", input } },
+    { approval: { action: "grades.mark", input }, teacher: true },
   );
 }

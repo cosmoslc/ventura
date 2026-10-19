@@ -6,7 +6,7 @@ import { getStaff } from "@/lib/server/session";
 /** Tepadagi filial tanlovi: faqat xodimga ochiq filial yoki "all" saqlanadi. */
 export async function selectBranchAction(value: string): Promise<{ ok: boolean }> {
   const staff = await getStaff();
-  if (!staff || staff.state !== "ok") return { ok: false };
+  if (!staff || staff.state !== "ok" || staff.kind === "teacher") return { ok: false };
   const ctx = await getBranchContext();
   if (value !== "all" && !ctx.options.some((b) => b.id === value)) return { ok: false };
   await storeBranch(value);

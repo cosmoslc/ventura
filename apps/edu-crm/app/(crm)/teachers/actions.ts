@@ -3,10 +3,19 @@
 import { and, count, eq, isNull, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { formatPhone } from "@ventura/auth/policy";
+import { formatPhone, passwordProblem } from "@ventura/auth/policy";
 import { groups, teachers } from "@ventura/db/schema/tenant";
 import { resolveBranch } from "@/lib/server/branch";
-import { type ActionResult, crmAction } from "@/lib/server/action";
+import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
+import {
+  type TeacherLoginError,
+  grantTeacherLogin,
+  resetTeacherPassword,
+  revokeTeacherLogin,
+  syncTeacherLogin,
+  teacherLoginBlocker,
+  teacherPhoneFree,
+} from "@/lib/server/teacher-account";
 import { firstError, teacherInput } from "@/lib/rules";
 import { uz } from "@/lib/uz";
 
@@ -22,7 +31,8 @@ const PATH = "/teachers";
 export async function saveTeacherAction(input: unknown): Promise<ActionResult<{ id: string }>> {
   const raw = z.object({ id: z.uuid().optional() }).safeParse(input);
   const editing = raw.success && !!raw.data.id;
-  return crmAction<{ id: string }>(FEATURE, editing ? "staff.edit" : "staff.create", async ({ db, branch, audit }) => {
+  return crmAction<{ id: string }>(FEATURE, editing ? "staff.edit" : "staff.create", async (ctx) => {
+    const { db, branch, audit } = ctx;
     const parsed = teacherInput.safeParse(input);
     if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
     const v = parsed.data;
@@ -50,6 +60,19 @@ export async function saveTeacherAction(input: unknown): Promise<ActionResult<{ 
       .from(teachers)
       .where(and(eq(teachers.phone, phone), isNull(teachers.archivedAt), v.id ? ne(teachers.id, v.id) : undefined));
     if (dup) return { ok: false, error: uz.teachers.phoneTaken };
+
+    // Kabinetga kirish (ADR 0062): yangi o'qituvchida parol berilsa; telefon login sifatida bo'sh bo'lishi kerak
+    const password = v.id ? "" : v.password;
+    if (password) {
+      if (support) return { ok: false, error: uz.teachers.loginSupport };
+      const problem = passwordProblem(password);
+      if (problem) return { ok: false, error: problem };
+      const blocker = await teacherLoginBlocker(ctx);
+      if (blocker) return { ok: false, error: loginError(blocker) };
+    }
+    const loginPhoneCheck = password || (existing?.userId && existing.phone !== phone);
+    if (loginPhoneCheck && !(await teacherPhoneFree(ctx, phone, existing?.id ?? null)))
+      return { ok: false, error: uz.teachers.loginPhoneTaken };
 
     if (support && v.assignedTeacherId) {
       const [mentor] = await db
@@ -82,6 +105,8 @@ export async function saveTeacherAction(input: unknown): Promise<ActionResult<{ 
 
     if (existing) {
       await db.update(teachers).set(values).where(eq(teachers.id, existing.id));
+      if (existing.userId && (existing.name !== v.name || existing.phone !== phone))
+        await syncTeacherLogin(ctx, existing.userId, { name: v.name, phone });
       await audit(
         "teacher.update",
         { type: "teacher", id: existing.id },
@@ -109,6 +134,14 @@ export async function saveTeacherAction(input: unknown): Promise<ActionResult<{ 
         salaryType: values.salaryType,
       },
     );
+    if (password) {
+      const login = await grantTeacherLogin(ctx, { id: row!.id, name: v.name, phone, branchId }, password);
+      if (!login.ok) {
+        revalidatePath(PATH);
+        return { ok: false, error: `${uz.teachers.createdNoLogin} ${loginError(login.error)}` };
+      }
+      await audit("teacher.login_grant", { type: "teacher", id: row!.id }, { name: v.name });
+    }
     revalidatePath(PATH);
     return { ok: true, id: row!.id };
   });
@@ -137,6 +170,71 @@ export async function archiveTeacherAction(id: unknown): Promise<ActionResult> {
     await db.update(teachers).set({ archivedAt: new Date() }).where(eq(teachers.id, t.id));
     await audit("teacher.archive", { type: "teacher", id: t.id }, { name: t.name, kind: t.kind });
     revalidatePath(PATH);
+    return { ok: true };
+  });
+}
+
+/* ---------- Kabinetga kirish (ADR 0062) ---------- */
+
+function loginError(code: TeacherLoginError): string {
+  return uz.teachers.loginErrors[code] ?? uz.common.error;
+}
+
+/** Faol (support emas) o'qituvchi, filial cheklovi bilan */
+async function loadTeacher(ctx: ActionCtx, id: unknown) {
+  const parsed = z.uuid().safeParse(id);
+  if (!parsed.success) return null;
+  const [t] = await ctx.db
+    .select()
+    .from(teachers)
+    .where(and(eq(teachers.id, parsed.data), isNull(teachers.archivedAt)));
+  if (!t || !ctx.branch.options.some((b) => b.id === t.branchId)) return null;
+  return t;
+}
+
+const passwordInput = z.object({ teacherId: z.uuid(), password: z.string().max(128) });
+
+export async function grantTeacherLoginAction(input: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "staff.create", async (ctx) => {
+    const v = passwordInput.safeParse(input);
+    if (!v.success) return { ok: false, error: uz.common.invalid };
+    const t = await loadTeacher(ctx, v.data.teacherId);
+    if (!t) return { ok: false, error: uz.common.gone };
+    if (t.kind !== "teacher") return { ok: false, error: uz.teachers.loginSupport };
+    if (t.userId) return { ok: true };
+    const problem = passwordProblem(v.data.password);
+    if (problem) return { ok: false, error: problem };
+    const login = await grantTeacherLogin(ctx, t, v.data.password);
+    if (!login.ok) return { ok: false, error: loginError(login.error) };
+    await ctx.audit("teacher.login_grant", { type: "teacher", id: t.id }, { name: t.name });
+    revalidatePath(`${PATH}/${t.id}`);
+    return { ok: true };
+  });
+}
+
+export async function resetTeacherPasswordAction(input: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "staff.edit", async (ctx) => {
+    const v = passwordInput.safeParse(input);
+    if (!v.success) return { ok: false, error: uz.common.invalid };
+    const t = await loadTeacher(ctx, v.data.teacherId);
+    if (!t?.userId) return { ok: false, error: uz.common.gone };
+    const problem = passwordProblem(v.data.password);
+    if (problem) return { ok: false, error: problem };
+    if (!(await resetTeacherPassword(ctx, t.userId, v.data.password))) return { ok: false, error: uz.common.error };
+    await ctx.audit("teacher.login_reset", { type: "teacher", id: t.id }, { name: t.name });
+    revalidatePath(`${PATH}/${t.id}`);
+    return { ok: true };
+  });
+}
+
+export async function revokeTeacherLoginAction(teacherId: unknown): Promise<ActionResult> {
+  return crmAction(FEATURE, "staff.delete", async (ctx) => {
+    const t = await loadTeacher(ctx, teacherId);
+    if (!t) return { ok: false, error: uz.common.gone };
+    if (!t.userId) return { ok: true };
+    await revokeTeacherLogin(ctx, t.id, t.userId);
+    await ctx.audit("teacher.login_revoke", { type: "teacher", id: t.id }, { name: t.name });
+    revalidatePath(`${PATH}/${t.id}`);
     return { ok: true };
   });
 }

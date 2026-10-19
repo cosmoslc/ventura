@@ -327,6 +327,16 @@ describe.skipIf(!ADMIN_URL)("ish haqi (haqiqiy PostgreSQL)", () => {
     ).rejects.toThrow();
   });
 
+  it("o'qituvchi kabineti hisobi (ADR 0062) xodimlar oyligiga tushmaydi", async () => {
+    const [acc] = await db
+      .insert(users)
+      .values({ name: "Kabinet hisobi", email: "kabinet@payroll.local", role: "staff", kind: "teacher" })
+      .returning();
+    const p = await loadPayroll(db, null, "2026-10", TODAY);
+    expect(p.rows.some((r) => r.kind === "user" && r.id === acc!.id)).toBe(false);
+    expect(p.rows.some((r) => r.kind === "user" && r.id === ids.manager)).toBe(true);
+  });
+
   it("boshqa mijoz ma'lumoti ko'rinmaydi", async () => {
     const p = await loadPayroll(other, null, "2026-10", TODAY);
     expect(p.rows).toEqual([]);

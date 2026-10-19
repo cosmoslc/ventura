@@ -39,6 +39,7 @@ import type { MethodOption } from "../payments/payment-dialog";
 import type { SalaryEntryRow } from "../salaries/data";
 import { SalaryForm, type SalaryFormState, type SalaryPerms } from "../salaries/salary-form";
 import { archiveTeacherAction } from "./actions";
+import { TeacherLoginCard } from "./teacher-login-card";
 import type { TeacherOverview, TeacherRef, TeacherRow } from "./data";
 import { TeacherForm } from "./teacher-form";
 import { TeacherShares, TeacherTransactions } from "./teacher-salary";
@@ -300,6 +301,7 @@ export function TeacherProfile({
               {hoursLabel(t) ? <Row label={tt.workHours}>{hoursLabel(t)}</Row> : null}
             </dl>
           </section>
+          {!support ? <TeacherLoginCard teacherId={t.id} hasLogin={t.hasLogin} perms={perms} /> : null}
           <section>
             <div className="mb-1 text-caption font-semibold text-muted-foreground">{tt.note}</div>
             <p className="rounded-control border border-border-soft bg-muted px-3 py-2.5 text-body text-foreground">

@@ -12,6 +12,7 @@ import {
   unique,
   uuid,
 } from "drizzle-orm/pg-core";
+import { users } from "./auth";
 import { tenantId, tenantPolicy, timestamps } from "./columns";
 import { branches } from "./core";
 
@@ -120,11 +121,19 @@ export const teachers = pgTable(
     startTime: text("start_time"),
     endTime: text("end_time"),
     note: text("note"),
+    /** Kabinetga kirish hisobi (ADR 0062); null — tizimga kirmaydi */
+    userId: uuid("user_id"),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
   (t) => [
     unique("teachers_tenant_id_uq").on(t.tenantId, t.id),
+    unique("teachers_user_uq").on(t.tenantId, t.userId),
+    foreignKey({
+      name: "teachers_user_fk",
+      columns: [t.tenantId, t.userId],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
     index("teachers_branch_idx").on(t.branchId),
     foreignKey({
       name: "teachers_branch_fk",

@@ -10,10 +10,16 @@ import { type ActionResult, crmAction } from "@/lib/server/action";
  */
 
 export async function endOtherSessionsAction(): Promise<ActionResult<{ count: number }>> {
-  return crmAction<{ count: number }>("students", null, async ({ staff, db, audit }) => {
-    const count = await endOtherSessions(db, staff.id, staff.sessionId);
-    await audit("user.sessions_ended", { type: "user", id: staff.id }, { count });
-    revalidatePath("/account");
-    return { ok: true, count };
-  });
+  return crmAction<{ count: number }>(
+    "students",
+    null,
+    async ({ staff, db, audit }) => {
+      const count = await endOtherSessions(db, staff.id, staff.sessionId);
+      await audit("user.sessions_ended", { type: "user", id: staff.id }, { count });
+      revalidatePath("/account");
+      revalidatePath("/kabinet/profil");
+      return { ok: true, count };
+    },
+    { teacher: true },
+  );
 }
