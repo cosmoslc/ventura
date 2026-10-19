@@ -130,6 +130,7 @@ export const PERMISSION_CATEGORIES = [
       { id: "settings.roles_permissions", name: "Lavozimlar va ruxsatlarni sozlash" },
       { id: "settings.sms_gateways", name: "SMS provayder va avto-SMS shablonlari" },
       { id: "settings.receipt", name: "Chek va printer sozlamalari" },
+      { id: "settings.coins", name: "Coin qoidalari va miqdorlari" },
       { id: "settings.logs", name: "Tizim harakatlari jurnali (Audit Logs)" },
     ],
   },

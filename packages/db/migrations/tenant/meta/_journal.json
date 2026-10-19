@@ -190,6 +190,13 @@
       "when": 1792310311002,
       "tag": "0026_s4_sms_mode_default",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792423351004,
+      "tag": "0027_e7_coins",
+      "breakpoints": true
     }
   ]
 }

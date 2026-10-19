@@ -18,3 +18,4 @@ export * from "./approvals";
 export * from "./leads";
 export * from "./notifications";
 export * from "./sms";
+export * from "./coins";

@@ -6,7 +6,9 @@ import { z } from "zod";
 import { ATTENDANCE_STATUSES, attendance, groups } from "@ventura/db/schema/tenant";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { markable } from "@/lib/lessons";
+import { coinMeta } from "@/lib/coins";
 import { groupAttendance } from "@/lib/server/attendance";
+import { awardAttendanceMany, coinRuntime, syncAttendanceCoin } from "@/lib/server/coins";
 import { todayTashkent } from "@/lib/server/memberships";
 import { uz } from "@/lib/uz";
 
@@ -69,32 +71,46 @@ export async function markAttendanceAction(input: unknown): Promise<ActionResult
       if (!member || !markable(member.periods, v.date)) return { ok: false, error: uz.attendance.notMember };
 
       const before = lc.data.marks[`${v.studentId}|${v.date}`] ?? null;
-      if (v.status === null) {
-        if (!before) return { ok: true };
-        await ctx.db
-          .delete(attendance)
-          .where(
-            and(eq(attendance.groupId, v.groupId), eq(attendance.studentId, v.studentId), eq(attendance.date, v.date)),
-          );
-      } else {
-        // Sabab faqat kelmagan/kechikkan/sababli uchun
-        const reason = v.status === "present" ? null : v.reason || null;
-        if (before && before.status === v.status && before.reason === reason) return { ok: true };
-        await ctx.db
-          .insert(attendance)
-          .values({
-            groupId: v.groupId,
-            studentId: v.studentId,
-            date: v.date,
-            status: v.status,
-            reason,
-            markedBy: ctx.staff.id,
-          })
-          .onConflictDoUpdate({
-            target: [attendance.tenantId, attendance.groupId, attendance.studentId, attendance.date],
-            set: { status: v.status, reason, markedBy: ctx.staff.id, updatedAt: new Date() },
-          });
-      }
+      // Sabab faqat kelmagan/kechikkan/sababli uchun
+      const reason = v.status === "present" ? null : v.reason || null;
+      if (v.status === null ? !before : before && before.status === v.status && before.reason === reason)
+        return { ok: true };
+      const rt = await coinRuntime(ctx.tenant, ctx.db);
+      // Belgi va coin bitta tranzaksiyada (ADR 0061)
+      const coin = await ctx.db.transaction(async (tx) => {
+        if (v.status === null) {
+          await tx
+            .delete(attendance)
+            .where(
+              and(
+                eq(attendance.groupId, v.groupId),
+                eq(attendance.studentId, v.studentId),
+                eq(attendance.date, v.date),
+              ),
+            );
+        } else {
+          await tx
+            .insert(attendance)
+            .values({
+              groupId: v.groupId,
+              studentId: v.studentId,
+              date: v.date,
+              status: v.status,
+              reason,
+              markedBy: ctx.staff.id,
+            })
+            .onConflictDoUpdate({
+              target: [attendance.tenantId, attendance.groupId, attendance.studentId, attendance.date],
+              set: { status: v.status, reason, markedBy: ctx.staff.id, updatedAt: new Date() },
+            });
+        }
+        return syncAttendanceCoin(tx, rt, {
+          studentId: v.studentId,
+          groupId: v.groupId,
+          date: v.date,
+          status: v.status,
+        });
+      });
       await ctx.audit(
         "attendance.mark",
         { type: "student", id: v.studentId },
@@ -105,6 +121,7 @@ export async function markAttendanceAction(input: unknown): Promise<ActionResult
           from: before?.status ?? null,
           to: v.status,
           ...(v.status && v.status !== "present" && v.reason ? { reason: v.reason } : {}),
+          ...coinMeta([coin]),
         },
       );
       refresh(v.groupId);
@@ -129,22 +146,38 @@ export async function markRestPresentAction(input: unknown): Promise<ActionResul
         (m) => markable(m.periods, date) && !lc.data.marks[`${m.studentId}|${date}`],
       );
       if (!targets.length) return { ok: true, marked: 0 };
-      await ctx.db
-        .insert(attendance)
-        .values(
-          targets.map((m) => ({
-            groupId,
-            studentId: m.studentId,
-            date,
-            status: "present" as const,
-            markedBy: ctx.staff.id,
-          })),
-        )
-        .onConflictDoNothing();
+      const rt = await coinRuntime(ctx.tenant, ctx.db);
+      const coins = await ctx.db.transaction(async (tx) => {
+        const inserted = await tx
+          .insert(attendance)
+          .values(
+            targets.map((m) => ({
+              groupId,
+              studentId: m.studentId,
+              date,
+              status: "present" as const,
+              markedBy: ctx.staff.id,
+            })),
+          )
+          .onConflictDoNothing()
+          .returning({ studentId: attendance.studentId });
+        return awardAttendanceMany(
+          tx,
+          rt,
+          groupId,
+          date,
+          inserted.map((r) => r.studentId),
+        );
+      });
       await ctx.audit(
         "attendance.mark_all",
         { type: "group", id: groupId },
-        { group: lc.group.name, date, marked: targets.length },
+        {
+          group: lc.group.name,
+          date,
+          marked: targets.length,
+          ...(coins.count ? { coins: { rule: "attendance", action: "award", ...coins } } : {}),
+        },
       );
       refresh(groupId);
       return { ok: true, marked: targets.length };

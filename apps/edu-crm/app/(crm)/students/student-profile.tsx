@@ -88,6 +88,7 @@ export function StudentProfile({
   groupOptions,
   groupPerms,
   finance,
+  coins,
 }: {
   student: StudentRow;
   notes: StudentNoteRow[];
@@ -104,6 +105,8 @@ export function StudentProfile({
   groupPerms: GroupPerms;
   /** null — moliya bo'limi o'chiq yoki ko'rish ruxsati yo'q */
   finance: StudentFinance | null;
+  /** Coin balansi; null — coin bo'limi o'chiq (ADR 0061) */
+  coins: number | null;
 }) {
   const router = useRouter();
   const [tab, setTab] = React.useState<Tab>("groups");
@@ -252,7 +255,11 @@ export function StudentProfile({
       </Card>
 
       <div className="min-w-0 space-y-4">
-        {finance ? <StudentMoneyCards summary={finance.summary} currentMonth={finance.currentMonth} /> : null}
+        <StudentMoneyCards
+          summary={finance?.summary ?? null}
+          currentMonth={finance?.currentMonth ?? ""}
+          coins={coins}
+        />
 
         <Card className="min-w-0 space-y-5 p-5">
           <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>

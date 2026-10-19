@@ -118,6 +118,17 @@ function simple(
 }
 
 const reason = (i: SentenceInput) => str(i.m.reason) ?? str(i.m.voidReason);
+/** Amal bilan birga berilgan yoki olingan coin (ADR 0061): `coins` — ro'yxat yoki ommaviy amalda bitta yozuv */
+const coinText = (i: SentenceInput): string | null => {
+  const list = Array.isArray(i.m.coins) ? i.m.coins : i.m.coins ? [i.m.coins] : [];
+  const out = list.flatMap((c) => {
+    const o = obj(c);
+    const amount = num(o?.amount);
+    if (!o || amount === null) return [];
+    return [`${o.action === "revoke" ? "−" : "+"}${money(amount)} coin`];
+  });
+  return out.length ? out.join(", ") : null;
+};
 const groupOf = (i: SentenceInput) => str(i.m.group);
 const studentOf = (i: SentenceInput) => str(i.m.student);
 
@@ -230,19 +241,21 @@ const REGISTRY: Record<string, Def> = {
   // To'lovlar
   "payment.create": {
     section: "payment",
-    text: money2("to'lov qabul qildi", (i) => (num(i.m.discount) ? `chegirma ${som(num(i.m.discount)!)}` : null)),
+    text: money2("to'lov qabul qildi", (i) =>
+      parts(num(i.m.discount) ? `chegirma ${som(num(i.m.discount)!)}` : null, coinText(i)),
+    ),
   },
   "payment.update": simple(
     "payment",
     "to'lovni tahrirladi",
-    (i) => (str(i.m.receiptNo) ? `№${str(i.m.receiptNo)}` : null),
+    (i) => parts(str(i.m.receiptNo) ? `№${str(i.m.receiptNo)}` : null, coinText(i)),
     (i) => i.who,
   ),
   "payment.refund": { section: "payment", text: money2("to'lovni qaytardi", reason) },
   "payment.correction": { section: "payment", text: money2("o'quvchi balansini tuzatdi", reason) },
   "payment.writeoff": { section: "payment", text: money2("guruhdan chiqarishda qarzdan kechdi") },
-  "payment.void": { section: "payment", text: money2("to'lovni bekor qildi", reason) },
-  "payment.restore": { section: "payment", text: money2("bekor qilingan to'lovni tikladi") },
+  "payment.void": { section: "payment", text: money2("to'lovni bekor qildi", (i) => parts(reason(i), coinText(i))) },
+  "payment.restore": { section: "payment", text: money2("bekor qilingan to'lovni tikladi", coinText) },
   "discount.create": simple("payment", "chegirma berdi", discountText, (i) => i.who),
   "discount.update": simple("payment", "chegirmani o'zgartirdi", undefined, (i) => i.who),
   "discount.delete": simple("payment", "chegirmani o'chirdi", discountText, (i) => i.who),
@@ -254,6 +267,7 @@ const REGISTRY: Record<string, Def> = {
     (i) => str(obj(i.m.after)?.name) ?? i.who,
   ),
   "finance_settings.update": simple("payment", "moliya sozlamalarini o'zgartirdi", undefined, () => null),
+  "coin_settings.update": simple("settings", "coin qoidalarini o'zgartirdi", undefined, () => null),
 
   // Xarajat, daromad, ish haqi
   "expense.create": { section: "finance", text: money2("xarajat kiritdi") },
@@ -291,13 +305,13 @@ const REGISTRY: Record<string, Def> = {
   "attendance.mark": simple(
     "attendance",
     "o'quvchi davomatini belgiladi",
-    (i) => parts(groupOf(i), day(i.m.date), LESSON_STATUS[str(i.m.to) ?? ""] ?? str(i.m.to)),
+    (i) => parts(groupOf(i), day(i.m.date), LESSON_STATUS[str(i.m.to) ?? ""] ?? str(i.m.to), coinText(i)),
     (i) => i.who,
   ),
   "attendance.mark_all": simple(
     "attendance",
     "guruh davomatini belgiladi",
-    (i) => parts(day(i.m.date), num(i.m.marked) !== null && `${num(i.m.marked)} ta o'quvchi`),
+    (i) => parts(day(i.m.date), num(i.m.marked) !== null && `${num(i.m.marked)} ta o'quvchi`, coinText(i)),
     (i) => groupOf(i) ?? i.who,
   ),
   "employee_attendance.mark": simple("attendance", "xodim davomatini belgiladi", (i) =>

@@ -9,7 +9,7 @@ export const template = {
   name: "O'quv markaz CRM",
   category: "Ta'lim",
   description: "O'quvchilar, guruhlar, davomat, to'lovlar va hisobotlar",
-  version: "0.6.0",
+  version: "0.7.0",
 } satisfies TemplateInfo;
 
 export const features = [
@@ -165,11 +165,13 @@ export const features = [
     name: "Coinlar",
     group: "O'quv jarayoni",
     type: "regular",
-    status: "soon",
     requires: ["students"],
-    description: "O'quvchilarni rag'batlantirish",
+    description: "Avtomatik coinlar: oldindan to'lov, davomat va uy vazifasi uchun",
     routes: ["/api/coins"],
-    nav: [{ label: "Coinlar", href: "/coins", section: "O'quv jarayoni" }],
+    nav: [
+      { label: "Coinlar", href: "/coins", section: "O'quv jarayoni" },
+      { label: "Coin sozlamalari", href: "/coin-settings", section: "Tizim" },
+    ],
   },
 
   // Sotuv va aloqa
