@@ -29,6 +29,10 @@ import { tenantId, tenantPolicy, timestamps } from "./columns";
 export const STAFF_ROLES = ["director", "staff", "manager", "cashier", "viewer"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
+/** `staff` — admin CRM; `teacher` — faqat o'qituvchi kabineti (ADR 0062), `teachers.user_id` orqali bog'langan */
+export const USER_KINDS = ["staff", "teacher"] as const;
+export type UserKind = (typeof USER_KINDS)[number];
+
 export const GENDERS = ["male", "female"] as const;
 export const SALARY_TYPES = ["fixed", "kpi"] as const;
 export type SalaryType = (typeof SALARY_TYPES)[number];
@@ -48,6 +52,7 @@ export const users = pgTable(
     phoneNumberVerified: boolean("phone_number_verified").notNull().default(false),
     twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
     role: text("role", { enum: STAFF_ROLES }).notNull().default("viewer"),
+    kind: text("kind", { enum: USER_KINDS }).notNull().default("staff"),
     /** Kirish kodlari mijozning o'z Telegram boti orqali shu chatga yuboriladi */
     telegramChatId: text("telegram_chat_id"),
     mustChangePassword: boolean("must_change_password").notNull().default(false),

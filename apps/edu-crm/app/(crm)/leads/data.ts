@@ -216,7 +216,7 @@ export async function staffOptions(db: TenantDb, filter: readonly string[] | nul
     db
       .select({ id: users.id, name: users.name, role: users.role })
       .from(users)
-      .where(isNull(users.archivedAt))
+      .where(and(isNull(users.archivedAt), eq(users.kind, "staff")))
       .orderBy(asc(users.name)),
     filter
       ? db

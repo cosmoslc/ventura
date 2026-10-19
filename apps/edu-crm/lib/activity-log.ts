@@ -200,6 +200,10 @@ const REGISTRY: Record<string, Def> = {
   "teacher.update": simple("teacher", "o'qituvchi ma'lumotini tahrirladi"),
   "teacher.archive": simple("teacher", "o'qituvchini arxivga oldi"),
   "teacher.restore": simple("teacher", "o'qituvchini arxivdan tikladi"),
+  "teacher.self_update": simple("teacher", "kabinetda o'z ma'lumotini tahrirladi"),
+  "teacher.login_grant": simple("teacher", "o'qituvchiga kabinetga kirish berdi"),
+  "teacher.login_reset": simple("teacher", "o'qituvchi kabineti parolini yangiladi"),
+  "teacher.login_revoke": simple("teacher", "o'qituvchining kabinetga kirishini o'chirdi"),
 
   // Xodimlar va lavozimlar
   "staff.create": simple("staff", "yangi xodim qo'shdi"),

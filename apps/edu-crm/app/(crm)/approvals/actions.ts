@@ -30,7 +30,7 @@ async function context() {
   const tenant = await currentTenant();
   if (!tenant) return null;
   const staff = await getStaff();
-  if (!staff || staff.state !== "ok") return null;
+  if (!staff || staff.state !== "ok" || staff.kind === "teacher") return null;
   const db = getTenantDb(tenant);
   const meta = await requestMeta();
   const audit = (action: string, id: string, metadata: Record<string, unknown>) =>

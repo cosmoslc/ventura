@@ -37,7 +37,7 @@ export interface BranchContext {
 
 export const getBranchContext = cache(async (): Promise<BranchContext> => {
   const tenant = await requireTenant();
-  const staff = await requireStaff();
+  const staff = await requireStaff(undefined, "any");
   const db = getTenantDb(tenant);
   const all = await db
     .select({ id: branches.id, name: branches.name, color: branches.color, address: branches.address })

@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import {
   type StaffRole,
+  type UserKind,
   knownDevices,
   sessions,
   settings,
@@ -227,6 +228,8 @@ export interface NewStaff {
   positionIds?: string[];
   /** Vaqtinchalik parol bilan yaratilsa — birinchi kirishda almashtiriladi */
   mustChangePassword?: boolean;
+  /** `teacher` — faqat o'qituvchi kabineti (ADR 0062) */
+  kind?: UserKind;
 }
 
 export async function createStaffUser(auth: StaffAuth, db: TenantDb, input: NewStaff) {
@@ -239,6 +242,7 @@ export async function createStaffUser(auth: StaffAuth, db: TenantDb, input: NewS
       phoneNumber: input.phone,
       phoneNumberVerified: true,
       role: input.role,
+      kind: input.kind ?? "staff",
       telegramChatId: null,
       twoFactorEnabled: false,
       mustChangePassword: input.mustChangePassword ?? true,

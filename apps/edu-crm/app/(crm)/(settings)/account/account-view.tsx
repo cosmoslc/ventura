@@ -36,6 +36,7 @@ export function AccountView({
   groups,
   devices,
   sessionCount,
+  header = true,
 }: {
   name: string;
   phone: string;
@@ -45,6 +46,8 @@ export function AccountView({
   groups: PermissionGroup[];
   devices: OwnDevice[];
   sessionCount: number;
+  /** Sahifa sarlavhasi; o'qituvchi kabinetida sarlavha profil formasida (ADR 0062) */
+  header?: boolean;
 }) {
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = React.useState(false);
@@ -60,7 +63,7 @@ export function AccountView({
 
   return (
     <div className="space-y-section">
-      <PageHeader title={t.title} description={t.description} />
+      {header ? <PageHeader title={t.title} description={t.description} /> : null}
 
       <Card>
         <CardContent className="flex flex-wrap items-center gap-4">

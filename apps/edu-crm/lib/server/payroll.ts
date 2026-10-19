@@ -252,7 +252,7 @@ async function staffRows(
   let list = await db
     .select()
     .from(users)
-    .where(and(isNull(users.archivedAt), ne(users.role, "director")))
+    .where(and(isNull(users.archivedAt), ne(users.role, "director"), eq(users.kind, "staff")))
     .orderBy(asc(users.name));
   if (filter) {
     const links = await db

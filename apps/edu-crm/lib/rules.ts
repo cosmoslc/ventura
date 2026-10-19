@@ -95,6 +95,8 @@ export const teacherInput = z.object({
     .default(""),
   assignedTeacherId: id.nullable().default(null),
   salaryType: z.enum(["percent", "per_student", "fixed"]),
+  /** Kabinetga kirish paroli (ADR 0062): faqat yangi o'qituvchida, bo'sh — kirish berilmaydi */
+  password: z.string().max(128).default(""),
   revenueSharePercent: z
     .number()
     .int()

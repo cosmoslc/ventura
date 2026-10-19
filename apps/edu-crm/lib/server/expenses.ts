@@ -122,7 +122,11 @@ export const personValue = (r: PersonRef) =>
  */
 export async function listPeople(db: TenantDb, filter: readonly string[] | null): Promise<PersonOption[]> {
   const [staff, links, tch] = await Promise.all([
-    db.select({ id: users.id, name: users.name }).from(users).where(isNull(users.archivedAt)).orderBy(asc(users.name)),
+    db
+      .select({ id: users.id, name: users.name })
+      .from(users)
+      .where(and(isNull(users.archivedAt), eq(users.kind, "staff")))
+      .orderBy(asc(users.name)),
     filter
       ? db
           .select()

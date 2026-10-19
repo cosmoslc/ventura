@@ -1982,6 +1982,47 @@ export const uz = {
     titleGroup: (name: string) => `Guruh: ${name}`,
   },
 
+  // O'qituvchi kabineti (ADR 0062)
+  kabinet: {
+    navTitle: "Kabinet",
+    subtitle: "O'qituvchi kabineti",
+    role: "O'qituvchi",
+    hello: (name: string) => `Xush kelibsiz, ${name}`,
+    homeHint: "Bu yerda o'z guruhlaringiz. Davomat, baholar va statistika keyingi yangilanishda qo'shiladi.",
+    groupsTitle: "Guruhlarim",
+    groupsEmpty: "Sizga hali guruh biriktirilmagan",
+    students: (n: number) => `${n} o'quvchi`,
+    profileTitle: "Profil",
+    profileDescription: "Shaxsiy ma'lumotlar va xavfsizlik",
+    personalTitle: "Shaxsiy ma'lumotlar",
+    name: "Ism familiya",
+    nameRequired: "Ismni kiriting",
+    phone: "Telefon (login)",
+    phoneHint: "Telefon raqamni markaz administratori o'zgartiradi",
+    gender: "Jinsi",
+    male: "Erkak",
+    female: "Ayol",
+    birthDate: "Tug'ilgan sana",
+    saved: "Saqlandi",
+  },
+
+  teacherLogin: {
+    title: "Kabinetga kirish",
+    on: "Kirish berilgan",
+    off: "Tizimga kirmaydi",
+    hint: "O'qituvchi o'z telefon raqami va shu parol bilan kiradi, faqat o'z guruhlarini ko'radi. Birinchi kirishda parolni almashtiradi.",
+    password: "Kirish paroli",
+    passwordPlaceholder: "Kamida 8 belgi (bo'sh — kirish berilmaydi)",
+    newPassword: "Yangi parol",
+    grant: "Kirish berish",
+    reset: "Parolni yangilash",
+    revoke: "Kirishni o'chirish",
+    revokeConfirm: "O'qituvchi tizimga kira olmaydi, ochiq sessiyalari yopiladi. Keyin qayta berish mumkin.",
+    granted: "Kirish berildi",
+    resetDone: "Parol yangilandi, ochiq sessiyalar yopildi",
+    revoked: "Kirish o'chirildi",
+  },
+
   coins: {
     title: "Coinlar",
     description: "O'quvchilar coinlari: avtomatik beriladi — oldindan to'lov, davomat va uy vazifasi uchun",
@@ -2828,6 +2869,14 @@ export const uz = {
   },
 
   teachers: {
+    loginSupport: "Support o'qituvchiga kabinet berilmaydi",
+    loginPhoneTaken: "Bu telefon bilan tizimda boshqa xodim bor — kirish berib bo'lmaydi",
+    createdNoLogin: "O'qituvchi saqlandi, lekin kirish berilmadi:",
+    loginErrors: {
+      phone_taken: "bu telefon bilan tizimda boshqa xodim bor",
+      position_too_wide: "\"O'qituvchi / Mentor\" lavozimida sizda yo'q ruxsatlar bor",
+      no_auth: "markazda kirish sozlanmagan",
+    } as Record<string, string>,
     title: "Ustozlar boshqaruvi",
     tabTeachers: "O'qituvchilar",
     tabSupport: "Support o'qituvchilar",

@@ -10,6 +10,7 @@ import { coinMeta } from "@/lib/coins";
 import { groupAttendance } from "@/lib/server/attendance";
 import { awardAttendanceMany, coinRuntime, syncAttendanceCoin } from "@/lib/server/coins";
 import { todayTashkent } from "@/lib/server/memberships";
+import { ownsGroup } from "@/lib/server/teacher-scope";
 import { uz } from "@/lib/uz";
 
 /*
@@ -28,7 +29,8 @@ async function lessonContext(ctx: ActionCtx, groupId: string, date: string) {
     .select()
     .from(groups)
     .where(and(eq(groups.id, groupId), isNull(groups.archivedAt)));
-  if (!g || !ctx.branch.options.some((b) => b.id === g.branchId)) return { ok: false as const, error: uz.common.gone };
+  if (!g || !ctx.branch.options.some((b) => b.id === g.branchId) || !ownsGroup(ctx.staff, g))
+    return { ok: false as const, error: uz.common.gone };
   const today = todayTashkent();
   if (date > today) return { ok: false as const, error: uz.attendance.future };
   if (date < today) {
@@ -127,7 +129,7 @@ export async function markAttendanceAction(input: unknown): Promise<ActionResult
       refresh(v.groupId);
       return { ok: true };
     },
-    { approval: { action: "attendance.mark", input: input } },
+    { approval: { action: "attendance.mark", input: input }, teacher: true },
   );
 }
 
@@ -182,6 +184,6 @@ export async function markRestPresentAction(input: unknown): Promise<ActionResul
       refresh(groupId);
       return { ok: true, marked: targets.length };
     },
-    { approval: { action: "attendance.markRest", input: input } },
+    { approval: { action: "attendance.markRest", input: input }, teacher: true },
   );
 }

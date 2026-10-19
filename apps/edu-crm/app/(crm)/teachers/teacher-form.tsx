@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Plus, User } from "lucide-react";
+import { Check, KeyRound, Plus, User } from "lucide-react";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -44,6 +44,8 @@ interface Form {
   startTime: string;
   endTime: string;
   note: string;
+  /** Kabinetga kirish paroli (faqat yangi o'qituvchida, ADR 0062) */
+  password: string;
 }
 
 export function TeacherForm({
@@ -84,6 +86,7 @@ export function TeacherForm({
       startTime: editing?.startTime ?? "09:00",
       endTime: editing?.endTime ?? "18:00",
       note: editing?.note ?? "",
+      password: "",
     }),
     [editing, selectedBranch, branches, support],
   );
@@ -141,6 +144,7 @@ export function TeacherForm({
       startTime: support ? form.startTime : "",
       endTime: support ? form.endTime : "",
       note: form.note,
+      password: !support && !editing ? form.password : "",
     });
     if (!parsed.success) return setError(firstError(parsed.error));
     if (support && form.startTime && form.endTime && form.endTime <= form.startTime) {
@@ -403,6 +407,23 @@ export function TeacherForm({
             </div>
           </>
         )}
+
+        {!support && !editing ? (
+          <div className="sm:col-span-2">
+            <Label htmlFor="teacher-password">{uz.teacherLogin.password}</Label>
+            <Input
+              id="teacher-password"
+              type="password"
+              autoComplete="new-password"
+              icon={<KeyRound />}
+              maxLength={128}
+              placeholder={uz.teacherLogin.passwordPlaceholder}
+              value={form.password}
+              onChange={(e) => set("password", e.target.value)}
+            />
+            <FieldHint>{uz.teacherLogin.hint}</FieldHint>
+          </div>
+        ) : null}
 
         <div className={cn(!support && "sm:col-span-2")}>
           <Label htmlFor="teacher-note">{uz.teachers.note}</Label>

@@ -42,6 +42,8 @@ export interface TeacherRow {
   retentionKept: number;
   /** Joriy oy hisoblangan ulushi (ish haqi hisobidan); ish haqini ko'rish ruxsati bo'lmasa — null */
   share: number | null;
+  /** Kabinetga kirish hisobi bor (ADR 0062) */
+  hasLogin: boolean;
 }
 
 /** Biriktirilgan ustoz nomi uchun (bo'shatilgan bo'lsa ham) */
@@ -73,6 +75,7 @@ function toRow(t: typeof teachers.$inferSelect): TeacherRow {
     startTime: t.startTime,
     endTime: t.endTime,
     note: t.note,
+    hasLogin: t.userId !== null,
     groups: 0,
     students: 0,
     retentionBase: 0,
