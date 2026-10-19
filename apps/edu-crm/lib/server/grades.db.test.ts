@@ -129,6 +129,7 @@ describe.skipIf(!ADMIN_URL)("dars baholari (haqiqiy PostgreSQL)", () => {
         prepay: { enabled: false, amount: 10 },
         attendance: { enabled: false, amount: 1 },
         homework: { enabled: true, amount: 3 },
+        manual: { enabled: false, dailyLimit: 5 },
       },
     };
     const mark = (homework: boolean | null) =>

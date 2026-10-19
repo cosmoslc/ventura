@@ -1,6 +1,6 @@
 "use client";
 
-import { BookCheck, CalendarCheck, Check, Wallet } from "lucide-react";
+import { BookCheck, CalendarCheck, Check, HandCoins, Wallet } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
@@ -91,6 +91,41 @@ export function CoinSettingsView({
             </Card>
           );
         })}
+        <Card className="flex flex-wrap items-start gap-4 p-5">
+          <div className="grid size-10 shrink-0 place-items-center rounded-stat-icon bg-muted text-primary [&_svg]:size-5">
+            <HandCoins />
+          </div>
+          <div className="min-w-0 flex-1 basis-64 space-y-1">
+            <div className="flex items-center gap-3">
+              <h2 className="type-heading text-base">{t.manualTitle}</h2>
+              <Switch
+                checked={form.manual.enabled}
+                disabled={!canEdit}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, manual: { ...f.manual, enabled: v } }))}
+                aria-label={t.manualTitle}
+              />
+            </div>
+            <p className="text-caption text-muted-foreground">{t.manualHint}</p>
+          </div>
+          <div className="w-36">
+            <Label htmlFor="coin-manual">{t.manualLimit}</Label>
+            <Input
+              id="coin-manual"
+              inputMode="numeric"
+              disabled={!canEdit}
+              value={String(form.manual.dailyLimit)}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  manual: {
+                    ...f.manual,
+                    dailyLimit: Math.min(COIN_AMOUNT_MAX, Math.max(1, Number(e.target.value.replace(/\D/g, "")) || 1)),
+                  },
+                }))
+              }
+            />
+          </div>
+        </Card>
         <Notice tone="info">
           <ul className="list-disc space-y-1 pl-4">
             {t.notes.map((n) => (

@@ -64,6 +64,7 @@ function HistoryModal({ row, onClose }: { row: CoinRow | null; onClose: () => vo
                 <div className="text-caption text-muted-foreground">
                   {formatDate(h.refDate)} · {h.groupName ?? t.noGroup}
                 </div>
+                {h.note ? <div className="text-caption text-foreground">{h.note}</div> : null}
               </div>
               {h.revoked ? (
                 <Badge tone="neutral">{t.revoked}</Badge>

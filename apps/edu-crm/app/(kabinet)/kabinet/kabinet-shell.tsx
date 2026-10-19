@@ -1,6 +1,6 @@
 "use client";
 
-import { House, KeyRound, LogOut, type LucideIcon, UserRound } from "lucide-react";
+import { House, KeyRound, LogOut, type LucideIcon, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -22,6 +22,7 @@ import { signOutAction } from "../../(auth)/actions";
 
 const ICONS: Record<KabinetIcon, { icon: LucideIcon; hue: string }> = {
   home: { icon: House, hue: "blue" },
+  groups: { icon: UsersRound, hue: "teal" },
   profile: { icon: UserRound, hue: "violet" },
 };
 

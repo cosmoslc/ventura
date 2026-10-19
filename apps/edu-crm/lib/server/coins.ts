@@ -13,11 +13,13 @@ import { type Tenant, hasFeature } from "@ventura/tenants";
 import {
   COINS_KEY,
   type CoinChange,
+  type CoinEntryRule,
   type CoinRuleKey,
   type CoinSettings,
   attendanceEarns,
   attendanceKey,
   homeworkKey,
+  manualRemaining,
   parseCoinSettings,
   prepayKey,
   prepayQualifies,
@@ -249,6 +251,63 @@ export async function syncPrepayCoin(
   return applyCoin(db, rt, src, ok);
 }
 
+/* ---------- Qo'lda (ADR 0062) ---------- */
+
+/** O'quvchiga shu kuni qo'lda berilgan coin (bekor qilinmaganlari) */
+export async function manualGivenOn(db: Db, studentId: string, date: string): Promise<number> {
+  const [row] = await db
+    .select({ total: sql<number>`coalesce(sum(${coinEntries.amount}), 0)::int` })
+    .from(coinEntries)
+    .where(
+      and(
+        eq(coinEntries.studentId, studentId),
+        eq(coinEntries.rule, "manual"),
+        eq(coinEntries.refDate, date),
+        isNull(coinEntries.revokedAt),
+      ),
+    );
+  return row?.total ?? 0;
+}
+
+/**
+ * Qo'lda berish: kunlik cheklov o'quvchi bo'yicha (kim bergani muhim emas). Tranzaksiya ichida, o'quvchi qulfi
+ * bilan chaqiriladi — bir vaqtda ikki so'rov cheklovdan oshib ketmasin. Har berish — alohida yozuv.
+ */
+export async function giveManualCoin(
+  db: Db,
+  input: { studentId: string; groupId: string; amount: number; note: string; staffId: string; date: string },
+  dailyLimit: number,
+): Promise<{ ok: true; id: string } | { ok: false; remaining: number }> {
+  const given = await manualGivenOn(db, input.studentId, input.date);
+  const remaining = manualRemaining(dailyLimit, given);
+  if (input.amount > remaining) return { ok: false, remaining };
+  const [row] = await db
+    .insert(coinEntries)
+    .values({
+      studentId: input.studentId,
+      groupId: input.groupId,
+      rule: "manual",
+      sourceKey: `manual:${crypto.randomUUID()}`,
+      refDate: input.date,
+      amount: input.amount,
+      note: input.note,
+      createdBy: input.staffId,
+    })
+    .returning({ id: coinEntries.id });
+  return { ok: true, id: row!.id };
+}
+
+/** Bir nechta o'quvchi balansi (guruh "O'quvchilar" tabi uchun) */
+export async function coinBalances(db: Db, studentIds: readonly string[]): Promise<Record<string, number>> {
+  if (!studentIds.length) return {};
+  const rows = await db
+    .select({ studentId: coinEntries.studentId, total: sql<number>`sum(${coinEntries.amount})::int` })
+    .from(coinEntries)
+    .where(and(inArray(coinEntries.studentId, [...studentIds]), isNull(coinEntries.revokedAt)))
+    .groupBy(coinEntries.studentId);
+  return Object.fromEntries(rows.map((r) => [r.studentId, r.total]));
+}
+
 /* ---------- O'qish ---------- */
 
 /** O'quvchi balansi (bekor qilinmagan yozuvlar yig'indisi) */
@@ -306,7 +365,9 @@ export async function coinLeaders(
 
 export interface CoinHistoryRow {
   id: string;
-  rule: CoinRuleKey;
+  rule: CoinEntryRule;
+  /** Qo'lda berilganda — sabab */
+  note: string | null;
   amount: number;
   refDate: string;
   groupId: string | null;
@@ -327,6 +388,7 @@ export async function coinHistory(db: Db, studentId: string, limit = 200): Promi
       groupName: groups.name,
       revokedAt: coinEntries.revokedAt,
       createdAt: coinEntries.createdAt,
+      note: coinEntries.note,
     })
     .from(coinEntries)
     .leftJoin(groups, eq(groups.id, coinEntries.groupId))

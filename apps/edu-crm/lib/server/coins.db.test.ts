@@ -22,7 +22,10 @@ import {
   coinBalance,
   coinHistory,
   coinLeaders,
+  coinBalances,
   coinRuntime,
+  giveManualCoin,
+  manualGivenOn,
   syncAttendanceCoin,
   syncPrepayCoin,
 } from "./coins";
@@ -52,6 +55,7 @@ const ON: CoinSettings = {
   prepay: { enabled: true, amount: 10 },
   attendance: { enabled: true, amount: 2 },
   homework: { enabled: true, amount: 1 },
+  manual: { enabled: true, dailyLimit: 5 },
 };
 const rt = (s: CoinSettings = ON, active = true): CoinRuntime => ({ active, settings: s });
 
@@ -227,6 +231,32 @@ describe.skipIf(!ADMIN_URL)("coinlar (haqiqiy PostgreSQL)", () => {
     const history = await coinHistory(db, b.id);
     expect(history).toHaveLength(1);
     expect(history[0]).toMatchObject({ rule: "attendance", revoked: true, groupName: group.name });
+  });
+
+  it("qo'lda: kunlik cheklov o'quvchi bo'yicha, sabab va xodim majburiy", async () => {
+    const { group, student } = await seed(db);
+    const s = await student("Qo'lda");
+    const [staff] = await db.insert(users).values({ name: "Ustoz", email: "ustoz@coins.test" }).returning();
+    const give = (amount: number, date = "2026-11-02") =>
+      giveManualCoin(db, { studentId: s.id, groupId: group.id, amount, note: "Faol", staffId: staff!.id, date }, 5);
+    expect((await give(3)).ok).toBe(true);
+    expect(await give(3)).toEqual({ ok: false, remaining: 2 });
+    expect((await give(2)).ok).toBe(true);
+    expect(await give(1)).toEqual({ ok: false, remaining: 0 });
+    // Ertasi kuni cheklov yangilanadi
+    expect((await give(5, "2026-11-03")).ok).toBe(true);
+    expect(await manualGivenOn(db, s.id, "2026-11-02")).toBe(5);
+    expect(await coinBalances(db, [s.id])).toEqual({ [s.id]: 10 });
+    // Bazada: qo'lda yozuv sababsiz bo'lmaydi
+    await expect(
+      db.insert(coinEntries).values({
+        studentId: s.id,
+        rule: "manual",
+        sourceKey: "manual:x",
+        refDate: "2026-11-04",
+        amount: 1,
+      }),
+    ).rejects.toThrow();
   });
 
   it("sozlama bazadan o'qiladi; boshqa mijoz yozuvlari ko'rinmaydi", async () => {

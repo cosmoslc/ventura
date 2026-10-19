@@ -271,6 +271,9 @@ const REGISTRY: Record<string, Def> = {
     (i) => str(obj(i.m.after)?.name) ?? i.who,
   ),
   "finance_settings.update": simple("payment", "moliya sozlamalarini o'zgartirdi", undefined, () => null),
+  "coin.manual": simple("student", "o'quvchiga coin berdi", (i) =>
+    parts(num(i.m.amount) !== null && `+${num(i.m.amount)} coin`, groupOf(i), str(i.m.reason)),
+  ),
   "coin_settings.update": simple("settings", "coin qoidalarini o'zgartirdi", undefined, () => null),
   "grading_settings.update": simple(
     "settings",

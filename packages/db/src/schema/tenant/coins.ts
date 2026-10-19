@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { check, date, foreignKey, index, integer, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { users } from "./auth";
 import { tenantId, tenantPolicy, timestamps } from "./columns";
 import { groups } from "./groups";
 import { students } from "./students";
@@ -10,7 +11,8 @@ import { students } from "./students";
  * bir sabab uchun coin ikki marta berilmaydi. Balans — bekor qilinmagan yozuvlar yig'indisi.
  */
 
-export const COIN_RULES = ["prepay", "attendance", "homework"] as const;
+/** `manual` — o'qituvchi qo'lda bergan (ADR 0062): sabab majburiy, kunlik cheklov sozlamada */
+export const COIN_RULES = ["prepay", "attendance", "homework", "manual"] as const;
 export type CoinRule = (typeof COIN_RULES)[number];
 
 export const coinEntries = pgTable(
@@ -28,6 +30,10 @@ export const coinEntries = pgTable(
     /** Sabab sanasi: dars kuni yoki to'lov oyining 1-kuni */
     refDate: date("ref_date", { mode: "string" }).notNull(),
     revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    /** Qo'lda berilganda — sabab */
+    note: text("note"),
+    /** Qo'lda bergan xodim */
+    createdBy: uuid("created_by"),
     ...timestamps,
   },
   (t) => [
@@ -44,7 +50,16 @@ export const coinEntries = pgTable(
       columns: [t.tenantId, t.groupId],
       foreignColumns: [groups.tenantId, groups.id],
     }).onDelete("restrict"),
+    foreignKey({
+      name: "coin_entries_created_by_fk",
+      columns: [t.tenantId, t.createdBy],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("restrict"),
     check("coin_entries_amount", sql`${t.amount} between 1 and 100000`),
+    check(
+      "coin_entries_manual",
+      sql`${t.rule} <> 'manual' or (${t.note} is not null and length(${t.note}) between 1 and 300 and ${t.createdBy} is not null)`,
+    ),
     check("coin_entries_source_len", sql`length(${t.sourceKey}) between 1 and 200`),
     tenantPolicy("coin_entries"),
   ],
