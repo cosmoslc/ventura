@@ -12,7 +12,7 @@ import {
   students,
   teachers,
 } from "@ventura/db/schema/tenant";
-import { kabinetGroup, kabinetGroups } from "./kabinet";
+import { kabinetFinance, kabinetGroup, kabinetGroups, kabinetStats, kabinetStudents } from "./kabinet";
 
 /*
  * O'qituvchi kabineti ma'lumotlari haqiqiy PostgreSQL'da (ADR 0062): guruh sahifasi faqat o'z guruhiga ochiladi,
@@ -125,6 +125,36 @@ describe.skipIf(!ADMIN_URL)("o'qituvchi kabineti (haqiqiy PostgreSQL)", () => {
     expect(d.stats.worst?.name).toBe("Vali");
     expect(d.coins).toEqual({});
     expect(d.manualCoins).toBeNull();
+  });
+
+  it("o'quvchilar: faqat o'z guruhidagilar, oy davomati va o'rtacha bahosi", async () => {
+    const list = await kabinetStudents(ALL, db, ids.a, "2026-11-10");
+    expect(list.map((x) => [x.name, x.groups.map((g) => g.id), x.attendance, x.average, x.coins])).toEqual([
+      ["Ali", [ids.groupA], 100, 100, 0],
+      ["Vali", [ids.groupA], 0, 40, 0],
+    ]);
+    expect(await kabinetStudents(ALL, db, ids.b, "2026-11-10")).toEqual([]);
+    expect(await kabinetStudents(ALL, other, ids.a, "2026-11-10")).toEqual([]);
+  });
+
+  it("statistika: o'tgan dars kunlari, davomat olinganlari va daraja taqsimoti", async () => {
+    // Noyabr 2026: du/chor/ju — 10-noyabrgacha 2, 4, 6, 9 (4 ta dars), davomat faqat 2-noyabrda
+    const s = await kabinetStats(ALL, db, ids.a, "2026-11", "2026-11-10");
+    expect(s.lessons).toEqual([{ groupId: ids.groupA, name: "A guruh", planned: 4, conducted: 1, minutes: 90 }]);
+    expect(s.levels).toEqual({ excellent: 1, good: 0, fair: 0, low: 1, none: 0 });
+    expect(s.money).toBeNull();
+  });
+
+  it("moliya: Ish haqi bo'limi o'chiq — null", async () => {
+    expect(await kabinetFinance(ALL, db, ids.a, "2026-11", "2026-11-10")).toBeNull();
+  });
+
+  it("moliya: o'z hisobi — guruhlar va balans (to'lov yo'q — 0)", async () => {
+    const f = (await kabinetFinance({ features: ["salaries"] }, db, ids.a, "2026-11", "2026-11-10"))!;
+    expect(f.row.id).toBe(ids.a);
+    expect(f.row.balance.paid).toBe(0);
+    expect(f.entries).toEqual([]);
+    expect(f.groups.every((g) => g.groupId === ids.groupA)).toBe(true);
   });
 
   it("bo'lim o'chiq bo'lsa tab ma'lumoti yo'q", async () => {

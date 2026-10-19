@@ -1,10 +1,20 @@
 import "server-only";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
-import { attendance, groupMemberships, teachers } from "@ventura/db/schema/tenant";
+import {
+  type StudentStatus,
+  attendance,
+  groupMemberships,
+  lessonGrades,
+  students,
+  teachers,
+} from "@ventura/db/schema/tenant";
 import { hasFeature } from "@ventura/tenants";
 import { groupMembers, listGroups } from "@/app/(crm)/groups/data";
-import { groupStats } from "@/lib/kabinet-stats";
+import { type SalaryEntryRow, listPersonEntries } from "@/app/(crm)/salaries/data";
+import { teacherOverview } from "@/app/(crm)/teachers/data";
+import { type MasteryLevel, groupStats, masteryLevel } from "@/lib/kabinet-stats";
+import { lessonMinutes } from "@/lib/teacher-reports";
 import { monthRange, weekdayOf } from "@/lib/lessons";
 import { groupAttendance } from "./attendance";
 import { coinBalances, coinLeaders, getCoinSettings } from "./coins";
@@ -207,3 +217,233 @@ export async function kabinetGroup(
 }
 
 export type KabinetGroupData = NonNullable<Awaited<ReturnType<typeof kabinetGroup>>>;
+
+/* ---------- O'quvchilar (3-bosqich) ---------- */
+
+export interface KabinetStudent {
+  id: string;
+  name: string;
+  phone: string;
+  /** O'quvchi holati (o'quvchilar bazasidagi) */
+  status: StudentStatus;
+  /** O'qituvchining guruhlaridagi ochiq a'zoliklari */
+  groups: { id: string; name: string; status: string }[];
+  coins: number | null;
+  /** Joriy oy: davomat va o'rtacha baho, % */
+  attendance: number | null;
+  average: number | null;
+}
+
+/** O'qituvchining guruhlaridagi o'quvchilar (ochiq a'zolik) — boshqa guruhlari ko'rinmaydi */
+export async function kabinetStudents(
+  tenant: { features: string[] },
+  db: TenantDb,
+  teacherId: string,
+  today: string,
+): Promise<KabinetStudent[]> {
+  const own = await kabinetGroups(db, teacherId);
+  if (!own.length) return [];
+  const groupIds = own.map((g) => g.id);
+  const names = new Map(own.map((g) => [g.id, g.name]));
+  const rows = await db
+    .select({
+      id: students.id,
+      name: students.name,
+      phone: students.phone,
+      status: students.status,
+      groupId: groupMemberships.groupId,
+      membership: groupMemberships.status,
+    })
+    .from(groupMemberships)
+    .innerJoin(students, eq(students.id, groupMemberships.studentId))
+    .where(and(inArray(groupMemberships.groupId, groupIds), isNull(groupMemberships.leftAt)))
+    .orderBy(asc(students.name));
+  const byId = new Map<string, KabinetStudent>();
+  for (const r of rows) {
+    const s = byId.get(r.id) ?? {
+      id: r.id,
+      name: r.name,
+      phone: r.phone.replace(/\D/g, "").slice(-9),
+      status: r.status,
+      groups: [],
+      coins: null,
+      attendance: null,
+      average: null,
+    };
+    s.groups.push({ id: r.groupId, name: names.get(r.groupId) ?? "—", status: r.membership });
+    byId.set(r.id, s);
+  }
+  const list = [...byId.values()];
+  const ids = list.map((s) => s.id);
+  const [from, to] = monthRange(today.slice(0, 7));
+  const [coinsOn, gradesOn] = await Promise.all([hasFeature(tenant, "coins"), hasFeature(tenant, "grades")]);
+  const [balances, marks, grades] = await Promise.all([
+    coinsOn ? coinBalances(db, ids) : Promise.resolve(null),
+    db
+      .select({ studentId: attendance.studentId, status: attendance.status })
+      .from(attendance)
+      .where(
+        and(
+          inArray(attendance.groupId, groupIds),
+          inArray(attendance.studentId, ids),
+          gte(attendance.date, from),
+          lte(attendance.date, to),
+        ),
+      ),
+    gradesOn
+      ? db
+          .select({ studentId: lessonGrades.studentId, score: lessonGrades.score, scale: lessonGrades.scale })
+          .from(lessonGrades)
+          .where(
+            and(
+              inArray(lessonGrades.groupId, groupIds),
+              inArray(lessonGrades.studentId, ids),
+              gte(lessonGrades.date, from),
+              lte(lessonGrades.date, to),
+            ),
+          )
+      : Promise.resolve([]),
+  ]);
+  const att = new Map<string, { came: number; n: number }>();
+  for (const m of marks) {
+    const a = att.get(m.studentId) ?? { came: 0, n: 0 };
+    a.n++;
+    if (m.status === "present" || m.status === "late") a.came++;
+    att.set(m.studentId, a);
+  }
+  const avg = new Map<string, { sum: number; n: number }>();
+  for (const g of grades) {
+    if (g.score === null) continue;
+    const a = avg.get(g.studentId) ?? { sum: 0, n: 0 };
+    a.sum += (g.score / g.scale) * 100;
+    a.n++;
+    avg.set(g.studentId, a);
+  }
+  return list.map((s) => {
+    const a = att.get(s.id);
+    const g = avg.get(s.id);
+    return {
+      ...s,
+      coins: balances ? (balances[s.id] ?? 0) : null,
+      attendance: a?.n ? Math.round((a.came / a.n) * 100) : null,
+      average: g?.n ? Math.round(g.sum / g.n) : null,
+    };
+  });
+}
+
+/* ---------- Statistika (3-bosqich) ---------- */
+
+export interface KabinetStats {
+  /** Har guruh: o'tgan dars kunlari (bayramsiz, bugungacha), davomat olinganlari, soat */
+  lessons: { groupId: string; name: string; planned: number; conducted: number; minutes: number }[];
+  /** O'quvchilar baho darajalari bo'yicha (oy o'rtachasidan); bahosizlar alohida */
+  levels: Record<MasteryLevel | "none", number>;
+  retention: number | null;
+  attendance: number | null;
+  /** Oy yozuvlari (bekor qilinmaganlari): avans, jarima, bonus */
+  money: { advance: number; penalty: number; bonus: number; entries: SalaryEntryRow[] } | null;
+}
+
+export async function kabinetStats(
+  tenant: { features: string[] },
+  db: TenantDb,
+  teacherId: string,
+  month: string,
+  today: string,
+): Promise<KabinetStats> {
+  const own = (await listGroups(db, null)).filter((g) => g.teacherId === teacherId);
+  const salariesOn = await hasFeature(tenant, "salaries");
+  const [perGroup, overview, entries] = await Promise.all([
+    Promise.all(own.map((g) => groupAttendance(db, g, month).then((a) => ({ g, a })))),
+    teacherOverview(db, teacherId, month, today),
+    salariesOn ? listPersonEntries(db, { teacherId }, month) : Promise.resolve(null),
+  ]);
+  const [from, to] = monthRange(month);
+  const gradeRows = own.length
+    ? await db
+        .select({ studentId: lessonGrades.studentId, score: lessonGrades.score, scale: lessonGrades.scale })
+        .from(lessonGrades)
+        .where(
+          and(
+            inArray(
+              lessonGrades.groupId,
+              own.map((g) => g.id),
+            ),
+            gte(lessonGrades.date, from),
+            lte(lessonGrades.date, to),
+          ),
+        )
+    : [];
+
+  const lessons = perGroup.map(({ g, a }) => {
+    const past = a.dates.filter((d) => d <= today);
+    const marked = new Set(Object.keys(a.marks).map((k) => k.split("|")[1]));
+    const conducted = past.filter((d) => marked.has(d)).length;
+    return {
+      groupId: g.id,
+      name: g.name,
+      planned: past.length,
+      conducted,
+      minutes: conducted * lessonMinutes(g.startTime, g.endTime),
+    };
+  });
+
+  // Daraja — oy davomida guruhlarida bo'lgan har o'quvchi uchun bir marta
+  const studentIds = new Set(perGroup.flatMap(({ a }) => a.members.map((m) => m.studentId)));
+  const avg = new Map<string, { sum: number; n: number }>();
+  for (const r of gradeRows) {
+    if (r.score === null) continue;
+    const x = avg.get(r.studentId) ?? { sum: 0, n: 0 };
+    x.sum += (r.score / r.scale) * 100;
+    x.n++;
+    avg.set(r.studentId, x);
+  }
+  const levels: KabinetStats["levels"] = { excellent: 0, good: 0, fair: 0, low: 0, none: 0 };
+  for (const id of studentIds) {
+    const x = avg.get(id);
+    levels[x?.n ? masteryLevel(Math.round(x.sum / x.n)) : "none"]++;
+  }
+
+  const live = entries?.filter((e) => !e.voided) ?? null;
+  const sum = (k: string) => (live ?? []).filter((e) => e.kind === k).reduce((s, e) => s + e.amount, 0);
+  return {
+    lessons,
+    levels,
+    retention: overview.retention,
+    attendance: overview.attendance,
+    money: live ? { advance: sum("advance"), penalty: sum("penalty"), bonus: sum("bonus"), entries: live } : null,
+  };
+}
+
+/* ---------- Moliya (3-bosqich) ---------- */
+
+/** O'qituvchining oy hisobi: Ish haqi bo'limi bilan bir manba (ADR 0018), faqat o'zining. `salaries` o'chiq — null */
+export async function kabinetFinance(
+  tenant: { features: string[] },
+  db: TenantDb,
+  teacherId: string,
+  month: string,
+  today: string,
+) {
+  if (!(await hasFeature(tenant, "salaries"))) return null;
+  const [pay, entries] = await Promise.all([
+    loadTeacherPayroll(db, teacherId, month, today),
+    listPersonEntries(db, { teacherId }, month),
+  ]);
+  if (!pay) return null;
+  // Guruh bo'yicha: tushum, shart (foiz/stavka/belgilangan) va hisoblangan ulush
+  const groups = pay.row.accrual.groups.map((g) => {
+    const share = pay.shares.find((s) => s.groupId === g.groupId);
+    return {
+      groupId: g.groupId,
+      name: pay.groupNames[g.groupId] ?? "—",
+      salaryType: g.salaryType,
+      value: share?.value ?? null,
+      revenue: g.revenue,
+      pay: g.pay,
+    };
+  });
+  return { row: pay.row, groupNames: pay.groupNames, shares: pay.shares, groups, entries };
+}
+
+export type KabinetFinance = NonNullable<Awaited<ReturnType<typeof kabinetFinance>>>;

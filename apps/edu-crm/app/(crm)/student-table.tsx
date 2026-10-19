@@ -177,15 +177,18 @@ export function GroupChip({
   name,
   sub,
   muted,
+  href,
 }: {
   id: string;
   name: string;
   sub?: string | null;
   muted?: boolean;
+  /** Boshqa manzil (o'qituvchi kabinetida — `/kabinet/guruhlar/<id>`) */
+  href?: string;
 }) {
   return (
     <Link
-      href={`/groups/${id}`}
+      href={href ?? `/groups/${id}`}
       className={cn(
         "inline-block max-w-full truncate rounded-badge border border-border-soft bg-muted px-2 py-0.5 text-caption hover:border-(--ring-border)",
         muted && "opacity-60",
