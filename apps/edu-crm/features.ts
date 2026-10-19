@@ -2,7 +2,7 @@ import type { FeatureManifest, TemplateInfo } from "@ventura/tenants";
 
 /**
  * O'quv markaz CRM — bo'limlar manifesti (SPEC 8-bo'lim). `group` — paneldagi bo'limlar tanlovi uchun,
- * `nav.section` — CRM menyusidagi joy (eski tizim menyusi: asosiy bandlar, Moliya, Hisobotlar, Ofis, O'quv).
+ * `nav.section` — CRM menyusidagi joy: Asos (bosh sahifa yonida), O'quv jarayoni, Moliya, Tahlil, Jamoa, Tizim.
  */
 export const template = {
   key: "edu-crm",
@@ -23,13 +23,13 @@ export const features = [
     routes: ["/api/students"],
     nav: [
       // Bugungi ishlar (ADR 0027) — bir nechta bo'lim bloklari; har blok o'z ruxsati va bo'limi bilan
-      { label: "Bugungi ishlar", href: "/bugun" },
-      { label: "O'quvchilar", href: "/students" },
-      { label: "Arxiv", href: "/archive", section: "Ofis" },
-      { label: "Faoliyat jurnali", href: "/activity", section: "Ofis" },
-      { label: "Sabablar", href: "/reasons", section: "Ofis" },
-      { label: "Qurilmalar", href: "/devices", section: "Ofis" },
-      { label: "Markaz sozlamalari", href: "/settings", section: "Ofis" },
+      { label: "Bugungi ishlar", href: "/bugun", section: "Asos" },
+      { label: "O'quvchilar", href: "/students", section: "O'quv jarayoni" },
+      { label: "Arxiv", href: "/archive", section: "Tizim" },
+      { label: "Faoliyat jurnali", href: "/activity", section: "Tizim" },
+      { label: "Sabablar", href: "/reasons", section: "Tizim" },
+      { label: "Qurilmalar", href: "/devices", section: "Tizim" },
+      { label: "Markaz sozlamalari", href: "/settings", section: "Tizim" },
     ],
   },
   {
@@ -39,7 +39,7 @@ export const features = [
     type: "core",
     description: "Kurslar katalogi va narxlar",
     routes: ["/api/courses"],
-    nav: [{ label: "Kurslar", href: "/courses", section: "O'quv" }],
+    nav: [{ label: "Kurslar", href: "/courses", section: "Tizim" }],
   },
   {
     key: "teachers",
@@ -49,9 +49,9 @@ export const features = [
     description: "O'qituvchilar, xodimlar va lavozimlar (ruxsatlar)",
     routes: ["/api/teachers"],
     nav: [
-      { label: "O'qituvchilar", href: "/teachers" },
-      { label: "Lavozimlar", href: "/positions", section: "Ofis" },
-      { label: "Xodimlar", href: "/staff", section: "Ofis" },
+      { label: "O'qituvchilar", href: "/teachers", section: "Jamoa" },
+      { label: "Lavozimlar", href: "/positions", section: "Jamoa" },
+      { label: "Xodimlar", href: "/staff", section: "Jamoa" },
     ],
   },
   {
@@ -63,8 +63,8 @@ export const features = [
     requires: ["students", "courses", "teachers"],
     routes: ["/api/groups"],
     nav: [
-      { label: "Guruhlar", href: "/groups" },
-      { label: "Xonalar", href: "/rooms", section: "Ofis" },
+      { label: "Guruhlar", href: "/groups", section: "O'quv jarayoni" },
+      { label: "Xonalar", href: "/rooms", section: "Tizim" },
     ],
   },
   {
@@ -73,7 +73,7 @@ export const features = [
     group: "Asos",
     type: "mode",
     description: "Loyiha sozlamasi boshqaradi",
-    nav: [{ label: "Filiallar", href: "/branches", section: "Ofis" }],
+    nav: [{ label: "Filiallar", href: "/branches", section: "Tizim" }],
   },
 
   // Davomat
@@ -84,7 +84,7 @@ export const features = [
     type: "regular",
     description: "Bayram va dam olish kunlari — dars bo'lmaydigan kunlar",
     routes: ["/api/holidays"],
-    nav: [{ label: "Dam olish kunlari", href: "/holidays", section: "Ofis" }],
+    nav: [{ label: "Dam olish kunlari", href: "/holidays", section: "Tizim" }],
   },
   {
     key: "attendance",
@@ -95,8 +95,8 @@ export const features = [
     requires: ["groups", "holidays"],
     routes: ["/api/attendance", "/api/attendance-settings"],
     nav: [
-      { label: "Davomat", href: "/attendance", section: "Asos" },
-      { label: "Xodimlar davomati", href: "/staff-attendance", section: "Ofis" },
+      { label: "Davomat", href: "/attendance", section: "O'quv jarayoni" },
+      { label: "Xodimlar davomati", href: "/staff-attendance", section: "Jamoa" },
     ],
   },
 
@@ -110,9 +110,9 @@ export const features = [
     requires: ["students"],
     routes: ["/api/payments"],
     nav: [
-      { label: "To'lovlar", href: "/payments" },
-      { label: "To'lov sozlamalari", href: "/payment-settings", section: "Ofis" },
-      { label: "Pul amallari tarixi", href: "/money-audit", section: "Ofis" },
+      { label: "To'lovlar", href: "/payments", section: "Moliya" },
+      { label: "To'lov sozlamalari", href: "/payment-settings", section: "Tizim" },
+      { label: "Pul amallari tarixi", href: "/money-audit", section: "Moliya" },
     ],
   },
   {
@@ -123,7 +123,7 @@ export const features = [
     description: "Qarzdorlar ro'yxati, eslatmalar va izohlar",
     requires: ["payments"],
     routes: ["/api/debtors"],
-    nav: [{ label: "Qarzdorlar", href: "/debtors" }],
+    nav: [{ label: "Qarzdorlar", href: "/debtors", section: "Moliya" }],
   },
   {
     key: "expenses",
@@ -133,8 +133,8 @@ export const features = [
     description: "Xarajatlar, toifalar, xarajat rejasi va qo'shimcha daromadlar",
     routes: ["/api/expenses"],
     nav: [
-      { label: "Xarajatlar", href: "/expenses" },
-      { label: "Qo'shimcha daromadlar", href: "/additional-income" },
+      { label: "Xarajatlar", href: "/expenses", section: "Moliya" },
+      { label: "Qo'shimcha daromadlar", href: "/additional-income", section: "Moliya" },
     ],
   },
   {
@@ -145,7 +145,7 @@ export const features = [
     description: "O'qituvchi va xodimlar maoshi: hisob, avans, to'lov",
     requires: ["teachers", "payments"],
     routes: ["/api/salaries"],
-    nav: [{ label: "Ish haqi", href: "/salaries" }],
+    nav: [{ label: "Ish haqi", href: "/salaries", section: "Jamoa" }],
   },
 
   // O'quv jarayoni
@@ -158,7 +158,7 @@ export const features = [
     description: "Imtihonlar va natijalar",
     requires: ["groups"],
     routes: ["/api/exams"],
-    nav: [{ label: "Imtihonlar", href: "/exams", section: "O'quv" }],
+    nav: [{ label: "Imtihonlar", href: "/exams", section: "O'quv jarayoni" }],
   },
   {
     key: "coins",
@@ -169,7 +169,7 @@ export const features = [
     requires: ["students"],
     description: "O'quvchilarni rag'batlantirish",
     routes: ["/api/coins"],
-    nav: [{ label: "Coinlar", href: "/coins", section: "O'quv" }],
+    nav: [{ label: "Coinlar", href: "/coins", section: "O'quv jarayoni" }],
   },
 
   // Sotuv va aloqa
@@ -180,7 +180,7 @@ export const features = [
     type: "regular",
     description: "Lidlar, birinchi dars, kutish ro'yxati va ariza sahifasi",
     routes: ["/api/leads"],
-    nav: [{ label: "Lidlar", href: "/leads", section: "Asos" }],
+    nav: [{ label: "Lidlar", href: "/leads", section: "O'quv jarayoni" }],
   },
   {
     key: "sms",
@@ -189,7 +189,7 @@ export const features = [
     type: "regular",
     description: "Eskiz orqali SMS: Ventura paketi yoki o'z hisobi, shablonlar, qo'lda va avto-SMS",
     routes: ["/api/sms"],
-    nav: [{ label: "SMS xabarnomalar", href: "/sms" }],
+    nav: [{ label: "SMS xabarnomalar", href: "/sms", section: "Tahlil" }],
   },
   {
     key: "telegram_bot",
@@ -210,6 +210,6 @@ export const features = [
     description: "Moliya, o'quv, lidlar va o'qituvchilar hisobotlari",
     requires: ["payments"],
     routes: ["/api/reports"],
-    nav: [{ label: "Hisobotlar", href: "/reports" }],
+    nav: [{ label: "Hisobotlar", href: "/reports", section: "Tahlil" }],
   },
 ] satisfies FeatureManifest;

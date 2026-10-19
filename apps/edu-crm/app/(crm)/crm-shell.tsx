@@ -86,17 +86,45 @@ const HREF_ICONS: Record<string, { icon: LucideIcon; hue: string }> = {
   "/activity": { icon: ScrollText, hue: "blue" },
 };
 
-/** Bo'lim ichidagi tartib (eski tizimdagi "Ofis" menyusi): ro'yxatda yo'qlari oxirida, manifest tartibida */
-const ITEM_ORDER = ["/branches", "/positions", "/staff", "/staff-attendance", "/archive", "/activity"];
+/** Bo'lim ichidagi tartib: ro'yxatda yo'qlari oxirida, manifest tartibida */
+const ITEM_ORDER = [
+  // O'quv jarayoni
+  "/students",
+  "/groups",
+  "/exams",
+  "/leads",
+  "/coins",
+  "/attendance",
+  // Moliya
+  "/payments",
+  "/debtors",
+  "/expenses",
+  "/additional-income",
+  "/money-audit",
+  // Tahlil
+  "/reports",
+  "/sms",
+  // Jamoa
+  "/staff",
+  "/positions",
+  "/salaries",
+  "/teachers",
+  "/staff-attendance",
+  // Tizim ("Sozlamalar" bandi bo'lim boshida)
+  "/branches",
+  "/archive",
+  "/activity",
+  "/reasons",
+];
 const itemRank = (href: string) => {
   const i = ITEM_ORDER.indexOf(href);
   return i === -1 ? ITEM_ORDER.length : i;
 };
 
-/** Menyu bo'limlari tartibi (eski tizimdagidek); "Asos" bandlari bosh sahifa bilan birga eng tepada. */
-const SECTION_ORDER = ["Asos", "Moliya", "Sotuv va aloqa", "Hisobotlar", "Ofis", "O'quv"];
+/** Menyu bo'limlari tartibi; "Asos" bandlari bosh sahifa bilan birga eng tepada. */
+const SECTION_ORDER = ["Asos", "O'quv jarayoni", "Moliya", "Tahlil", "Jamoa", "Tizim"];
 const MAIN = "Asos";
-const SETTINGS_SECTION = "Ofis";
+const SETTINGS_SECTION = "Tizim";
 
 function sections(
   groups: NavGroup[],
@@ -124,7 +152,7 @@ function sections(
     return i === -1 ? SECTION_ORDER.length : i;
   };
   const main = groups.find((g) => g.title === MAIN);
-  // "Sozlamalar" — Ofis bo'limining oxirida (ichida o'z navbari, ADR 0051)
+  // "Sozlamalar" — Tizim bo'limining boshida (ichida o'z navbari, ADR 0051)
   const settings: NavItem | null = settingsHref
     ? { id: settingsHref, label: uz.nav.settings, icon: Settings, color: "var(--nav-hue-blue)" }
     : null;
@@ -134,7 +162,7 @@ function sections(
     .map((g) => ({ title: g.title, items: toItems(g) }));
   if (settings) {
     const office = rest.find((s) => s.title === SETTINGS_SECTION);
-    if (office) office.items.push(settings);
+    if (office) office.items.unshift(settings);
     else rest.push({ title: SETTINGS_SECTION, items: [settings] });
   }
   return [

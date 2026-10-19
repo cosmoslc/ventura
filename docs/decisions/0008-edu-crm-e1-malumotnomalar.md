@@ -55,6 +55,8 @@ Eski kodni o'rganganda bir nechta xato va soxta ko'rsatkich topildi: ular "bir x
 
 - **Manifest `nav` bandida ixtiyoriy `section` maydoni bor.** Bitta bo'limning bandlari menyuning turli joyida turishi mumkin (Xonalar — guruhlar bo'limidan, "Ofis" ostida).
 - **Bo'limlar tartibi eski tizimdagidek:** asosiy bandlar, Moliya, Hisobotlar, Ofis, O'quv.
+  - 2026-10-19: yangi tartib — Asosiy, O'quv jarayoni, Moliya, Tahlil, Jamoa, Tizim. Ichki tartib
+    `crm-shell.tsx` dagi `ITEM_ORDER` da; "Sozlamalar" Tizim bo'limining boshida. Yangi sahifa qo'shilmadi.
 - **Panelda bo'limlar hali `group` bo'yicha tanlanadi.**
 
 ## Oqibatlari
