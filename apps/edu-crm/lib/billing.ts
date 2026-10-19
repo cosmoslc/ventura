@@ -161,10 +161,23 @@ function paused(pauses: readonly Pause[], date: string) {
   return pauses.some((p) => p.from <= date && (p.to === null || date < p.to));
 }
 
-/** Oyning guruh kunlariga tushgan barcha sanalari (bayramlar ham) */
-export function scheduledDates(days: readonly string[], month: string): string[] {
+/*
+ * Oy sanalari faqat (dars kunlari, oy) ga bog'liq, lekin hisobda har a'zolik-oy uchun ikki marta so'raladi:
+ * 170 o'quvchi × 18 oyda ~7 000 marta, har biri 31 ta Date. Natija keshlanadi (ADR 0060); kesh hajmi cheklangan.
+ */
+const SCHEDULE_CACHE_LIMIT = 5_000;
+const scheduleCache = new Map<string, readonly string[]>();
+
+/** Oyning guruh kunlariga tushgan barcha sanalari (bayramlar ham). Qaytgan ro'yxat o'zgartirilmaydi. */
+export function scheduledDates(days: readonly string[], month: string): readonly string[] {
+  const key = `${month}|${days.join(",")}`;
+  const hit = scheduleCache.get(key);
+  if (hit) return hit;
   const [from, to] = monthRange(month);
-  return eachDay(from, to).filter((d) => days.includes(weekdayOf(d)));
+  const dates = Object.freeze(eachDay(from, to).filter((d) => days.includes(weekdayOf(d))));
+  if (scheduleCache.size >= SCHEDULE_CACHE_LIMIT) scheduleCache.clear();
+  scheduleCache.set(key, dates);
+  return dates;
 }
 
 /** Shu oy hisobga olinadigan dars sanalari */

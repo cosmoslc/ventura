@@ -3,7 +3,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { groups, studentNotes, students, teachers } from "@ventura/db/schema/tenant";
 import { overdueDays } from "@/lib/ledger";
-import { type FinanceSettings, loadAccounts } from "@/lib/server/finance";
+import { type FinanceSettings, loadAccountsCached } from "@/lib/server/finance";
 
 /*
  * Qarzdorlar (ADR 0015): barcha oylar bo'yicha yig'ilgan qarz — balans manfiy bo'lgan o'quvchilar. Eski tizimda
@@ -62,7 +62,7 @@ export async function listDebtors(
     .from(students)
     .where(filter ? inArray(students.branchId, [...filter]) : undefined);
   if (!list.length) return [];
-  const accounts = await loadAccounts(
+  const accounts = await loadAccountsCached(
     db,
     list.map((s) => s.id),
     today,

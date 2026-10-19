@@ -62,6 +62,15 @@ describe("dars sanalari", () => {
       "2026-10-30",
     ]);
   });
+
+  it("kesh (ADR 0060): takroriy so'rov o'sha ro'yxatni qaytaradi, u o'zgartirilmaydi, kunlar farqlanadi", () => {
+    const first = scheduledDates(group.days, OCT);
+    expect(scheduledDates(["mon", "wed", "fri"], OCT)).toBe(first);
+    expect(Object.isFrozen(first)).toBe(true);
+    expect(scheduledDates(["tue", "thu"], OCT)).toHaveLength(9);
+    expect(scheduledDates(["fri", "mon", "wed"], OCT)).toEqual(first);
+    expect(scheduledDates(group.days, "2026-11")).toHaveLength(13);
+  });
 });
 
 describe("oylik rejim", () => {

@@ -158,6 +158,29 @@ describe.skipIf(!ADMIN_URL)("mijozlarni ajratish (haqiqiy PostgreSQL)", () => {
       }
     });
 
+    it("bo'sh ulanish yopiladi, qayta ochilgan ulanish ham faqat o'z mijozini ko'radi (ADR 0060)", async () => {
+      const u = new URL(urlFor(DBS.shared, app));
+      u.searchParams.set("application_name", "edu_iso_idle");
+      const a = createTenantDb(u.toString(), "alfa", { max: 3, idleTimeoutSec: 1 });
+      opened.push(a);
+      const admin = postgres(urlFor(DBS.shared), { max: 1, onnotice: () => {} });
+      const live = async () =>
+        (
+          await admin<{ n: number }[]>`
+          select count(*)::int as n from pg_stat_activity where application_name = 'edu_iso_idle'`
+        )[0]!.n;
+      try {
+        await Promise.all([1, 2, 3].map(() => a.execute(sql`select pg_sleep(0.05)`)));
+        expect(await live()).toBe(3);
+        await new Promise((r) => setTimeout(r, 2_500));
+        expect(await live()).toBe(0);
+        // Yangi ulanish ham app.tenant_id bilan ochiladi — RLS ajratish o'zgarmaydi
+        expect((await a.select().from(branches)).map((r) => r.tenantId)).toEqual(["alfa"]);
+      } finally {
+        await admin.end();
+      }
+    });
+
     it("faoliyat jurnalini o'zgartirib ham, o'chirib ham bo'lmaydi", async () => {
       const a = open(urlFor(DBS.shared, app), "alfa");
       const [ev] = await a.insert(auditEvents).values({ actorType: "system", action: "test", hash: "h" }).returning();

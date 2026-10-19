@@ -25,7 +25,7 @@ import {
 } from "@/lib/reports";
 import { uz } from "@/lib/uz";
 import { loadFlows } from "./dashboard";
-import { loadAccounts } from "./finance";
+import { loadAccountsCached } from "./finance";
 import type { LoadArgs, ReportPeriod } from "./reports";
 
 /*
@@ -211,7 +211,7 @@ export async function chargesOf(db: TenantDb, filter: readonly string[] | null, 
     .select({ id: students.id, name: students.name })
     .from(students)
     .where(filter ? inArray(students.branchId, [...filter]) : undefined);
-  const accounts = await loadAccounts(
+  const accounts = await loadAccountsCached(
     db,
     list.map((s) => s.id),
     today,

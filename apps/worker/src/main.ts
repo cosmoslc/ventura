@@ -24,8 +24,8 @@ import { createTelegram } from "@ventura/integrations";
 import { audit } from "@ventura/security";
 
 /*
- * Ishchi jarayon: navbatdagi fon vazifalarini bajaradi — deploy, serverlar bo'yicha buyruqlar va har daqiqalik
- * server metrikalari. Panel'dan alohida ishlaydi, shuning uchun panel qayta ishga tushsa ham boshlangan ish uzilmaydi.
+ * Ishchi jarayon: navbatdagi fon vazifalarini bajaradi — deploy, serverlar bo'yicha buyruqlar, har daqiqalik
+ * server metrikalari va kunlik audit zanjiri tekshiruvi. Panel'dan alohida ishlaydi, shuning uchun panel qayta ishga tushsa ham boshlangan ish uzilmaydi.
  *
  *   pnpm worker        — ishga tushirish
  *   pnpm dev           — panel bilan birga, fayl o'zgarsa qayta yuklanadi
@@ -38,6 +38,7 @@ process.chdir(ROOT);
 
 const HEARTBEAT_MS = 15_000;
 const MONITOR_MS = 60_000;
+const AUDIT_VERIFY_MS = 24 * 60 * 60_000;
 
 const db = createPanelDb();
 const telegram = createTelegram();
@@ -91,6 +92,20 @@ const monitor = async () => {
 void monitor();
 const monitorTimer = setInterval(() => void monitor(), MONITOR_MS);
 
+// Audit zanjiri: butun zanjir kuniga bir marta (ADR 0060). /audit sahifasi faqat nazorat nuqtasidan keyingisini
+// tekshiradi; nuqtadan oldingi yozuv o'zgartirilsa shu tekshiruv topadi va nuqtani bekor qiladi.
+const verifyAudit = async () => {
+  try {
+    const v = await audit.verifyFull(db);
+    if (v.ok) console.log(`[audit] zanjir butun: ${v.count} ta yozuv`);
+    else console.error(`[audit] zanjir uzilgan: seq ${v.brokenAtSeq} — ${v.reason}`);
+  } catch (e) {
+    console.error("[audit]", (e as Error).message);
+  }
+};
+void verifyAudit();
+const auditTimer = setInterval(() => void verifyAudit(), AUDIT_VERIFY_MS);
+
 const beat = () =>
   db
     .insert(settings)
@@ -114,6 +129,7 @@ async function shutdown(signal: string) {
   console.log(`[worker] ${signal}: joriy vazifa tugashi kutilmoqda…`);
   clearInterval(heartbeat);
   clearInterval(monitorTimer);
+  clearInterval(auditTimer);
   // Boshlangan deploy oxirigacha bajariladi (eng ko'pi 15 daqiqa), yangi vazifa olinmaydi
   await queue.stop({ graceful: true, timeout: 15 * 60_000 }).catch(() => {});
   process.exit(0);
