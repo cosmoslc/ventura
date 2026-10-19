@@ -20,7 +20,16 @@ import {
   teachers,
   users,
 } from "@ventura/db/schema/tenant";
-import { FINANCE_SETTINGS_KEY, ensurePaymentMethods, getFinanceSettings, loadAccount, loadAccounts } from "./finance";
+import {
+  FINANCE_SETTINGS_KEY,
+  ensurePaymentMethods,
+  financeSettingsSchema,
+  getFinanceSettings,
+  loadAccount,
+  loadAccountCached,
+  loadAccounts,
+  loadAccountsCached,
+} from "./finance";
 import { closePauses, openPauses } from "./memberships";
 
 /*
@@ -356,5 +365,52 @@ describe.skipIf(!ADMIN_URL)("o'quvchi hisobi (haqiqiy PostgreSQL)", () => {
     const foreign = await loadAccounts(other, [a.id], TODAY);
     expect(foreign.get(a.id)!.summary).toMatchObject({ charged: 0, credited: 0 });
     expect(await other.select().from(paymentMethods)).toEqual([]);
+  });
+
+  it("so'rov keshi va toraytirilgan so'rovlar natijani o'zgartirmaydi (ADR 0060)", async () => {
+    const { branch, group } = await seedGroup(db);
+    const a = await seedStudent(db, branch.id, "Kesh A");
+    const b = await seedStudent(db, branch.id, "Kesh B");
+    const c = await seedStudent(db, branch.id, "Kesh C");
+    await db.insert(groupMemberships).values([
+      { groupId: group.id, studentId: a.id, status: "active", enrolledAt: "2026-08-01", activatedAt: "2026-08-03" },
+      { groupId: group.id, studentId: b.id, status: "trial", enrolledAt: "2026-10-01" },
+      { groupId: group.id, studentId: c.id, status: "active", enrolledAt: "2026-09-01", activatedAt: "2026-09-01" },
+    ]);
+    await db.insert(groupPrices).values({ groupId: group.id, fromMonth: "2026-10", price: 330_000 });
+    await db.insert(attendance).values([
+      { groupId: group.id, studentId: a.id, date: "2026-10-02", status: "present" },
+      { groupId: group.id, studentId: a.id, date: "2026-10-05", status: "excused" },
+      { groupId: group.id, studentId: a.id, date: "2026-10-07", status: "absent" },
+      { groupId: group.id, studentId: c.id, date: "2026-09-02", status: "excused" },
+    ]);
+    const [method] = await ensurePaymentMethods(db);
+    await db.insert(payments).values({
+      studentId: a.id,
+      groupId: group.id,
+      kind: "payment",
+      amount: 250_000,
+      month: "2026-08",
+      date: "2026-08-04",
+      methodId: method!.id,
+      receiptNo: 900,
+    });
+    const ids = [c.id, a.id, b.id, a.id];
+    const base = financeSettingsSchema.parse({});
+    for (const fs of [
+      base,
+      { ...base, excusedRefund: false },
+      { ...base, mode: "per_lesson" as const },
+      { ...base, mode: "per_lesson" as const, excusedRefund: false },
+    ]) {
+      const plain = await loadAccounts(db, ids, TODAY, fs);
+      const cached = await loadAccountsCached(db, ids, TODAY, fs);
+      expect(cached).toEqual(plain);
+      // Tartib ham bir xil (kirish tartibi, takrorlarsiz)
+      expect([...cached.keys()]).toEqual([c.id, a.id, b.id]);
+    }
+    // Sozlama berilmasa bazadagisi olinadi
+    expect(await loadAccountCached(db, a.id, TODAY)).toEqual(await loadAccount(db, a.id, TODAY));
+    expect(await loadAccountsCached(db, [], TODAY)).toEqual(new Map());
   });
 });

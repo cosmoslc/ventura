@@ -15,7 +15,7 @@ import {
   users,
 } from "@ventura/db/schema/tenant";
 import { cash } from "@/lib/ledger";
-import { type StudentAccount, loadAccount, loadAccounts } from "@/lib/server/finance";
+import { type StudentAccount, loadAccountCached, loadAccountsCached } from "@/lib/server/finance";
 
 export interface PaymentRow {
   id: string;
@@ -207,7 +207,7 @@ export interface StudentFinance {
 
 export async function studentFinance(db: TenantDb, studentId: string, today: string): Promise<StudentFinance> {
   const [account, groupList, entries, discounts] = await Promise.all([
-    loadAccount(db, studentId, today),
+    loadAccountCached(db, studentId, today),
     studentGroupOptions(db, studentId),
     studentEntries(db, studentId),
     studentDiscountRows(db, studentId),
@@ -233,7 +233,7 @@ export async function groupFinance(db: TenantDb, groupId: string, today: string)
     .select({ studentId: groupMemberships.studentId })
     .from(groupMemberships)
     .where(eq(groupMemberships.groupId, groupId));
-  const accounts = await loadAccounts(
+  const accounts = await loadAccountsCached(
     db,
     memberRows.map((r) => r.studentId),
     today,

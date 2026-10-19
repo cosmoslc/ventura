@@ -14,7 +14,7 @@ import {
   teachers,
 } from "@ventura/db/schema/tenant";
 import { type AttendanceStat, type MemberMoney, attendanceStat, daysAgo, memberMoney } from "@/lib/group-profile";
-import { loadAccounts } from "@/lib/server/finance";
+import { loadAccountsCached } from "@/lib/server/finance";
 import type { GroupFinance } from "../payments/data";
 
 export interface GroupRow {
@@ -389,7 +389,7 @@ export async function groupProfileStats(
       .select({ studentId: groupMemberships.studentId })
       .from(groupMemberships)
       .where(eq(groupMemberships.groupId, groupId));
-    const accounts = await loadAccounts(
+    const accounts = await loadAccountsCached(
       db,
       all.map((r) => r.studentId),
       today,

@@ -2,7 +2,7 @@ import { can, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
 import { pagePermissions } from "@/lib/access";
 import { getBranchContext } from "@/lib/server/branch";
-import { loadAccounts } from "@/lib/server/finance";
+import { loadAccountsCached } from "@/lib/server/finance";
 import { todayTashkent } from "@/lib/server/memberships";
 import { financePerms } from "../payments/perms";
 import { getTenantDb } from "@/lib/server/deps";
@@ -37,7 +37,7 @@ export default async function StudentsPage() {
   const canSms = (await hasFeature(tenant, "sms")) && can(staff.access, "students.sms_send");
   const [byStudent, accounts, enrollGroups] = await Promise.all([
     openGroupsByStudent(db, ids),
-    withFinance ? loadAccounts(db, ids, todayTashkent()) : Promise.resolve(null),
+    withFinance ? loadAccountsCached(db, ids, todayTashkent()) : Promise.resolve(null),
     canEnroll ? groupPickOptions(db, branch.filter) : Promise.resolve(null),
   ]);
   const fill = (s: (typeof base)[number]) => ({

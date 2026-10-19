@@ -25,7 +25,7 @@ import {
   monthRange,
   totalsFor,
 } from "@/lib/dashboard";
-import { loadAccounts } from "./finance";
+import { loadAccountsCached } from "./finance";
 
 /*
  * Bosh panel ma'lumoti (ADR 0017). Pul oqimi va davomat bazada kunlar bo'yicha yig'iladi (bekor qilinganlar
@@ -301,7 +301,7 @@ export async function loadDashboard(
   });
 
   /* ---------- Guruhlar (fokus oyi) va qarz ---------- */
-  const accounts = await loadAccounts(
+  const accounts = await loadAccountsCached(
     db,
     studentRows.map((s) => s.id),
     today,

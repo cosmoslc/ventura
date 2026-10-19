@@ -18,7 +18,7 @@ import { displayPhone, formatDate, formatMonth } from "@/lib/format";
 import type { ReportData, ReportRow } from "@/lib/reports";
 import { uz } from "@/lib/uz";
 import { attendanceReport } from "./attendance-report";
-import { loadAccounts } from "./finance";
+import { loadAccountsCached } from "./finance";
 import type { LoadArgs } from "./reports";
 
 /*
@@ -356,7 +356,7 @@ export async function riskReport({ db, filter, today }: LoadArgs): Promise<Repor
   const k = t.risk;
   const all = await attendanceReport(db, filter, { from: minusDays(today, 29), to: today, today });
   const current = all.filter((r) => r.memberStatus === "trial" || r.memberStatus === "active");
-  const accounts = await loadAccounts(db, [...new Set(current.map((r) => r.studentId))], today);
+  const accounts = await loadAccountsCached(db, [...new Set(current.map((r) => r.studentId))], today);
   const debtOf = (id: string) => accounts.get(id)?.summary.debt ?? 0;
 
   const rows = current

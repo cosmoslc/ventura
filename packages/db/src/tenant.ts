@@ -10,11 +10,29 @@ import * as tenantSchema from "./schema/tenant";
  * yozmaydi va filtrlashni unutib qo'ya olmaydi. Strategiya (umumiy baza yoki alohida baza) faqat URL'da farq qiladi.
  */
 
-export function createTenantDb(url: string, tenantId: string, options: { max?: number } = {}) {
+/*
+ * Pul chegaralari (ADR 0060). `app.tenant_id` ulanish parametri bo'lgani uchun har mijozning o'z puli bor va ularni
+ * birlashtirib bo'lmaydi. Umumiy bazada ulanishlar soni = faol mijozlar × max, shuning uchun:
+ *  - bo'sh ulanish 30 soniyadan keyin yopiladi — sahifa ochilmayotgan mijoz ulanish band qilmaydi;
+ *  - ulanish ko'pi bilan 30 daqiqa yashaydi (server tomonidagi xotira to'planib qolmaydi);
+ *  - bitta mijozga ko'pi bilan 3 ta ulanish (sahifadagi parallel so'rovlar navbatda kutadi).
+ */
+export const TENANT_POOL = { max: 3, idleTimeoutSec: 30, maxLifetimeSec: 30 * 60 } as const;
+
+export interface TenantDbOptions {
+  max?: number;
+  /** Bo'sh ulanish shuncha soniyadan keyin yopiladi */
+  idleTimeoutSec?: number;
+  maxLifetimeSec?: number;
+}
+
+export function createTenantDb(url: string, tenantId: string, options: TenantDbOptions = {}) {
   if (!url) throw new Error("Mijoz bazasi manzili berilmagan");
   if (!tenantId) throw new Error("tenant_id berilmagan");
   const client = postgres(url, {
-    max: options.max ?? 5,
+    max: options.max ?? TENANT_POOL.max,
+    idle_timeout: options.idleTimeoutSec ?? TENANT_POOL.idleTimeoutSec,
+    max_lifetime: options.maxLifetimeSec ?? TENANT_POOL.maxLifetimeSec,
     // Ulanish parametri sifatida — pul'dagi har ulanishda bir xil, so'rov oralig'ida yo'qolmaydi
     connection: { "app.tenant_id": tenantId },
   });

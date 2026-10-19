@@ -1,5 +1,6 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, eq, gte, inArray, isNotNull, isNull, lte, ne } from "drizzle-orm";
+import { cache } from "react";
 import { z } from "zod";
 import type { TenantDb } from "@ventura/db";
 import {
@@ -162,33 +163,59 @@ export async function loadAccounts(
   const billing = billingOf(conf);
   const currentMonth = monthOf(today);
 
+  // Faqat hisobga kerakli ustunlar (ADR 0060): izoh, chek raqami, kim yaratgani va h.k. o'qilmaydi
   const [memberships, entryRows, discountRows] = await Promise.all([
-    inChunks(ids, (part) => db.select().from(groupMemberships).where(inArray(groupMemberships.studentId, part))),
     inChunks(ids, (part) =>
       db
-        .select()
+        .select({
+          id: groupMemberships.id,
+          groupId: groupMemberships.groupId,
+          studentId: groupMemberships.studentId,
+          status: groupMemberships.status,
+          activatedAt: groupMemberships.activatedAt,
+          pausedAt: groupMemberships.pausedAt,
+          leftAt: groupMemberships.leftAt,
+        })
+        .from(groupMemberships)
+        // Sinovdagi (faollashtirilmagan) a'zolik hisoblanmaydi — bazadan ham olinmaydi
+        .where(and(inArray(groupMemberships.studentId, part), isNotNull(groupMemberships.activatedAt))),
+    ),
+    inChunks(ids, (part) =>
+      db
+        .select({
+          id: payments.id,
+          studentId: payments.studentId,
+          kind: payments.kind,
+          amount: payments.amount,
+          groupId: payments.groupId,
+          month: payments.month,
+          date: payments.date,
+        })
         .from(payments)
         .where(and(inArray(payments.studentId, part), isNull(payments.voidedAt))),
     ),
-    inChunks(ids, (part) => db.select().from(studentDiscounts).where(inArray(studentDiscounts.studentId, part))),
-  ]);
-
-  const billed = memberships
-    .filter((m) => m.activatedAt !== null)
-    .map((m) => (leaveOverride && m.id === leaveOverride.membershipId ? { ...m, leftAt: leaveOverride.leftAt } : m));
-  const groupIds = [...new Set(billed.map((m) => m.groupId))];
-  const membershipIds = billed.map((m) => m.id);
-  const [groupRows, priceRows, pauseRows] = await Promise.all([
-    inChunks(groupIds, (part) => db.select().from(groups).where(inArray(groups.id, part))),
-    inChunks(groupIds, (part) => db.select().from(groupPrices).where(inArray(groupPrices.groupId, part))),
-    inChunks(membershipIds, (part) =>
-      db.select().from(membershipPauses).where(inArray(membershipPauses.membershipId, part)),
+    inChunks(ids, (part) =>
+      db
+        .select({
+          id: studentDiscounts.id,
+          studentId: studentDiscounts.studentId,
+          groupId: studentDiscounts.groupId,
+          kind: studentDiscounts.kind,
+          value: studentDiscounts.value,
+          fromMonth: studentDiscounts.fromMonth,
+          toMonth: studentDiscounts.toMonth,
+          affectsTeacher: studentDiscounts.affectsTeacher,
+        })
+        .from(studentDiscounts)
+        .where(inArray(studentDiscounts.studentId, part)),
     ),
   ]);
 
-  const pricesOf = groupBy(priceRows, (p) => p.groupId);
-  const pausesOf = groupBy(pauseRows, (p) => p.membershipId);
-  const groupById = new Map(groupRows.map((g) => [g.id, billingGroupOf(g, pricesOf.get(g.id) ?? [])]));
+  const billed = memberships.map((m) =>
+    leaveOverride && m.id === leaveOverride.membershipId ? { ...m, leftAt: leaveOverride.leftAt } : m,
+  );
+  const groupIds = [...new Set(billed.map((m) => m.groupId))];
+  const membershipIds = billed.map((m) => m.id);
 
   // Davomat faqat kerak bo'lganda: oylik rejimda — sababli belgilar, dars rejimida — hammasi
   const firstMonth = billed.reduce<string | null>((min, m) => {
@@ -198,7 +225,36 @@ export async function loadAccounts(
   const from = firstMonth ? monthRange(firstMonth)[0] : today;
   const to = monthRange(currentMonth)[1];
   const needMarks = billing.mode === "per_lesson" || billing.excusedRefund;
-  const [holidays, markRows] = await Promise.all([
+  // Guruh, narx, muzlatish, bayram va davomat bir-biriga bog'liq emas — bir vaqtda
+  const [groupRows, priceRows, pauseRows, holidays, markRows] = await Promise.all([
+    inChunks(groupIds, (part) =>
+      db
+        .select({
+          id: groups.id,
+          branchId: groups.branchId,
+          days: groups.days,
+          startDate: groups.startDate,
+          price: groups.price,
+        })
+        .from(groups)
+        .where(inArray(groups.id, part)),
+    ),
+    inChunks(groupIds, (part) =>
+      db
+        .select({ groupId: groupPrices.groupId, fromMonth: groupPrices.fromMonth, price: groupPrices.price })
+        .from(groupPrices)
+        .where(inArray(groupPrices.groupId, part)),
+    ),
+    inChunks(membershipIds, (part) =>
+      db
+        .select({
+          membershipId: membershipPauses.membershipId,
+          startDate: membershipPauses.startDate,
+          endDate: membershipPauses.endDate,
+        })
+        .from(membershipPauses)
+        .where(inArray(membershipPauses.membershipId, part)),
+    ),
     firstMonth ? holidayRanges(db, from, to) : Promise.resolve([]),
     needMarks && billed.length
       ? inChunks(ids, (part) =>
@@ -215,12 +271,21 @@ export async function loadAccounts(
                 inArray(attendance.studentId, part),
                 gte(attendance.date, from),
                 lte(attendance.date, to),
-                billing.mode === "monthly" ? eq(attendance.status, "excused") : undefined,
+                // Oylik rejimda faqat sababli belgi kerak; dars rejimida sababli dars to'lovdan chiqsa — u kerak emas
+                billing.mode === "monthly"
+                  ? eq(attendance.status, "excused")
+                  : billing.excusedRefund
+                    ? ne(attendance.status, "excused")
+                    : undefined,
               ),
             ),
         )
       : Promise.resolve([]),
   ]);
+
+  const pricesOf = groupBy(priceRows, (p) => p.groupId);
+  const pausesOf = groupBy(pauseRows, (p) => p.membershipId);
+  const groupById = new Map(groupRows.map((g) => [g.id, billingGroupOf(g, pricesOf.get(g.id) ?? [])]));
 
   const marksOf = new Map<string, Map<string, Mark>>();
   for (const a of markRows) {
@@ -271,4 +336,48 @@ export async function loadAccounts(
 
 export async function loadAccount(db: Db, studentId: string, today: string, fs?: FinanceSettings) {
   return (await loadAccounts(db, [studentId], today, fs)).get(studentId)!;
+}
+
+/*
+ * So'rov keshi (ADR 0060): bitta sahifa render'i ichida bir o'quvchining hisobi bir marta hisoblanadi — bosh sahifa,
+ * O'quvchilar, Qarzdorlar, Bugun, guruh va o'quvchi profili shu orqali oladi. React `cache` faqat server komponent
+ * render'ida ishlaydi; server amali, fon vazifasi va testda har chaqiruv bazadan yangidan o'qiydi, shuning uchun
+ * yozuvdan keyin eskirgan hisob qaytmaydi. Taxminiy hisob (leaveOverride) keshlanmaydi — loadAccounts'ni chaqiring.
+ */
+const requestSettings = cache((db: Db) => getFinanceSettings(db));
+const requestAccounts = cache(
+  (_db: Db, _today: string, _billing: string) => new Map<string, Promise<StudentAccount | undefined>>(),
+);
+
+export async function loadAccountsCached(
+  db: Db,
+  studentIds: readonly string[],
+  today: string,
+  fs?: FinanceSettings,
+): Promise<Map<string, StudentAccount>> {
+  const ids = [...new Set(studentIds)];
+  const result = new Map<string, StudentAccount>();
+  if (!ids.length) return result;
+  const conf = fs ?? (await requestSettings(db));
+  const store = requestAccounts(db, today, JSON.stringify(billingOf(conf)));
+  const missing = ids.filter((id) => !store.has(id));
+  if (missing.length) {
+    const batch = loadAccounts(db, missing, today, conf);
+    for (const id of missing)
+      store.set(
+        id,
+        batch.then((map) => map.get(id)),
+      );
+  }
+  // Tartib loadAccounts bilan bir xil (kirish tartibi)
+  const accounts = await Promise.all(ids.map((id) => store.get(id)));
+  ids.forEach((id, i) => {
+    const acc = accounts[i];
+    if (acc) result.set(id, acc);
+  });
+  return result;
+}
+
+export async function loadAccountCached(db: Db, studentId: string, today: string, fs?: FinanceSettings) {
+  return (await loadAccountsCached(db, [studentId], today, fs)).get(studentId)!;
 }

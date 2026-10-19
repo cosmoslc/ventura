@@ -43,23 +43,29 @@ export function hashLink(prevHash: string | null, payload: ChainPayload): string
 export type ChainVerdict =
   { ok: true; count: number } | { ok: false; count: number; brokenAtSeq: number; reason: string };
 
-/** Yozuvlar seq bo'yicha o'sish tartibida beriladi. */
-export function verifyChain(links: ChainLink[]): ChainVerdict {
-  let prev: string | null = null;
+export type SegmentVerdict = { ok: true; lastHash: string | null } | { ok: false; brokenAtSeq: number; reason: string };
+
+/**
+ * Zanjir bo'lagi: yozuvlar seq bo'yicha o'sish tartibida, `prevHash` — bo'lakdan oldingi yozuv xeshi (boshida null).
+ * Bo'laklab tekshirish (audit.verify) va butun zanjir (verifyChain) shu bitta qoidadan foydalanadi.
+ */
+export function verifySegment(links: readonly ChainLink[], prevHash: string | null): SegmentVerdict {
+  let prev = prevHash;
   for (const link of links) {
-    if (link.prevHash !== prev) {
-      return {
-        ok: false,
-        count: links.length,
-        brokenAtSeq: link.seq,
-        reason: "prev_hash oldingi yozuv xeshiga mos emas",
-      };
-    }
+    if (link.prevHash !== prev)
+      return { ok: false, brokenAtSeq: link.seq, reason: "prev_hash oldingi yozuv xeshiga mos emas" };
     const { seq: _seq, prevHash: _p, hash, ...payload } = link;
-    if (hashLink(prev, payload) !== hash) {
-      return { ok: false, count: links.length, brokenAtSeq: link.seq, reason: "yozuv mazmuni o'zgartirilgan" };
-    }
+    if (hashLink(prev, payload) !== hash)
+      return { ok: false, brokenAtSeq: link.seq, reason: "yozuv mazmuni o'zgartirilgan" };
     prev = hash;
   }
-  return { ok: true, count: links.length };
+  return { ok: true, lastHash: prev };
+}
+
+/** Yozuvlar seq bo'yicha o'sish tartibida beriladi. */
+export function verifyChain(links: ChainLink[]): ChainVerdict {
+  const v = verifySegment(links, null);
+  return v.ok
+    ? { ok: true, count: links.length }
+    : { ok: false, count: links.length, brokenAtSeq: v.brokenAtSeq, reason: v.reason };
 }
