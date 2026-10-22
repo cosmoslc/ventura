@@ -192,6 +192,7 @@ const REGISTRY: Record<string, Def> = {
   "group.create": created("group", "yangi guruh ochdi", "Excel'dan guruh qo'shdi"),
   "group.update": simple("group", "guruhni tahrirladi", (i) => (obj(i.m.price) ? "narx o'zgardi" : null)),
   "group.homework.create": simple("group", "guruhga yangi uy vazifasi berdi", (i) => str(i.m.title)),
+  "group.homework.delete": simple("group", "guruh uy vazifasini o'chirdi"),
   "group.archive": simple("group", "guruhni arxivga oldi"),
   "group.restore": simple("group", "guruhni arxivdan tikladi"),
   "group.enroll": simple("group", "guruhga o'quvchi qo'shdi", studentOf),

@@ -10,7 +10,7 @@ import { GroupView, type KabinetTab } from "./group-view";
 
 export const metadata = { title: uz.kabinet.navGroups };
 
-const TABS: readonly KabinetTab[] = ["attendance", "grades", "students", "stats"];
+const TABS: readonly KabinetTab[] = ["attendance", "grades", "students", "homework", "stats"];
 
 /** Kabinet: o'z guruhi — Davomat, Baholash, O'quvchilar (coin berish), Statistika. Boshqa guruh — 404. */
 export default async function KabinetGroupPage({

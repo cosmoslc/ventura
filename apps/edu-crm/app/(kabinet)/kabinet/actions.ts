@@ -146,6 +146,45 @@ export async function createGroupHomeworkAction(input: unknown): Promise<ActionR
 
       await ctx.audit("group.homework.create", { type: "group", id: v.groupId }, { title: v.title, lessonDate: v.lessonDate });
       revalidatePath(`/kabinet/guruhlar/${v.groupId}`);
+      revalidatePath("/kabinet/uy-ishi");
+      revalidatePath("/portal/uy-ishi");
+      return { ok: true };
+    },
+    { teacher: true },
+  );
+}
+
+const deleteHomeworkInput = z.object({
+  homeworkId: z.string().uuid(),
+  groupId: z.string().uuid(),
+});
+
+export async function deleteGroupHomeworkAction(input: unknown): Promise<ActionResult> {
+  return crmAction(
+    "groups",
+    null,
+    async (ctx) => {
+      if (ctx.staff.kind !== "teacher" || !ctx.staff.teacherId) return { ok: false, error: uz.common.forbidden };
+      const parsed = deleteHomeworkInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: uz.common.invalid };
+      const { homeworkId, groupId } = parsed.data;
+
+      const { groups: grpTable } = await import("@ventura/db/schema/tenant");
+      const [g] = await ctx.db
+        .select({ id: grpTable.id, teacherId: grpTable.teacherId })
+        .from(grpTable)
+        .where(and(eq(grpTable.id, groupId), isNull(grpTable.archivedAt)))
+        .limit(1);
+      if (!g || g.teacherId !== ctx.staff.teacherId) return { ok: false, error: uz.common.forbidden };
+
+      await ctx.db
+        .delete(groupHomeworks)
+        .where(and(eq(groupHomeworks.id, homeworkId), eq(groupHomeworks.groupId, groupId)));
+
+      await ctx.audit("group.homework.delete", { type: "group", id: groupId }, { homeworkId });
+      revalidatePath(`/kabinet/guruhlar/${groupId}`);
+      revalidatePath("/kabinet/uy-ishi");
+      revalidatePath("/portal/uy-ishi");
       return { ok: true };
     },
     { teacher: true },

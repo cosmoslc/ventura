@@ -1,9 +1,10 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import {
   type StudentStatus,
   attendance,
+  groupHomeworks,
   groupMemberships,
   lessonGrades,
   students,
@@ -183,7 +184,7 @@ export async function kabinetGroup(
     phone: m.phone,
     status: m.status,
   }));
-  const [balances, coinSettings] = await Promise.all([
+  const [balances, coinSettings, homeworks] = await Promise.all([
     coinsOn
       ? coinBalances(
           db,
@@ -191,6 +192,19 @@ export async function kabinetGroup(
         )
       : Promise.resolve(null),
     coinsOn ? getCoinSettings(db) : Promise.resolve(null),
+    db
+      .select({
+        id: groupHomeworks.id,
+        groupId: groupHomeworks.groupId,
+        lessonDate: groupHomeworks.lessonDate,
+        title: groupHomeworks.title,
+        description: groupHomeworks.description,
+        dueDate: groupHomeworks.dueDate,
+        createdAt: groupHomeworks.createdAt,
+      })
+      .from(groupHomeworks)
+      .where(eq(groupHomeworks.groupId, g.id))
+      .orderBy(desc(groupHomeworks.lessonDate), desc(groupHomeworks.createdAt)),
   ]);
   return {
     group: {
@@ -208,6 +222,7 @@ export async function kabinetGroup(
     members: open,
     coins: balances,
     manualCoins: coinSettings?.manual.enabled ? { dailyLimit: coinSettings.manual.dailyLimit } : null,
+    homeworks,
     stats: groupStats({
       members: lessons.members.map((m) => ({ studentId: m.studentId, name: m.name })),
       attendance: lessons.marks,
@@ -217,6 +232,60 @@ export async function kabinetGroup(
 }
 
 export type KabinetGroupData = NonNullable<Awaited<ReturnType<typeof kabinetGroup>>>;
+
+/* ---------- Uy ishlari (ADR 0063) ---------- */
+
+export interface KabinetHomeworkItem {
+  id: string;
+  groupId: string;
+  groupName?: string;
+  courseName?: string;
+  lessonDate: string;
+  title: string;
+  description: string | null;
+  dueDate: string | null;
+  createdAt: Date;
+}
+
+/** O'qituvchining barcha yoki bitta guruhidagi uy vazifalari */
+export async function kabinetHomeworks(
+  db: TenantDb,
+  teacherId: string,
+  groupId?: string,
+): Promise<KabinetHomeworkItem[]> {
+  const teacherGroups = await kabinetGroups(db, teacherId);
+  const allowedGroupIds = new Set(teacherGroups.map((g) => g.id));
+  const groupMap = new Map(teacherGroups.map((g) => [g.id, g]));
+
+  const targetGroupIds = groupId
+    ? (allowedGroupIds.has(groupId) ? [groupId] : [])
+    : [...allowedGroupIds];
+
+  if (!targetGroupIds.length) return [];
+
+  const rows = await db
+    .select({
+      id: groupHomeworks.id,
+      groupId: groupHomeworks.groupId,
+      lessonDate: groupHomeworks.lessonDate,
+      title: groupHomeworks.title,
+      description: groupHomeworks.description,
+      dueDate: groupHomeworks.dueDate,
+      createdAt: groupHomeworks.createdAt,
+    })
+    .from(groupHomeworks)
+    .where(inArray(groupHomeworks.groupId, targetGroupIds))
+    .orderBy(desc(groupHomeworks.lessonDate), desc(groupHomeworks.createdAt));
+
+  return rows.map((r) => {
+    const grp = groupMap.get(r.groupId);
+    return {
+      ...r,
+      groupName: grp?.name ?? "",
+      courseName: grp?.courseName ?? "",
+    };
+  });
+}
 
 /* ---------- O'quvchilar (3-bosqich) ---------- */
 

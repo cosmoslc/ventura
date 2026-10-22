@@ -34,10 +34,11 @@ import { uz } from "@/lib/uz";
 import { AttendanceTab } from "../../../../(crm)/groups/attendance-tab";
 import { GradesTab } from "../../../../(crm)/groups/grades-tab";
 import { giveCoinAction } from "../../../../(crm)/coins/actions";
+import { HomeworkTab } from "./homework-tab";
 
 const t = uz.kabinet;
 
-export type KabinetTab = "attendance" | "grades" | "students" | "stats";
+export type KabinetTab = "attendance" | "grades" | "students" | "homework" | "stats";
 
 export interface KabinetGroupPerms {
   attendanceToday: boolean;
@@ -102,6 +103,7 @@ export function GroupView({
             {data.attendance ? <TabsTrigger value="attendance">{t.tabAttendance}</TabsTrigger> : null}
             {data.grades ? <TabsTrigger value="grades">{t.tabGrades}</TabsTrigger> : null}
             <TabsTrigger value="students">{t.tabStudents}</TabsTrigger>
+            <TabsTrigger value="homework">{t.tabHomework}</TabsTrigger>
             <TabsTrigger value="stats">{t.tabStats}</TabsTrigger>
           </TabsList>
         </Tabs>
@@ -133,6 +135,9 @@ export function GroupView({
             coins={data.coins}
             manual={perms.giveCoins ? data.manualCoins : null}
           />
+        ) : null}
+        {tab === "homework" ? (
+          <HomeworkTab groupId={g.id} today={today} homeworks={data.homeworks} />
         ) : null}
         {tab === "stats" ? <StatsTab stats={data.stats} month={month} grades={!!data.grades} /> : null}
       </Card>

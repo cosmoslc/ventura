@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookOpen,
   ChartColumn,
   GraduationCap,
   House,
@@ -34,6 +35,7 @@ const ICONS: Record<KabinetIcon, { icon: LucideIcon; hue: string }> = {
   home: { icon: House, hue: "blue" },
   groups: { icon: UsersRound, hue: "teal" },
   students: { icon: GraduationCap, hue: "sky" },
+  homework: { icon: BookOpen, hue: "amber" },
   stats: { icon: ChartColumn, hue: "violet" },
   finance: { icon: Wallet, hue: "green" },
   profile: { icon: UserRound, hue: "slate" },
