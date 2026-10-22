@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   ExternalLink,
   GraduationCap,
   type LucideIcon,
@@ -9,7 +8,6 @@ import {
   Send,
   Settings2,
   ShieldCheck,
-  Smartphone,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -44,7 +42,6 @@ interface BotMeta {
   name: string;
   icon: LucideIcon;
   colorClass: string;
-  badgeTone: "success" | "neutral" | "warning";
   notificationOptions: readonly BotNotificationOption[];
   miniAppHint: string;
 }
@@ -55,7 +52,6 @@ const BOTS_META: Record<BotRole, BotMeta> = {
     name: t.teacherBot,
     icon: GraduationCap,
     colorClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-    badgeTone: "success",
     notificationOptions: TEACHER_NOTIFICATIONS,
     miniAppHint: "O'qituvchilar kabineti (masalan: /kabinet)",
   },
@@ -64,7 +60,6 @@ const BOTS_META: Record<BotRole, BotMeta> = {
     name: t.studentBot,
     icon: Users,
     colorClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
-    badgeTone: "success",
     notificationOptions: STUDENT_NOTIFICATIONS,
     miniAppHint: "O'quvchilar portali (masalan: /portal)",
   },
@@ -73,7 +68,6 @@ const BOTS_META: Record<BotRole, BotMeta> = {
     name: t.parentBot,
     icon: ShieldCheck,
     colorClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-    badgeTone: "success",
     notificationOptions: PARENT_NOTIFICATIONS,
     miniAppHint: "Ota-onalar uchun Mini App (ixtiyoriy)",
   },
@@ -107,7 +101,6 @@ export function TelegramBotsView({
   );
   const [testPending, startTestTransition] = React.useTransition();
 
-  // Modallarni ochish
   function openEditModal(role: BotRole) {
     const bot =
       role === "teacher"
@@ -129,7 +122,6 @@ export function TelegramBotsView({
     setTestChatId("");
   }
 
-  // Sozlamalarni saqlash
   function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!editingRole) return;
@@ -155,7 +147,6 @@ export function TelegramBotsView({
     });
   }
 
-  // Webhookni sinxronlash
   function handleSyncWebhook(role: BotRole) {
     startTransition(async () => {
       const res = await syncBotWebhookAction({ role });
@@ -168,7 +159,6 @@ export function TelegramBotsView({
     });
   }
 
-  // Test xabar yuborish
   function handleSendTest(e: React.FormEvent) {
     e.preventDefault();
     if (!testingRole) return;
@@ -197,21 +187,19 @@ export function TelegramBotsView({
   const roles: BotRole[] = ["teacher", "student", "parent"];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title={t.title}
         description={t.description}
         actions={
-          <div className="flex items-center gap-2">
-            <Badge tone="info" className="font-mono text-xs">
-              Markaz: {tenantName}
-            </Badge>
-          </div>
+          <Badge tone="info" className="font-mono text-xs">
+            Markaz: {tenantName}
+          </Badge>
         }
       />
 
-      {/* 3 ta Bot Kartochkalari (Boxlar) */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      {/* 3 ta Bot Boxlari (Kichikroq, ixcham va sodda) */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
         {roles.map((role) => {
           const meta = BOTS_META[role];
           const bot =
@@ -229,111 +217,93 @@ export function TelegramBotsView({
           return (
             <Card
               key={role}
-              className="flex flex-col justify-between p-5 transition-all hover:border-primary/40 shadow-xs"
+              className="flex flex-col justify-between p-4 transition-all hover:border-primary/40 shadow-xs"
             >
-              <div className="space-y-4">
-                {/* Tepasi: Ikonka, Nomi va Holati */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`grid size-11 place-items-center rounded-xl border ${meta.colorClass}`}>
-                      <Icon className="size-5" />
+              <div className="space-y-3">
+                {/* 1. Sarlavha: Ikonka, Nomi va Holat nishoni */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`grid size-9 shrink-0 place-items-center rounded-lg border ${meta.colorClass}`}>
+                      <Icon className="size-4" />
                     </div>
-                    <div>
-                      <h3 className="type-heading text-body font-bold text-foreground">{meta.name}</h3>
+                    <div className="min-w-0">
+                      <h3 className="type-heading text-sm font-bold text-foreground leading-snug truncate">
+                        {meta.name}
+                      </h3>
                       {bot.username ? (
                         <a
                           href={`https://t.me/${bot.username}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center gap-1 text-caption text-primary hover:underline font-mono"
+                          className="flex items-center gap-1 text-2xs text-primary hover:underline font-mono truncate"
                         >
-                          @{bot.username} <ExternalLink className="size-3" />
+                          @{bot.username} <ExternalLink className="size-2.5 shrink-0" />
                         </a>
                       ) : (
-                        <span className="text-caption text-muted-foreground font-mono">@username yo'q</span>
+                        <span className="text-2xs text-muted-foreground font-mono block">@username yo'q</span>
                       )}
                     </div>
                   </div>
 
-                  <div>
+                  <div className="shrink-0">
                     {!isConfigured ? (
-                      <Badge tone="neutral">{t.noToken}</Badge>
+                      <Badge tone="neutral" className="text-2xs">{t.noToken}</Badge>
                     ) : bot.enabled ? (
-                      <Badge tone="success" dot>
+                      <Badge tone="success" dot className="text-2xs">
                         {t.activeStatus}
                       </Badge>
                     ) : (
-                      <Badge tone="warning">{t.inactiveStatus}</Badge>
+                      <Badge tone="warning" className="text-2xs">{t.inactiveStatus}</Badge>
                     )}
                   </div>
                 </div>
 
-                {/* Foydalanuvchilar Statistikasi Boxi */}
-                <div className="rounded-control border border-border bg-muted/40 p-3.5 space-y-2.5">
-                  <div className="grid grid-cols-2 gap-2 text-center">
-                    <div className="space-y-0.5 border-r border-border pr-2">
-                      <div className="text-caption text-muted-foreground font-medium">{t.activeCount}</div>
-                      <div className="type-heading text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        {stat.active}
-                      </div>
-                    </div>
-                    <div className="space-y-0.5 pl-2">
-                      <div className="text-caption text-muted-foreground font-medium">{t.inactiveCount}</div>
-                      <div className="type-heading text-xl font-bold text-muted-foreground font-mono">
-                        {stat.inactive}
-                      </div>
-                    </div>
+                {/* 2. Foydalanuvchilar statistikasi: sodda va ixcham 1 qator */}
+                <div className="flex items-center justify-between rounded-control border border-border/70 bg-muted/30 px-3 py-2 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-muted-foreground">{t.activeCount}:</span>
+                    <b className="font-mono text-foreground font-semibold">{stat.active}</b>
                   </div>
-
-                  {/* Ulanganlik foizi progress bar */}
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-2xs text-muted-foreground font-mono">
-                      <span>Ulanganlik darajasi</span>
-                      <span>{stat.percentage}%</span>
-                    </div>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full bg-emerald-500 transition-all duration-300"
-                        style={{ width: `${stat.percentage}%` }}
-                      />
-                    </div>
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <span>{t.inactiveCount}:</span>
+                    <b className="font-mono text-foreground/80 font-semibold">{stat.inactive}</b>
                   </div>
                 </div>
 
-                {/* Bot Imkoniyatlari qisqacha */}
-                <div className="space-y-2 text-caption">
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <span className="flex items-center gap-1.5">
-                      <Bell className="size-3.5" /> Bildirishnomalar
-                    </span>
-                    <Badge tone={activeNotificationsCount > 0 ? "info" : "neutral"} className="font-mono text-2xs">
-                      {activeNotificationsCount}/{meta.notificationOptions.length} faol
-                    </Badge>
-                  </div>
-
+                {/* 3. Bildirishnomalar va Mini App holati */}
+                <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
+                  <span>
+                    Bildirishnomalar:{" "}
+                    <b className="text-foreground font-mono">
+                      {activeNotificationsCount}/{meta.notificationOptions.length}
+                    </b>
+                  </span>
                   {bot.miniAppUrl ? (
-                    <div className="flex items-center justify-between text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Smartphone className="size-3.5" /> Mini App (Web App)
-                      </span>
-                      <span className="font-mono text-2xs text-foreground font-semibold">{bot.miniAppUrl}</span>
-                    </div>
-                  ) : null}
+                    <span className="font-mono text-primary font-medium">{bot.miniAppUrl}</span>
+                  ) : (
+                    <span>Mini App: yo'q</span>
+                  )}
                 </div>
               </div>
 
-              {/* Pastki tugmalar */}
-              <div className="pt-5 mt-4 border-t border-border flex items-center justify-between gap-2">
+              {/* 4. Pastki ixcham amallar (overflow bo'lmaydi) */}
+              <div className="pt-3 mt-3 border-t border-border flex items-center gap-2">
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="flex-1 justify-center text-xs h-8"
                   onClick={() => openTestModal(role)}
                   disabled={!isConfigured}
                 >
-                  <Send /> {t.testMessage}
+                  <Send className="size-3" /> Test
                 </Button>
-                <Button size="sm" onClick={() => openEditModal(role)}>
-                  <Settings2 /> Sozlamalar
+                <Button
+                  size="sm"
+                  className="flex-1 justify-center text-xs h-8"
+                  onClick={() => openEditModal(role)}
+                >
+                  <Settings2 className="size-3" /> Sozlash
                 </Button>
               </div>
             </Card>
@@ -341,33 +311,14 @@ export function TelegramBotsView({
         })}
       </div>
 
-      {/* Qo'llanma bloki */}
-      <Card className="p-5 bg-card/60 space-y-3">
-        <div className="flex items-center gap-2 text-body font-bold text-foreground">
-          <Sparkles className="size-4 text-primary" />
-          <span>Telegram botlarni qanday sozlash kerak?</span>
+      {/* Ixcham yo'l-yo'riq maslahati (Katta kartochkalar o'rniga oddiy chiziqli panel) */}
+      <div className="flex items-start gap-2.5 rounded-card border border-border/80 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+        <Sparkles className="size-4 shrink-0 text-primary mt-0.5" />
+        <div className="leading-relaxed">
+          <span className="font-semibold text-foreground">Botlarni sozlash: </span>
+          Telegramda <b>@BotFather</b> orqali yangi bot yarating, olingan API tokenni tegishli bot sozlamasiga kiriting va yoqing. O'qituvchi, o'quvchi va ota-onalar botga kirib <code>/start</code> yuborish orqali akkauntlarini ulaydilar.
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-caption text-muted-foreground">
-          <div className="space-y-1 rounded-control border border-border p-3 bg-card">
-            <span className="font-bold text-foreground block font-mono">1. Bot yaratish</span>
-            <span>
-              Telegramda rasmiy <b>@BotFather</b> ga o'ting va <code>/newbot</code> buyrug'i orqali yangi bot yarating.
-            </span>
-          </div>
-          <div className="space-y-1 rounded-control border border-border p-3 bg-card">
-            <span className="font-bold text-foreground block font-mono">2. Tokenni kiritish</span>
-            <span>
-              BotFather bergan <b>HTTP API token</b> va bot username'ni yuqoridagi mos bot sozlamalariga kiriting.
-            </span>
-          </div>
-          <div className="space-y-1 rounded-control border border-border p-3 bg-card">
-            <span className="font-bold text-foreground block font-mono">3. Akkauntlarni ulash</span>
-            <span>
-              O'qituvchilar, o'quvchilar va ota-onalar botga <code>/start</code> bosib o'z telefon raqamlarini yuborishadi.
-            </span>
-          </div>
-        </div>
-      </Card>
+      </div>
 
       {/* Bot Sozlamalari Modali */}
       {editingRole ? (
@@ -389,9 +340,9 @@ export function TelegramBotsView({
             </>
           }
         >
-          <form id="bot-settings-form" onSubmit={handleSave} className="space-y-5">
+          <form id="bot-settings-form" onSubmit={handleSave} className="space-y-4">
             {/* Yoqish / O'chirish switchi */}
-            <div className="flex items-center justify-between rounded-control border border-border bg-muted/30 p-3.5">
+            <div className="flex items-center justify-between rounded-control border border-border bg-muted/30 p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="bot-enable-switch" className="text-body font-semibold cursor-pointer">
                   {t.enableSwitch}
@@ -404,33 +355,29 @@ export function TelegramBotsView({
             </div>
 
             {/* Token va Username */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="bot-token">{t.tokenLabel}</Label>
-                <div className="relative">
-                  <Input
-                    id="bot-token"
-                    type="password"
-                    placeholder="1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-                    className="font-mono text-xs"
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                  />
-                </div>
+                <Input
+                  id="bot-token"
+                  type="password"
+                  placeholder="1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                  className="font-mono text-xs"
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                />
                 <FieldHint>{t.tokenHint}</FieldHint>
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="bot-username">{t.usernameLabel}</Label>
-                <div className="relative">
-                  <Input
-                    id="bot-username"
-                    placeholder="edu_teacher_bot"
-                    className="font-mono"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                  />
-                </div>
+                <Input
+                  id="bot-username"
+                  placeholder="edu_teacher_bot"
+                  className="font-mono"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
                 <FieldHint>{t.usernameHint}</FieldHint>
               </div>
             </div>
@@ -448,30 +395,30 @@ export function TelegramBotsView({
             </div>
 
             {/* Bildirishnomalar Bo'limi */}
-            <div className="space-y-3 pt-2">
-              <div className="border-b border-border pb-2">
+            <div className="space-y-2.5 pt-2">
+              <div className="border-b border-border pb-1.5">
                 <h4 className="type-heading text-body font-bold text-foreground">{t.notificationsSection}</h4>
                 <p className="text-caption text-muted-foreground">
-                  Kerakli bildirishnomalarni yoqing yoki o'chiring. Tizim tegishli hodisa yuz berganda xabarni avtomatik jo'natadi.
+                  Kerakli bildirishnomalarni yoqing yoki o'chiring. Tizim tegishli hodisada xabarni avtomatik jo'natadi.
                 </p>
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
                 {BOTS_META[editingRole].notificationOptions.map((opt) => {
                   const on = notifications[opt.key] ?? opt.defaultEnabled;
                   return (
                     <div
                       key={opt.key}
-                      className="flex items-start justify-between gap-3 rounded-control border border-border p-3 transition-colors hover:bg-muted/30"
+                      className="flex items-start justify-between gap-3 rounded-control border border-border p-2.5 transition-colors hover:bg-muted/30"
                     >
                       <div className="space-y-0.5">
                         <Label
                           htmlFor={`notif-${opt.key}`}
-                          className="text-body font-medium text-foreground cursor-pointer"
+                          className="text-body font-medium text-foreground cursor-pointer text-xs"
                         >
                           {opt.label}
                         </Label>
-                        <p className="text-caption text-muted-foreground">{opt.description}</p>
+                        <p className="text-2xs text-muted-foreground">{opt.description}</p>
                       </div>
                       <Switch
                         id={`notif-${opt.key}`}
@@ -487,20 +434,21 @@ export function TelegramBotsView({
             </div>
 
             {/* Webhook qismi */}
-            <div className="rounded-control border border-border/80 bg-muted/20 p-3 space-y-2 text-2xs">
+            <div className="rounded-control border border-border/80 bg-muted/20 p-2.5 space-y-1.5 text-2xs">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-foreground">Webhook manzili:</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
+                  className="h-7 text-2xs"
                   onClick={() => handleSyncWebhook(editingRole)}
                   disabled={pending || !token.trim()}
                 >
                   <RefreshCw className="size-3" /> {t.syncWebhook}
                 </Button>
               </div>
-              <code className="block bg-card border border-border p-2 rounded text-muted-foreground font-mono break-all">
+              <code className="block bg-card border border-border p-1.5 rounded text-muted-foreground font-mono break-all text-2xs">
                 /api/telegram/webhook?role={editingRole}
               </code>
             </div>
@@ -522,7 +470,7 @@ export function TelegramBotsView({
                 {uz.common.cancel}
               </Button>
               <Button form="test-message-form" type="submit" disabled={testPending}>
-                <Send /> {testPending ? "Yuborilmoqda..." : t.sendTestBtn}
+                <Send className="size-3.5" /> {testPending ? "Yuborilmoqda..." : t.sendTestBtn}
               </Button>
             </>
           }
@@ -534,7 +482,7 @@ export function TelegramBotsView({
                 id="test-chat-id"
                 placeholder="Masalan: 123456789"
                 required
-                className="font-mono"
+                className="font-mono text-xs"
                 value={testChatId}
                 onChange={(e) => setTestChatId(e.target.value)}
               />
