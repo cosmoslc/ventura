@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Calendar, Clock, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Calendar, Clock, Inbox, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -13,6 +13,9 @@ import { Modal } from "@ventura/ui/modal";
 import { EmptyState } from "@ventura/ui/page-header";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
+import type { HomeworkAttachment } from "@ventura/db/schema/tenant";
+import { FileAttachmentsList, FileAttachmentsUploader } from "@/components/file-attachments";
+import { HomeworkSubmissionsModal } from "@/components/homework-submissions-modal";
 import { formatDate } from "@/lib/format";
 import type { KabinetGroup, KabinetHomeworkItem } from "@/lib/server/kabinet";
 import { uz } from "@/lib/uz";
@@ -44,8 +47,10 @@ export function TeacherHomeworksView({
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [dueDate, setDueDate] = React.useState("");
+  const [attachments, setAttachments] = React.useState<HomeworkAttachment[]>([]);
   const [pending, startTransition] = React.useTransition();
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [selectedHwForSubmissions, setSelectedHwForSubmissions] = React.useState<KabinetHomeworkItem | null>(null);
 
   function resetForm() {
     setCustomGroupId(null);
@@ -53,6 +58,7 @@ export function TeacherHomeworksView({
     setTitle("");
     setDescription("");
     setDueDate("");
+    setAttachments([]);
     setOpen(false);
   }
 
@@ -74,6 +80,7 @@ export function TeacherHomeworksView({
         title: title.trim(),
         description: description.trim() || undefined,
         dueDate: dueDate || undefined,
+        attachments,
       });
 
       if (!res.ok) {
@@ -118,27 +125,28 @@ export function TeacherHomeworksView({
       </div>
 
       {/* Guruhlar bo'yicha filtr */}
-      {groups.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Link href="/kabinet/uy-ishi">
-            <Badge
-              tone={!selectedGroupId ? "info" : "neutral"}
-              className="cursor-pointer px-3 py-1.5 transition-colors hover:opacity-80"
-            >
-              Barcha guruhlar ({groups.length})
-            </Badge>
+      {groups.length > 1 ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/kabinet/uy-ishi"
+            className={`px-3 py-1.5 text-caption font-semibold rounded-control transition-colors ${
+              !selectedGroupId ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+            }`}
+          >
+            Hammasi ({homeworks.length})
           </Link>
           {groups.map((g) => {
-            const on = selectedGroupId === g.id;
+            const count = homeworks.filter((h) => h.groupId === g.id).length;
+            const active = selectedGroupId === g.id;
             return (
-              <Link key={g.id} href={`/kabinet/uy-ishi?groupId=${g.id}`}>
-                <Badge
-                  tone={on ? "info" : "neutral"}
-                  className="cursor-pointer px-3 py-1.5 transition-colors hover:opacity-80 flex items-center gap-1.5"
-                >
-                  <span className="size-2 rounded-full" style={{ backgroundColor: g.color }} />
-                  {g.name}
-                </Badge>
+              <Link
+                key={g.id}
+                href={`/kabinet/uy-ishi?groupId=${g.id}`}
+                className={`px-3 py-1.5 text-caption font-semibold rounded-control transition-colors ${
+                  active ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {g.name} ({count})
               </Link>
             );
           })}
@@ -147,63 +155,83 @@ export function TeacherHomeworksView({
 
       {/* Vazifalar ro'yxati */}
       {homeworks.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-4">
           {homeworks.map((hw) => (
-            <Card
-              key={hw.id}
-              className="p-5 space-y-3.5 flex flex-col justify-between hover:border-primary/50 transition-colors shadow-sm"
-            >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-2xs font-semibold text-primary font-mono block">
-                      {hw.groupName} {hw.courseName ? `· ${hw.courseName}` : ""}
-                    </span>
-                    <h3 className="text-subheading font-bold text-foreground leading-snug mt-0.5">{hw.title}</h3>
+            <Card key={hw.id} className="p-5 space-y-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-caption font-semibold text-primary">{hw.groupName}</span>
+                    <span className="text-muted-foreground">•</span>
+                    <span className="text-caption text-muted-foreground">{hw.courseName}</span>
                   </div>
+                  <h2 className="text-subheading font-bold text-foreground mt-0.5">{hw.title}</h2>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setSelectedHwForSubmissions(hw)}
+                  >
+                    <Inbox className="size-4 text-primary" />
+                    <span>Javoblar ({hw.submissionsCount})</span>
+                    {hw.checkedCount > 0 ? (
+                      <Badge tone="success" className="ml-1 text-xs py-0 px-1.5">
+                        {hw.checkedCount} ta tekshirildi
+                      </Badge>
+                    ) : hw.submissionsCount > 0 ? (
+                      <Badge tone="warning" className="ml-1 text-xs py-0 px-1.5">
+                        kutilmoqda
+                      </Badge>
+                    ) : null}
+                  </Button>
+
                   <Button
                     variant="ghost"
-                    size="icon-sm"
-                    className="text-destructive-text hover:bg-destructive-bg shrink-0 -mt-1 -mr-1"
-                    title={uz.common.delete}
-                    aria-label={uz.common.delete}
-                    disabled={pending && deletingId === hw.id}
+                    size="sm"
+                    className="text-destructive-text"
+                    disabled={deletingId === hw.id}
                     onClick={() => handleDelete(hw.id, hw.groupId)}
                   >
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
+              </div>
 
-                <div className="flex flex-wrap items-center gap-2 text-2xs text-muted-foreground">
-                  <Badge tone="neutral" className="flex items-center gap-1 font-mono">
-                    <Calendar className="size-3" />
-                    Dars: {formatDate(hw.lessonDate)}
-                  </Badge>
+              {hw.description ? (
+                <div className="p-3.5 rounded-control bg-muted/40 border border-border-soft text-body text-foreground whitespace-pre-wrap">
+                  {hw.description}
+                </div>
+              ) : null}
+
+              {/* Biriktirilgan fayllar */}
+              {hw.attachments && hw.attachments.length > 0 ? (
+                <FileAttachmentsList attachments={hw.attachments} className="pt-1" />
+              ) : null}
+
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-border-soft text-caption text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="size-3.5" /> Dars sanasi: <b>{formatDate(hw.lessonDate)}</b>
+                  </span>
                   {hw.dueDate ? (
-                    <Badge tone="warning" className="flex items-center gap-1 font-mono">
-                      <Clock className="size-3" />
-                      Muddat: {formatDate(hw.dueDate)}
-                    </Badge>
+                    <span className="flex items-center gap-1.5 text-warning font-semibold">
+                      <Clock className="size-3.5" /> Muddat: {formatDate(hw.dueDate)}
+                    </span>
                   ) : null}
                 </div>
 
-                {hw.description ? (
-                  <p className="text-caption text-foreground/90 whitespace-pre-wrap pt-1 leading-relaxed">
-                    {hw.description}
-                  </p>
-                ) : (
-                  <p className="text-caption italic text-muted-foreground pt-1">Batafsil izoh kiritilmagan</p>
-                )}
-              </div>
-
-              <div className="pt-2.5 border-t border-border-soft flex items-center justify-between text-2xs text-muted-foreground font-mono">
-                <span>Berildi: {formatDate(new Date(hw.createdAt).toISOString().slice(0, 10))}</span>
-                <Link
-                  href={`/kabinet/guruhlar/${hw.groupId}?tab=homework`}
-                  className="text-primary hover:underline font-sans font-semibold"
-                >
-                  Guruhga o'tish →
-                </Link>
+                <div className="flex items-center gap-3">
+                  <span>Berildi: {formatDate(new Date(hw.createdAt).toISOString().slice(0, 10))}</span>
+                  <Link
+                    href={`/kabinet/guruhlar/${hw.groupId}?tab=homework`}
+                    className="text-primary hover:underline font-sans font-semibold"
+                  >
+                    Guruhga o'tish →
+                  </Link>
+                </div>
               </div>
             </Card>
           ))}
@@ -220,6 +248,17 @@ export function TeacherHomeworksView({
           }
         />
       )}
+
+      {/* O'quvchilar topshiriqlarini tekshirish modali */}
+      <HomeworkSubmissionsModal
+        open={!!selectedHwForSubmissions}
+        onOpenChange={(v) => {
+          if (!v) setSelectedHwForSubmissions(null);
+        }}
+        homeworkId={selectedHwForSubmissions?.id ?? null}
+        homeworkTitle={selectedHwForSubmissions?.title ?? ""}
+        onUpdated={() => router.refresh()}
+      />
 
       {/* Yangi uy vazifasi berish modali */}
       <Modal
@@ -309,6 +348,18 @@ export function TeacherHomeworksView({
               onChange={(e) => setDescription(e.target.value)}
             />
             <FieldHint>O'quvchilar ushbu tavsifni o'z portalida ko'rishadi</FieldHint>
+          </div>
+
+          {/* Fayllar va materiallar biriktirish */}
+          <div className="space-y-1.5 pt-1">
+            <Label>Topshiriq materiallari va fayllar</Label>
+            <FileAttachmentsUploader
+              attachments={attachments}
+              onChange={setAttachments}
+              disabled={pending}
+              label="📎 Fayl yoki kitob biriktirish"
+            />
+            <FieldHint>Darslik, mashqlar to'plami yoki audio/video qo'shishingiz mumkin</FieldHint>
           </div>
         </form>
       </Modal>

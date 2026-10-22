@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Calendar, Clock, Plus, Trash2 } from "lucide-react";
+import { BookOpen, Calendar, Clock, Inbox, Plus, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -12,6 +12,9 @@ import { Modal } from "@ventura/ui/modal";
 import { EmptyState } from "@ventura/ui/page-header";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
+import type { HomeworkAttachment } from "@ventura/db/schema/tenant";
+import { FileAttachmentsList, FileAttachmentsUploader } from "@/components/file-attachments";
+import { HomeworkSubmissionsModal } from "@/components/homework-submissions-modal";
 import { formatDate } from "@/lib/format";
 import type { KabinetHomeworkItem } from "@/lib/server/kabinet";
 import { uz } from "@/lib/uz";
@@ -21,7 +24,7 @@ const t = uz.kabinet;
 
 /**
  * O'qituvchi guruhi ichidagi "Uy ishlari" tabi (ADR 0063).
- * Yangi topshiriq berish, mavjud vazifalar ro'yxati va o'chirish.
+ * Yangi topshiriq berish, mavjud vazifalar ro'yxati, fayllar biriktirish va o'quvchilar javoblarini tekshirish.
  * Muallif / Agent: Google Gemini
  */
 export function HomeworkTab({
@@ -39,14 +42,17 @@ export function HomeworkTab({
   const [title, setTitle] = React.useState("");
   const [description, setDescription] = React.useState("");
   const [dueDate, setDueDate] = React.useState("");
+  const [attachments, setAttachments] = React.useState<HomeworkAttachment[]>([]);
   const [pending, startTransition] = React.useTransition();
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [selectedHwForSubmissions, setSelectedHwForSubmissions] = React.useState<KabinetHomeworkItem | null>(null);
 
   function resetForm() {
     setLessonDate(today);
     setTitle("");
     setDescription("");
     setDueDate("");
+    setAttachments([]);
     setOpen(false);
   }
 
@@ -64,6 +70,7 @@ export function HomeworkTab({
         title: title.trim(),
         description: description.trim() || undefined,
         dueDate: dueDate || undefined,
+        attachments,
       });
 
       if (!res.ok) {
@@ -93,8 +100,9 @@ export function HomeworkTab({
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="space-y-4">
+      {/* Sarlavha va tugma */}
+      <div className="flex items-center justify-between gap-2">
         <div>
           <h2 className="text-body font-bold text-foreground">{t.homeworkTitle}</h2>
           <p className="text-caption text-muted-foreground">{t.homeworkSubtitle}</p>
@@ -144,10 +152,36 @@ export function HomeworkTab({
                 ) : (
                   <p className="text-caption italic text-muted-foreground pt-1">Batafsil izoh kiritilmagan</p>
                 )}
+
+                {/* Biriktirilgan fayllar */}
+                {hw.attachments && hw.attachments.length > 0 ? (
+                  <FileAttachmentsList attachments={hw.attachments} className="pt-1" />
+                ) : null}
               </div>
 
-              <div className="pt-2 border-t border-border-soft flex items-center justify-between text-2xs text-muted-foreground font-mono">
-                <span>Berilgan vaqti: {formatDate(new Date(hw.createdAt).toISOString().slice(0, 10))}</span>
+              <div className="pt-3 border-t border-border-soft flex items-center justify-between gap-2">
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  className="gap-1.5"
+                  onClick={() => setSelectedHwForSubmissions(hw)}
+                >
+                  <Inbox className="size-4 text-primary" />
+                  <span>Javoblar ({hw.submissionsCount})</span>
+                  {hw.checkedCount > 0 ? (
+                    <Badge tone="success" className="ml-1 text-xs py-0 px-1.5">
+                      {hw.checkedCount} ta tekshirildi
+                    </Badge>
+                  ) : hw.submissionsCount > 0 ? (
+                    <Badge tone="warning" className="ml-1 text-xs py-0 px-1.5">
+                      kutilmoqda
+                    </Badge>
+                  ) : null}
+                </Button>
+
+                <span className="text-2xs text-muted-foreground font-mono">
+                  {formatDate(new Date(hw.createdAt).toISOString().slice(0, 10))}
+                </span>
               </div>
             </Card>
           ))}
@@ -164,6 +198,17 @@ export function HomeworkTab({
           }
         />
       )}
+
+      {/* O'quvchilar topshiriqlarini tekshirish modali */}
+      <HomeworkSubmissionsModal
+        open={!!selectedHwForSubmissions}
+        onOpenChange={(v) => {
+          if (!v) setSelectedHwForSubmissions(null);
+        }}
+        homeworkId={selectedHwForSubmissions?.id ?? null}
+        homeworkTitle={selectedHwForSubmissions?.title ?? ""}
+        onUpdated={() => router.refresh()}
+      />
 
       {/* Yangi uy vazifasi berish modali */}
       <Modal
@@ -235,6 +280,18 @@ export function HomeworkTab({
               onChange={(e) => setDescription(e.target.value)}
             />
             <FieldHint>O'quvchilar ushbu tavsifni o'z portalida ko'rishadi</FieldHint>
+          </div>
+
+          {/* Fayllar va materiallar biriktirish */}
+          <div className="space-y-1.5 pt-1">
+            <Label>Topshiriq materiallari va fayllar</Label>
+            <FileAttachmentsUploader
+              attachments={attachments}
+              onChange={setAttachments}
+              disabled={pending}
+              label="📎 Fayl yoki kitob biriktirish"
+            />
+            <FieldHint>Darslik, mashqlar to'plami yoki audio/video qo'shishingiz mumkin</FieldHint>
           </div>
         </form>
       </Modal>

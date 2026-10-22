@@ -8,6 +8,8 @@ import {
   groupHomeworks,
   groupMemberships,
   groups,
+  type HomeworkAttachment,
+  homeworkSubmissions,
   lessonGrades,
   rooms,
   students,
@@ -458,10 +460,21 @@ export interface PortalHomeworkItem {
   lessonDate: string;
   title: string;
   description: string | null;
+  attachments: HomeworkAttachment[];
   dueDate: string | null;
   createdAt: string;
   /** Shu darsda tekshirilgan holat */
   status: "done" | "undone" | "pending";
+  submission: {
+    id: string;
+    text: string | null;
+    attachments: HomeworkAttachment[];
+    status: "submitted" | "checked" | "rejected";
+    grade: number | null;
+    feedback: string | null;
+    submittedAt: string;
+    checkedAt: string | null;
+  } | null;
 }
 
 export async function portalStudentHomeworks(db: TenantDb, studentId: string): Promise<PortalHomeworkItem[]> {
@@ -497,6 +510,7 @@ export async function portalStudentHomeworks(db: TenantDb, studentId: string): P
       lessonDate: groupHomeworks.lessonDate,
       title: groupHomeworks.title,
       description: groupHomeworks.description,
+      attachments: groupHomeworks.attachments,
       dueDate: groupHomeworks.dueDate,
       createdAt: groupHomeworks.createdAt,
     })
@@ -504,7 +518,24 @@ export async function portalStudentHomeworks(db: TenantDb, studentId: string): P
     .where(inArray(groupHomeworks.groupId, groupIds))
     .orderBy(desc(groupHomeworks.lessonDate), desc(groupHomeworks.createdAt));
 
-  // 3. O'quvchining shu darslardagi baholari
+  const hwIds = homeworkRows.map((h) => h.id);
+
+  // 3. O'quvchining yuborgan topshiriqlari (submissions)
+  const mySubmissions = hwIds.length
+    ? await db
+        .select()
+        .from(homeworkSubmissions)
+        .where(
+          and(
+            eq(homeworkSubmissions.studentId, studentId),
+            inArray(homeworkSubmissions.homeworkId, hwIds),
+          ),
+        )
+    : [];
+
+  const submissionMap = new Map(mySubmissions.map((s) => [s.homeworkId, s]));
+
+  // 4. O'quvchining shu darslardagi baholari
   const grades = await db
     .select({
       groupId: lessonGrades.groupId,
@@ -519,8 +550,16 @@ export async function portalStudentHomeworks(db: TenantDb, studentId: string): P
 
   return homeworkRows.map((h) => {
     const gInfo = groupMap.get(h.groupId);
+    const sub = submissionMap.get(h.id);
     const hw = gradeMap.get(gradeKey(h.groupId, h.lessonDate));
-    const status: "done" | "undone" | "pending" = hw === true ? "done" : hw === false ? "undone" : "pending";
+
+    // Status aniqlash: agar o'qituvchi tekshirgan bo'lsa yoki grade bo'lsa - done
+    let status: "done" | "undone" | "pending" = "pending";
+    if (sub?.status === "checked" || hw === true) {
+      status = "done";
+    } else if (hw === false) {
+      status = "undone";
+    }
 
     return {
       id: h.id,
@@ -531,9 +570,22 @@ export async function portalStudentHomeworks(db: TenantDb, studentId: string): P
       lessonDate: h.lessonDate,
       title: h.title,
       description: h.description,
+      attachments: h.attachments ?? [],
       dueDate: h.dueDate,
       createdAt: h.createdAt.toISOString(),
       status,
+      submission: sub
+        ? {
+            id: sub.id,
+            text: sub.text,
+            attachments: sub.attachments ?? [],
+            status: sub.status as "submitted" | "checked" | "rejected",
+            grade: sub.grade,
+            feedback: sub.feedback,
+            submittedAt: sub.createdAt.toISOString(),
+            checkedAt: sub.checkedAt?.toISOString() ?? null,
+          }
+        : null,
     };
   });
 }

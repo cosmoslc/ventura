@@ -6,6 +6,8 @@ import {
   attendance,
   groupHomeworks,
   groupMemberships,
+  type HomeworkAttachment,
+  homeworkSubmissions,
   lessonGrades,
   students,
   teachers,
@@ -192,19 +194,7 @@ export async function kabinetGroup(
         )
       : Promise.resolve(null),
     coinsOn ? getCoinSettings(db) : Promise.resolve(null),
-    db
-      .select({
-        id: groupHomeworks.id,
-        groupId: groupHomeworks.groupId,
-        lessonDate: groupHomeworks.lessonDate,
-        title: groupHomeworks.title,
-        description: groupHomeworks.description,
-        dueDate: groupHomeworks.dueDate,
-        createdAt: groupHomeworks.createdAt,
-      })
-      .from(groupHomeworks)
-      .where(eq(groupHomeworks.groupId, g.id))
-      .orderBy(desc(groupHomeworks.lessonDate), desc(groupHomeworks.createdAt)),
+    kabinetHomeworks(db, teacherId, g.id),
   ]);
   return {
     group: {
@@ -243,8 +233,26 @@ export interface KabinetHomeworkItem {
   lessonDate: string;
   title: string;
   description: string | null;
+  attachments: HomeworkAttachment[];
   dueDate: string | null;
   createdAt: Date;
+  submissionsCount: number;
+  checkedCount: number;
+}
+
+export interface HomeworkSubmissionItem {
+  id: string;
+  homeworkId: string;
+  studentId: string;
+  studentName: string;
+  studentPhone: string;
+  text: string | null;
+  attachments: HomeworkAttachment[];
+  status: "submitted" | "checked" | "rejected";
+  grade: number | null;
+  feedback: string | null;
+  submittedAt: string;
+  checkedAt: string | null;
 }
 
 /** O'qituvchining barcha yoki bitta guruhidagi uy vazifalari */
@@ -270,6 +278,7 @@ export async function kabinetHomeworks(
       lessonDate: groupHomeworks.lessonDate,
       title: groupHomeworks.title,
       description: groupHomeworks.description,
+      attachments: groupHomeworks.attachments,
       dueDate: groupHomeworks.dueDate,
       createdAt: groupHomeworks.createdAt,
     })
@@ -277,14 +286,71 @@ export async function kabinetHomeworks(
     .where(inArray(groupHomeworks.groupId, targetGroupIds))
     .orderBy(desc(groupHomeworks.lessonDate), desc(groupHomeworks.createdAt));
 
+  const hwIds = rows.map((r) => r.id);
+  const submissions = hwIds.length
+    ? await db
+        .select({
+          homeworkId: homeworkSubmissions.homeworkId,
+          status: homeworkSubmissions.status,
+        })
+        .from(homeworkSubmissions)
+        .where(inArray(homeworkSubmissions.homeworkId, hwIds))
+    : [];
+
+  const subCountMap = new Map<string, { total: number; checked: number }>();
+  for (const s of submissions) {
+    const cur = subCountMap.get(s.homeworkId) ?? { total: 0, checked: 0 };
+    cur.total++;
+    if (s.status === "checked") cur.checked++;
+    subCountMap.set(s.homeworkId, cur);
+  }
+
   return rows.map((r) => {
     const grp = groupMap.get(r.groupId);
+    const counts = subCountMap.get(r.id) ?? { total: 0, checked: 0 };
     return {
       ...r,
+      attachments: r.attachments ?? [],
       groupName: grp?.name ?? "",
       courseName: grp?.courseName ?? "",
+      submissionsCount: counts.total,
+      checkedCount: counts.checked,
     };
   });
+}
+
+/** Uy vazifasiga kelgan barcha o'quvchilar javoblari */
+export async function loadHomeworkSubmissions(
+  db: TenantDb,
+  homeworkId: string,
+): Promise<HomeworkSubmissionItem[]> {
+  const rows = await db
+    .select({
+      id: homeworkSubmissions.id,
+      homeworkId: homeworkSubmissions.homeworkId,
+      studentId: homeworkSubmissions.studentId,
+      studentName: students.name,
+      studentPhone: students.phone,
+      text: homeworkSubmissions.text,
+      attachments: homeworkSubmissions.attachments,
+      status: homeworkSubmissions.status,
+      grade: homeworkSubmissions.grade,
+      feedback: homeworkSubmissions.feedback,
+      submittedAt: homeworkSubmissions.createdAt,
+      checkedAt: homeworkSubmissions.checkedAt,
+    })
+    .from(homeworkSubmissions)
+    .innerJoin(students, eq(students.id, homeworkSubmissions.studentId))
+    .where(eq(homeworkSubmissions.homeworkId, homeworkId))
+    .orderBy(desc(homeworkSubmissions.createdAt));
+
+  return rows.map((r) => ({
+    ...r,
+    status: r.status as "submitted" | "checked" | "rejected",
+    attachments: r.attachments ?? [],
+    submittedAt: r.submittedAt.toISOString(),
+    checkedAt: r.checkedAt?.toISOString() ?? null,
+  }));
 }
 
 /* ---------- O'quvchilar (3-bosqich) ---------- */

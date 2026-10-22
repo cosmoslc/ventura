@@ -232,6 +232,13 @@
       "when": 1792671000000,
       "tag": "0032_telegram_bots",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1792680000000,
+      "tag": "0033_homework_attachments_and_submissions",
+      "breakpoints": true
     }
   ]
 }

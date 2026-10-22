@@ -108,12 +108,21 @@ export async function setStudentPasswordByTeacherAction(input: unknown): Promise
 
 /* ---------- Uy vazifasi berish (ADR 0063) ---------- */
 
+const attachmentInputSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  url: z.string(),
+  size: z.number(),
+  mimeType: z.string().optional(),
+});
+
 const homeworkInput = z.object({
   groupId: z.string().uuid(),
   lessonDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   title: z.string().trim().min(1, "Vazifa sarlavhasi kiritilishi shart").max(200),
   description: z.string().trim().max(2000).optional(),
   dueDate: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).optional(),
+  attachments: z.array(attachmentInputSchema).default([]),
 });
 
 export async function createGroupHomeworkAction(input: unknown): Promise<ActionResult> {
@@ -140,6 +149,7 @@ export async function createGroupHomeworkAction(input: unknown): Promise<ActionR
         lessonDate: v.lessonDate,
         title: v.title,
         description: v.description || null,
+        attachments: v.attachments,
         dueDate: v.dueDate || null,
         createdBy: ctx.staff.id,
       });
@@ -149,6 +159,135 @@ export async function createGroupHomeworkAction(input: unknown): Promise<ActionR
       revalidatePath("/kabinet/uy-ishi");
       revalidatePath("/portal/uy-ishi");
       return { ok: true };
+    },
+    { teacher: true },
+  );
+}
+
+const checkSubmissionInput = z.object({
+  submissionId: z.string().uuid(),
+  grade: z.number().int().min(1).max(100).optional().nullable(),
+  feedback: z.string().trim().max(2000).optional(),
+  status: z.enum(["checked", "rejected"]),
+});
+
+export async function checkHomeworkSubmissionAction(input: unknown): Promise<ActionResult> {
+  return crmAction(
+    "groups",
+    null,
+    async (ctx) => {
+      if (ctx.staff.kind !== "teacher" || !ctx.staff.teacherId) return { ok: false, error: uz.common.forbidden };
+      const parsed = checkSubmissionInput.safeParse(input);
+      if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.invalid };
+      const v = parsed.data;
+
+      const { homeworkSubmissions: subTable, lessonGrades: lgTable, groups: grpTable } = await import("@ventura/db/schema/tenant");
+
+      // Submissionni tekshiramiz
+      const [sub] = await ctx.db
+        .select({
+          id: subTable.id,
+          homeworkId: subTable.homeworkId,
+          studentId: subTable.studentId,
+          groupId: groupHomeworks.groupId,
+          lessonDate: groupHomeworks.lessonDate,
+          teacherId: grpTable.teacherId,
+          hwTitle: groupHomeworks.title,
+        })
+        .from(subTable)
+        .innerJoin(groupHomeworks, eq(groupHomeworks.id, subTable.homeworkId))
+        .innerJoin(grpTable, eq(grpTable.id, groupHomeworks.groupId))
+        .where(eq(subTable.id, v.submissionId))
+        .limit(1);
+
+      if (!sub || sub.teacherId !== ctx.staff.teacherId) {
+        return { ok: false, error: uz.common.forbidden };
+      }
+
+      await ctx.db
+        .update(subTable)
+        .set({
+          status: v.status,
+          grade: v.grade ?? null,
+          feedback: v.feedback || null,
+          checkedAt: new Date(),
+          checkedBy: ctx.staff.id,
+        })
+        .where(eq(subTable.id, v.submissionId));
+
+      // Dars baholari jurnali bilan sinxronlash (agar tekshirildi bo'lsa)
+      if (v.status === "checked") {
+        const [existingGrade] = await ctx.db
+          .select({ id: lgTable.id })
+          .from(lgTable)
+          .where(
+            and(
+              eq(lgTable.groupId, sub.groupId),
+              eq(lgTable.studentId, sub.studentId),
+              eq(lgTable.date, sub.lessonDate),
+            ),
+          )
+          .limit(1);
+
+        if (existingGrade) {
+          await ctx.db
+            .update(lgTable)
+            .set({ homework: true })
+            .where(eq(lgTable.id, existingGrade.id));
+        } else {
+          await ctx.db.insert(lgTable).values({
+            groupId: sub.groupId,
+            studentId: sub.studentId,
+            date: sub.lessonDate,
+            scale: 5,
+            homework: true,
+            markedBy: ctx.staff.id,
+          });
+        }
+
+        // Student & Parent Telegram xabarnomasi yuborish
+        try {
+          const { notifyStudent, notifyParent } = await import("@/lib/server/telegram-notifications");
+          await Promise.allSettled([
+            notifyStudent(ctx.db, sub.studentId, "homework", {
+              homeworkTitle: sub.hwTitle,
+              score: v.grade ?? undefined,
+              comment: v.feedback,
+            }),
+            notifyParent(ctx.db, sub.studentId, "homework", {
+              homeworkTitle: sub.hwTitle,
+              score: v.grade ?? undefined,
+            }),
+          ]);
+        } catch {
+          // Xabarnoma xatosi amalni to'xtatmaydi
+        }
+      }
+
+      await ctx.audit(
+        "homework.submission.check",
+        { type: "homework_submission", id: v.submissionId },
+        { status: v.status, grade: v.grade, studentId: sub.studentId },
+      );
+
+      revalidatePath(`/kabinet/guruhlar/${sub.groupId}`);
+      revalidatePath("/kabinet/uy-ishi");
+      revalidatePath("/portal/uy-ishi");
+      return { ok: true };
+    },
+    { teacher: true },
+  );
+}
+
+export async function getHomeworkSubmissionsAction(homeworkId: string): Promise<ActionResult & { data?: unknown }> {
+  return crmAction(
+    "groups",
+    null,
+    async (ctx) => {
+      if (ctx.staff.kind !== "teacher" || !ctx.staff.teacherId) return { ok: false, error: uz.common.forbidden };
+      const { loadHomeworkSubmissions } = await import("@/lib/server/kabinet");
+      const items = await loadHomeworkSubmissions(ctx.db, homeworkId);
+      return { ok: true, data: items };
     },
     { teacher: true },
   );
