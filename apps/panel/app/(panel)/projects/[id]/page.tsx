@@ -77,6 +77,10 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           ownerName: p.ownerName,
           ownerPhone: p.ownerPhone,
           templateName: tpl[0]?.name ?? p.templateKey,
+          storageLimitMb:
+            typeof (p.settings as Record<string, unknown> | null)?.storageLimitMb === "number"
+              ? ((p.settings as Record<string, unknown>).storageLimitMb as number)
+              : 5120,
         }}
         clients={cls}
         features={(tpl[0]?.manifest as Feature[] | undefined) ?? []}

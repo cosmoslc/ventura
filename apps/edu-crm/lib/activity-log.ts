@@ -193,6 +193,10 @@ const REGISTRY: Record<string, Def> = {
   "group.update": simple("group", "guruhni tahrirladi", (i) => (obj(i.m.price) ? "narx o'zgardi" : null)),
   "group.homework.create": simple("group", "guruhga yangi uy vazifasi berdi", (i) => str(i.m.title)),
   "group.homework.delete": simple("group", "guruh uy vazifasini o'chirdi"),
+  "homework.submission.check": simple("group", "o'quvchi uy vazifasi javobini tekshirdi", (i) =>
+    parts(str(i.m.status) === "accepted" ? "qabul qilindi" : "qaytarildi", num(i.m.grade) !== null ? `${num(i.m.grade)} ball` : null),
+  ),
+  "student.homework.submit": simple("student", "uy vazifasiga javob topshirdi", undefined, () => null),
   "group.archive": simple("group", "guruhni arxivga oldi"),
   "group.restore": simple("group", "guruhni arxivdan tikladi"),
   "group.enroll": simple("group", "guruhga o'quvchi qo'shdi", studentOf),
@@ -386,6 +390,18 @@ const REGISTRY: Record<string, Def> = {
     (i) => SETTING_LABEL[i.targetId ?? ""] ?? null,
     () => null,
   ),
+  "telegram_bots.update": simple("settings", "Telegram bot sozlamalarini yangiladi", undefined, () => null),
+  "storage.cleanup": simple(
+    "settings",
+    "xotirani tozaladi",
+    (i) =>
+      parts(
+        num(i.m.filesDeleted) !== null ? `${num(i.m.filesDeleted)} ta fayl o'chirildi` : null,
+        num(i.m.bytesFreedMb) !== null ? `${num(i.m.bytesFreedMb)} MB joy bo'shatildi` : null,
+      ),
+    () => null,
+  ),
+  "storage.file_delete": simple("settings", "faylni o'chirdi", (i) => str(i.m.fileUrl), () => null),
   // SMS (docs/EDU-CRM-SMS.md): kalit jurnalga yozilmaydi — faqat email, soatlar va test raqami
   "sms.connect": simple(
     "settings",

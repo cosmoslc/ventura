@@ -263,6 +263,10 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
         hosts,
         brand: project.brand,
         features: featureRows.map((f) => f.key).sort(),
+        storageLimitMb:
+          typeof (project.settings as Record<string, unknown> | null)?.storageLimitMb === "number"
+            ? ((project.settings as Record<string, unknown>).storageLimitMb as number)
+            : 5120,
       },
       sha,
       reuse: false,

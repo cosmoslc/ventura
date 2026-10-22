@@ -49,6 +49,7 @@ interface EditorProps {
     ownerName: string | null;
     ownerPhone: string | null;
     templateName: string;
+    storageLimitMb?: number;
   };
   clients: { id: string; name: string }[];
   features: Feature[];
@@ -91,6 +92,7 @@ export function ProjectEditor({
     mode: project.mode,
     target: project.target,
     dbStrategy: project.dbStrategy,
+    storageLimitGb: Math.round(((project.storageLimitMb ?? 5120) / 1024) * 10) / 10,
   });
   const [brand, setBrand] = React.useState(project.brand);
   const [feats, setFeats] = React.useState(() => new Set(enabled));
@@ -183,6 +185,22 @@ export function ProjectEditor({
                 <div className="sm:col-span-2">
                   <Label>{uz.projects.template}</Label>
                   <Input value={project.templateName} disabled readOnly />
+                </div>
+                <div>
+                  <Label htmlFor="p-storage">Xotira limiti (GB)</Label>
+                  <Input
+                    id="p-storage"
+                    type="number"
+                    min={0.5}
+                    max={1000}
+                    step={0.5}
+                    value={general.storageLimitGb}
+                    disabled={!canWrite}
+                    onChange={(e) => setGeneral({ ...general, storageLimitGb: Number(e.target.value) || 1 })}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    O&apos;quv markazi uchun ajratilgan disk hajmi (standart 5 GB).
+                  </p>
                 </div>
               </div>
               <div className="grid gap-6 lg:grid-cols-3">

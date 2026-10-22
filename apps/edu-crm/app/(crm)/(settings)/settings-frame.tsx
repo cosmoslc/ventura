@@ -8,6 +8,7 @@ import {
   CalendarOff,
   Coins,
   GraduationCap,
+  HardDrive,
   DoorOpen,
   type LucideIcon,
   MessageSquareText,
@@ -36,6 +37,7 @@ const ICONS: Record<SettingsIcon, LucideIcon> = {
   sms: MessageSquareText,
   profile: UserRound,
   security: ShieldCheck,
+  storage: HardDrive,
 };
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);

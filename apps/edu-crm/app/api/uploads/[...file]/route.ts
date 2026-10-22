@@ -20,7 +20,27 @@ export async function GET(
   }
 
   const uploadsDir = getUploadsDir();
-  const filePath = path.join(uploadsDir, relativePath);
+  let filePath = path.join(uploadsDir, relativePath);
+
+  if (!fs.existsSync(filePath)) {
+    // Agar to'g'ridan-to'g'ri topilmasa va bitta nom bo'lsa, mijoz ichki papkalaridan qidiramiz
+    if (!relativePath.includes("/")) {
+      try {
+        const entries = fs.readdirSync(uploadsDir, { withFileTypes: true });
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const sub = path.join(uploadsDir, entry.name, relativePath);
+            if (fs.existsSync(sub)) {
+              filePath = sub;
+              break;
+            }
+          }
+        }
+      } catch {
+        // ignore
+      }
+    }
+  }
 
   if (!fs.existsSync(filePath)) {
     return new NextResponse("Fayl topilmadi", { status: 404 });

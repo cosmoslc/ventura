@@ -159,6 +159,7 @@ const generalSchema = z.object({
   mode: z.enum(DEPLOY_MODES),
   target: z.enum(TARGET_KINDS),
   dbStrategy: z.enum(DB_STRATEGIES),
+  storageLimitGb: z.number().positive().max(1000).optional(),
 });
 
 export async function updateProjectAction(id: string, input: unknown): Promise<Result> {
@@ -177,7 +178,16 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
   const sharedDbChanged =
     before.dbStrategy !== parsed.data.dbStrategy && [before.dbStrategy, parsed.data.dbStrategy].includes("shared_db");
   if (sharedDbChanged && before.status !== "draft") return { ok: false, error: uz.projects.dbChangeLocked };
-  await db.update(projects).set(parsed.data).where(eq(projects.id, id));
+  const { storageLimitGb, ...restFields } = parsed.data;
+  const currentSettings = (before.settings ?? {}) as Record<string, unknown>;
+  const nextSettings =
+    storageLimitGb !== undefined
+      ? { ...currentSettings, storageLimitMb: Math.round(storageLimitGb * 1024) }
+      : currentSettings;
+  await db
+    .update(projects)
+    .set({ ...restFields, settings: nextSettings })
+    .where(eq(projects.id, id));
   const changed = Object.fromEntries(
     Object.entries(parsed.data).filter(([k, val]) => before[k as keyof typeof before] !== val),
   );

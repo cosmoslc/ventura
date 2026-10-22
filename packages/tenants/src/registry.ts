@@ -21,6 +21,8 @@ export const tenantSchema = z.object({
   }),
   /** Yoqilgan bo'limlar kalitlari */
   features: z.array(z.string()),
+  /** Xotira limiti (MB da). Belgilanmagan bo'lsa standart 5120 MB (5 GB) */
+  storageLimitMb: z.number().int().positive().optional(),
 });
 
 export const tenantRegistrySchema = z.object({

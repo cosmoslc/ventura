@@ -16,7 +16,8 @@ export type SettingsIcon =
   | "bot"
   | "sms"
   | "profile"
-  | "security";
+  | "security"
+  | "storage";
 
 export interface SettingsItem {
   href: string;
@@ -34,7 +35,10 @@ export interface SettingsGroup {
 export const SETTINGS_NAV: SettingsGroup[] = [
   {
     title: "Markaz",
-    items: [{ href: "/settings", label: "Markaz ma'lumotlari", feature: "students", icon: "center" }],
+    items: [
+      { href: "/settings", label: "Markaz ma'lumotlari", feature: "students", icon: "center" },
+      { href: "/storage", label: "Xotira va fayllar", feature: "students", icon: "storage" },
+    ],
   },
   {
     title: "O'quv jarayoni",

@@ -10,26 +10,113 @@ import path from "node:path";
  * Muallif / Agent: Google Gemini
  */
 
-export function getUploadsDir(): string {
+export function getUploadsDir(tenantSlug?: string): string {
   const custom = process.env.VENTURA_UPLOADS_DIR;
+  let baseDir: string;
   if (custom) {
-    if (!fs.existsSync(custom)) fs.mkdirSync(custom, { recursive: true });
-    return custom;
-  }
-
-  const shared = "/home/deploy/apps/edu-crm/shared/uploads";
-  if (fs.existsSync("/home/deploy/apps/edu-crm/shared")) {
-    try {
-      if (!fs.existsSync(shared)) fs.mkdirSync(shared, { recursive: true });
-      return shared;
-    } catch {
-      // ruxsat bo'lmasa quyidagi zaxira papkaga o'tadi
+    baseDir = custom;
+  } else {
+    const shared = "/home/deploy/apps/edu-crm/shared/uploads";
+    if (fs.existsSync("/home/deploy/apps/edu-crm/shared")) {
+      try {
+        if (!fs.existsSync(shared)) fs.mkdirSync(shared, { recursive: true });
+        baseDir = shared;
+      } catch {
+        baseDir = path.join(process.cwd(), "uploads");
+      }
+    } else {
+      baseDir = path.join(process.cwd(), "uploads");
     }
   }
 
-  const local = path.join(process.cwd(), "uploads");
-  if (!fs.existsSync(local)) fs.mkdirSync(local, { recursive: true });
-  return local;
+  if (!fs.existsSync(baseDir)) {
+    try {
+      fs.mkdirSync(baseDir, { recursive: true });
+    } catch {
+      // ignore
+    }
+  }
+
+  if (tenantSlug) {
+    const safeSlug = tenantSlug.replace(/[^a-zA-Z0-9_\-]/g, "");
+    const tenantDir = path.join(baseDir, safeSlug);
+    if (!fs.existsSync(tenantDir)) {
+      try {
+        fs.mkdirSync(tenantDir, { recursive: true });
+      } catch {
+        // fallback to baseDir if failed
+        return baseDir;
+      }
+    }
+    return tenantDir;
+  }
+
+  return baseDir;
+}
+
+/** Berilgan manzil yoki nomdagi faylni diskdan xavfsiz o'chiradi */
+export function deleteUploadedFile(fileUrlOrName: string, tenantSlug?: string): boolean {
+  try {
+    const clean = fileUrlOrName.replace(/^\/api\/uploads\/?/, "");
+    const parts = clean.split("/").filter(Boolean);
+    const filename = parts.pop();
+    if (!filename) return false;
+
+    const baseDir = getUploadsDir();
+    const possiblePaths: string[] = [];
+
+    if (tenantSlug) {
+      possiblePaths.push(path.join(getUploadsDir(tenantSlug), filename));
+    }
+    if (parts.length > 0) {
+      possiblePaths.push(path.join(baseDir, ...parts, filename));
+    }
+    possiblePaths.push(path.join(baseDir, filename));
+
+    for (const p of possiblePaths) {
+      if (fs.existsSync(p)) {
+        fs.unlinkSync(p);
+        return true;
+      }
+    }
+    return false;
+  } catch (e) {
+    console.error("[deleteUploadedFile] xatolik:", e);
+    return false;
+  }
+}
+
+export interface DiskFileInfo {
+  filename: string;
+  url: string;
+  size: number;
+  createdAt: Date;
+}
+
+/** Diskdagi mijoz fayllarini o'qiydi */
+export function scanTenantDiskFiles(tenantSlug?: string): DiskFileInfo[] {
+  const result: DiskFileInfo[] = [];
+  try {
+    const dir = getUploadsDir(tenantSlug);
+    if (!fs.existsSync(dir)) return result;
+
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isFile()) continue;
+      const fullPath = path.join(dir, entry.name);
+      const stat = fs.statSync(fullPath);
+      const url = tenantSlug ? `/api/uploads/${tenantSlug}/${entry.name}` : `/api/uploads/${entry.name}`;
+      result.push({
+        filename: entry.name,
+        url,
+        size: stat.size,
+        createdAt: stat.birthtime || stat.mtime,
+      });
+    }
+  } catch (e) {
+    console.error("[scanTenantDiskFiles] xatolik:", e);
+  }
+  return result;
 }
 
 export function sanitizeFilename(originalName: string): string {
