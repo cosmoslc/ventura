@@ -9,7 +9,10 @@ import { getStorageStats } from "@/lib/server/storage";
 
 export const dynamic = "force-dynamic";
 
-/** Fayl yuklash (maksimal 25MB va limit tekshiruvi bilan) */
+/*
+ * Fayl yuklash (maksimal 25MB va limit tekshiruvi bilan).
+ * Muallif / Agent: Google Gemini
+ */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();

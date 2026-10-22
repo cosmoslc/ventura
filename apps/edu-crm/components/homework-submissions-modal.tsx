@@ -12,7 +12,10 @@ import { checkHomeworkSubmissionAction, getHomeworkSubmissionsAction } from "@/a
 import { FileAttachmentsList } from "@/components/file-attachments";
 import type { HomeworkSubmissionItem } from "@/lib/server/kabinet";
 
-/** O'qituvchi uchun o'quvchilar topshirgan uy vazifalarini ko'rish va baholash modali */
+/*
+ * O'qituvchi uchun o'quvchilar topshirgan uy vazifalarini ko'rish va baholash modali.
+ * Muallif / Agent: Google Gemini
+ */
 export function HomeworkSubmissionsModal({
   open,
   onOpenChange,

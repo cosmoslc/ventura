@@ -1,3 +1,6 @@
+-- Migratsiya 0033: Uy vazifasi birikmalari va o'quvchi javoblari (submissions)
+-- Muallif / Agent: Google Gemini
+
 ALTER TABLE "group_homeworks" ADD COLUMN IF NOT EXISTS "attachments" jsonb DEFAULT '[]'::jsonb NOT NULL;--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "homework_submissions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,

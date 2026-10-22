@@ -6,6 +6,11 @@ import { Button } from "@ventura/ui/button";
 import { toast } from "@ventura/ui/toast";
 import type { HomeworkAttachment } from "@ventura/db/schema/tenant";
 
+/*
+ * Fayllar yuklash va ko'rish komponentlari.
+ * Muallif / Agent: Google Gemini
+ */
+
 export function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;

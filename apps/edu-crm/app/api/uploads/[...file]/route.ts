@@ -6,7 +6,10 @@ import { getMimeType, getUploadsDir } from "@/lib/server/uploads";
 
 export const dynamic = "force-dynamic";
 
-/** Yuklangan fayllarni o'qish / ko'rsatish / yuklab olish */
+/*
+ * Yuklangan fayllarni o'qish / ko'rsatish / yuklab olish (streaming API).
+ * Muallif / Agent: Google Gemini
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ file: string[] }> },
