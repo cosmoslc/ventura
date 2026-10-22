@@ -1,16 +1,22 @@
 "use client";
 
-import { GraduationCap, TrendingDown, UserCheck, Users } from "lucide-react";
+import { GraduationCap, KeyRound, TrendingDown, UserCheck, Users } from "lucide-react";
 import * as React from "react";
+import { Button } from "@ventura/ui/button";
 import { FilterBar, FilterEnd, FilterSearch, FilterSelect } from "@ventura/ui/filter-bar";
+import { Input } from "@ventura/ui/input";
+import { Label } from "@ventura/ui/label";
+import { Modal } from "@ventura/ui/modal";
 import { EmptyState, PageHeader } from "@ventura/ui/page-header";
 import { StatCard } from "@ventura/ui/stat-card";
+import { toast } from "@ventura/ui/toast";
 import { displayPhone, money } from "@/lib/format";
 import { masteryLevel } from "@/lib/kabinet-stats";
 import type { KabinetStudent } from "@/lib/server/kabinet";
 import { uz } from "@/lib/uz";
 import { StatusBadge } from "../../../(crm)/students/student-dialogs";
 import { GroupChip, MoreRows, StudentsTable } from "../../../(crm)/student-table";
+import { setStudentPasswordByTeacherAction } from "../actions";
 
 const t = uz.kabinet;
 const ALL = "all";
@@ -22,6 +28,21 @@ export function StudentsView({ rows }: { rows: KabinetStudent[] }) {
   const [group, setGroup] = React.useState(ALL);
   const [status, setStatus] = React.useState(ALL);
   const [limit, setLimit] = React.useState(PAGE_ROWS);
+  const [passStudent, setPassStudent] = React.useState<KabinetStudent | null>(null);
+  const [newPass, setNewPass] = React.useState("");
+  const [savingPass, startPassTransition] = React.useTransition();
+
+  function handleSetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!passStudent || !newPass) return;
+    startPassTransition(async () => {
+      const res = await setStudentPasswordByTeacherAction({ studentId: passStudent.id, password: newPass });
+      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      toast({ tone: "success", title: "Parol muvaffaqiyatli saqlandi" });
+      setPassStudent(null);
+      setNewPass("");
+    });
+  }
 
   const groupOptions = [...new Map(rows.flatMap((r) => r.groups.map((g) => [g.id, g.name] as const))).entries()].sort(
     (a, b) => a[1].localeCompare(b[1]),
@@ -132,6 +153,24 @@ export function StudentsView({ rows }: { rows: KabinetStudent[] }) {
               ]
             : []),
           { key: "status", header: t.colStatus, cell: (r) => <StatusBadge status={r.status} /> },
+          {
+            key: "actions",
+            header: "",
+            align: "right" as const,
+            cell: (r: KabinetStudent) => (
+              <Button
+                variant="icon"
+                size="icon-sm"
+                title={r.hasLogin ? "Parolni yangilash" : "Kirish paroli berish"}
+                onClick={() => {
+                  setPassStudent(r);
+                  setNewPass("");
+                }}
+              >
+                <KeyRound className={r.hasLogin ? "text-primary" : "text-muted-foreground"} />
+              </Button>
+            ),
+          },
         ]}
         footer={
           visible.length > limit ? (
@@ -142,6 +181,35 @@ export function StudentsView({ rows }: { rows: KabinetStudent[] }) {
         }
         empty={<EmptyState icon={<Users />} title={rows.length ? t.nothingFound : t.studentsEmpty} />}
       />
+
+      <Modal
+        open={!!passStudent}
+        onOpenChange={(open) => !open && setPassStudent(null)}
+        title={passStudent ? `${passStudent.name} — ${passStudent.hasLogin ? "Parolni yangilash" : "Kirish paroli berish"}` : ""}
+      >
+        <form onSubmit={handleSetPassword} className="space-y-4">
+          <div>
+            <Label htmlFor="kabinet-student-pass">Yangi parol</Label>
+            <Input
+              id="kabinet-student-pass"
+              type="password"
+              placeholder="Kamida 6 belgi"
+              value={newPass}
+              onChange={(e) => setNewPass(e.target.value)}
+              autoFocus
+              required
+            />
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" type="button" onClick={() => setPassStudent(null)}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" disabled={savingPass || newPass.length < 6}>
+              Saqlash
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

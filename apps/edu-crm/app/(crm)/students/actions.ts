@@ -3,12 +3,19 @@
 import { and, eq, isNull, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { formatPhone } from "@ventura/auth/policy";
+import { formatPhone, passwordProblem } from "@ventura/auth/policy";
 import { STUDENT_NOTE_KINDS, groupMemberships, settings, studentNotes, students } from "@ventura/db/schema/tenant";
 import { STUDENT_FIELDS_KEY, cleanCustomData, formFieldsSchema, missingRequired } from "@/lib/form-fields";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { resolveBranch } from "@/lib/server/branch";
 import { closePauses, syncMembershipsWithStatus, todayTashkent } from "@/lib/server/memberships";
+import {
+  grantStudentLogin,
+  resetStudentPassword,
+  revokeStudentLogin,
+  studentPhoneFree,
+  syncStudentLogin,
+} from "@/lib/server/student-account";
 import { firstError, studentInput, studentStatusInput, studentTransferInput } from "@/lib/rules";
 import { uz } from "@/lib/uz";
 import { getStudentFields } from "./data";
@@ -66,6 +73,16 @@ export async function saveStudentAction(input: unknown): Promise<ActionResult<{ 
         .where(and(eq(students.phone, phone), isNull(students.archivedAt), v.id ? ne(students.id, v.id) : undefined));
       if (dup) return { ok: false, error: uz.students.phoneTaken };
 
+      // Portalga kirish (ADR 0063): yangi o'quvchida parol berilsa
+      const password = v.id ? "" : v.password;
+      if (password) {
+        const problem = passwordProblem(password);
+        if (problem) return { ok: false, error: problem };
+      }
+      const loginPhoneCheck = password || (existing?.userId && existing.phone !== phone);
+      if (loginPhoneCheck && !(await studentPhoneFree(ctx, phone, existing?.id ?? null)))
+        return { ok: false, error: uz.students.phoneTaken };
+
       // Tahrirlashda faqat formadagi maydonlar yangilanadi — eski ustunlar (Excel importidan) saqlanib qoladi
       const values = {
         name: v.name,
@@ -77,6 +94,9 @@ export async function saveStudentAction(input: unknown): Promise<ActionResult<{ 
 
       if (existing) {
         await db.update(students).set(values).where(eq(students.id, existing.id));
+        if (existing.userId && (existing.name !== v.name || existing.phone !== phone)) {
+          await syncStudentLogin(ctx, existing.userId, { name: v.name, phone });
+        }
         const same = (k: keyof typeof values) =>
           k === "customData"
             ? JSON.stringify(existing.customData) === JSON.stringify(customData)
@@ -91,6 +111,12 @@ export async function saveStudentAction(input: unknown): Promise<ActionResult<{ 
         .insert(students)
         .values({ ...values, branchId, createdBy: ctx.staff.id })
         .returning({ id: students.id });
+
+      if (password) {
+        const login = await grantStudentLogin(ctx, { id: row!.id, name: v.name, phone, branchId }, password);
+        if (!login.ok) return { ok: false, error: login.error === "phone_taken" ? "Telefon band" : "Xatolik" };
+      }
+
       await audit(
         "student.create",
         { type: "student", id: row!.id },
@@ -315,6 +341,60 @@ export async function deleteStudentNoteAction(id: unknown): Promise<ActionResult
         text: note.text.slice(0, 200),
       },
     );
+    revalidatePath(`${PATH}/${s.id}`);
+    return { ok: true };
+  });
+}
+
+/* ---------- O'quvchi kabinetiga kirish (ADR 0063) ---------- */
+
+const loginInput = z.object({
+  studentId: z.string().uuid(),
+  password: z.string().min(6).max(128),
+});
+
+export async function grantStudentLoginAction(input: unknown): Promise<ActionResult> {
+  const v = loginInput.safeParse(input);
+  if (!v.success) return { ok: false, error: firstError(v.error) };
+  return crmAction(FEATURE, "students.create", async (ctx) => {
+    const s = await loadStudent(ctx, v.data.studentId);
+    if (!s) return { ok: false, error: uz.common.gone };
+    const problem = passwordProblem(v.data.password);
+    if (problem) return { ok: false, error: problem };
+    if (!(await studentPhoneFree(ctx, s.phone, s.id)))
+      return { ok: false, error: uz.students.phoneTaken };
+    const login = await grantStudentLogin(ctx, s, v.data.password);
+    if (!login.ok) return { ok: false, error: login.error === "phone_taken" ? "Telefon band" : "Xatolik" };
+    await ctx.audit("student.login.grant", { type: "student", id: s.id }, { userId: login.userId });
+    revalidatePath(`${PATH}/${s.id}`);
+    return { ok: true };
+  });
+}
+
+export async function resetStudentPasswordAction(input: unknown): Promise<ActionResult> {
+  const v = loginInput.safeParse(input);
+  if (!v.success) return { ok: false, error: firstError(v.error) };
+  return crmAction(FEATURE, "students.edit", async (ctx) => {
+    const s = await loadStudent(ctx, v.data.studentId);
+    if (!s || !s.userId) return { ok: false, error: uz.common.gone };
+    const problem = passwordProblem(v.data.password);
+    if (problem) return { ok: false, error: problem };
+    const ok = await resetStudentPassword(ctx, s.userId, v.data.password);
+    if (!ok) return { ok: false, error: uz.common.gone };
+    await ctx.audit("student.password.reset", { type: "student", id: s.id }, { userId: s.userId });
+    revalidatePath(`${PATH}/${s.id}`);
+    return { ok: true };
+  });
+}
+
+export async function revokeStudentLoginAction(studentId: unknown): Promise<ActionResult> {
+  const parsed = z.string().uuid().safeParse(studentId);
+  if (!parsed.success) return { ok: false, error: uz.common.invalid };
+  return crmAction(FEATURE, "students.delete", async (ctx) => {
+    const s = await loadStudent(ctx, parsed.data);
+    if (!s || !s.userId) return { ok: false, error: uz.common.gone };
+    await revokeStudentLogin(ctx, s.id, s.userId);
+    await ctx.audit("student.login.revoke", { type: "student", id: s.id }, { userId: s.userId });
     revalidatePath(`${PATH}/${s.id}`);
     return { ok: true };
   });

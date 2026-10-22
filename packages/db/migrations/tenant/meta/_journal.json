@@ -218,6 +218,13 @@
       "when": 1792432512545,
       "tag": "0030_k2_manual_coins",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1792661314999,
+      "tag": "0031_equal_veda",
+      "breakpoints": true
     }
   ]
 }

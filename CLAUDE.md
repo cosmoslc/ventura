@@ -49,7 +49,7 @@
 
 ## So'rab qil
 
-- Ma'lumot o'chirish, force push, migratsiyada ustun o'chirish, serverda buyruq ishga tushirish — avval Saidakbardan tasdiq so'ra.
+- Ma'lumot o'chirish, force push, migratsiyada ustun o'chirish, serverda buyruq ishga tushirish — avval Alsiherdan tasdiq so'ra.
 
 ## Dizayn
 

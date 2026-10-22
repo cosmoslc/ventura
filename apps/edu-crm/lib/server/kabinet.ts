@@ -232,6 +232,9 @@ export interface KabinetStudent {
   /** Joriy oy: davomat va o'rtacha baho, % */
   attendance: number | null;
   average: number | null;
+  /** Portalga kirish hisobi (ADR 0063) */
+  userId: string | null;
+  hasLogin: boolean;
 }
 
 /** O'qituvchining guruhlaridagi o'quvchilar (ochiq a'zolik) — boshqa guruhlari ko'rinmaydi */
@@ -251,6 +254,7 @@ export async function kabinetStudents(
       name: students.name,
       phone: students.phone,
       status: students.status,
+      userId: students.userId,
       groupId: groupMemberships.groupId,
       membership: groupMemberships.status,
     })
@@ -269,6 +273,8 @@ export async function kabinetStudents(
       coins: null,
       attendance: null,
       average: null,
+      userId: r.userId ?? null,
+      hasLogin: !!r.userId,
     };
     s.groups.push({ id: r.groupId, name: names.get(r.groupId) ?? "—", status: r.membership });
     byId.set(r.id, s);

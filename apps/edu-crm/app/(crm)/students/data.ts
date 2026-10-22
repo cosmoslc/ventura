@@ -42,6 +42,9 @@ export interface StudentRow {
   balance: number | null;
   /** O'chirilgan (arxivga o'tkazilgan) vaqti; null — ro'yxatdagi o'quvchi */
   archivedAt: string | null;
+  /** Portalga kirish hisobi (ADR 0063) */
+  userId: string | null;
+  hasLogin: boolean;
 }
 
 const localPhone = (phone: string | null) => (phone ?? "").replace(/\D/g, "").slice(-9);
@@ -70,6 +73,8 @@ export function toStudentRow(s: typeof students.$inferSelect): StudentRow {
     groups: [],
     balance: null,
     archivedAt: s.archivedAt?.toISOString() ?? null,
+    userId: s.userId ?? null,
+    hasLogin: !!s.userId,
   };
 }
 

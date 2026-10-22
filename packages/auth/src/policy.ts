@@ -96,10 +96,12 @@ export function accessState(user: {
   mustChangePassword: boolean;
   twoFactorEnabled: boolean;
   telegramChatId: string | null;
+  /** O'quvchi hisobi (ADR 0063) yoki 2FA ixtiyoriy foydalanuvchilar uchun */
+  twoFactorOptional?: boolean;
 }): AccessState {
   if (user.lockedAt) return "locked";
   if (user.mustChangePassword) return "must_change_password";
-  if (!user.twoFactorEnabled || !user.telegramChatId) return "needs_telegram";
+  if (!user.twoFactorOptional && (!user.twoFactorEnabled || !user.telegramChatId)) return "needs_telegram";
   return "ok";
 }
 

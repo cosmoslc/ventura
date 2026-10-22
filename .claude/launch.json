@@ -14,6 +14,26 @@
       "port": 3000
     },
     {
+      "name": "edu-crm",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ventura/edu-crm", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "edu-crm-dev-3002",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ventura/edu-crm", "exec", "next", "dev", "--port", "3002"],
+      "env": { "NEXT_DIST_DIR": ".next-dev" },
+      "port": 3002
+    },
+    {
+      "name": "panel-dev-3003",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@ventura/panel", "exec", "next", "dev", "--port", "3003"],
+      "env": { "NEXT_DIST_DIR": ".next-dev" },
+      "port": 3003
+    },
+    {
       "name": "panel-attach",
       "url": "http://localhost:3000"
     }

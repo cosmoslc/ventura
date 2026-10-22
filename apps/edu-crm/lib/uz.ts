@@ -2136,6 +2136,23 @@ export const uz = {
     revoked: "Kirish o'chirildi",
   },
 
+  studentLogin: {
+    title: "O'quvchi kabineti",
+    on: "Kirish berilgan",
+    off: "Kirish berilmagan",
+    hint: "O'quvchi telefon raqami va shu parol bilan portalga kiradi. Dastlab 2FA talab qilinmaydi.",
+    password: "Kirish paroli",
+    passwordPlaceholder: "Kamida 6 belgi (bo'sh — kirish berilmaydi)",
+    newPassword: "Yangi parol",
+    grant: "Kirish berish",
+    reset: "Parolni yangilash",
+    revoke: "Kirishni o'chirish",
+    revokeConfirm: "O'quvchi portalga kira olmaydi, ochiq sessiyalari yopiladi. Keyin qayta berish mumkin.",
+    granted: "Kirish berildi",
+    resetDone: "Parol yangilandi, ochiq sessiyalar yopildi",
+    revoked: "Kirish o'chirildi",
+  },
+
   coins: {
     title: "Coinlar",
     description: "O'quvchilar coinlari: avtomatik beriladi — oldindan to'lov, davomat va uy vazifasi uchun",

@@ -20,3 +20,4 @@ export * from "./notifications";
 export * from "./sms";
 export * from "./coins";
 export * from "./grades";
+export * from "./homework";

@@ -1,6 +1,6 @@
 import "server-only";
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import { groupMemberships, groups } from "@ventura/db/schema/tenant";
+import { type UserKind, groupMemberships, groups } from "@ventura/db/schema/tenant";
 import type { Db } from "./memberships";
 
 /*
@@ -10,12 +10,13 @@ import type { Db } from "./memberships";
  */
 
 export interface ScopedStaff {
-  kind: "staff" | "teacher";
+  kind: UserKind;
   teacherId: string | null;
 }
 
 /** Guruh shu xodimga ochiqmi: admin — ha (filial alohida tekshiriladi), o'qituvchi — faqat o'z guruhi */
 export function ownsGroup(staff: ScopedStaff, group: { teacherId: string }): boolean {
+  if (staff.kind === "student") return false;
   return staff.kind !== "teacher" || (!!staff.teacherId && group.teacherId === staff.teacherId);
 }
 
@@ -42,6 +43,7 @@ export async function teacherHasStudent(db: Db, teacherId: string, studentId: st
 
 /** Xodim shu o'quvchini ko'ra oladimi: admin — ha, o'qituvchi — o'z guruhlarida bo'lsa */
 export async function canSeeStudent(db: Db, staff: ScopedStaff, studentId: string): Promise<boolean> {
+  if (staff.kind === "student") return false;
   if (staff.kind !== "teacher") return true;
   return !!staff.teacherId && teacherHasStudent(db, staff.teacherId, studentId);
 }

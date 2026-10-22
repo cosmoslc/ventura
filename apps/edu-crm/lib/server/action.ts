@@ -51,6 +51,11 @@ export interface ActionOptions {
    * (`lib/server/teacher-scope.ts`). Belgilanmagan amal o'qituvchiga yopiq.
    */
   teacher?: true;
+  /**
+   * O'quvchi hisobi (ADR 0063) chaqira oladigan amallar (profil, 2FA, sozlamalar).
+   * Belgilanmagan amal o'quvchiga yopiq.
+   */
+  student?: true;
 }
 
 /**
@@ -68,6 +73,7 @@ export async function crmAction<T extends object = object>(
   const staff = await getStaff();
   if (!staff || staff.state !== "ok") return { ok: false, error: uz.common.sessionGone };
   if (staff.kind === "teacher" && !options.teacher) return { ok: false, error: uz.common.forbidden };
+  if (staff.kind === "student" && !options.student) return { ok: false, error: uz.common.forbidden };
   const db = getTenantDb(tenant);
   const meta = await requestMeta();
   const branch = await getBranchContext();

@@ -4,7 +4,7 @@ import { venturaRules } from "./rules.mjs";
 
 /** apps/* (Next.js) uchun: Next tavsiyalari + loyiha qoidalari. */
 export default [
-  { ignores: [".next/**", "next-env.d.ts"] },
+  { ignores: [".next/**", ".next-dev/**", "next-env.d.ts"] },
   ...nextVitals,
   ...nextTs,
   venturaRules,

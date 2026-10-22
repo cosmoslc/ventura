@@ -104,8 +104,9 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
     });
     return { next: "/login/verify" };
   }
-  // 2FA hali yoqilmagan (yangi xodim): sessiya bor, lekin tizim yopiq — parol yoki Telegram sahifasiga
-  return { next: "/" };
+  // 2FA hali yoqilmagan (yangi xodim yoki o'quvchi)
+  const next = user?.kind === "student" ? "/portal" : user?.kind === "teacher" ? "/kabinet" : "/";
+  return { next };
 }
 
 /* ---------- 2. Telegram kodi ---------- */
@@ -152,7 +153,8 @@ export async function verifyCodeAction(_prev: FormState, form: FormData): Promis
     await auth.api.signOut({ headers: await headers() }).catch(() => {});
     return { error: uz.auth.deviceBlocked };
   }
-  return { next: "/" };
+  const next = user.kind === "student" ? "/portal" : user.kind === "teacher" ? "/kabinet" : "/";
+  return { next };
 }
 
 /* ---------- Chiqish ---------- */

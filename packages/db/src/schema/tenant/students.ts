@@ -54,10 +54,13 @@ export const students = pgTable(
     archivedBy: uuid("archived_by"),
     /** O'quvchini qo'shgan xodim — menejer KPI shunga yoziladi (EDU-CRM-E3-DAVOMI, 4-qaror); eski yozuvlarda bo'sh */
     createdBy: uuid("created_by"),
+    /** O'quvchilar kabinetiga kirish hisobi (ADR 0063) */
+    userId: uuid("user_id"),
     ...timestamps,
   },
   (t) => [
     unique("students_tenant_id_uq").on(t.tenantId, t.id),
+    unique("students_tenant_user_uq").on(t.tenantId, t.userId),
     index("students_branch_idx").on(t.branchId),
     index("students_phone_idx").on(t.phone),
     index("students_created_by_idx").on(t.createdBy),
@@ -81,6 +84,11 @@ export const students = pgTable(
       columns: [t.tenantId, t.archivedBy],
       foreignColumns: [users.tenantId, users.id],
     }).onDelete("restrict"),
+    foreignKey({
+      name: "students_user_fk",
+      columns: [t.tenantId, t.userId],
+      foreignColumns: [users.tenantId, users.id],
+    }).onDelete("set null"),
     tenantPolicy("students"),
   ],
 );

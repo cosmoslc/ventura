@@ -133,6 +133,8 @@ export const studentInput = z.object({
   gender: z.enum(["male", "female"]).nullable().default(null),
   note: z.string().trim().max(1000).default(""),
   customData: z.record(z.string().max(40), z.string().max(300)).default({}),
+  /** Portalga kirish paroli (yangi o'quvchida ixtiyoriy, ADR 0063) */
+  password: z.string().max(128).default(""),
 });
 export type StudentInput = z.input<typeof studentInput>;
 
