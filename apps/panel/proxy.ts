@@ -11,15 +11,38 @@ import { type NextRequest, NextResponse } from "next/server";
 const PUBLIC = ["/login", "/ui-preview", "/preview", "/api/sms/relay", "/crm"];
 
 export function proxy(request: NextRequest) {
-  const host = request.headers.get("host") ?? "";
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "";
   const isCrmHost = host.startsWith("crm.");
   const { pathname } = request.nextUrl;
 
+  // crm.ventura.uz yoki crm.localhost uchun qat'iy qoidalar:
+  // Bu subdomenda HECH QACHON admin login yoki boshqaruv paneli ko'rinmaydi.
   if (isCrmHost) {
     if (pathname === "/") {
-      return NextResponse.rewrite(new URL("/crm", request.url));
+      const response = NextResponse.rewrite(new URL("/crm", request.url));
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      return response;
     }
-    return NextResponse.next();
+    if (pathname === "/crm") {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
+    // Agar foydalanuvchi /login ga kirsa (yoki avvalgi kesh bo'lsa), darhol landing sahifasiga qaytaramiz
+    if (pathname === "/login" || pathname.startsWith("/login/")) {
+      const response = NextResponse.redirect(new URL("/", request.url));
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
+      return response;
+    }
+    // Statik fayllar va Next ichki resurslari
+    if (
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/api/crm") ||
+      pathname === "/icon.svg" ||
+      pathname === "/favicon.ico"
+    ) {
+      return NextResponse.next();
+    }
+    // crm.ventura.uz dagi boshqa barcha yo'llar (masalan admin panel sahifalari) landingga qaytadi
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();

@@ -2,6 +2,9 @@
 import type { Metadata } from "next";
 import { CrmLanding } from "./crm-landing";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Ventura CRM · O'quv Markaz Boshqaruv Tizimi | 7 Kun Bepul Sinov",
   description:
