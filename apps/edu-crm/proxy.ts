@@ -10,10 +10,10 @@ import { tenantForHost } from "@/lib/server/tenant";
  * 2) sessiya cookie'si bo'lmasa — /login (optimistik; haqiqiy tekshiruv serverda: requireStaff, requireFeature).
  */
 
-// /api/sms/eskiz — Eskiz yetkazish xabari (sessiyasiz, manzildagi token bilan tekshiriladi)
-const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/ariza", "/api/sms/eskiz"];
-/** Boshqa saytga iframe qilib qo'yiladigan sahifalar (ADR 0026); qolganlari ramkada ochilmaydi (clickjacking) */
-const EMBEDDABLE = ["/ariza"];
+// /api/sms/eskiz, /api/telegram — webhooklar (sessiyasiz)
+const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/ariza", "/api/sms/eskiz", "/api/telegram"];
+/** Boshqa saytga iframe qilib qo'yiladigan yoki Telegram Mini App sahifalari (ADR 0026) */
+const EMBEDDABLE = ["/ariza", "/kabinet", "/portal"];
 
 const under = (list: readonly string[], pathname: string) =>
   list.some((p) => pathname === p || pathname.startsWith(`${p}/`));

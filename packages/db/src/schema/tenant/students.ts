@@ -56,6 +56,8 @@ export const students = pgTable(
     createdBy: uuid("created_by"),
     /** O'quvchilar kabinetiga kirish hisobi (ADR 0063) */
     userId: uuid("user_id"),
+    /** Ota-ona Telegram boti chat ID (tasdiqlangan) */
+    parentTelegramChatId: text("parent_telegram_chat_id"),
     ...timestamps,
   },
   (t) => [

@@ -225,6 +225,13 @@
       "when": 1792661314999,
       "tag": "0031_equal_veda",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1792671000000,
+      "tag": "0032_telegram_bots",
+      "breakpoints": true
     }
   ]
 }

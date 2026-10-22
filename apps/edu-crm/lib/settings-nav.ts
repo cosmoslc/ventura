@@ -13,6 +13,7 @@ export type SettingsIcon =
   | "coins"
   | "payments"
   | "notifications"
+  | "bot"
   | "sms"
   | "profile"
   | "security";
@@ -53,6 +54,7 @@ export const SETTINGS_NAV: SettingsGroup[] = [
     title: "Aloqa",
     items: [
       { href: "/notifications", label: "Bildirishnomalar", feature: null, icon: "notifications" },
+      { href: "/telegram-bots", label: "Telegram botlar", feature: null, icon: "bot" },
       { href: "/sms/settings", label: "SMS (Eskiz)", feature: "sms", icon: "sms" },
     ],
   },

@@ -3,6 +3,7 @@
 import {
   Bell,
   BookOpen,
+  Bot,
   Building2,
   CalendarOff,
   Coins,
@@ -31,6 +32,7 @@ const ICONS: Record<SettingsIcon, LucideIcon> = {
   grades: GraduationCap,
   payments: Wallet,
   notifications: Bell,
+  bot: Bot,
   sms: MessageSquareText,
   profile: UserRound,
   security: ShieldCheck,
