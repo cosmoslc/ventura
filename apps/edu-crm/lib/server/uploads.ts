@@ -54,31 +54,53 @@ export function getUploadsDir(tenantSlug?: string): string {
   return baseDir;
 }
 
-/** Berilgan manzil yoki nomdagi faylni diskdan xavfsiz o'chiradi */
+/** Berilgan manzil yoki nomdagi faylni diskdan xavfsiz o'chiradi (qat'iy multi-tenant tekshiruvi bilan) */
 export function deleteUploadedFile(fileUrlOrName: string, tenantSlug?: string): boolean {
   try {
     const clean = fileUrlOrName.replace(/^\/api\/uploads\/?/, "");
     const parts = clean.split("/").filter(Boolean);
-    const filename = parts.pop();
+    const filename = parts[parts.length - 1];
     if (!filename) return false;
 
+    // Traversal himoyasi
+    if (filename.includes("..") || filename.includes("/") || filename.includes("\\")) {
+      return false;
+    }
+
     const baseDir = getUploadsDir();
-    const possiblePaths: string[] = [];
 
+    // Multi-tenant izolyatsiyasi:
+    // Agar tenantSlug berilgan bo'lsa, URL dagi papka aynan shu tenant bo'lishi shart
     if (tenantSlug) {
-      possiblePaths.push(path.join(getUploadsDir(tenantSlug), filename));
-    }
-    if (parts.length > 0) {
-      possiblePaths.push(path.join(baseDir, ...parts, filename));
-    }
-    possiblePaths.push(path.join(baseDir, filename));
+      if (parts.length > 1 && parts[0] !== tenantSlug) {
+        console.warn(`[deleteUploadedFile] Multi-tenant bloklandi: ${tenantSlug} boshqa mijoz (${parts[0]}) faylini o'chirishga urindi.`);
+        return false;
+      }
 
-    for (const p of possiblePaths) {
-      if (fs.existsSync(p)) {
-        fs.unlinkSync(p);
+      // Faqat shu mijozning o'z papkasidan o'chirish
+      const tenantFile = path.join(getUploadsDir(tenantSlug), filename);
+      if (fs.existsSync(tenantFile)) {
+        fs.unlinkSync(tenantFile);
         return true;
       }
+
+      // Zaxira: faqat ildiz uploads papkasida turgan bo'lsa (boshqa mijoz papkasida emas)
+      const rootFile = path.join(baseDir, filename);
+      if (fs.existsSync(rootFile) && fs.statSync(rootFile).isFile()) {
+        fs.unlinkSync(rootFile);
+        return true;
+      }
+
+      return false;
     }
+
+    // tenantSlug berilmagan bo'lsa faqat ildizdan
+    const directPath = path.join(baseDir, filename);
+    if (fs.existsSync(directPath) && fs.statSync(directPath).isFile()) {
+      fs.unlinkSync(directPath);
+      return true;
+    }
+
     return false;
   } catch (e) {
     console.error("[deleteUploadedFile] xatolik:", e);

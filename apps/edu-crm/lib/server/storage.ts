@@ -1,5 +1,5 @@
 import "server-only";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import { type HomeworkAttachment, groupHomeworks, homeworkSubmissions, settings } from "@ventura/db/schema/tenant";
 import { tenantAudit } from "@ventura/security";
@@ -103,6 +103,7 @@ export async function getStorageStats(tenant: Tenant, db: TenantDb): Promise<Sto
       createdAt: groupHomeworks.createdAt,
     })
     .from(groupHomeworks)
+    .where(eq(groupHomeworks.tenantId, tenant.slug))
     .orderBy(desc(groupHomeworks.createdAt));
 
   for (const row of hwRows) {
@@ -137,6 +138,7 @@ export async function getStorageStats(tenant: Tenant, db: TenantDb): Promise<Sto
       createdAt: homeworkSubmissions.createdAt,
     })
     .from(homeworkSubmissions)
+    .where(eq(homeworkSubmissions.tenantId, tenant.slug))
     .orderBy(desc(homeworkSubmissions.createdAt));
 
   for (const row of subRows) {
@@ -285,7 +287,8 @@ export async function executeCleanup(
   // 2. DB dagi groupHomeworks attachments larini tozalash
   const hwRows = await db
     .select({ id: groupHomeworks.id, attachments: groupHomeworks.attachments })
-    .from(groupHomeworks);
+    .from(groupHomeworks)
+    .where(eq(groupHomeworks.tenantId, tenant.slug));
 
   for (const row of hwRows) {
     if (!row.attachments || row.attachments.length === 0) continue;
@@ -294,14 +297,15 @@ export async function executeCleanup(
       await db
         .update(groupHomeworks)
         .set({ attachments: remaining, updatedAt: new Date() })
-        .where(eq(groupHomeworks.id, row.id));
+        .where(and(eq(groupHomeworks.tenantId, tenant.slug), eq(groupHomeworks.id, row.id)));
     }
   }
 
   // 3. DB dagi homeworkSubmissions attachments larini tozalash
   const subRows = await db
     .select({ id: homeworkSubmissions.id, attachments: homeworkSubmissions.attachments })
-    .from(homeworkSubmissions);
+    .from(homeworkSubmissions)
+    .where(eq(homeworkSubmissions.tenantId, tenant.slug));
 
   for (const row of subRows) {
     if (!row.attachments || row.attachments.length === 0) continue;
@@ -310,7 +314,7 @@ export async function executeCleanup(
       await db
         .update(homeworkSubmissions)
         .set({ attachments: remaining, updatedAt: new Date() })
-        .where(eq(homeworkSubmissions.id, row.id));
+        .where(and(eq(homeworkSubmissions.tenantId, tenant.slug), eq(homeworkSubmissions.id, row.id)));
     }
   }
 
@@ -343,7 +347,8 @@ export async function deleteSingleFile(
     // groupHomeworks attachments dan olib tashlash
     const hwRows = await db
       .select({ id: groupHomeworks.id, attachments: groupHomeworks.attachments })
-      .from(groupHomeworks);
+      .from(groupHomeworks)
+      .where(eq(groupHomeworks.tenantId, tenant.slug));
 
     for (const row of hwRows) {
       const atts = row.attachments as HomeworkAttachment[] | null;
@@ -352,14 +357,15 @@ export async function deleteSingleFile(
         await db
           .update(groupHomeworks)
           .set({ attachments: remaining, updatedAt: new Date() })
-          .where(eq(groupHomeworks.id, row.id));
+          .where(and(eq(groupHomeworks.tenantId, tenant.slug), eq(groupHomeworks.id, row.id)));
       }
     }
 
     // homeworkSubmissions attachments dan olib tashlash
     const subRows = await db
       .select({ id: homeworkSubmissions.id, attachments: homeworkSubmissions.attachments })
-      .from(homeworkSubmissions);
+      .from(homeworkSubmissions)
+      .where(eq(homeworkSubmissions.tenantId, tenant.slug));
 
     for (const row of subRows) {
       const atts = row.attachments as HomeworkAttachment[] | null;
@@ -368,7 +374,7 @@ export async function deleteSingleFile(
         await db
           .update(homeworkSubmissions)
           .set({ attachments: remaining, updatedAt: new Date() })
-          .where(eq(homeworkSubmissions.id, row.id));
+          .where(and(eq(homeworkSubmissions.tenantId, tenant.slug), eq(homeworkSubmissions.id, row.id)));
       }
     }
 
