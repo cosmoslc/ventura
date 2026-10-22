@@ -22,5 +22,5 @@ export default async function TelegramBotsPage() {
     getTelegramBotsStats(db),
   ]);
 
-  return <TelegramBotsView config={config} stats={stats} tenantName={tenant.name} />;
+  return <TelegramBotsView config={config} stats={stats} tenantName={tenant.name} tenantSlug={tenant.slug} />;
 }

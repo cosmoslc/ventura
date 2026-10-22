@@ -22,7 +22,7 @@ const saveBotSchema = z.object({
 const PERM = "settings.sms_gateways";
 
 export async function saveBotConfigAction(input: unknown): Promise<ActionResult> {
-  return crmAction("sms", PERM, async ({ db, staff, audit }) => {
+  return crmAction("sms", PERM, async ({ db, tenant, staff, audit }) => {
     const parsed = saveBotSchema.safeParse(input);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
 
@@ -51,9 +51,11 @@ export async function saveBotConfigAction(input: unknown): Promise<ActionResult>
       try {
         const tg = createTelegram(token);
         if (enabled) {
-          // Webhook manzilini tekshiramiz
-          const host = process.env.BETTER_AUTH_URL || "https://admin.ventura.uz";
-          const webhookUrl = `${host}/api/telegram/webhook?role=${role}`;
+          // Webhook manzilini markazning o'z subdomeni bo'yicha quramiz
+          const domain =
+            tenant.hosts?.find((h) => !h.includes("localhost") && !h.includes("127.0.0.1")) ||
+            `${tenant.slug}.ventura.uz`;
+          const webhookUrl = `https://${domain}/api/telegram/webhook?role=${role}`;
           await tg.setWebhook(webhookUrl);
         } else {
           await tg.deleteWebhook().catch(() => {});
@@ -120,7 +122,7 @@ const syncWebhookSchema = z.object({
 });
 
 export async function syncBotWebhookAction(input: unknown): Promise<ActionResult> {
-  return crmAction("sms", PERM, async ({ db }) => {
+  return crmAction("sms", PERM, async ({ db, tenant }) => {
     const parsed = syncWebhookSchema.safeParse(input);
     if (!parsed.success) return { ok: false, error: uz.common.invalid };
 
@@ -139,8 +141,10 @@ export async function syncBotWebhookAction(input: unknown): Promise<ActionResult
 
     try {
       const tg = createTelegram(bot.token);
-      const host = process.env.BETTER_AUTH_URL || "https://admin.ventura.uz";
-      const webhookUrl = `${host}/api/telegram/webhook?role=${role}`;
+      const domain =
+        tenant.hosts?.find((h) => !h.includes("localhost") && !h.includes("127.0.0.1")) ||
+        `${tenant.slug}.ventura.uz`;
+      const webhookUrl = `https://${domain}/api/telegram/webhook?role=${role}`;
       await tg.setWebhook(webhookUrl);
       revalidatePath("/telegram-bots");
       return { ok: true };

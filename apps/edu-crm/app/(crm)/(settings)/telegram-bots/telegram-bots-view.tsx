@@ -77,10 +77,12 @@ export function TelegramBotsView({
   config,
   stats,
   tenantName,
+  tenantSlug,
 }: {
   config: TelegramBotsConfig;
   stats: TelegramBotsStats;
   tenantName: string;
+  tenantSlug: string;
 }) {
   const router = useRouter();
 
@@ -449,7 +451,7 @@ export function TelegramBotsView({
                 </Button>
               </div>
               <code className="block bg-card border border-border p-1.5 rounded text-muted-foreground font-mono break-all text-2xs">
-                /api/telegram/webhook?role={editingRole}
+                https://{tenantSlug}.ventura.uz/api/telegram/webhook?role={editingRole}
               </code>
             </div>
           </form>
