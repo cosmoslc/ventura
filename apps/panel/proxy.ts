@@ -1,3 +1,4 @@
+// Muallif / Agent: Google Gemini
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -7,10 +8,20 @@ import { type NextRequest, NextResponse } from "next/server";
  */
 
 // /api/sms/relay — markaz ilovalaridan imzolangan so'rovlar (sessiyasiz, imzo route ichida tekshiriladi)
-const PUBLIC = ["/login", "/ui-preview", "/preview", "/api/sms/relay"];
+const PUBLIC = ["/login", "/ui-preview", "/preview", "/api/sms/relay", "/crm"];
 
 export function proxy(request: NextRequest) {
+  const host = request.headers.get("host") ?? "";
+  const isCrmHost = host.startsWith("crm.");
   const { pathname } = request.nextUrl;
+
+  if (isCrmHost) {
+    if (pathname === "/") {
+      return NextResponse.rewrite(new URL("/crm", request.url));
+    }
+    return NextResponse.next();
+  }
+
   if (PUBLIC.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
   if (!getSessionCookie(request, { cookiePrefix: "ventura" })) {
     return NextResponse.redirect(new URL("/login", request.url));
