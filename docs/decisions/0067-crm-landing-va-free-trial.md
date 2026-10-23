@@ -57,10 +57,28 @@ Ventura EDU CRM mahsulotini o'quv markazlariga taqdim etish, funksiyalarni ko'rs
    - `requestDeployment` orqali yangi markazni deploy va proviziya navbatiga qo'yish;
    - Audit jurnaliga yozish va SuperAdminlarga Telegram orqali yangi markaz haqida xabarnoma jo'natish.
 
+### 5. Aloqa va Manzil bo'limi hamda Panel orqali Dinamik Boshqaruv
+- **Dinamik Aloqa Sozlamalari (`apps/panel/lib/server/crm-contacts.ts`):**
+  - Asosiy telefon, qo'shimcha telefon, Telegram qo'llab-quvvatlash (`@ventura_support`), Telegram kanal (`@ventura_uz`), email, ofis manzili, ish tartibi va xarita havolasi (Google/Yandex Maps) `settings` jadvalida JSON formatida saqlanadi (`key: "crm_contacts"`).
+  - Ventura Panel boshqaruvida yangi **"Sozlamalar → Aloqa va Manzil"** (`/settings/contacts`) bo'limi yaratildi. Admin xohlagan paytda raqamlar yoki manzilni o'zgartirishi mumkin va o'zgarishlar darhol `crm.ventura.uz` sahifasida revalidatsiya qilinadi.
+- **Landingdagi "Aloqa va Manzil" bo'limi:**
+  - Landing sahifasining pastki qismida (`#contacts`) chiroyli kartochkalar shaklida telefonlar, Telegram havolalari, ofis joylashuvi va ish vaqtlari ko'rsatiladi.
+
+### 6. Light / Dark Mode va Premium Animatsiyalar
+- **Mavzu almashtirgich (Theme Toggle):**
+  - Tizim foydalanuvchining afzal ko'rgan mavzusini (`next-themes`) qo'llab-quvvatlaydi. Navbar va Footer qismida Quyosh/Oy tugmasi orqali Dark va Light mode o'rtasida silliq almashish imkoniyati yaratildi.
+  - Tailwind `dark:` variantlari va Ventura dizayn tokenlari bilan uyg'unlashtirildi.
+- **Silliq va Premium Animatsiyalar:**
+  - Orqa fonda erkin harakatlanuvchi gradient nurlar (`float-slow`, `float-reverse`, `pulse-glow`), silliq kartochka elevatsiyasi, interaktiv tab o'tishlari va jonli subdomen tekshirgich effektlari qo'shildi.
+- **Tipografiya:**
+  - Loyihaning asosiy tizim shriftlari bo'lgan `Quicksand` (barcha matnlar va sarlavhalar uchun) hamda `JetBrains Mono` (subdomen va kod elementlari uchun) to'liq saqlanib qolindi.
+
 ---
 
 ## Oqibatlar
 
 - Yangi o'quv markazlari hech kimning aralashuvisiz, 30 soniyada o'z subdomenlarini band qilib 7 kunlik sinovni boshlay oladi.
+- Adminlar `admin.ventura.uz/settings/contacts` orqali aloqa ma'lumotlarini istalgan payt o'zgartira oladi, landing sahifasi avtomatik yangilanadi.
+- `crm.ventura.uz` endi ham yorug' (Light), ham tungi (Dark) rejimda zamonaviy, premium va qisqa lirik matnlar bilan taqdim etiladi.
 - `ventura.uz` mutlaqo tegilmagan holda saqlanib qoladi.
 - Barcha markazlar to'liq izolyatsiyalangan arxitektura, o'quvchi/o'qituvchi kabinetlari va 10 GB disk xotirasiga ega bo'ladi.

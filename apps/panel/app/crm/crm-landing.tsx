@@ -18,18 +18,52 @@ import {
   GraduationCap,
   HardDrive,
   HelpCircle,
+  Mail,
+  MapPin,
+  Moon,
+  Phone,
+  Send,
   Shield,
   Sparkles,
+  Sun,
   Users,
   Wallet,
   X,
   Zap,
 } from "lucide-react";
+import type { CrmContacts } from "@/lib/server/crm-contacts";
 import { checkCrmSlugAvailability, startFreeTrialAction } from "./actions";
 
-export function CrmLanding() {
+/* Theme hook based on document.documentElement.classList */
+function useTheme() {
+  const [isDark, setIsDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const check = () => setIsDark(document.documentElement.classList.contains("dark"));
+    check();
+    const observer = new MutationObserver(check);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  const toggle = () => {
+    const next = !isDark;
+    setIsDark(next);
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("ventura-theme", next ? "dark" : "light");
+    } catch {
+      /* ignore */
+    }
+  };
+
+  return { isDark, toggle };
+}
+
+export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [initialSlug, setInitialSlug] = React.useState("");
+  const { isDark, toggle: toggleTheme } = useTheme();
 
   const handleOpenTrial = (slug?: string) => {
     if (slug) setInitialSlug(slug);
@@ -37,20 +71,21 @@ export function CrmLanding() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
-      {/* Background gradients */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans selection:bg-indigo-500 selection:text-white transition-colors duration-300">
+      {/* Background Animated Gradient Orbs */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[550px] bg-gradient-to-b from-indigo-600/20 via-purple-600/10 to-transparent blur-3xl opacity-60" />
-        <div className="absolute top-[35%] -left-[200px] w-[600px] h-[600px] bg-sky-600/10 blur-3xl rounded-full" />
-        <div className="absolute top-[65%] -right-[200px] w-[600px] h-[600px] bg-indigo-600/10 blur-3xl rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[450px] bg-gradient-to-b from-indigo-500/15 dark:from-indigo-600/20 via-purple-500/10 to-transparent blur-3xl opacity-70 animate-pulse-glow" />
+        <div className="absolute top-[28%] -left-[180px] w-[500px] h-[500px] bg-sky-400/10 dark:bg-sky-600/10 blur-3xl rounded-full animate-float-slow" />
+        <div className="absolute top-[60%] -right-[180px] w-[500px] h-[500px] bg-indigo-500/10 dark:bg-indigo-600/10 blur-3xl rounded-full animate-float-reverse" />
       </div>
 
       {/* 1. Header / Navbar */}
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-slate-950/75 border-b border-slate-800/80">
+      <header className="sticky top-0 z-40 backdrop-blur-md bg-white/80 dark:bg-slate-950/80 border-b border-slate-200/80 dark:border-slate-800/80 transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Brand Logo */}
           <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 border border-indigo-400/30">
-              <svg viewBox="0 0 40 40" fill="none" className="size-6 text-white" aria-hidden>
+            <div className="size-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-md shadow-indigo-500/20 border border-indigo-400/30 group hover:scale-105 transition-transform">
+              <svg viewBox="0 0 40 40" fill="none" className="size-5.5 text-white" aria-hidden>
                 <path
                   d="M6.25 8.75 20 31.25 33.75 8.75"
                   stroke="currentColor"
@@ -61,7 +96,7 @@ export function CrmLanding() {
                 <path
                   d="M15 8.75 20 16.9 25 8.75"
                   stroke="currentColor"
-                  strokeOpacity="0.7"
+                  strokeOpacity="0.75"
                   strokeWidth="3.2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -69,284 +104,286 @@ export function CrmLanding() {
               </svg>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent">
+              <span className="font-bold text-lg tracking-tight bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-800 dark:from-white dark:via-slate-100 dark:to-slate-300 bg-clip-text text-transparent">
                 Ventura CRM
               </span>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 border border-indigo-500/20 dark:border-indigo-500/30 text-indigo-600 dark:text-indigo-300">
                 EDU v2.0
               </span>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
-            <a href="#features" className="hover:text-white transition-colors">
+          {/* Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 dark:text-slate-300">
+            <a href="#features" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Imkoniyatlar
             </a>
-            <a href="#portals" className="hover:text-white transition-colors">
+            <a href="#portals" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Kabinetlar
             </a>
-            <a href="#bot" className="hover:text-white transition-colors">
+            <a href="#bot" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Telegram Bot
             </a>
-            <a href="#storage" className="hover:text-white transition-colors">
-              Fayllar & Xotira
-            </a>
-            <a href="#pricing" className="hover:text-white transition-colors">
+            <a href="#pricing" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Tariflar
             </a>
-            <a href="#faq" className="hover:text-white transition-colors">
-              Savol-javob
+            <a href="#contacts" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
+              Aloqa & Manzil
+            </a>
+            <a href="#faq" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
+              FAQ
             </a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          {/* Controls: Theme Toggle & Trial CTA */}
+          <div className="flex items-center gap-2.5">
+            {/* Dark / Light Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              aria-label={isDark ? "Yorug' rejim" : "Qorong'i rejim"}
+              title={isDark ? "Yorug' rejim" : "Qorong'i rejim"}
+            >
+              {isDark ? <Sun className="size-4.5 text-amber-400" /> : <Moon className="size-4.5 text-indigo-600" />}
+            </button>
+
+            {/* Trial Button */}
             <button
               onClick={() => handleOpenTrial()}
-              className="relative group inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-500 transition-all duration-200 shadow-md shadow-indigo-600/25 active:scale-95 cursor-pointer"
+              className="relative group inline-flex items-center justify-center px-4 py-2 text-sm font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 transition-all duration-200 shadow-md shadow-indigo-600/25 active:scale-95 cursor-pointer"
             >
-              <Sparkles className="size-4 mr-2 text-indigo-200 group-hover:rotate-12 transition-transform" />
-              <span>7 kun bepul sinov</span>
+              <Sparkles className="size-4 mr-1.5 text-indigo-200 group-hover:rotate-12 transition-transform" />
+              <span>7 kun bepul</span>
             </button>
           </div>
         </div>
       </header>
 
       {/* 2. Hero Section */}
-      <section className="relative pt-16 pb-20 md:pt-24 md:pb-28 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          {/* Top Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-950/80 border border-indigo-500/30 text-xs sm:text-sm font-medium text-indigo-300 mb-6 shadow-inner">
-            <span className="flex size-2 rounded-full bg-emerald-400 animate-pulse" />
+      <section className="relative pt-14 pb-16 md:pt-20 md:pb-24 overflow-hidden text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Live Notification Pill */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 dark:bg-indigo-950/80 border border-indigo-500/20 dark:border-indigo-500/30 text-xs sm:text-sm font-medium text-indigo-700 dark:text-indigo-300 mb-6 shadow-sm">
+            <span className="flex size-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>7 kunlik to'liq bepul sinov davri</span>
-            <span className="text-slate-500">·</span>
-            <span className="text-slate-300">Karta talab etilmaydi</span>
+            <span className="text-slate-300 dark:text-slate-600">·</span>
+            <span className="text-slate-600 dark:text-slate-300">Karta talab etilmaydi</span>
           </div>
 
           {/* Main Title */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.15]">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.12]">
             O'quv markazingizni{" "}
-            <span className="bg-gradient-to-r from-indigo-400 via-violet-300 to-sky-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-indigo-600 via-violet-600 to-sky-600 dark:from-indigo-400 dark:via-violet-300 dark:to-sky-300 bg-clip-text text-transparent">
               100% avtomatlashtiring
             </span>
           </h1>
 
-          {/* Subtitle */}
-          <p className="mt-6 text-base sm:text-lg md:text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            O'quvchi va o'qituvchi shaxsiy kabinetlari, davomat, moliya, shaxsiy Telegram botlar, uy vazifalariga fayl
-            yuklash va har bir markaz uchun <strong className="text-white">alohida mustaqil xavfsiz baza</strong>.
+          {/* Concise Subtitle */}
+          <p className="mt-5 text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
+            O'quvchi va o'qituvchi shaxsiy kabinetlari, davomat, moliya, Telegram botlar, uy vazifalariga fayl almashinuvi
+            va har bir markazga <strong className="text-slate-900 dark:text-white font-semibold">alohida mustaqil xavfsiz baza</strong>.
           </p>
 
-          {/* Quick Subdomain Claim Card */}
-          <div className="mt-10 max-w-xl mx-auto p-2 sm:p-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 shadow-2xl backdrop-blur-sm">
+          {/* Interactive Subdomain Quick Starter */}
+          <div className="mt-9 max-w-xl mx-auto p-2 sm:p-2.5 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl backdrop-blur-sm hover:border-indigo-500/50 transition-all">
             <SubdomainQuickStarter onStart={(slug) => handleOpenTrial(slug)} />
           </div>
 
-          {/* Trust Chips */}
-          <div className="mt-8 flex flex-wrap justify-center items-center gap-y-3 gap-x-6 text-xs sm:text-sm text-slate-400">
+          {/* Trust Highlights */}
+          <div className="mt-7 flex flex-wrap justify-center items-center gap-y-2.5 gap-x-6 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="size-4 text-emerald-400" />
+              <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
               <span>30 soniyada faollashadi</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="size-4 text-emerald-400" />
-              <span>Alohida shaxsiy baza</span>
+              <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+              <span>Alohida PostgreSQL baza</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="size-4 text-emerald-400" />
-              <span>Har markazga o'z Telegram boti</span>
+              <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+              <span>Shaxsiy Telegram bot</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <CheckCircle2 className="size-4 text-emerald-400" />
-              <span>10 GB bepul fayllar ombori</span>
+              <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+              <span>10 GB fayllar xotirasi</span>
             </div>
           </div>
         </div>
 
         {/* 3. Interactive Showcase Preview */}
-        <div className="mt-14 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mt-12 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <InteractiveMockup onOpenTrial={() => handleOpenTrial()} />
         </div>
       </section>
 
-      {/* 4. Features Section */}
-      <section id="features" className="py-20 md:py-28 border-t border-slate-900 bg-slate-950/60">
+      {/* 4. Features Grid */}
+      <section id="features" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950/60 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2.5">
               <Sparkles className="size-3.5" />
-              <span>To'liq Ekotizim</span>
+              <span>Asosiy Imkoniyatlar</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              O'quv markaz uchun zarur barcha imkoniyatlar
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Barcha o'quv jarayonlari bitta tizimda
             </h2>
-            <p className="mt-4 text-slate-400 text-base sm:text-lg">
-              Oddiy jadvallar va tarqoq botlardan voz keching. Ventura EDU CRM barcha jarayonlarni bitta qulay tizimga
-              birlashtiradi.
+            <p className="mt-3 text-slate-600 dark:text-slate-400 text-sm sm:text-base">
+              Tarqoq jadvallar va botlardan voz keching. Ventura EDU CRM barcha filiallar va guruhlarni to'liq
+              avtomatlashtiradi.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Feature 1 */}
             <FeatureCard
-              icon={<GraduationCap className="size-6 text-indigo-400" />}
-              title="O'quvchi Shaxsiy Kabineti"
+              icon={<GraduationCap className="size-6 text-indigo-600 dark:text-indigo-400" />}
+              title="O'quvchi Shaxsiy Portali"
               badge="/student"
-              description="Har bir o'quvchi o'z davomati, dars jadvali, to'lovlar balansi, uy vazifalari va olgan baholarini shaxsiy telefonidan ko'rib boradi."
+              description="Dars jadvali, davomat ko'rsatkichi, to'lovlar tarixi, uy vazifalarini ko'rish va fayl ilova qilib topshirish."
             />
 
-            {/* Feature 2 */}
             <FeatureCard
-              icon={<BookOpen className="size-6 text-purple-400" />}
-              title="O'qituvchi Kabineti & Tekshiruv"
+              icon={<BookOpen className="size-6 text-purple-600 dark:text-purple-400" />}
+              title="O'qituvchi Kabineti"
               badge="/teacher"
-              description="1-klikda davomat olish, darslarga PDF/Word uy vazifalari biriktirish va o'quvchilar yuborgan javob fayllarini tekshirib baho qo'yish."
+              description="1-klikda davomat belgilash, darslarga PDF/Word uy vazifalari biriktirish, o'quvchilar javoblarini tekshirib baholash."
             />
 
-            {/* Feature 3 */}
             <FeatureCard
-              icon={<Bot className="size-6 text-sky-400" />}
-              title="Shaxsiy Telegram Bot Ekotizimi"
+              icon={<Bot className="size-6 text-sky-600 dark:text-sky-400" />}
+              title="Shaxsiy Telegram Bot"
               badge="Har markazga"
-              description="O'quvchi va o'qituvchilar markazingizning shaxsiy Telegram boti orqali 1-klikda tizimga kiradi, dars va to'lov xabarnomalarini oladi."
+              description="Har bir markaz o'z botiga ega bo'ladi. O'quvchi va o'qituvchilar 1-klikda kirish kodi oladi, eslatmalar boradi."
             />
 
-            {/* Feature 4 */}
             <FeatureCard
-              icon={<Wallet className="size-6 text-emerald-400" />}
-              title="Shaffof Moliya & Kassa Nazorati"
-              badge="Audit bilan"
-              description="Kirim-chiqimlar, oylik to'lovlar, qarzdorlar monitoringi, xodimlar maoshi va hech kim o'chira olmaydigan pul operatsiyalari auditi."
+              icon={<Wallet className="size-6 text-emerald-600 dark:text-emerald-400" />}
+              title="Shaffof Moliya & Audit"
+              badge="Audit zanjiri"
+              description="Kassa kirim-chiqimlari, oylik to'lovlar, qarzdorlar monitoringi va o'zgartirib bo'lmas operatsiyalar auditi."
             />
 
-            {/* Feature 5 */}
             <FeatureCard
-              icon={<HardDrive className="size-6 text-amber-400" />}
+              icon={<HardDrive className="size-6 text-amber-600 dark:text-amber-400" />}
               title="Xotira & Fayllar Ombori"
               badge="/storage (10GB)"
-              description="Darsliklar, PDF uy vazifalari va kvitansiyalar uchun ajratilgan disk hajmi. 1, 3, 4 oylik eski fayllarni avtomatik tozalash funksiyasi."
+              description="Darsliklar va vazifalar uchun 10 GB disk xotirasi. 1, 3, 4 oylik eski fayllarni avtomatik tozalash funksiyasi."
             />
 
-            {/* Feature 6 */}
             <FeatureCard
-              icon={<Shield className="size-6 text-rose-400" />}
-              title="Multi-Tenant Alohida Xavfsiz Baza"
-              badge="Izolyatsiya"
-              description="Sizning markazingiz uchun alohida PostgreSQL ma'lumotlar bazasi va subdomen: ma'lumotlar hech qachon begonalarga ko'rinmaydi."
+              icon={<Shield className="size-6 text-rose-600 dark:text-rose-400" />}
+              title="Mustaqil Alohida Baza"
+              badge="100% Izolyatsiya"
+              description="Sizning markazingiz uchun alohida mustaqil PostgreSQL bazasi va subdomen: ma'lumotlar hech qachon begonalarga ko'rinmaydi."
             />
           </div>
         </div>
       </section>
 
-      {/* 5. Portals Deep-Dive Section */}
-      <section id="portals" className="py-20 md:py-28 border-t border-slate-900 bg-slate-900/30">
+      {/* 5. Portals Showcase */}
+      <section id="portals" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/30 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-semibold text-purple-300 mb-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-semibold text-purple-700 dark:text-purple-300 mb-3.5">
                 <Users className="size-3.5" />
-                <span>O'quvchi va O'qituvchi Portallari</span>
+                <span>O'quvchi & O'qituvchi Kabinetlari</span>
               </div>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white leading-tight">
-                O'quvchilar va O'qituvchilar uchun alohida qulay kabinetlar
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white leading-tight">
+                Vazifalarni tekshirish va baholash endi juda oson
               </h2>
-              <p className="mt-4 text-slate-300 text-base sm:text-lg leading-relaxed">
-                Venturada barcha tomonlar o'zlariga kerakli ma'lumotni darhol topadi. Qog'ozbozlik va doimiy
-                savol-javoblarga chek qo'ying.
+              <p className="mt-3.5 text-slate-600 dark:text-slate-300 text-sm sm:text-base leading-relaxed">
+                Qog'oz daftarlar va Telegram guruhlardagi betartiblikka chek qo'ying. Har bir dars uchun vazifalar va
+                javoblar tartibli tizimda saqlanadi.
               </p>
 
-              <div className="mt-8 space-y-4">
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex gap-4 items-start">
-                  <div className="size-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
-                    <GraduationCap className="size-5 text-indigo-400" />
+              <div className="mt-7 space-y-3.5">
+                <div className="p-4 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3.5 items-start hover:border-indigo-500/40 transition-all">
+                  <div className="size-9 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                    <GraduationCap className="size-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">O'quvchiga: Uy vazifasiga fayl yuklab topshirish</h3>
-                    <p className="text-sm text-slate-400 mt-1">
-                      O'quvchi o'z kabinetida berilgan uy vazifasini ko'radi, rasm, PDF yoki hujjat faylini ilova qilib
-                      yuboradi va o'qituvchi tekshirganini ko'radi.
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">Fayl yuklab topshirish</h3>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                      O'quvchi vazifani ko'radi, rasm yoki PDF yuklaydi va tekshirish holatini kuzatib boradi.
                     </p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex gap-4 items-start">
-                  <div className="size-10 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
-                    <BookOpen className="size-5 text-purple-400" />
+                <div className="p-4 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3.5 items-start hover:border-purple-500/40 transition-all">
+                  <div className="size-9 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                    <BookOpen className="size-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">O'qituvchiga: Topshiriqlarni tekshirib baholash</h3>
-                    <p className="text-sm text-slate-400 mt-1">
-                      O'qituvchi har bir o'quvchining yuborgan javob faylini yuklab oladi yoki ko'radi, izoh yozadi va
-                      baho qo'yadi. Baholar avtomatik reytingga o'tadi.
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">Topshiriqlarni tekshirib baholash</h3>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                      O'qituvchi faylni yuklab oladi, izoh yozadi va baho qo'yadi. Natija darhol o'quvchi portalida aks etadi.
                     </p>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex gap-4 items-start">
-                  <div className="size-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <Award className="size-5 text-emerald-400" />
+                <div className="p-4 rounded-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 shadow-sm flex gap-3.5 items-start hover:border-emerald-500/40 transition-all">
+                  <div className="size-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <Award className="size-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-white">Coinlar va Motivatsiya Tizimi</h3>
-                    <p className="text-sm text-slate-400 mt-1">
-                      Vaqtida to'lov, 100% davomat va a'lo baholar uchun avtomatik Ventura Coinlar taqdim etiladi.
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">Coinlar va Motivatsiya</h3>
+                    <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
+                      Vaqtida to'lov, 100% davomat va a'lo baholar uchun avtomatik Ventura Coinlar beriladi.
                     </p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Portal Card Visual */}
-            <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900/90 to-indigo-950/40 border border-slate-800 shadow-2xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+            {/* Visual Card */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl relative overflow-hidden">
+              <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-2">
-                  <div className="size-3 rounded-full bg-red-500/80" />
-                  <div className="size-3 rounded-full bg-amber-500/80" />
-                  <div className="size-3 rounded-full bg-emerald-500/80" />
-                  <span className="ml-2 text-xs text-slate-400 font-mono">student.ventura.uz/homework</span>
+                  <div className="size-2.5 rounded-full bg-red-400" />
+                  <div className="size-2.5 rounded-full bg-amber-400" />
+                  <div className="size-2.5 rounded-full bg-emerald-400" />
+                  <span className="ml-2 text-xs text-slate-500 font-mono">student.ventura.uz/homework</span>
                 </div>
-                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-medium border border-emerald-500/30">
+                <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-medium border border-emerald-500/20">
                   Baholangan: 100 ball
                 </span>
               </div>
 
-              <div className="mt-6 space-y-4">
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-                    <span className="font-medium text-slate-200">Mavzu: Ingliz tili - Present Perfect Continuous</span>
+              <div className="mt-5 space-y-3.5">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/70 dark:border-slate-800">
+                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1.5">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">Ingliz tili - Grammar Practice</span>
                     <span>Muddat: Bugun, 18:00</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    12-betdagi 3 va 4-mashqlarni daftarga yozib, fotosuratini yoki PDF qilib ilova qiling.
+                  <p className="text-xs text-slate-600 dark:text-slate-300">
+                    3-mashqni yozib, fotosuratini yoki PDF faylini ilova qilib yuboring.
                   </p>
-                  <div className="mt-3 flex items-center gap-2 p-2 rounded-lg bg-indigo-950/40 border border-indigo-500/20 text-xs text-indigo-300">
-                    <FileText className="size-4 text-indigo-400 shrink-0" />
-                    <span className="truncate">present_perfect_exercises.pdf (1.8 MB)</span>
+                  <div className="mt-2.5 flex items-center gap-2 p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-500/20 text-xs text-indigo-700 dark:text-indigo-300">
+                    <FileText className="size-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                    <span className="truncate font-mono">grammar_task_unit4.pdf (1.8 MB)</span>
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800">
-                  <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Topshirilgan javob</span>
-                  <div className="mt-2 flex items-center justify-between p-2.5 rounded-lg bg-slate-900 border border-slate-700/60 text-xs">
-                    <div className="flex items-center gap-2 text-slate-200">
-                      <FileText className="size-4 text-emerald-400" />
-                      <span>mashqlar_javobi_malika.pdf (2.4 MB)</span>
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/70 dark:border-slate-800">
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Topshirilgan javob</span>
+                  <div className="mt-1.5 flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 text-xs">
+                    <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
+                      <FileText className="size-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="font-mono">javob_farrux.pdf (2.4 MB)</span>
                     </div>
-                    <span className="text-[11px] text-emerald-400 font-medium">✓ Qabul qilingan</span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">✓ Qabul qilingan</span>
                   </div>
-                  <div className="mt-3 p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/20 text-xs text-slate-300">
-                    <span className="font-semibold text-emerald-400">O'qituvchi izohi:</span> Barakalla, barcha qoidalar
-                    to'g'ri qo'llanilgan! +10 Ventura Coin qo'shildi.
+                  <div className="mt-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-500/20 text-xs text-slate-700 dark:text-slate-300">
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">O'qituvchi izohi:</span> Barakalla, barcha qoidalar to'g'ri! +10 Coin qo'shildi.
                   </div>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 flex justify-between items-center text-xs text-slate-400">
-                <span>⚡ O'quvchilar Telegram bot orqali ham kirishadi</span>
+              <div className="mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
+                <span>⚡ O'quvchilar mobil brauzerdan ham kirishadi</span>
                 <button
                   onClick={() => handleOpenTrial()}
-                  className="text-indigo-400 hover:text-indigo-300 font-medium inline-flex items-center gap-1 cursor-pointer"
+                  className="text-indigo-600 dark:text-indigo-400 font-semibold inline-flex items-center gap-1 hover:underline cursor-pointer"
                 >
                   <span>Sinab ko'rish</span>
                   <ArrowRight className="size-3.5" />
@@ -357,154 +394,26 @@ export function CrmLanding() {
         </div>
       </section>
 
-      {/* 6. Storage & Telegram Bot Section */}
-      <section id="storage" className="py-20 md:py-28 border-t border-slate-900 bg-slate-950">
+      {/* 6. Pricing Section */}
+      <section id="pricing" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Storage Box */}
-            <div className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 relative overflow-hidden">
-              <div className="size-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-6">
-                <HardDrive className="size-6 text-amber-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-white">Xotira & Fayllar Boshqaruvi (/storage)</h3>
-              <p className="mt-3 text-slate-300 leading-relaxed text-sm sm:text-base">
-                Har bir markazga boshlang'ich 10 GB disk xotirasi ajratiladi. O'quvchilar va o'qituvchilar yuklagan barcha
-                PDF darsliklar, fotosuratlar va hujjatlar markaziy xotirada tartibli saqlanadi.
-              </p>
-              <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-3">
-                <div className="flex justify-between text-xs text-slate-400">
-                  <span>Band qilingan joy:</span>
-                  <span className="font-semibold text-slate-200">1.84 GB / 10.00 GB (18%)</span>
-                </div>
-                <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
-                  <div className="bg-gradient-to-r from-amber-400 to-indigo-500 h-2 rounded-full w-[18%]" />
-                </div>
-                <div className="pt-2 flex items-center justify-between text-xs text-slate-400">
-                  <span className="flex items-center gap-1.5 text-emerald-400">
-                    <Check className="size-3.5" /> 1, 3, 4 oylik eski fayllarni tozalash
-                  </span>
-                  <span className="text-slate-500">25 MB gacha fayllar</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Telegram Bot Box */}
-            <div id="bot" className="p-8 rounded-3xl bg-slate-900/60 border border-slate-800 relative overflow-hidden">
-              <div className="size-12 rounded-2xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center mb-6">
-                <Bot className="size-6 text-sky-400" />
-              </div>
-              <h3 className="text-2xl font-bold text-white">Shaxsiy Telegram Bot Integratsiyasi</h3>
-              <p className="mt-3 text-slate-300 leading-relaxed text-sm sm:text-base">
-                O'quv markazingiz uchun @BotFather orqali yaratilgan bot tokenni ulab qo'yishingiz bilan tizim uni to'liq
-                ishga tushiradi. Hech qanday murakkab server sozlash talab qilinmaydi.
-              </p>
-              <div className="mt-6 p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2.5 text-xs text-slate-300">
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-sky-400" />
-                  <span>O'quvchilar telefon raqami orqali 1-klikda kirish</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-sky-400" />
-                  <span>Dars jadvali va xonalar haqida avtomatik eslatmalar</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-sky-400" />
-                  <span>Uy vazifasi yuklangani haqida tezkor bildirishnoma</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-sky-400" />
-                  <span>Ota-onalar uchun to'lov va davomat hisoboti</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. Comparison Table */}
-      <section className="py-20 md:py-28 border-t border-slate-900 bg-slate-900/20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl font-bold tracking-tight text-white">Nega aynan Ventura CRM?</h2>
-            <p className="mt-3 text-slate-400 text-base">
-              Bozordagi eski va cheklangan CRM tizimlariga nisbatan farqimiz
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-slate-800 overflow-hidden bg-slate-950 shadow-xl">
-            <div className="grid grid-cols-3 bg-slate-900/80 p-4 border-b border-slate-800 text-xs sm:text-sm font-semibold text-slate-300">
-              <div>Imkoniyat</div>
-              <div className="text-center text-slate-400">Oddiy CRM tizimlari</div>
-              <div className="text-center text-indigo-400 font-bold">Ventura EDU CRM</div>
-            </div>
-
-            <ComparisonRow
-              feature="Ma'lumotlar bazasi"
-              other="Barcha mijozlar umumiy bazada"
-              ventura="Har markazga alohida mustaqil baza"
-              positive
-            />
-            <ComparisonRow
-              feature="Shaxsiy Subdomen"
-              other="Yo'q, umumiy sayt orqali"
-              ventura="sizning-markaz.ventura.uz"
-              positive
-            />
-            <ComparisonRow
-              feature="O'quvchi & O'qituvchi Kabineti"
-              other="Qo'shimcha to'lov talab qiladi"
-              ventura="O'rnatilgan va bepul kiritilgan"
-              positive
-            />
-            <ComparisonRow
-              feature="Faylli Uy Vazifasi"
-              other="Cheklangan yoki faqat matn"
-              ventura="PDF, rasm, word 25MB gacha"
-              positive
-            />
-            <ComparisonRow
-              feature="Shaxsiy Telegram Bot"
-              other="Qo'shimcha oyiga to'lov"
-              ventura="Har markazga o'z shaxsiy boti"
-              positive
-            />
-            <ComparisonRow
-              feature="Fayllar xotirasi"
-              other="1 GB dan kam yoki yo'q"
-              ventura="10 GB boshlang'ich disk"
-              positive
-            />
-            <ComparisonRow
-              feature="Sinov muddati"
-              other="Cheklangan yoki karta so'raydi"
-              ventura="7 kun 100% to'liq bepul sinov"
-              positive
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* 8. Pricing Section */}
-      <section id="pricing" className="py-20 md:py-28 border-t border-slate-900 bg-slate-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto mb-16">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-400 mb-3">
+          <div className="text-center max-w-3xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-2.5">
               <Zap className="size-3.5" />
-              <span>Har bir tarifda 7 kun bepul</span>
+              <span>Har bir tarifda 7 kun bepul sinov</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-              Shaffof va qulay narxlar
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Shaffof va hamyonbop tariflar
             </h2>
-            <p className="mt-3 text-slate-400 text-base sm:text-lg">
-              Avval 7 kun bepul sinab ko'ring. Hech qanday karta talab etilmaydi.
+            <p className="mt-2.5 text-slate-600 dark:text-slate-400 text-sm sm:text-base">
+              Avval 7 kun to'liq bepul sinab ko'ring. Hech qanday karta kiritish talab etilmaydi.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Start Plan */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-7 max-w-6xl mx-auto">
             <PricingCard
               name="Start"
-              description="Kichik va yangi ochilgan o'quv markazlari uchun"
+              description="Yangi ochilgan o'quv markazlar uchun"
               price="290,000"
               period="so'm / oy"
               features={[
@@ -514,45 +423,40 @@ export function CrmLanding() {
                 "Uy vazifalariga fayl yuklash",
                 "Shaxsiy Telegram bot",
                 "5 GB xotira hajmi",
-                "Standart qo'llab-quvvatlash",
               ]}
               buttonText="7 kun bepul boshlash"
               onSelect={() => handleOpenTrial()}
             />
 
-            {/* Pro Plan */}
             <PricingCard
               name="Pro"
               popular
-              description="O'sib borayotgan va filiallarini kengaytirayotgan markazlar"
+              description="O'sib borayotgan va kengayayotgan markazlar"
               price="590,000"
               period="so'm / oy"
               features={[
                 "3 tagacha filial",
                 "1,000 tagacha faol o'quvchi",
                 "O'quvchi & O'qituvchi kabinetlari",
-                "Faylli uy vazifalari va baholash",
+                "Faylli vazifalar va baholash",
                 "Shaxsiy Telegram bot ekotizimi",
                 "20 GB yuqori tezlikdagi xotira",
                 "SMS xabarnomalar integratsiyasi",
                 "Kengaytirilgan moliya va audit",
-                "24/7 tezkor qo'llab-quvvatlash",
               ]}
               buttonText="7 kun bepul boshlash"
               onSelect={() => handleOpenTrial()}
             />
 
-            {/* Enterprise Plan */}
             <PricingCard
               name="Enterprise"
-              description="Katta o'quv markazlari tarmoqlari va akademiyalar"
+              description="Katta o'quv markazlari va tarmoqlar uchun"
               price="1,290,000"
               period="so'm / oy"
               features={[
                 "Cheksiz filiallar",
                 "Cheksiz o'quvchilar soni",
-                "Barcha mavjud kabinetlar",
-                "Alohida ajratilgan server (VPS)",
+                "Alohida server (Dedicated VPS)",
                 "100 GB+ kengaytiriluvchi disk",
                 "Shaxsiy domen (crm.markaz.uz)",
                 "Maxsus bot funksiyalari",
@@ -565,62 +469,173 @@ export function CrmLanding() {
         </div>
       </section>
 
-      {/* 9. FAQ Section */}
-      <section id="faq" className="py-20 md:py-28 border-t border-slate-900 bg-slate-900/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-indigo-400 mb-3">
-              <HelpCircle className="size-3.5" />
-              <span>Savol-Javob</span>
+      {/* 7. NEW: Contacts & Office Address Section (Ventura Panel Sozlamalaridan) */}
+      <section id="contacts" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-100/60 dark:bg-slate-900/40 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2.5">
+              <Phone className="size-3.5" />
+              <span>Aloqa va Manzil</span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-white">Ko'p so'raladigan savollar</h2>
-            <p className="mt-3 text-slate-400 text-base">
-              7 kunlik bepul sinov va tizim bo'yicha eng muhim savollarga javoblar
+            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Biz bilan bog'laning
+            </h2>
+            <p className="mt-2.5 text-slate-600 dark:text-slate-400 text-sm sm:text-base">
+              Savollaringiz bormi yoki tizimni joriy qilishda ko'mak kerakmi? Mutaxassislarimiz yordam berishga tayyor.
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Phone Card */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-indigo-500/40 hover:-translate-y-1 transition-all">
+              <div className="size-11 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
+                <Phone className="size-5.5" />
+              </div>
+              <h3 className="font-semibold text-slate-900 dark:text-white">Telefon raqamlar</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3">Qo'ng'iroqlarga tezkor javob</p>
+              <div className="space-y-1 font-mono text-sm">
+                <a
+                  href={`tel:${contacts.phonePrimary.replace(/\s+/g, "")}`}
+                  className="block font-bold text-slate-900 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                >
+                  {contacts.phonePrimary}
+                </a>
+                {contacts.phoneSecondary && (
+                  <a
+                    href={`tel:${contacts.phoneSecondary.replace(/\s+/g, "")}`}
+                    className="block text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  >
+                    {contacts.phoneSecondary}
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Telegram Card */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-sky-500/40 hover:-translate-y-1 transition-all">
+              <div className="size-11 rounded-xl bg-sky-500/10 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center mb-4">
+                <Send className="size-5.5" />
+              </div>
+              <h3 className="font-semibold text-slate-900 dark:text-white">Telegram aloqa</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-3">Onlayn menejer va yangiliklar</p>
+              <div className="space-y-1.5 text-sm">
+                {contacts.telegramSupport && (
+                  <a
+                    href={`https://t.me/${contacts.telegramSupport.replace("@", "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 font-medium text-sky-600 dark:text-sky-400 hover:underline"
+                  >
+                    <span>{contacts.telegramSupport}</span>
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                )}
+                {contacts.telegramChannel && (
+                  <a
+                    href={`https://t.me/${contacts.telegramChannel.replace("@", "")}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-sky-500"
+                  >
+                    <span>Kanal: {contacts.telegramChannel}</span>
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Address Card */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-amber-500/40 hover:-translate-y-1 transition-all">
+              <div className="size-11 rounded-xl bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-4">
+                <MapPin className="size-5.5" />
+              </div>
+              <h3 className="font-semibold text-slate-900 dark:text-white">Bosh ofis manzili</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">Toshkentdagi ofisimiz</p>
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-3">
+                {contacts.address}
+              </p>
+              {contacts.mapUrl && (
+                <a
+                  href={contacts.mapUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+                >
+                  <span>Xaritada ko'rish</span>
+                  <ExternalLink className="size-3.5" />
+                </a>
+              )}
+            </div>
+
+            {/* Hours & Email Card */}
+            <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm hover:border-emerald-500/40 hover:-translate-y-1 transition-all">
+              <div className="size-11 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mb-4">
+                <Mail className="size-5.5" />
+              </div>
+              <h3 className="font-semibold text-slate-900 dark:text-white">Ish vaqti & Pochta</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">Qabul va konsultatsiya</p>
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed mb-2">
+                {contacts.workHours}
+              </p>
+              {contacts.email && (
+                <a
+                  href={`mailto:${contacts.email}`}
+                  className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400 hover:underline block truncate"
+                >
+                  {contacts.email}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 8. FAQ Section */}
+      <section id="faq" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950 transition-colors">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2">
+              <HelpCircle className="size-3.5" />
+              <span>Savol-Javob</span>
+            </div>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ko'p so'raladigan savollar</h2>
+          </div>
+
+          <div className="space-y-3.5">
             <FaqItem
               question="7 kunlik bepul sinovda qanday cheklovlar bor?"
-              answer="Hech qanday funksional cheklov yo'q! Siz 7 kun davomida o'quvchilar, guruhlar, to'lovlar, o'quvchi va o'qituvchi kabinetlari, uy vazifalariga fayl yuklash hamda Telegram bot imkoniyatlaridan 100% to'liq foydalanishingiz mumkin."
+              answer="Hech qanday funksional cheklov yo'q. Barcha bo'limlar: o'quvchi va o'qituvchi kabinetlari, vazifalarga fayl yuklash, Telegram bot va moliya to'liq ochiq bo'ladi."
             />
             <FaqItem
               question="Ro'yxatdan o'tish uchun bank kartasi kerakmi?"
-              answer="Yo'q, mutlaqo kerak emas. 7 kunlik sinovni boshlash uchun faqat o'quv markazingiz nomi, subdomen va telefon raqamingizni kiritish kifoya. Karta ma'lumotlari talab etilmaydi."
+              answer="Yo'q, mutlaqo kerak emas. Sinovni boshlash uchun faqat markazingiz nomi, subdomen va telefon raqamingiz yetarli."
             />
             <FaqItem
-              question="Markazim ma'lumotlari boshqalarga ko'rinib qolmaydimi?"
-              answer="Yo'q, ko'rinmaydi. Ventura har bir markaz uchun alohida mustaqil PostgreSQL ma'lumotlar bazasi va shaxsiy shifrlangan subdomen taqdim etadi. Tizim arxitekturasi ko'p tenantli to'liq izolyatsiyaga ega."
+              question="Markazim ma'lumotlari xavfsizmi?"
+              answer="Ha. Ventura har bir markaz uchun alohida mustaqil PostgreSQL ma'lumotlar bazasi va shaxsiy shifrlangan subdomen taqdim etadi. Boshqa markazlar bilan ma'lumotlar aralashmaydi."
             />
             <FaqItem
               question="Shaxsiy Telegram bot qanday ulanadi?"
-              answer="O'quv markazingiz boshqaruv panelidan @BotFather orqali olingan token kiritiladi. Ventura avtomatik ravishda barcha buyruqlar, menyular va bildirishnomalarni sizning markazingiz nomi bilan ishga tushiradi."
+              answer="Markazingiz panelidan @BotFather bergan token kiritiladi. Tizim avtomatik ravishda botni sizning markazingiz nomi bilan ishga tushiradi."
             />
             <FaqItem
-              question="7 kunlik sinov muddati tugagach nima bo'ladi?"
-              answer="Sinov muddati tugagach, sizga mos tarifni tanlab to'lovni amalga oshirasiz. Sinov davomida kiritgan barcha o'quvchilaringiz, to'lovlar va dars ma'lumotlaringiz xavfsiz saqlanadi va ishlashda davom etadi."
-            />
-            <FaqItem
-              question="O'zimizning shaxsiy domenimizni (masalan crm.markaz.uz) ulash mumkinmi?"
-              answer="Ha, Enterprise tarifida yoki qo'shimcha xizmat sifatida o'zingizning shaxsiy domeningizni ulash imkoniyati mavjud. Standart holda barcha markazlar tekin va tezkor sizning-markaz.ventura.uz manziliga ega bo'ladi."
+              question="Sinov muddati tugagach nima bo'ladi?"
+              answer="O'zingizga mos tarifni tanlab to'lov qilasiz. Sinov davridagi barcha ma'lumotlar xavfsiz saqlanib qoladi."
             />
           </div>
         </div>
       </section>
 
-      {/* 10. Final Call To Action */}
-      <section className="py-20 md:py-24 border-t border-slate-900 bg-gradient-to-b from-slate-950 via-indigo-950/20 to-slate-950">
+      {/* 9. Final CTA */}
+      <section className="py-16 md:py-20 border-t border-slate-200 dark:border-slate-900 bg-gradient-to-b from-slate-50 via-indigo-50/50 to-slate-50 dark:from-slate-950 dark:via-indigo-950/20 dark:to-slate-950 transition-colors">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="p-8 sm:p-14 rounded-3xl bg-gradient-to-tr from-indigo-900/40 via-slate-900 to-slate-900 border border-indigo-500/30 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight">
+          <div className="p-8 sm:p-12 rounded-3xl bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-500/30 shadow-2xl relative overflow-hidden">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
               O'quv markazingizni yangi bosqichga olib chiqing
             </h2>
-            <p className="mt-4 text-slate-300 text-base sm:text-lg max-w-2xl mx-auto">
-              Hozir 30 soniyada o'z subdomeningizni tanlang va 7 kunlik to'liq bepul sinovni boshlang.
+            <p className="mt-3 text-slate-600 dark:text-slate-300 text-sm sm:text-base max-w-xl mx-auto">
+              Hozir 30 soniyada o'z subdomeningizni tanlang va 7 kunlik bepul sinovni boshlang.
             </p>
-            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="mt-7 flex flex-col sm:flex-row gap-3.5 justify-center items-center">
               <button
                 onClick={() => handleOpenTrial()}
                 className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold rounded-xl text-white bg-indigo-600 hover:bg-indigo-500 transition-all shadow-lg shadow-indigo-600/30 active:scale-95 cursor-pointer"
@@ -629,13 +644,13 @@ export function CrmLanding() {
                 <ArrowRight className="size-5 ml-2" />
               </button>
             </div>
-            <p className="mt-4 text-xs text-slate-400">Hech qanday karta talab etilmaydi · 30 soniyada tayyor</p>
+            <p className="mt-3.5 text-xs text-slate-500">Karta talab etilmaydi · 30 soniyada ishga tushadi</p>
           </div>
         </div>
       </section>
 
-      {/* 11. Footer */}
-      <footer className="py-12 border-t border-slate-900 bg-slate-950 text-slate-500 text-xs sm:text-sm">
+      {/* 10. Footer */}
+      <footer className="py-12 border-t border-slate-200 dark:border-slate-900 bg-white dark:bg-slate-950 text-slate-500 text-xs sm:text-sm transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <div className="size-7 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
@@ -649,31 +664,36 @@ export function CrmLanding() {
                 />
               </svg>
             </div>
-            <span className="font-semibold text-slate-300">Ventura CRM · O'quv Markaz Boshqaruv Tizimi</span>
+            <span className="font-semibold text-slate-800 dark:text-slate-300">
+              Ventura CRM · O'quv Markaz Boshqaruv Tizimi
+            </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-6 text-slate-400">
-            <a href="#features" className="hover:text-slate-200 transition-colors">
+          <div className="flex flex-wrap items-center gap-6 text-slate-600 dark:text-slate-400">
+            <a href="#features" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Imkoniyatlar
             </a>
-            <a href="#portals" className="hover:text-slate-200 transition-colors">
+            <a href="#portals" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Kabinetlar
             </a>
-            <a href="#pricing" className="hover:text-slate-200 transition-colors">
+            <a href="#pricing" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               Tariflar
             </a>
-            <a href="#faq" className="hover:text-slate-200 transition-colors">
+            <a href="#contacts" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
+              Aloqa
+            </a>
+            <a href="#faq" className="hover:text-indigo-600 dark:hover:text-white transition-colors">
               FAQ
             </a>
           </div>
 
-          <p className="text-slate-600">
-            © {new Date().getFullYear()} Ventura EDU CRM. Barcha huquqlar himoyalangan.
+          <p className="text-slate-400 dark:text-slate-600">
+            © {new Date().getFullYear()} Ventura EDU CRM.
           </p>
         </div>
       </footer>
 
-      {/* 12. Free Trial Registration Modal */}
+      {/* 11. Free Trial Registration Modal */}
       {modalOpen && (
         <FreeTrialModal initialSlug={initialSlug} onClose={() => setModalOpen(false)} />
       )}
@@ -681,7 +701,7 @@ export function CrmLanding() {
   );
 }
 
-/* ---------- Subdomain Quick Starter in Hero ---------- */
+/* ---------- Subdomain Quick Starter Component ---------- */
 
 function SubdomainQuickStarter({ onStart }: { onStart: (slug: string) => void }) {
   const [slug, setSlug] = React.useState("");
@@ -694,20 +714,22 @@ function SubdomainQuickStarter({ onStart }: { onStart: (slug: string) => void })
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2">
-      <div className="relative flex-1 w-full flex items-center bg-slate-950/80 rounded-xl border border-slate-800 px-3.5 py-2.5 focus-within:border-indigo-500 transition-colors">
-        <span className="text-slate-500 font-mono text-sm select-none">https://</span>
+      <div className="relative flex-1 w-full flex items-center bg-slate-100/90 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+        <span className="text-slate-400 dark:text-slate-500 font-mono text-xs select-none">https://</span>
         <input
           type="text"
           value={slug}
           onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
           placeholder="sizning-markaz"
-          className="w-full bg-transparent text-white font-medium text-sm placeholder:text-slate-600 focus:outline-none px-1"
+          className="w-full bg-transparent text-slate-900 dark:text-white font-medium text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none px-1"
         />
-        <span className="text-slate-400 font-mono text-xs select-none shrink-0">.ventura.uz</span>
+        <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0">
+          .ventura.uz
+        </span>
       </div>
       <button
         type="submit"
-        className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-all shadow-md shadow-indigo-600/30 shrink-0 active:scale-95 cursor-pointer"
+        className="w-full sm:w-auto inline-flex items-center justify-center px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm transition-all shadow-md shadow-indigo-600/30 shrink-0 active:scale-95 cursor-pointer"
       >
         <span>7 kun bepul boshlash</span>
         <ArrowRight className="size-4 ml-1.5" />
@@ -716,148 +738,148 @@ function SubdomainQuickStarter({ onStart }: { onStart: (slug: string) => void })
   );
 }
 
-/* ---------- Interactive Mockup Component ---------- */
+/* ---------- Interactive Mockup Dashboard Tabs ---------- */
 
 function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
   const [tab, setTab] = React.useState<"student" | "teacher" | "finance" | "bot" | "storage">("student");
 
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-900/90 shadow-2xl overflow-hidden backdrop-blur-sm">
+    <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/90 shadow-2xl overflow-hidden backdrop-blur-sm text-left transition-colors">
       {/* Top Bar with Tabs */}
-      <div className="bg-slate-950/90 border-b border-slate-800 p-3 sm:p-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+      <div className="bg-slate-100/80 dark:bg-slate-950/90 border-b border-slate-200 dark:border-slate-800 p-2.5 sm:p-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <MockupTabButton
             active={tab === "student"}
             onClick={() => setTab("student")}
-            icon={<GraduationCap className="size-4 text-indigo-400" />}
+            icon={<GraduationCap className="size-4 text-indigo-600 dark:text-indigo-400" />}
             label="O'quvchi Kabineti"
           />
           <MockupTabButton
             active={tab === "teacher"}
             onClick={() => setTab("teacher")}
-            icon={<BookOpen className="size-4 text-purple-400" />}
+            icon={<BookOpen className="size-4 text-purple-600 dark:text-purple-400" />}
             label="O'qituvchi Kabineti"
           />
           <MockupTabButton
             active={tab === "finance"}
             onClick={() => setTab("finance")}
-            icon={<Wallet className="size-4 text-emerald-400" />}
+            icon={<Wallet className="size-4 text-emerald-600 dark:text-emerald-400" />}
             label="Moliya & Kassa"
           />
           <MockupTabButton
             active={tab === "bot"}
             onClick={() => setTab("bot")}
-            icon={<Bot className="size-4 text-sky-400" />}
+            icon={<Bot className="size-4 text-sky-600 dark:text-sky-400" />}
             label="Telegram Bot"
           />
           <MockupTabButton
             active={tab === "storage"}
             onClick={() => setTab("storage")}
-            icon={<HardDrive className="size-4 text-amber-400" />}
+            icon={<HardDrive className="size-4 text-amber-600 dark:text-amber-400" />}
             label="Fayllar & Xotira"
           />
         </div>
 
         <button
           onClick={onOpenTrial}
-          className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-600/30 cursor-pointer"
+          className="hidden md:inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600/10 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20 dark:border-indigo-500/30 hover:bg-indigo-600/20 cursor-pointer"
         >
           <span>Sinovda ko'rish</span>
           <ArrowRight className="size-3.5" />
         </button>
       </div>
 
-      {/* Screen Content based on active tab */}
-      <div className="p-4 sm:p-8 min-h-[380px] bg-slate-950/40">
+      {/* Screen Content */}
+      <div className="p-4 sm:p-7 min-h-[360px] bg-white dark:bg-slate-950/40 transition-all">
         {tab === "student" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-lg font-bold text-white">O'quvchi shaxsiy portali</h4>
-                <p className="text-xs text-slate-400">Dars jadvali, davomat, baholar va uy vazifalari</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">O'quvchi shaxsiy portali</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Dars jadvali, davomat, baholar va uy vazifalari</p>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              <div className="flex items-center gap-2">
+                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/20">
                   Davomat: 98%
                 </span>
-                <span className="text-xs px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  240 Ventura Coin
+                <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-semibold border border-indigo-500/20">
+                  240 Coin
                 </span>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-xs text-slate-400">Keyingi dars</span>
-                <p className="text-sm font-semibold text-white mt-1">General English (IELTS 7.0)</p>
-                <p className="text-xs text-indigo-400 mt-0.5">Bugun, 15:30 · 2-xona</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-xs text-slate-500">Keyingi dars</span>
+                <p className="text-sm font-semibold text-slate-900 dark:text-white mt-1">General English (IELTS)</p>
+                <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-0.5">Bugun, 15:30 · 2-xona</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-xs text-slate-400">To'lov holati</span>
-                <p className="text-sm font-semibold text-emerald-400 mt-1">To'langan (Noyabr)</p>
-                <p className="text-xs text-slate-400 mt-0.5">Qarzdorlik yo'q · Chek #4821</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-xs text-slate-500">To'lov holati</span>
+                <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-400 mt-1">To'langan</p>
+                <p className="text-xs text-slate-500 mt-0.5">Qarzdorlik yo'q · Chek #4821</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-xs text-slate-400">Faol uy vazifasi</span>
-                <p className="text-sm font-semibold text-amber-300 mt-1">Reading Practice Test #4</p>
-                <p className="text-xs text-slate-400 mt-0.5">Topshirildi · Fayl: reading_test.pdf</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-xs text-slate-500">Topshirilgan vazifa</span>
+                <p className="text-sm font-semibold text-amber-600 dark:text-amber-300 mt-1">Reading Practice #4</p>
+                <p className="text-xs text-slate-500 mt-0.5">Topshirildi · PDF yuklangan</p>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs text-slate-300">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
               <span className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-emerald-400" />
+                <CheckCircle2 className="size-4 text-emerald-500" />
                 O'quvchi mobil brauzer va Telegram bot orqali kiradi
               </span>
-              <span className="text-slate-500">Avto-login orqali parol kiritish shart emas</span>
+              <span className="text-slate-400">Avto-login mavjud</span>
             </div>
           </div>
         )}
 
         {tab === "teacher" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-lg font-bold text-white">O'qituvchi ishchi kabineti</h4>
-                <p className="text-xs text-slate-400">Guruhlar, davomat olish, uy vazifasi berish va tekshirish</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">O'qituvchi ishchi kabineti</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Guruhlar, davomat, vazifa berish va tekshirish</p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">
+              <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-semibold border border-purple-500/20">
                 Faol guruhlar: 4 ta · 48 o'quvchi
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-semibold text-slate-300">Tezkor davomat olish</span>
-                  <span className="text-[11px] text-emerald-400 font-medium">Bugungi dars</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tezkor davomat olish</span>
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Bugungi dars</span>
                 </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950">
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <span>Rustam Karimov</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">Bor (K)</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">Bor (K)</span>
                   </div>
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <span>Zilola Mahmudova</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold">Bor (K)</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">Bor (K)</span>
                   </div>
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-xs font-semibold text-slate-300">Uy vazifasi tekshiruvi</span>
-                  <span className="text-[11px] text-amber-400 font-medium">Tekshirishga: 3 ta</span>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <div className="flex justify-between items-center mb-2.5">
+                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Vazifalar tekshiruvi</span>
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Tekshirishga: 3 ta</span>
                 </div>
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center justify-between p-2 rounded-lg bg-slate-950">
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <div>
-                      <span className="font-medium text-slate-200">Farrux Saidov</span>
-                      <p className="text-[10px] text-slate-500">vazifa_3.pdf (1.4 MB)</p>
+                      <span className="font-medium text-slate-800 dark:text-slate-200">Farrux Saidov</span>
+                      <p className="text-[10px] text-slate-400">vazifa_unit4.pdf (1.4 MB)</p>
                     </div>
-                    <span className="px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 font-medium">Baho qo'yish</span>
+                    <span className="px-2.5 py-1 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-semibold">Baho qo'yish</span>
                   </div>
                 </div>
               </div>
@@ -866,94 +888,94 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
         )}
 
         {tab === "finance" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-lg font-bold text-white">Moliya va Kassa boshqaruvi</h4>
-                <p className="text-xs text-slate-400">Kassa balansi, to'lovlar, qarzdorlar va o'zgarmas audit</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Moliya va Kassa</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Kassa balansi, to'lovlar va qarzdorlar</p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                Kriptografik zanjir himoyasi
+              <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/20">
+                Kriptografik audit
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-xs text-slate-400">Joriy oylik tushum</span>
-                <p className="text-xl font-bold text-white mt-1">48,500,000 so'm</p>
-                <p className="text-xs text-emerald-400 mt-1">↑ +14% o'tgan oyga nisbatan</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-xs text-slate-500">Joriy oylik tushum</span>
+                <p className="text-xl font-bold text-slate-900 dark:text-white mt-1">48,500,000 so'm</p>
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">↑ +14% o'tgan oyga nisbatan</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-xs text-slate-400">Qarzdorlik miqdori</span>
-                <p className="text-xl font-bold text-amber-300 mt-1">3,200,000 so'm</p>
-                <p className="text-xs text-slate-400 mt-1">6 ta o'quvchida qarzdorlik</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-xs text-slate-500">Qarzdorlik miqdori</span>
+                <p className="text-xl font-bold text-amber-600 dark:text-amber-300 mt-1">3,200,000 so'm</p>
+                <p className="text-xs text-slate-500 mt-0.5">6 ta o'quvchida</p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-900 border border-slate-800">
-                <span className="text-xs text-slate-400">Kassa qoldig'i</span>
-                <p className="text-xl font-bold text-indigo-300 mt-1">21,450,000 so'm</p>
-                <p className="text-xs text-slate-400 mt-1">Naqd + Karta hisoblari</p>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                <span className="text-xs text-slate-500">Kassa qoldig'i</span>
+                <p className="text-xl font-bold text-indigo-600 dark:text-indigo-300 mt-1">21,450,000 so'm</p>
+                <p className="text-xs text-slate-500 mt-0.5">Naqd + Karta hisoblari</p>
               </div>
             </div>
           </div>
         )}
 
         {tab === "bot" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-lg font-bold text-white">Telegram Bot Ekotizimi</h4>
-                <p className="text-xs text-slate-400">Har bir o'quv markazining o'z shaxsiy boti</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Telegram Bot Ekotizimi</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Har bir markazning shaxsiy Telegram boti</p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                Status: Onlayn & Faol
+              <span className="text-xs px-2.5 py-1 rounded-full bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 font-semibold border border-sky-500/20">
+                Onlayn & Faol
               </span>
             </div>
 
-            <div className="max-w-md mx-auto p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 font-mono text-xs">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-800 text-sky-400">
+            <div className="max-w-md mx-auto p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2.5 font-mono text-xs">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800 text-sky-600 dark:text-sky-400">
                 <Bot className="size-4" />
                 <span className="font-semibold">@RegistonEduCrmBot</span>
               </div>
-              <div className="p-2.5 rounded-lg bg-slate-950 text-slate-300">
-                Assalomu alaykum, Jasur! Registon o'quv markazi botiga xush kelibsiz.
+              <div className="p-2.5 rounded-lg bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                Assalomu alaykum! Registon o'quv markazi botiga xush kelibsiz.
               </div>
-              <div className="p-2.5 rounded-lg bg-indigo-950/60 border border-indigo-500/30 text-indigo-200">
-                📢 <strong>Eslatma:</strong> Bugun soat 15:30 da IELTS 7.0 guruhingizda dars boshlanadi. Xona: #2.
+              <div className="p-2.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-500/30 text-indigo-900 dark:text-indigo-200">
+                📢 <strong>Eslatma:</strong> Bugun soat 15:30 da IELTS guruhingizda dars boshlanadi. Xona: #2.
               </div>
-              <div className="grid grid-cols-2 gap-2 text-center pt-2">
-                <div className="p-2 rounded bg-slate-800 text-slate-200 text-[11px]">📅 Dars jadvali</div>
-                <div className="p-2 rounded bg-slate-800 text-slate-200 text-[11px]">💳 To'lov holati</div>
+              <div className="grid grid-cols-2 gap-2 text-center pt-1.5">
+                <div className="p-2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[11px] font-semibold">📅 Dars jadvali</div>
+                <div className="p-2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[11px] font-semibold">💳 To'lov holati</div>
               </div>
             </div>
           </div>
         )}
 
         {tab === "storage" && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-lg font-bold text-white">Fayllar va Xotira ombori (/storage)</h4>
-                <p className="text-xs text-slate-400">Markazga ajratilgan 10GB disk, fayllar monitoringi va avto-tozalash</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Fayllar va Xotira (/storage)</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">10 GB disk, monitoring va avtomatik tozalash</p>
               </div>
-              <span className="text-xs px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                10 GB Ajratilgan Limiti
+              <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/20">
+                10 GB Limiti
               </span>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-4">
+            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3.5">
               <div className="flex justify-between items-center text-xs">
-                <span className="text-slate-300 font-medium">Disk bandligi</span>
-                <span className="text-amber-400 font-semibold">1.84 GB / 10 GB</span>
+                <span className="text-slate-700 dark:text-slate-300 font-medium">Disk bandligi</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold font-mono">1.84 GB / 10 GB (18%)</span>
               </div>
-              <div className="w-full bg-slate-950 rounded-full h-3 p-0.5 overflow-hidden">
+              <div className="w-full bg-slate-200 dark:bg-slate-950 rounded-full h-2.5 p-0.5 overflow-hidden">
                 <div className="bg-gradient-to-r from-amber-400 to-indigo-500 h-2 rounded-full w-[18%]" />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-xs text-slate-400">
-                <div className="p-2 rounded-lg bg-slate-950">📚 Darsliklar: 840 MB</div>
-                <div className="p-2 rounded-lg bg-slate-950">📝 Uy vazifalari: 720 MB</div>
-                <div className="p-2 rounded-lg bg-slate-950">🧾 Kvitansiyalar: 280 MB</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1.5 text-xs text-slate-600 dark:text-slate-400">
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">📚 Darsliklar: 840 MB</div>
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">📝 Uy vazifalari: 720 MB</div>
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">🧾 Kvitansiyalar: 280 MB</div>
               </div>
             </div>
           </div>
@@ -977,10 +999,10 @@ function MockupTabButton({
   return (
     <button
       onClick={onClick}
-      className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
         active
-          ? "bg-slate-800 text-white shadow-sm border border-slate-700"
-          : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
+          ? "bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-700"
+          : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-900"
       }`}
     >
       {icon}
@@ -1003,41 +1025,17 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-all group">
-      <div className="flex items-center justify-between mb-4">
-        <div className="size-11 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center group-hover:scale-105 transition-transform">
+    <div className="p-6 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl dark:hover:border-indigo-500/30 hover:-translate-y-1 transition-all duration-300 group">
+      <div className="flex items-center justify-between mb-3.5">
+        <div className="size-11 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center group-hover:scale-105 transition-transform">
           {icon}
         </div>
-        <span className="text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-slate-800 text-slate-300">
+        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
           {badge}
         </span>
       </div>
-      <h3 className="text-lg font-semibold text-white tracking-tight">{title}</h3>
-      <p className="mt-2 text-sm text-slate-400 leading-relaxed">{description}</p>
-    </div>
-  );
-}
-
-/* ---------- Comparison Row Component ---------- */
-
-function ComparisonRow({
-  feature,
-  other,
-  ventura,
-  positive,
-}: {
-  feature: string;
-  other: string;
-  ventura: string;
-  positive?: boolean;
-}) {
-  return (
-    <div className="grid grid-cols-3 p-4 border-b border-slate-800/80 text-xs sm:text-sm items-center hover:bg-slate-900/30 transition-colors">
-      <div className="font-medium text-slate-200">{feature}</div>
-      <div className="text-center text-slate-400">{other}</div>
-      <div className={`text-center font-semibold ${positive ? "text-emerald-400" : "text-white"}`}>
-        {ventura}
-      </div>
+      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">{title}</h3>
+      <p className="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{description}</p>
     </div>
   );
 }
@@ -1065,47 +1063,47 @@ function PricingCard({
 }) {
   return (
     <div
-      className={`rounded-3xl p-8 flex flex-col justify-between relative transition-all ${
+      className={`rounded-3xl p-7 flex flex-col justify-between relative transition-all duration-300 ${
         popular
-          ? "bg-gradient-to-b from-indigo-950/70 via-slate-900 to-slate-900 border-2 border-indigo-500 shadow-2xl shadow-indigo-500/10"
-          : "bg-slate-900/60 border border-slate-800 hover:border-slate-700"
+          ? "bg-white dark:bg-gradient-to-b dark:from-indigo-950/70 dark:via-slate-900 dark:to-slate-900 border-2 border-indigo-600 shadow-2xl shadow-indigo-600/10 hover:-translate-y-1.5"
+          : "bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-lg hover:-translate-y-1"
       }`}
     >
       {popular && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-indigo-500 text-white font-semibold text-xs tracking-wider uppercase shadow-md">
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-indigo-600 text-white font-semibold text-xs tracking-wider uppercase shadow-md animate-pulse">
           Eng ommabop tanlov
         </div>
       )}
 
       <div>
         <div className="flex justify-between items-baseline">
-          <h3 className="text-2xl font-bold text-white">{name}</h3>
+          <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{name}</h3>
         </div>
-        <p className="mt-2 text-xs sm:text-sm text-slate-400 min-h-[36px]">{description}</p>
+        <p className="mt-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-400 min-h-[32px]">{description}</p>
 
-        <div className="mt-6 pb-6 border-b border-slate-800">
-          <span className="text-3xl sm:text-4xl font-extrabold text-white">{price}</span>
-          <span className="text-xs sm:text-sm text-slate-400 ml-1.5">{period}</span>
-          <div className="mt-1 text-xs text-emerald-400 font-medium">⭐ 7 kun to'liq bepul sinov</div>
+        <div className="mt-5 pb-5 border-b border-slate-100 dark:border-slate-800">
+          <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">{price}</span>
+          <span className="text-xs sm:text-sm text-slate-500 ml-1">{period}</span>
+          <div className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">⭐ 7 kun to'liq bepul sinov</div>
         </div>
 
-        <ul className="mt-6 space-y-3 text-xs sm:text-sm text-slate-300">
+        <ul className="mt-5 space-y-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
           {features.map((f, i) => (
-            <li key={i} className="flex items-center gap-2.5">
-              <Check className="size-4 text-emerald-400 shrink-0" />
+            <li key={i} className="flex items-center gap-2">
+              <Check className="size-4 text-emerald-500 shrink-0" />
               <span>{f}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="mt-8 pt-4">
+      <div className="mt-7 pt-2">
         <button
           onClick={onSelect}
           className={`w-full py-3 px-4 rounded-xl font-semibold text-sm transition-all shadow-md active:scale-95 cursor-pointer ${
             popular
               ? "bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/30"
-              : "bg-slate-800 hover:bg-slate-700 text-white"
+              : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white"
           }`}
         >
           {buttonText}
@@ -1115,22 +1113,22 @@ function PricingCard({
   );
 }
 
-/* ---------- FAQ Item Component ---------- */
+/* ---------- FAQ Accordion Item Component ---------- */
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/60 overflow-hidden">
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 overflow-hidden shadow-sm">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full p-4 sm:p-5 flex items-center justify-between text-left font-semibold text-white text-sm sm:text-base hover:text-indigo-300 transition-colors cursor-pointer"
+        className="w-full p-4 sm:p-5 flex items-center justify-between text-left font-semibold text-slate-900 dark:text-white text-sm sm:text-base hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors cursor-pointer"
       >
         <span>{question}</span>
-        <ChevronDown className={`size-5 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+        <ChevronDown className={`size-5 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="px-4 pb-5 sm:px-5 text-slate-300 text-xs sm:text-sm leading-relaxed border-t border-slate-800/60 pt-3">
+        <div className="px-4 pb-4 sm:px-5 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
           {answer}
         </div>
       )}
@@ -1148,11 +1146,9 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
   const [ownerPassword, setOwnerPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
 
-  // Slug check state
   const [checkingSlug, setCheckingSlug] = React.useState(false);
   const [slugStatus, setSlugStatus] = React.useState<{ available?: boolean; error?: string } | null>(null);
 
-  // Submit state
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [successResult, setSuccessResult] = React.useState<{ slug: string; url: string; centerName: string } | null>(
@@ -1160,7 +1156,6 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
   );
   const [copied, setCopied] = React.useState(false);
 
-  // Debounced check
   React.useEffect(() => {
     if (!slug || slug.length < 3) {
       const timer = setTimeout(() => {
@@ -1184,7 +1179,6 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
     return () => clearTimeout(timer);
   }, [slug]);
 
-  // Auto slug generation from center name if slug is empty
   const handleCenterNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setCenterName(val);
@@ -1235,13 +1229,12 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-3xl bg-slate-900 border border-slate-800 shadow-2xl p-6 sm:p-8 text-slate-100 max-h-[92vh] overflow-y-auto">
-        {/* Close Button */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 text-slate-900 dark:text-slate-100 max-h-[92vh] overflow-y-auto">
         <button
           onClick={onClose}
           disabled={submitting}
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <X className="size-5" />
         </button>
@@ -1249,85 +1242,80 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
         {!successResult ? (
           <div>
             <div className="flex items-center gap-2.5 mb-2">
-              <div className="size-9 rounded-xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+              <div className="size-9 rounded-xl bg-indigo-500/10 dark:bg-indigo-600/20 border border-indigo-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
                 <Sparkles className="size-5" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white">7 kunlik bepul sinovni boshlash</h3>
-                <p className="text-xs text-slate-400">Hech qanday karta talab etilmaydi · 30 soniyada tayyor</p>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">7 kunlik bepul sinov</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Karta talab etilmaydi · 30 soniyada tayyor</p>
               </div>
             </div>
 
             {submitError && (
-              <div className="my-4 p-3.5 rounded-xl bg-red-950/60 border border-red-500/30 text-red-200 text-xs">
+              <div className="my-3.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs">
                 ⚠️ {submitError}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4 text-xs sm:text-sm">
-              {/* 1. Center Name */}
+            <form onSubmit={handleSubmit} className="mt-4 space-y-3.5 text-xs sm:text-sm">
               <div>
-                <label className="block font-medium text-slate-300 mb-1.5">O'quv markaz nomi *</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">O'quv markaz nomi *</label>
                 <input
                   type="text"
                   required
                   value={centerName}
                   onChange={handleCenterNameChange}
                   placeholder="Masalan: Registon Academy"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* 2. Subdomain */}
               <div>
-                <label className="block font-medium text-slate-300 mb-1.5">
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Subdomen manzili *{" "}
-                  <span className="text-[11px] text-slate-400 font-normal">(o'quv markazingiz web manzili)</span>
+                  <span className="text-[11px] text-slate-400 font-normal">(web manzilingiz)</span>
                 </label>
-                <div className="flex items-center rounded-xl bg-slate-950 border border-slate-800 px-3.5 py-2 focus-within:border-indigo-500">
-                  <span className="text-slate-500 font-mono text-xs select-none">https://</span>
+                <div className="flex items-center rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2 focus-within:border-indigo-500">
+                  <span className="text-slate-400 font-mono text-xs select-none">https://</span>
                   <input
                     type="text"
                     required
                     value={slug}
                     onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
                     placeholder="registon"
-                    className="w-full bg-transparent text-white font-medium px-1 focus:outline-none"
+                    className="w-full bg-transparent text-slate-900 dark:text-white font-medium px-1 focus:outline-none"
                   />
-                  <span className="text-indigo-400 font-mono text-xs font-semibold shrink-0">.ventura.uz</span>
+                  <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold shrink-0">.ventura.uz</span>
                 </div>
 
-                {/* Subdomain status */}
-                <div className="mt-1.5 min-h-[20px] text-xs">
+                <div className="mt-1 min-h-[18px] text-xs">
                   {checkingSlug && <span className="text-slate-400">Tekshirilmoqda...</span>}
                   {!checkingSlug && slugStatus && slugStatus.available && (
-                    <span className="text-emerald-400 flex items-center gap-1">
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                       <Check className="size-3.5" /> <strong>{slug}.ventura.uz</strong> bo'sh, tanlashingiz mumkin
                     </span>
                   )}
                   {!checkingSlug && slugStatus && !slugStatus.available && (
-                    <span className="text-red-400">❌ {slugStatus.error}</span>
+                    <span className="text-red-500">❌ {slugStatus.error}</span>
                   )}
                 </div>
               </div>
 
-              {/* 3. Owner Name */}
               <div>
-                <label className="block font-medium text-slate-300 mb-1.5">Direktor (Rahbar) ismi va familiyasi *</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Direktor ismi va familiyasi *</label>
                 <input
                   type="text"
                   required
                   value={ownerName}
                   onChange={(e) => setOwnerName(e.target.value)}
                   placeholder="Masalan: Javohir Alimov"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* 4. Owner Phone */}
               <div>
-                <label className="block font-medium text-slate-300 mb-1.5">
-                  Telefon raqami * <span className="text-[11px] text-slate-400 font-normal">(kirish logini bo'ladi)</span>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Telefon raqami * <span className="text-[11px] text-slate-400 font-normal">(kirish logini)</span>
                 </label>
                 <input
                   type="tel"
@@ -1335,13 +1323,12 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                   value={ownerPhone}
                   onChange={(e) => setOwnerPhone(e.target.value)}
                   placeholder="+998 90 123 45 67"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              {/* 5. Owner Password */}
               <div>
-                <label className="block font-medium text-slate-300 mb-1.5">Direktor paroli *</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Direktor paroli *</label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -1350,19 +1337,18 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                     value={ownerPassword}
                     onChange={(e) => setOwnerPassword(e.target.value)}
                     placeholder="Kamida 8 ta belgi"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 pr-10"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 pr-10"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Submit CTA */}
               <div className="pt-2">
                 <button
                   type="submit"
@@ -1372,7 +1358,7 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                   {submitting ? (
                     <>
                       <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Markaz yaratilmoqda va tizim sozlanmoqda...</span>
+                      <span>Markaz tayyorlanmoqda...</span>
                     </>
                   ) : (
                     <>
@@ -1382,63 +1368,56 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                   )}
                 </button>
               </div>
-
-              <p className="text-[11px] text-center text-slate-500 mt-2">
-                Ro'yxatdan o'tish orqali siz Ventura foydalanish shartlariga rozilik bildirasiz.
-              </p>
             </form>
           </div>
         ) : (
-          /* Success Screen */
-          <div className="text-center py-4 space-y-5 animate-in zoom-in-95 duration-200">
-            <div className="size-16 rounded-3xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+          <div className="text-center py-4 space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="size-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
               <CheckCircle2 className="size-9" />
             </div>
 
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">Tabriklaymiz!</span>
-              <h3 className="text-2xl font-extrabold text-white mt-1">O'quv markazingiz muvaffaqiyatli yaratildi!</h3>
-              <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-sm mx-auto">
-                <strong>{successResult.centerName}</strong> uchun 7 kunlik to'liq bepul sinov davri faollashtirildi.
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tabriklaymiz!</span>
+              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">O'quv markazingiz yaratildi!</h3>
+              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5">
+                <strong>{successResult.centerName}</strong> uchun 7 kunlik to'liq bepul sinov davri boshlandi.
               </p>
             </div>
 
-            {/* Access Details Box */}
-            <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-left space-y-3 font-mono text-xs">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-left space-y-2.5 font-mono text-xs">
               <div>
-                <span className="text-slate-500 block text-[10px] uppercase">CRM Tizim manzili</span>
-                <div className="flex items-center justify-between mt-1 p-2 rounded-lg bg-slate-900 border border-slate-800">
+                <span className="text-slate-400 block text-[10px] uppercase">CRM Tizim manzili</span>
+                <div className="flex items-center justify-between mt-1 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
                   <a
                     href={successResult.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-indigo-400 font-bold hover:underline truncate"
+                    className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline truncate"
                   >
                     {successResult.url}
                   </a>
                   <button
                     onClick={handleCopyUrl}
-                    className="p-1 rounded text-slate-400 hover:text-white shrink-0 ml-2 cursor-pointer"
+                    className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white shrink-0 ml-2 cursor-pointer"
                   >
-                    {copied ? <Check className="size-4 text-emerald-400" /> : <Copy className="size-4" />}
+                    {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1 text-slate-300">
+              <div className="grid grid-cols-2 gap-2 pt-1 text-slate-700 dark:text-slate-300">
                 <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Login (Telefon)</span>
-                  <span className="font-semibold text-slate-200">{ownerPhone}</span>
+                  <span className="text-slate-400 block text-[10px] uppercase">Login</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-200">{ownerPhone}</span>
                 </div>
                 <div>
-                  <span className="text-slate-500 block text-[10px] uppercase">Parol</span>
-                  <span className="font-semibold text-slate-200">••••••••</span>
+                  <span className="text-slate-400 block text-[10px] uppercase">Parol</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-200">••••••••</span>
                 </div>
               </div>
             </div>
 
-            {/* Direct Open Button */}
-            <div className="pt-2">
+            <div className="pt-1.5">
               <a
                 href={successResult.url}
                 target="_blank"
@@ -1449,10 +1428,6 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                 <ExternalLink className="size-4 ml-2" />
               </a>
             </div>
-
-            <p className="text-[11px] text-slate-400">
-              ⚡ Tizim serverda bir daqiqada ishga tushadi. Sahifani saqlab oling!
-            </p>
           </div>
         )}
       </div>

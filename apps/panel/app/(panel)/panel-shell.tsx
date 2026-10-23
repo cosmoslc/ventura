@@ -45,10 +45,14 @@ const HREF: Record<string, string> = {
   databases: "/databases",
   "settings-security": "/settings/security",
   "settings-admins": "/settings/admins",
+  "settings-contacts": "/settings/contacts",
 };
 
 function sections(role: Role): NavSection[] {
-  const settingsChildren: NavChild[] = [{ id: "settings-security", label: uz.nav.security }];
+  const settingsChildren: NavChild[] = [
+    { id: "settings-security", label: uz.nav.security },
+    { id: "settings-contacts", label: "CRM Aloqa & Manzil" },
+  ];
   if (role === "super_admin") settingsChildren.push({ id: "settings-admins", label: uz.nav.admins });
   const projectChildren: NavChild[] = [{ id: "projects-all", label: uz.nav.projectsAll }];
   if (role !== "viewer") projectChildren.push({ id: "projects-new", label: uz.nav.projectsNew });

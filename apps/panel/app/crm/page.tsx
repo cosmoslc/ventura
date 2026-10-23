@@ -1,5 +1,7 @@
 // Muallif / Agent: Google Gemini
 import type { Metadata } from "next";
+import { getCrmContacts } from "@/lib/server/crm-contacts";
+import { deps } from "@/lib/server/deps";
 import { CrmLanding } from "./crm-landing";
 
 export const dynamic = "force-dynamic";
@@ -44,7 +46,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CrmLandingPage() {
+export default async function CrmLandingPage() {
+  const { db } = deps();
+  const contacts = await getCrmContacts(db);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
@@ -75,7 +80,7 @@ export default function CrmLandingPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <CrmLanding />
+      <CrmLanding contacts={contacts} />
     </>
   );
 }
