@@ -82,7 +82,7 @@ try {
       name: input.owner.name,
       password: input.owner.password,
       role: "director",
-      mustChangePassword: true,
+      mustChangePassword: false,
     });
     await tenantAudit.record(db, {
       actor: { type: "system", name: "Ventura deploy" },
@@ -90,7 +90,7 @@ try {
       target: { type: "user", id: user.id },
       metadata: { role: "director", source: "project.owner" },
     });
-    console.log(`Direktor yaratildi: ${input.owner.name} (birinchi kirishda parolni almashtiradi)`);
+    console.log(`Direktor yaratildi: ${input.owner.name}`);
   }
 } finally {
   await db.close();

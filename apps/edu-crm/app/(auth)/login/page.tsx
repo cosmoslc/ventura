@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     redirect("/");
   }
   const { telegram } = await searchParams;
-  const blocked = !deps ? uz.auth.notConfigured : !deps.telegram ? uz.auth.noBot : null;
+  const blocked = !deps ? uz.auth.notConfigured : null;
   return (
     <AuthCard title={uz.auth.loginTitle} hint={blocked ? undefined : uz.auth.loginHint}>
       {blocked ? (

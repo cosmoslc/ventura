@@ -146,7 +146,7 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
       mustChangePassword: !!u.mustChangePassword,
       twoFactorEnabled: !!u.twoFactorEnabled,
       telegramChatId: u.telegramChatId ?? null,
-      twoFactorOptional: kind === "student",
+      twoFactorOptional: kind === "student" || !deps.telegram,
     }),
     sessionId: data.session.id,
     // O'qituvchi / o'quvchi o'z filiali

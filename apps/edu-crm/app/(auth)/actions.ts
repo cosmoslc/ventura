@@ -52,13 +52,12 @@ const signInSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-type Ready = { error: string } | { deps: TenantDeps; telegram: Telegram; auth: StaffAuth };
+type Ready = { error: string } | { deps: TenantDeps; telegram: Telegram | null; auth: StaffAuth };
 
-/** Kirish uchun mijoz bog'liqliklari; baza yoki bot sozlanmagan bo'lsa — xato matni. */
+/** Kirish uchun mijoz bog'liqliklari; baza sozlanmagan bo'lsa — xato matni. */
 async function ready(): Promise<Ready> {
   const { deps } = await currentDeps();
   if (!deps) return { error: uz.auth.notConfigured };
-  if (!deps.telegram) return { error: uz.auth.noBot };
   return { deps, telegram: deps.telegram, auth: deps.auth(await requestOrigin()) };
 }
 
@@ -114,6 +113,7 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
 export async function sendCodeAction(): Promise<FormState> {
   const r = await ready();
   if ("error" in r) return { error: r.error };
+  if (!r.telegram) return { error: uz.auth.noBot };
   try {
     await r.auth.api.sendTwoFactorOTP({ headers: await headers(), body: {} });
     return { info: uz.auth.codeSent };
@@ -189,6 +189,7 @@ export async function linkTokenAction(): Promise<{ url: string } | { error: stri
   if (!staff) return { error: uz.auth.sessionGone };
   const r = await ready();
   if ("error" in r) return { error: r.error };
+  if (!r.telegram) return { error: uz.auth.noBot };
   const { deps, telegram } = r;
   const token = randomBytes(9).toString("base64url");
   await deps.db.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + staff.id));
@@ -207,6 +208,7 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
   if (!staff) return { error: uz.auth.sessionGone };
   const r = await ready();
   if ("error" in r) return { error: r.error };
+  if (!r.telegram) return { error: uz.auth.noBot };
   const { deps, telegram, auth } = r;
   const user = await findStaffById(deps.db, staff.id);
   if (!user) return { error: uz.auth.sessionGone };
