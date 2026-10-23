@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Check,
   ExternalLink,
   GraduationCap,
   type LucideIcon,
@@ -17,7 +18,7 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
-import { FieldHint, Label } from "@ventura/ui/label";
+import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { PageHeader } from "@ventura/ui/page-header";
 import { Switch } from "@ventura/ui/switch";
@@ -330,62 +331,54 @@ export function TelegramBotsView({
           position="center"
           wide
           title={`${BOTS_META[editingRole].name} sozlamalari`}
-          description="Bot tokeni, username, Mini App va avtomatik bildirishnoma yoqgichlari"
           footer={
             <>
               <Button type="button" variant="ghost" onClick={() => setEditingRole(null)} disabled={pending}>
                 {uz.common.cancel}
               </Button>
               <Button form="bot-settings-form" type="submit" disabled={pending}>
-                {pending ? "Saqlanmoqda..." : uz.common.save}
+                <Check className="size-4" /> {pending ? "Saqlanmoqda..." : uz.common.save}
               </Button>
             </>
           }
         >
           <form id="bot-settings-form" onSubmit={handleSave} className="space-y-4">
             {/* Yoqish / O'chirish switchi */}
-            <div className="flex items-center justify-between rounded-control border border-border bg-muted/30 p-3">
-              <div className="space-y-0.5">
-                <Label htmlFor="bot-enable-switch" className="text-body font-semibold cursor-pointer">
-                  {t.enableSwitch}
-                </Label>
-                <p className="text-caption text-muted-foreground">
-                  Bot faollashtirilsa, foydalanuvchilar undan foydalanishlari va xabarlar olishlari mumkin
-                </p>
-              </div>
+            <div className="flex items-center justify-between rounded-control border border-border bg-card px-3.5 py-2.5">
+              <Label htmlFor="bot-enable-switch" className="cursor-pointer font-medium text-foreground">
+                {t.enableSwitch}
+              </Label>
               <Switch id="bot-enable-switch" checked={enabled} onCheckedChange={setEnabled} />
             </div>
 
             {/* Token va Username */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
                 <Label htmlFor="bot-token">{t.tokenLabel}</Label>
                 <Input
                   id="bot-token"
                   type="password"
-                  placeholder="1234567890:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                  placeholder="1234567890:ABC-DEF1234ghIkl..."
                   className="font-mono text-xs"
                   value={token}
                   onChange={(e) => setToken(e.target.value)}
                 />
-                <FieldHint>{t.tokenHint}</FieldHint>
               </div>
 
-              <div className="space-y-1.5">
+              <div>
                 <Label htmlFor="bot-username">{t.usernameLabel}</Label>
                 <Input
                   id="bot-username"
                   placeholder="edu_teacher_bot"
-                  className="font-mono"
+                  className="font-mono text-xs"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                 />
-                <FieldHint>{t.usernameHint}</FieldHint>
               </div>
             </div>
 
             {/* Mini App URL */}
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="bot-miniapp">{t.miniAppLabel}</Label>
               <Input
                 id="bot-miniapp"
@@ -393,35 +386,23 @@ export function TelegramBotsView({
                 value={miniAppUrl}
                 onChange={(e) => setMiniAppUrl(e.target.value)}
               />
-              <FieldHint>Bot ichida ochiladigan Telegram WebApp sahifasi yo'li</FieldHint>
             </div>
 
             {/* Bildirishnomalar Bo'limi */}
-            <div className="space-y-2.5 pt-2">
-              <div className="border-b border-border pb-1.5">
-                <h4 className="type-heading text-body font-bold text-foreground">{t.notificationsSection}</h4>
-                <p className="text-caption text-muted-foreground">
-                  Kerakli bildirishnomalarni yoqing yoki o'chiring. Tizim tegishli hodisada xabarni avtomatik jo'natadi.
-                </p>
-              </div>
-
-              <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
+            <div className="space-y-2 pt-1">
+              <Label className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
+                {t.notificationsSection}
+              </Label>
+              <div className="divide-y divide-border rounded-control border border-border bg-card">
                 {BOTS_META[editingRole].notificationOptions.map((opt) => {
                   const on = notifications[opt.key] ?? opt.defaultEnabled;
                   return (
-                    <div
+                    <label
                       key={opt.key}
-                      className="flex items-start justify-between gap-3 rounded-control border border-border p-2.5 transition-colors hover:bg-muted/30"
+                      htmlFor={`notif-${opt.key}`}
+                      className="flex cursor-pointer items-center justify-between gap-3 px-3.5 py-2.5 transition-colors hover:bg-muted/40"
                     >
-                      <div className="space-y-0.5">
-                        <Label
-                          htmlFor={`notif-${opt.key}`}
-                          className="text-body font-medium text-foreground cursor-pointer text-xs"
-                        >
-                          {opt.label}
-                        </Label>
-                        <p className="text-2xs text-muted-foreground">{opt.description}</p>
-                      </div>
+                      <span className="text-body font-medium text-foreground">{opt.label}</span>
                       <Switch
                         id={`notif-${opt.key}`}
                         checked={on}
@@ -429,30 +410,30 @@ export function TelegramBotsView({
                           setNotifications((prev) => ({ ...prev, [opt.key]: checked }))
                         }
                       />
-                    </div>
+                    </label>
                   );
                 })}
               </div>
             </div>
 
             {/* Webhook qismi */}
-            <div className="rounded-control border border-border/80 bg-muted/20 p-2.5 space-y-1.5 text-2xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-foreground">Webhook manzili:</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-7 text-2xs"
-                  onClick={() => handleSyncWebhook(editingRole)}
-                  disabled={pending || !token.trim()}
-                >
-                  <RefreshCw className="size-3" /> {t.syncWebhook}
-                </Button>
+            <div className="flex items-center justify-between rounded-control border border-border bg-muted/20 px-3.5 py-2">
+              <div className="min-w-0 flex-1 pr-3">
+                <div className="text-2xs font-semibold text-muted-foreground">Webhook manzili</div>
+                <div className="truncate font-mono text-xs text-foreground select-all">
+                  https://{tenantSlug}.ventura.uz/api/telegram/webhook?role={editingRole}
+                </div>
               </div>
-              <code className="block bg-card border border-border p-1.5 rounded text-muted-foreground font-mono break-all text-2xs">
-                https://{tenantSlug}.ventura.uz/api/telegram/webhook?role={editingRole}
-              </code>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 shrink-0 text-xs"
+                onClick={() => handleSyncWebhook(editingRole)}
+                disabled={pending || !token.trim()}
+              >
+                <RefreshCw className="size-3" /> {t.syncWebhook}
+              </Button>
             </div>
           </form>
         </Modal>
@@ -464,8 +445,7 @@ export function TelegramBotsView({
           open={testingRole !== null}
           onOpenChange={(v) => !v && setTestingRole(null)}
           position="center"
-          title={`${BOTS_META[testingRole].name} orqali test xabar`}
-          description="Botning to'g'ri ulanganligini tekshirish uchun o'z Telegram Chat ID'ingizga xabar yuboring"
+          title={`${BOTS_META[testingRole].name}: Test xabar`}
           footer={
             <>
               <Button type="button" variant="ghost" onClick={() => setTestingRole(null)} disabled={testPending}>
@@ -478,22 +458,19 @@ export function TelegramBotsView({
           }
         >
           <form id="test-message-form" onSubmit={handleSendTest} className="space-y-4">
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="test-chat-id">{t.chatIdLabel}</Label>
               <Input
                 id="test-chat-id"
-                placeholder="Masalan: 123456789"
+                placeholder="123456789 (@userinfobot dan)"
                 required
                 className="font-mono text-xs"
                 value={testChatId}
                 onChange={(e) => setTestChatId(e.target.value)}
               />
-              <FieldHint>
-                O'z Telegram Chat ID'ingizni bilish uchun Telegramda <code>@userinfobot</code> ga yozing.
-              </FieldHint>
             </div>
 
-            <div className="space-y-1.5">
+            <div>
               <Label htmlFor="test-message-text">{t.messageTextLabel}</Label>
               <Textarea
                 id="test-message-text"
