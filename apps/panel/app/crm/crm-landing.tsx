@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Globe,
   GraduationCap,
   HardDrive,
   HelpCircle,
@@ -31,6 +32,8 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import { PhoneInput, formatUzPhone } from "@ventura/ui/phone-input";
+import { slugify } from "@/lib/project-rules";
 import type { CrmContacts } from "@/lib/server/crm-contacts";
 import { checkCrmSlugAvailability, startFreeTrialAction } from "./actions";
 
@@ -62,11 +65,18 @@ function useTheme() {
 
 export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
   const [modalOpen, setModalOpen] = React.useState(false);
+  const [initialCenterName, setInitialCenterName] = React.useState("");
   const [initialSlug, setInitialSlug] = React.useState("");
   const { isDark, toggle: toggleTheme } = useTheme();
 
-  const handleOpenTrial = (slug?: string) => {
-    if (slug) setInitialSlug(slug);
+  const handleOpenTrial = (nameOrSlug?: string) => {
+    if (nameOrSlug) {
+      setInitialCenterName(nameOrSlug);
+      setInitialSlug(slugify(nameOrSlug));
+    } else {
+      setInitialCenterName("");
+      setInitialSlug("");
+    }
     setModalOpen(true);
   };
 
@@ -695,7 +705,11 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
 
       {/* 11. Free Trial Registration Modal */}
       {modalOpen && (
-        <FreeTrialModal initialSlug={initialSlug} onClose={() => setModalOpen(false)} />
+        <FreeTrialModal
+          initialCenterName={initialCenterName}
+          initialSlug={initialSlug}
+          onClose={() => setModalOpen(false)}
+        />
       )}
     </div>
   );
@@ -703,29 +717,30 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
 
 /* ---------- Subdomain Quick Starter Component ---------- */
 
-function SubdomainQuickStarter({ onStart }: { onStart: (slug: string) => void }) {
-  const [slug, setSlug] = React.useState("");
+function SubdomainQuickStarter({ onStart }: { onStart: (nameOrSlug: string) => void }) {
+  const [name, setName] = React.useState("");
+  const autoSlug = name.trim() ? slugify(name) : "";
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const clean = slug.trim().toLowerCase().replace(/[^a-z0-9-]/g, "");
-    onStart(clean);
+    onStart(name.trim());
   };
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-center gap-2">
       <div className="relative flex-1 w-full flex items-center bg-slate-100/90 dark:bg-slate-950/80 rounded-xl border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
-        <span className="text-slate-400 dark:text-slate-500 font-mono text-xs select-none">https://</span>
         <input
           type="text"
-          value={slug}
-          onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-          placeholder="sizning-markaz"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="O'quv markazingiz nomi (masalan: Registon)"
           className="w-full bg-transparent text-slate-900 dark:text-white font-medium text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none px-1"
         />
-        <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0">
-          .ventura.uz
-        </span>
+        {autoSlug && (
+          <span className="hidden sm:inline-flex items-center text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0 bg-indigo-50 dark:bg-indigo-950/60 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-800/50">
+            {autoSlug}.ventura.uz
+          </span>
+        )}
       </div>
       <button
         type="submit"
@@ -1138,11 +1153,24 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
 
 /* ---------- Free Trial Modal Component ---------- */
 
-function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose: () => void }) {
-  const [centerName, setCenterName] = React.useState("");
-  const [slug, setSlug] = React.useState(initialSlug || "");
+function FreeTrialModal({
+  initialCenterName = "",
+  initialSlug = "",
+  onClose,
+}: {
+  initialCenterName?: string;
+  initialSlug?: string;
+  onClose: () => void;
+}) {
+  const [centerName, setCenterName] = React.useState(initialCenterName);
+  const [slug, setSlug] = React.useState(initialSlug || (initialCenterName ? slugify(initialCenterName) : ""));
+  const [slugTouched, setSlugTouched] = React.useState(false);
+  const [showCustomSlug, setShowCustomSlug] = React.useState(false);
+
   const [ownerName, setOwnerName] = React.useState("");
   const [ownerPhone, setOwnerPhone] = React.useState("");
+  const [phoneError, setPhoneError] = React.useState<string | null>(null);
+
   const [ownerPassword, setOwnerPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
 
@@ -1182,28 +1210,51 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
   const handleCenterNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setCenterName(val);
-    if (!slug || slug === initialSlug) {
-      const generated = val
-        .toLowerCase()
-        .replace(/['`ʻʼ]/g, "")
-        .replace(/[^a-z0-9]/g, "-")
-        .replace(/-+/g, "-")
-        .replace(/^-|-$/g, "");
-      if (generated) setSlug(generated.slice(0, 30));
+    if (!slugTouched) {
+      const generated = slugify(val);
+      setSlug(generated);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+    setPhoneError(null);
+
+    if (centerName.trim().length < 2) {
+      setSubmitError("O'quv markaz nomini kiriting (kamida 2 ta belgi)");
+      return;
+    }
+
+    if (!slug || slug.length < 3) {
+      setSubmitError("Subdomen kamida 3 ta belgidan iborat bo'lishi kerak");
+      return;
+    }
+
+    if (ownerName.trim().length < 2) {
+      setSubmitError("Rahbar ismini kiriting (kamida 2 ta belgi)");
+      return;
+    }
+
+    const cleanDigits = ownerPhone.replace(/\D/g, "");
+    if (!/^\d{9}$/.test(cleanDigits)) {
+      setPhoneError("Telefon raqami 9 ta raqamdan iborat bo'lishi kerak (masalan, 90 123 45 67)");
+      return;
+    }
+
+    if (ownerPassword.length < 8) {
+      setSubmitError("Parol kamida 8 ta belgidan iborat bo'lishi kerak");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
       const res = await startFreeTrialAction({
-        centerName,
-        slug,
-        ownerName,
-        ownerPhone,
+        centerName: centerName.trim(),
+        slug: slug.trim().toLowerCase(),
+        ownerName: ownerName.trim(),
+        ownerPhone: cleanDigits,
         ownerPassword,
       });
 
@@ -1251,15 +1302,29 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
               </div>
             </div>
 
+            {/* Post-login notice */}
+            <div className="my-3 p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2.5 text-xs text-indigo-900 dark:text-indigo-200">
+              <Bot className="size-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-semibold">Oson va tez boshlash:</span>
+                <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
+                  Telegram bot, 2FA xavfsizlik va boshqa sozlamalar loyihangiz ochilgandan so'ng, tizim ichida oson ulanadi.
+                </p>
+              </div>
+            </div>
+
             {submitError && (
-              <div className="my-3.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs">
+              <div className="my-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs">
                 ⚠️ {submitError}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="mt-4 space-y-3.5 text-xs sm:text-sm">
+            <form onSubmit={handleSubmit} className="mt-3.5 space-y-3.5 text-xs sm:text-sm">
+              {/* 1. Markaz nomi va avtomatik subdomen */}
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">O'quv markaz nomi *</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  O'quv markaz nomi *
+                </label>
                 <input
                   type="text"
                   required
@@ -1268,41 +1333,70 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                   placeholder="Masalan: Registon Academy"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
                 />
+
+                {/* Subdomain automatic preview & edit toggle */}
+                <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                      <Globe className="size-3.5 text-indigo-500" />
+                      <span>Web manzil:</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomSlug(!showCustomSlug)}
+                      className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                    >
+                      {showCustomSlug ? "Avtomatik" : "Subdomenni o'zgartirish"}
+                    </button>
+                  </div>
+
+                  {!showCustomSlug ? (
+                    <div className="mt-1.5 flex items-center gap-1 font-mono text-xs">
+                      <span className="text-slate-400 select-none">https://</span>
+                      <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                        {slug || "markaz"}
+                      </span>
+                      <span className="text-slate-500 select-none">.ventura.uz</span>
+                    </div>
+                  ) : (
+                    <div className="mt-1.5 flex items-center rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2.5 py-1.5 focus-within:border-indigo-500">
+                      <span className="text-slate-400 font-mono text-xs select-none">https://</span>
+                      <input
+                        type="text"
+                        value={slug}
+                        onChange={(e) => {
+                          setSlugTouched(true);
+                          setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                        }}
+                        placeholder="markaz"
+                        className="w-full bg-transparent text-slate-900 dark:text-white font-mono text-xs px-1 focus:outline-none"
+                      />
+                      <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0">
+                        .ventura.uz
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Availability badge */}
+                  <div className="mt-1 min-h-[16px] text-[11px]">
+                    {checkingSlug && <span className="text-slate-400">Tekshirilmoqda...</span>}
+                    {!checkingSlug && slugStatus && slugStatus.available && (
+                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <Check className="size-3 text-emerald-500" /> <strong>{slug}.ventura.uz</strong> bo'sh, markazingiz uchun tayyor
+                      </span>
+                    )}
+                    {!checkingSlug && slugStatus && !slugStatus.available && (
+                      <span className="text-red-500">❌ {slugStatus.error}</span>
+                    )}
+                  </div>
+                </div>
               </div>
 
+              {/* 2. Rahbar ismi */}
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Subdomen manzili *{" "}
-                  <span className="text-[11px] text-slate-400 font-normal">(web manzilingiz)</span>
+                  Rahbar ismi va familiyasi *
                 </label>
-                <div className="flex items-center rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2 focus-within:border-indigo-500">
-                  <span className="text-slate-400 font-mono text-xs select-none">https://</span>
-                  <input
-                    type="text"
-                    required
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-                    placeholder="registon"
-                    className="w-full bg-transparent text-slate-900 dark:text-white font-medium px-1 focus:outline-none"
-                  />
-                  <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold shrink-0">.ventura.uz</span>
-                </div>
-
-                <div className="mt-1 min-h-[18px] text-xs">
-                  {checkingSlug && <span className="text-slate-400">Tekshirilmoqda...</span>}
-                  {!checkingSlug && slugStatus && slugStatus.available && (
-                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                      <Check className="size-3.5" /> <strong>{slug}.ventura.uz</strong> bo'sh, tanlashingiz mumkin
-                    </span>
-                  )}
-                  {!checkingSlug && slugStatus && !slugStatus.available && (
-                    <span className="text-red-500">❌ {slugStatus.error}</span>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Direktor ismi va familiyasi *</label>
                 <input
                   type="text"
                   required
@@ -1313,22 +1407,32 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
                 />
               </div>
 
+              {/* 3. Telefon raqami — PhoneInput (paneldagi loyiha kabi) */}
               <div>
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Telefon raqami * <span className="text-[11px] text-slate-400 font-normal">(kirish logini)</span>
+                  Telefon raqami * <span className="text-[11px] text-slate-400 font-normal">(kabinetga kirish logini)</span>
                 </label>
-                <input
-                  type="tel"
-                  required
+                <PhoneInput
                   value={ownerPhone}
-                  onChange={(e) => setOwnerPhone(e.target.value)}
-                  placeholder="+998 90 123 45 67"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
+                  onValueChange={(val) => {
+                    setOwnerPhone(val);
+                    if (phoneError) setPhoneError(null);
+                  }}
+                  invalid={!!phoneError}
+                  className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-within:border-indigo-500"
                 />
+                {phoneError ? (
+                  <p className="mt-1 text-xs text-red-500">{phoneError}</p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-slate-400">9 ta raqam (masalan, 90 123 45 67)</p>
+                )}
               </div>
 
+              {/* 4. Parol */}
               <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Direktor paroli *</label>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  Kabinet paroli *
+                </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
@@ -1408,25 +1512,40 @@ function FreeTrialModal({ initialSlug, onClose }: { initialSlug: string; onClose
               <div className="grid grid-cols-2 gap-2 pt-1 text-slate-700 dark:text-slate-300">
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Login</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">{ownerPhone}</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-200">
+                    +998 {formatUzPhone(ownerPhone)}
+                  </span>
                 </div>
                 <div>
                   <span className="text-slate-400 block text-[10px] uppercase">Parol</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">••••••••</span>
+                  <span className="font-semibold text-slate-900 dark:text-slate-200">
+                    {ownerPassword ? "••••••••" : "Siz kiritgan parol"}
+                  </span>
                 </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-1.5 font-sans">
+                <Bot className="size-3.5 text-indigo-500 shrink-0 mt-0.5" />
+                <span>Kabinetingizga kirgach, Sozlamalar bo'limidan o'z Telegram botingizni va 2FA xavfsizlikni 1 daqiqada ulab olasiz.</span>
               </div>
             </div>
 
-            <div className="pt-1.5">
+            <div className="pt-1.5 flex flex-col sm:flex-row gap-2.5">
               <a
                 href={successResult.url}
                 target="_blank"
                 rel="noreferrer"
-                className="w-full inline-flex items-center justify-center py-3.5 px-4 rounded-xl font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/30 active:scale-95"
+                className="flex-1 inline-flex items-center justify-center py-3.5 px-4 rounded-xl font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/30 active:scale-95"
               >
                 <span>CRM Tizimiga Kirish</span>
                 <ExternalLink className="size-4 ml-2" />
               </a>
+              <button
+                onClick={onClose}
+                className="py-3.5 px-4 rounded-xl font-semibold text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+              >
+                Yopish
+              </button>
             </div>
           </div>
         )}

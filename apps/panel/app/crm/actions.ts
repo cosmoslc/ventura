@@ -130,7 +130,12 @@ const trialInputSchema = z.object({
     .trim()
     .min(2, "Rahbar ismi kamida 2 ta belgidan iborat bo'lishi kerak")
     .max(100, "Ism 100 ta belgidan oshmasligi kerak"),
-  ownerPhone: z.string().trim().min(9, "Telefon raqami noto'g'ri kiritildi"),
+  ownerPhone: z
+    .string()
+    .trim()
+    .refine((val) => /^\d{9}$/.test(val.replace(/\D/g, "")) || !!normalizeUzPhone(val), {
+      message: "Telefon raqami noto'g'ri kiritildi (9 ta raqam: masalan, 90 123 45 67)",
+    }),
   ownerPassword: z
     .string()
     .min(8, "Parol kamida 8 ta belgidan iborat bo'lishi kerak")
@@ -151,9 +156,10 @@ export async function startFreeTrialAction(input: unknown): Promise<Result<{ slu
   }
 
   // 2. Normalize phone
-  const normalizedPhone = normalizeUzPhone(v.ownerPhone);
+  const rawDigits = v.ownerPhone.replace(/\D/g, "");
+  const normalizedPhone = normalizeUzPhone(rawDigits) ?? normalizeUzPhone(v.ownerPhone);
   if (!normalizedPhone) {
-    return { ok: false, error: "Telefon raqami O'zbekiston formati bo'lishi kerak (+998 ...)" };
+    return { ok: false, error: "Telefon raqami O'zbekiston formati bo'lishi kerak (90 123 45 67)" };
   }
 
   const { db, telegram } = deps();
