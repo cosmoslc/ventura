@@ -1,9 +1,12 @@
 import "server-only";
 import { createHash } from "node:crypto";
+import { eq } from "drizzle-orm";
 import { type StaffAuth, type StaffDeps, createStaffAuth } from "@ventura/auth/staff";
 import { type TenantDb, createTenantDb } from "@ventura/db";
+import { settings } from "@ventura/db/schema/tenant";
 import { type Telegram, createTelegram } from "@ventura/integrations";
 import type { Tenant } from "@ventura/tenants";
+import { TELEGRAM_BOTS_KEY, parseTelegramBotsConfig } from "../telegram-bots";
 import { tenantSecret } from "./tenant";
 
 /*
@@ -42,17 +45,28 @@ export function tenantDeps(tenant: Tenant): TenantDeps | null {
   if (existing) void existing.deps.db.close().catch(() => {});
 
   const db = createTenantDb(secret.databaseUrl, tenant.slug);
-  const telegram = secret.telegramBotToken ? createTelegram(secret.telegramBotToken) : null;
+  let telegram = secret.telegramBotToken ? createTelegram(secret.telegramBotToken) : null;
   const auths = new Map<string, StaffAuth>();
   const deps: TenantDeps = {
     db,
-    telegram,
+    get telegram() {
+      return telegram;
+    },
+    set telegram(t: Telegram | null) {
+      telegram = t;
+    },
     appName: tenant.name,
     secret: secret.authSecret,
     auth(origin) {
       let auth = auths.get(origin);
       if (!auth) {
-        auth = createStaffAuth({ db, telegram, appName: tenant.name, secret: secret.authSecret, baseURL: origin });
+        auth = createStaffAuth({
+          db,
+          telegram: () => deps.telegram,
+          appName: tenant.name,
+          secret: secret.authSecret,
+          baseURL: origin,
+        });
         auths.set(origin, auth);
       }
       return auth;
@@ -60,6 +74,30 @@ export function tenantDeps(tenant: Tenant): TenantDeps | null {
   };
   entries.set(tenant.slug, { fingerprint: fp, deps });
   return deps;
+}
+
+/**
+ * Markaz Telegram botini aniqlaydi:
+ * 1. Avval maxfiy sozlamadagi (secret.telegramBotToken)
+ * 2. Bo'lmasa, baza sozlamalaridagi (settings.telegram_bots dagi teacherBot)
+ * Muallif / Agent: Google Gemini
+ */
+export async function resolveTelegramBot(deps: TenantDeps): Promise<Telegram | null> {
+  if (deps.telegram) return deps.telegram;
+  const [row] = await deps.db
+    .select({ value: settings.value })
+    .from(settings)
+    .where(eq(settings.key, TELEGRAM_BOTS_KEY))
+    .limit(1)
+    .catch(() => []);
+  const config = parseTelegramBotsConfig(row?.value);
+  const token = config.teacherBot.token?.trim() || config.studentBot.token?.trim();
+  if (token) {
+    const tg = createTelegram(token);
+    deps.telegram = tg;
+    return tg;
+  }
+  return null;
 }
 
 /** SPEC 4-bo'lim: mijoz bazasiga ulanish faqat shu orqali olinadi. */

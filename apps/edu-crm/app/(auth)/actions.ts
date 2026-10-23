@@ -29,7 +29,7 @@ import {
 import { users, verifications } from "@ventura/db/schema/tenant";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
 import { tenantAudit } from "@ventura/security";
-import type { TenantDeps } from "@/lib/server/deps";
+import { type TenantDeps, resolveTelegramBot } from "@/lib/server/deps";
 import { currentDeps, getStaff } from "@/lib/server/session";
 import { PENDING_COOKIE, ensureDeviceId, requestMeta, requestOrigin, secureRequest } from "@/lib/server/request";
 import { uz } from "@/lib/uz";
@@ -58,7 +58,8 @@ type Ready = { error: string } | { deps: TenantDeps; telegram: Telegram | null; 
 async function ready(): Promise<Ready> {
   const { deps } = await currentDeps();
   if (!deps) return { error: uz.auth.notConfigured };
-  return { deps, telegram: deps.telegram, auth: deps.auth(await requestOrigin()) };
+  const telegram = await resolveTelegramBot(deps);
+  return { deps, telegram, auth: deps.auth(await requestOrigin()) };
 }
 
 /* ---------- 1. Telefon + parol ---------- */
@@ -253,7 +254,11 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
     { telegramChatId: chatId },
     `✅ <b>${escapeHtml(deps.appName)}</b>: Telegram ulandi — ${escapeHtml(user.name)} (${formatPhone(user.phoneNumber ?? "")})\nEndi har kirishda kod shu yerga keladi.`,
   );
-  // Parolning o'zi bilan ochilgan sessiya yopiladi — endi to'liq (kod bilan) kirish kerak
+  const nextTarget = text(form, "next");
+  if (nextTarget === "/account") {
+    return { next: "/account?telegram=ulandi" };
+  }
+  // Parolning o'zi bilan ochilgan sessiya yopiladi — endi to'liq (kod bilan) kirish kerak (login funnel paytida)
   await revokeStaffSessions(deps.db, user.id);
   return { next: "/login?telegram=ulandi" };
 }

@@ -17,7 +17,7 @@ import { type Telegram, escapeHtml } from "@ventura/integrations";
 export interface StaffAuthDeps {
   db: TenantDb;
   /** Mijozning o'z boti; berilmasa kod yuborib bo'lmaydi va xodim kira olmaydi */
-  telegram: Telegram | null;
+  telegram: Telegram | null | (() => Telegram | null);
   /** Markaz nomi: Telegram xabarida ko'rinadi */
   appName: string;
   secret: string;
@@ -78,9 +78,10 @@ export function createStaffAuth({ db, telegram, appName, secret, baseURL }: Staf
           storeOTP: "hashed",
           async sendOTP({ user, otp }) {
             const chatId = (user as { telegramChatId?: string | null }).telegramChatId;
-            if (!telegram) throw new Error("Telegram bot ulanmagan");
+            const tg = typeof telegram === "function" ? telegram() : telegram;
+            if (!tg) throw new Error("Telegram bot ulanmagan");
             if (!chatId) throw new Error("Telegram ulanmagan");
-            await telegram.sendMessage(
+            await tg.sendMessage(
               chatId,
               `🔐 <b>${escapeHtml(appName)}</b> kirish kodi: <code>${escapeHtml(otp)}</code>\n` +
                 `Kod 5 daqiqa amal qiladi. Siz so'ramagan bo'lsangiz, hech kimga bermang.`,

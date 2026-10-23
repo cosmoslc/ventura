@@ -531,6 +531,8 @@ const REGISTRY: Record<string, Def> = {
   ),
   "user.create": simple("auth", "hisob yaratildi", undefined, () => null),
   "user.telegram_linked": simple("auth", "Telegramni ulab oldi", undefined, () => null),
+  "user.telegram_unlinked": simple("auth", "Telegram hisobini uzdi", undefined, () => null),
+  "user.2fa_toggled": simple("auth", "2FA sozlamasini o'zgartirdi", (i) => (i.m.enabled ? "yoqdi" : "o'chirdi"), () => null),
   "user.password_change": simple("auth", "parolini almashtirdi", undefined, () => null),
 };
 

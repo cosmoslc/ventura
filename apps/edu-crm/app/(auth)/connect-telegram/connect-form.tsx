@@ -21,7 +21,7 @@ function Step({ n, children }: { n: number; children: React.ReactNode }) {
   );
 }
 
-export function ConnectForm() {
+export function ConnectForm({ nextPath }: { nextPath?: string }) {
   const [state, action, pending] = useActionState<FormState, FormData>(checkLinkAction, {});
   useFormNext(state);
   const [link, setLink] = useState<string | null>(null);
@@ -41,6 +41,7 @@ export function ConnectForm() {
 
   return (
     <form action={action} className="space-y-5">
+      {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
       <FormMessage error={state.error ?? linkError} />
       <Step n={1}>
         <div className="text-body font-semibold text-foreground">{uz.auth.connectStep1}</div>
@@ -60,6 +61,13 @@ export function ConnectForm() {
           {uz.auth.check}
         </Button>
       </Step>
+      {nextPath ? (
+        <div className="text-center pt-1">
+          <Button variant="ghost" size="sm" asChild>
+            <a href={nextPath}>{uz.common.cancel}</a>
+          </Button>
+        </div>
+      ) : null}
     </form>
   );
 }
