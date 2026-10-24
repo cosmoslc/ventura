@@ -206,11 +206,11 @@ Har bosqich alohida branch va PR, muhim qarorlar ADR'da. Qabul mezoni bajarilmag
 
 ### S1. Ma'lumotnomalar va sozlamalar
 
-- [ ] Ishchilar: ro'yxat (balans ustuni keyin to'ladi), qo'shish, tahrirlash, arxiv
-- [ ] Materiallar katalogi: nom, birlik, hisoblash turi, o'lchamlar (q × e × u) va 1 dona hajmi; o'lcham variantlari (`material_sizes`)
-- [ ] Ish turlari (sozlamada), yuk mashinalari
-- [ ] Sozlamalar: foyda usuli, miqdor ko'rinishi, kub usuli, o'lcham birligi (mm/sm/m)
-- [ ] `lib/calc/units.ts`: birlik aylantirish, 1 dona hajmi, dona ↔ kub, pul formati — Vitest
+- [x] Ishchilar: ro'yxat (balans ustuni keyin to'ladi), qo'shish, tahrirlash, arxiv
+- [x] Materiallar katalogi: nom, birlik, hisoblash turi, o'lchamlar (q × e × u) va 1 dona hajmi; o'lcham variantlari (`material_sizes`)
+- [x] Ish turlari (sozlamada), yuk mashinalari
+- [x] Sozlamalar: foyda usuli, miqdor ko'rinishi, kub usuli, o'lcham birligi (mm/sm/m)
+- [x] `lib/calc/units.ts`: birlik aylantirish, 1 dona hajmi, dona ↔ kub, pul formati — Vitest (ADR 0069)
 
 **Qabul:** tahlil 5-qismidagi hamma formula testda; mm/sm/m da kiritilgan o'lcham bazada sm bo'lib turadi.
 

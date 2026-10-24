@@ -1,14 +1,23 @@
-import { SectionPlaceholder } from "@/components/section-placeholder";
-import { requireUser } from "@/lib/server/session";
+import { can } from "@/lib/auth/roles";
+import { currentDeps, requireUser } from "@/lib/server/session";
+import { getSettingsData } from "./actions";
+import { SettingsClient } from "./settings-client";
 
 export default async function SettingsPage() {
-  await requireUser();
+  const { user } = await requireUser();
+  const { deps } = await currentDeps();
+  if (!deps) return null;
+
+  const { settings, workTypes } = await getSettingsData(deps.db);
+  const canManage = can(user.role, "settings.manage");
+  const locale = user.locale ?? "uz";
 
   return (
-    <SectionPlaceholder
-      title="Sex va tizim sozlamalari"
-      stage="S1 Bosqich"
-      description="Birliklar (mm/sm/m), foyda hisoblash usuli, kub usuli va til sozlamalari."
+    <SettingsClient
+      initialSettings={settings}
+      workTypes={workTypes}
+      canManage={canManage}
+      locale={locale}
     />
   );
 }

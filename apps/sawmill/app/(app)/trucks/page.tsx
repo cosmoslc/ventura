@@ -1,19 +1,23 @@
-import { redirect } from "next/navigation";
-import { hasFeature } from "@ventura/tenants";
-import { SectionPlaceholder } from "@/components/section-placeholder";
-import { requireUser } from "@/lib/server/session";
+import { can } from "@/lib/auth/roles";
+import { currentDeps, requireUser } from "@/lib/server/session";
+import { getTrucksList } from "./actions";
+import { TrucksClient } from "./trucks-client";
 
 export default async function TrucksPage() {
-  const { tenant } = await requireUser();
-  if (!(await hasFeature(tenant, "trucks"))) {
-    redirect("/bolim-yopiq");
-  }
+  const { user } = await requireUser();
+  const { deps } = await currentDeps();
+  if (!deps) return null;
+
+  const { active, archived } = await getTrucksList(deps.db);
+  const canManage = can(user.role, "trucks.manage");
+  const locale = user.locale ?? "uz";
 
   return (
-    <SectionPlaceholder
-      title="Yuk mashinalari"
-      stage="S4 Bosqich"
-      description="Yuk mashinalari katalogi va tashish xarajatlari."
+    <TrucksClient
+      activeTrucks={active}
+      archivedTrucks={archived}
+      canManage={canManage}
+      locale={locale}
     />
   );
 }

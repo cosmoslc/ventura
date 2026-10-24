@@ -1,19 +1,23 @@
-import { redirect } from "next/navigation";
-import { hasFeature } from "@ventura/tenants";
-import { SectionPlaceholder } from "@/components/section-placeholder";
-import { requireUser } from "@/lib/server/session";
+import { can } from "@/lib/auth/roles";
+import { currentDeps, requireUser } from "@/lib/server/session";
+import { getWorkersList } from "./actions";
+import { WorkersClient } from "./workers-client";
 
 export default async function WorkersPage() {
-  const { tenant } = await requireUser();
-  if (!(await hasFeature(tenant, "workers"))) {
-    redirect("/bolim-yopiq");
-  }
+  const { user } = await requireUser();
+  const { deps } = await currentDeps();
+  if (!deps) return null;
+
+  const { active, archived } = await getWorkersList(deps.db);
+  const canManage = can(user.role, "workers.manage");
+  const locale = user.locale ?? "uz";
 
   return (
-    <SectionPlaceholder
-      title="Ishchilar va ish haqi"
-      stage="S1 / S3 Bosqich"
-      description="Ishchilar ro'yxati, balanslar, to'lovlar va maosh hisoblash."
+    <WorkersClient
+      activeWorkers={active}
+      archivedWorkers={archived}
+      canManage={canManage}
+      locale={locale}
     />
   );
 }

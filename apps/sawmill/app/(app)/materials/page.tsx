@@ -1,19 +1,26 @@
-import { redirect } from "next/navigation";
-import { hasFeature } from "@ventura/tenants";
-import { SectionPlaceholder } from "@/components/section-placeholder";
-import { requireUser } from "@/lib/server/session";
+import { can } from "@/lib/auth/roles";
+import { currentDeps, requireUser } from "@/lib/server/session";
+import { getSawmillSettings } from "@/lib/settings/schema";
+import { getMaterialsCatalog } from "./actions";
+import { MaterialsClient } from "./materials-client";
 
 export default async function MaterialsPage() {
-  const { tenant } = await requireUser();
-  if (!(await hasFeature(tenant, "stock"))) {
-    redirect("/bolim-yopiq");
-  }
+  const { user } = await requireUser();
+  const { deps } = await currentDeps();
+  if (!deps) return null;
+
+  const { active, archived } = await getMaterialsCatalog(deps.db);
+  const settings = await getSawmillSettings(deps.db);
+  const canManage = can(user.role, "stock.manage");
+  const locale = user.locale ?? "uz";
 
   return (
-    <SectionPlaceholder
-      title="Materiallar katalogi va ombor"
-      stage="S1 / S2 Bosqich"
-      description="Material turlari, o'lchamlar, narxlar va qoldiqlar harakati."
+    <MaterialsClient
+      activeMaterials={active}
+      archivedMaterials={archived}
+      defaultUnit={settings.dimensionUnit}
+      canManage={canManage}
+      locale={locale}
     />
   );
 }
