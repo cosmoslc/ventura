@@ -21,6 +21,7 @@ import { audit, putSecret } from "@ventura/security";
 import { type Feature, withRequirements } from "@ventura/tenants";
 import { BASE_DOMAIN, deployProblem, projectInputSchema, slugProblem } from "@/lib/project-rules";
 import { deps, queue } from "@/lib/server/deps";
+import { resetProjectDirectorPassword, unlockProjectDirector } from "@/lib/server/project-tenant";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -343,3 +344,70 @@ export async function purgeProjectAction(id: string, confirm: string): Promise<R
   revalidatePath("/projects/trash");
   return { ok: true };
 }
+
+/* ---------- Sinov va Ega boshqaruvi (Muallif / Agent: Google Gemini) ---------- */
+
+/** 7 kunlik sinovni yakunlab, loyihani to'liq faollashtirish */
+export async function activateTrialProjectAction(id: string): Promise<Result> {
+  const { actor, meta, db } = await ctx();
+  const [before] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
+    .limit(1);
+  if (!before) return { ok: false, error: uz.common.loadError };
+
+  const currentSettings = (before.settings ?? {}) as Record<string, unknown>;
+  const trial = (currentSettings.trial ?? {}) as Record<string, unknown>;
+  const nextSettings = {
+    ...currentSettings,
+    trial: {
+      ...trial,
+      active: false,
+      activatedAt: new Date().toISOString(),
+    },
+  };
+
+  await db
+    .update(projects)
+    .set({
+      status: "active",
+      settings: nextSettings,
+    })
+    .where(eq(projects.id, id));
+
+  await audit.record(db, {
+    actor,
+    action: "project.trial_activated",
+    target: { type: "project", id },
+    ...meta,
+    metadata: {
+      slug: before.slug,
+      name: before.name,
+      previousStatus: before.status,
+    },
+  });
+
+  revalidatePath(`/projects/${id}`);
+  revalidatePath("/projects");
+  return { ok: true };
+}
+
+/** Markaz direktori hisobini blokdan chiqarish */
+export async function unlockDirectorAction(id: string): Promise<Result> {
+  const { actor, meta, db } = await ctx();
+  const res = await unlockProjectDirector(db, id, actor, meta);
+  if (!res.ok) return res;
+  revalidatePath(`/projects/${id}`);
+  return { ok: true };
+}
+
+/** Markaz direktori parolini yangilash */
+export async function resetDirectorPasswordAction(id: string, newPassword: string): Promise<Result> {
+  const { actor, meta, db } = await ctx();
+  const res = await resetProjectDirectorPassword(db, id, newPassword, actor, meta);
+  if (!res.ok) return res;
+  revalidatePath(`/projects/${id}`);
+  return { ok: true };
+}
+

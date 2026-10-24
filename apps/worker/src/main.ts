@@ -22,6 +22,7 @@ import {
 } from "@ventura/deploy";
 import { createTelegram } from "@ventura/integrations";
 import { audit } from "@ventura/security";
+import { checkTrialExpirations } from "./trial-checker";
 
 /*
  * Ishchi jarayon: navbatdagi fon vazifalarini bajaradi — deploy, serverlar bo'yicha buyruqlar, har daqiqalik
@@ -83,6 +84,7 @@ const monitor = async () => {
   monitoring = true;
   try {
     await monitorServers(db, notifyServers);
+    await checkTrialExpirations(db, notifyServers);
   } catch (e) {
     console.error("[monitor]", (e as Error).message);
   } finally {

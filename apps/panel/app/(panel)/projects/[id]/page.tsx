@@ -9,6 +9,7 @@ import { Badge } from "@ventura/ui/badge";
 import { PageHeader } from "@ventura/ui/page-header";
 import { listDeployments, workerAlive } from "@/lib/server/deployments-query";
 import { deps } from "@/lib/server/deps";
+import { getProjectDirectorInfo } from "@/lib/server/project-tenant";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { ProjectEditor } from "./editor";
@@ -29,7 +30,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   if (!p) notFound();
 
   const owner = { type: "project", id };
-  const [tpl, cls, feats, doms, ownerPassword, telegramToken, deployRows, alive] = await Promise.all([
+  const [tpl, cls, feats, doms, ownerPassword, telegramToken, deployRows, alive, directorInfo] = await Promise.all([
     db.select().from(templates).where(eq(templates.key, p.templateKey)).limit(1),
     db.select({ id: clients.id, name: clients.name }).from(clients).orderBy(asc(clients.name)),
     db.select().from(projectFeatures).where(eq(projectFeatures.projectId, id)),
@@ -38,6 +39,14 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     hasSecret(db, owner, "telegram_bot_token"),
     listDeployments(id),
     workerAlive(),
+    getProjectDirectorInfo(db, {
+      id: p.id,
+      templateKey: p.templateKey,
+      slug: p.slug,
+      dbStrategy: p.dbStrategy,
+      serverId: p.serverId,
+      ownerPhone: p.ownerPhone,
+    }),
   ]);
   const primary = doms.find((d) => d.isPrimary) ?? doms[0];
   // Sirlar tabi — faqat super admin (ADR 0059): nomlar, qiymatsiz
@@ -50,6 +59,29 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             .where(and(eq(secrets.ownerType, "project"), eq(secrets.ownerId, id)))
         ).map((r) => r.name)
       : null;
+
+  const rawSettings = (p.settings ?? {}) as Record<string, unknown>;
+  const trialRaw = (rawSettings.trial ?? null) as {
+    days?: number;
+    active?: boolean;
+    startedAt?: string;
+    expiresAt?: string;
+    activatedAt?: string;
+  } | null;
+
+  const trialInfo = trialRaw
+    ? {
+        days: trialRaw.days ?? 7,
+        active: Boolean(trialRaw.active),
+        startedAt: trialRaw.startedAt ?? null,
+        expiresAt: trialRaw.expiresAt ?? null,
+        activatedAt: trialRaw.activatedAt ?? null,
+        expired: trialRaw.expiresAt ? new Date(trialRaw.expiresAt).getTime() <= Date.now() : false,
+        daysLeft: trialRaw.expiresAt
+          ? Math.max(0, Math.ceil((new Date(trialRaw.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
+          : null,
+      }
+    : null;
 
   return (
     <>
@@ -88,6 +120,8 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         domains={doms.map((d) => ({ hostname: d.hostname, kind: d.kind, isPrimary: d.isPrimary, status: d.status }))}
         secrets={{ ownerPassword, telegramToken }}
         secretNames={secretNames}
+        director={directorInfo}
+        trial={trialInfo}
         deploys={{
           rows: deployRows,
           workerAlive: alive,

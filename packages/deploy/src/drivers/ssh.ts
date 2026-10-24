@@ -267,6 +267,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
           typeof (project.settings as Record<string, unknown> | null)?.storageLimitMb === "number"
             ? ((project.settings as Record<string, unknown>).storageLimitMb as number)
             : 5120,
+        status: project.status,
       },
       sha,
       reuse: false,

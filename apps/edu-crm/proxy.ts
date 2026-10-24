@@ -11,7 +11,7 @@ import { tenantForHost } from "@/lib/server/tenant";
  */
 
 // /api/sms/eskiz, /api/telegram — webhooklar (sessiyasiz), /api/uploads — fayllar
-const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/ariza", "/api/sms/eskiz", "/api/telegram", "/api/uploads"];
+const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/muzlatilgan", "/ariza", "/api/sms/eskiz", "/api/telegram", "/api/uploads"];
 /** Boshqa saytga iframe qilib qo'yiladigan yoki Telegram Mini App sahifalari (ADR 0026) */
 const EMBEDDABLE = ["/ariza", "/kabinet", "/portal"];
 
@@ -41,6 +41,13 @@ function route(request: NextRequest): NextResponse {
   const tenant = tenantForHost(request.headers.get("host"));
   // Notanish domen: sahifalar o'zi "Bunday tizim topilmadi" ko'rsatadi
   if (!tenant) return NextResponse.next();
+
+  // Muzlatilgan (to'xtatilgan) loyiha
+  if (tenant.status === "paused") {
+    if (pathname === "/health" || pathname === "/muzlatilgan") return NextResponse.next();
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "project_paused" }, { status: 403 });
+    return NextResponse.rewrite(new URL("/muzlatilgan", request.url));
+  }
 
   const feature = featureForPath(features, pathname);
   if (feature && !tenant.features.includes(feature)) {
