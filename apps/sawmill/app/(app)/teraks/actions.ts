@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
   dispatches,
+  generalExpenses,
   materials,
   orders,
   terakCosts,
@@ -401,7 +402,7 @@ export async function deleteTerakCostAction(costId: string, terakId: string): Pr
 }
 
 export async function getTeraksList(db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"]) {
-  const active = await db
+  const activeRaw = await db
     .select({
       id: teraks.id,
       name: teraks.name,
@@ -413,6 +414,75 @@ export async function getTeraksList(db: NonNullable<Awaited<ReturnType<typeof cu
     .from(teraks)
     .where(isNull(teraks.deletedAt))
     .orderBy(desc(teraks.purchaseDate));
+
+  const active = await Promise.all(
+    activeRaw.map(async (tr) => {
+      // 1. Qo'shimcha xarajatlar
+      const [costsRow] = await db
+        .select({ total: sql<number>`coalesce(sum(${terakCosts.amount}), 0)` })
+        .from(terakCosts)
+        .where(eq(terakCosts.terakId, tr.id));
+      const additionalCosts = Number(costsRow?.total ?? 0);
+
+      // 2. Ish haqi xarajatlari
+      const [workRow] = await db
+        .select({ total: sql<number>`coalesce(sum(${workEntries.amount}), 0)` })
+        .from(workEntries)
+        .where(eq(workEntries.terakId, tr.id));
+      const workCosts = Number(workRow?.total ?? 0);
+
+      // 3. Yuk chiqarish tushumi
+      const [dispRow] = await db
+        .select({ total: sql<number>`coalesce(sum(${dispatches.totalAmount}), 0)` })
+        .from(dispatches)
+        .where(eq(dispatches.terakId, tr.id));
+      const dispatchRevenue = Number(dispRow?.total ?? 0);
+
+      // 4. Ombor qiymati
+      const stockRows = await db
+        .select({
+          quantity: terakMaterials.quantity,
+          sellingPrice: terakMaterials.sellingPrice,
+          cubePrice: terakMaterials.cubePrice,
+          thicknessCm: materials.thicknessCm,
+          widthCm: materials.widthCm,
+          lengthCm: materials.lengthCm,
+        })
+        .from(terakMaterials)
+        .innerJoin(materials, eq(materials.id, terakMaterials.materialId))
+        .where(eq(terakMaterials.terakId, tr.id));
+
+      let stockValue = 0;
+      for (const s of stockRows) {
+        const qty = Number(s.quantity ?? 0);
+        const vol = pieceVolumeM3({
+          thicknessCm: s.thicknessCm ? Number(s.thicknessCm) : null,
+          widthCm: s.widthCm ? Number(s.widthCm) : null,
+          lengthCm: s.lengthCm ? Number(s.lengthCm) : null,
+        });
+        if (s.sellingPrice > 0) {
+          stockValue += qty * s.sellingPrice;
+        } else if (s.cubePrice > 0 && vol) {
+          stockValue += qty * vol * s.cubePrice;
+        }
+      }
+
+      const totalCosts = tr.purchasePrice + additionalCosts + workCosts;
+      const profitEstimated = dispatchRevenue + Math.round(stockValue) - totalCosts;
+      const profitReal = dispatchRevenue - totalCosts;
+
+      return {
+        ...tr,
+        additionalCosts,
+        workCosts,
+        totalCosts,
+        dispatchRevenue,
+        stockValue: Math.round(stockValue),
+        profitEstimated,
+        profitReal,
+      };
+    }),
+  );
 
   const trashed = await db
     .select({
@@ -427,7 +497,13 @@ export async function getTeraksList(db: NonNullable<Awaited<ReturnType<typeof cu
     .where(isNotNull(teraks.deletedAt))
     .orderBy(desc(teraks.deletedAt));
 
-  return { active, trashed };
+  // K14: Umumiy xarajatlar
+  const [genExpRow] = await db
+    .select({ total: sql<number>`coalesce(sum(${generalExpenses.amount}), 0)` })
+    .from(generalExpenses);
+  const generalExpensesTotal = Number(genExpRow?.total ?? 0);
+
+  return { active, trashed, generalExpensesTotal };
 }
 
 export async function getTerakDetail(

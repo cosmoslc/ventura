@@ -250,12 +250,12 @@ Har bosqich alohida branch va PR, muhim qarorlar ADR'da. Qabul mezoni bajarilmag
 
 ### S5. Bosh sahifa va hisobotlar
 
-- [ ] Bosh sahifa: terak tanlash, sof foyda (taxminiy / haqiqiy), 4 ko'rsatkich, ombor kartalari, haftalik grafik (K11), qo'shimcha xarajatlar, diqqat talab zakazlar
-- [ ] Teraklar ro'yxatida foyda; "barcha teraklar" umumiy ko'rinishi (umumiy xarajatlar ayrilgan holda)
-- [ ] Umumiy xarajatlar sahifasi va toifalari (K14)
-- [ ] Hisobotlar: terak bo'yicha foyda tafsiloti, ishchilar ish haqi davr bo'yicha, yuk chiqarish davr bo'yicha
-- [ ] Excel eksport (har hisobot)
-- [ ] `lib/calc/profit.ts` — Vitest
+- [x] Bosh sahifa: terak tanlash, sof foyda (taxminiy / haqiqiy), 4 ko'rsatkich, ombor kartalari, haftalik grafik (K11), qo'shimcha xarajatlar, diqqat talab zakazlar
+- [x] Teraklar ro'yxatida foyda; "barcha teraklar" umumiy ko'rinishi (umumiy xarajatlar ayrilgan holda)
+- [x] Umumiy xarajatlar sahifasi va toifalari (K14)
+- [x] Hisobotlar: terak bo'yicha foyda tafsiloti, ishchilar ish haqi davr bo'yicha, yuk chiqarish davr bo'yicha
+- [x] Excel eksport (har hisobot)
+- [x] `lib/calc/profit.ts` — Vitest
 
 **Qabul:** har ko'rsatkich tegishli ro'yxat sahifasidagi yig'indi bilan mos keladi (test); foyda usuli almashganda faqat ombor qiymati qo'shiladi/olinadi.
 

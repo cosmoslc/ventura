@@ -1,118 +1,215 @@
-import Link from "next/link";
+import { and, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import {
-  ArrowRight,
-  BarChart3,
-  Briefcase,
-  Layers,
-  TreePine,
-  Truck,
-  Users,
-} from "lucide-react";
-import { Badge } from "@ventura/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@ventura/ui/card";
-import { t } from "@/lib/i18n";
-import { requireUser } from "@/lib/server/session";
+  dispatches,
+  generalExpenses,
+  materials,
+  orders,
+  terakCosts,
+  terakMaterials,
+  teraks,
+  workEntries,
+} from "@ventura/db/schema/sawmill";
+import { can } from "@/lib/auth/roles";
+import { getOrderStatus, isOrderDueSoon } from "@/lib/calc/orders";
+import { pieceVolumeM3 } from "@/lib/calc/units";
+import { getSettings } from "@/lib/settings/schema";
+import { currentDeps, requireUser } from "@/lib/server/session";
+import {
+  type AttentionOrderData,
+  DashboardClient,
+  type TerakDashboardData,
+} from "./dashboard-client";
 
 export default async function DashboardPage() {
-  const { user, tenant } = await requireUser();
-  const locale = user.locale ?? "uz";
+  const { user } = await requireUser();
+  const { deps } = await currentDeps();
+  if (!deps) return null;
 
-  const cards = [
-    {
-      title: t("nav_teraks", locale),
-      desc: "Yog'och partiyalari xaridi va holati",
-      href: "/teraks",
-      icon: TreePine,
-      color: "text-emerald-500 bg-emerald-500/10",
-    },
-    {
-      title: t("nav_work", locale),
-      desc: "Kunlik ishlar, sartirofka va hisoblar",
-      href: "/work",
-      icon: Briefcase,
-      color: "text-blue-500 bg-blue-500/10",
-    },
-    {
-      title: t("nav_stock", locale),
-      desc: "Materiallar qoldig'i va o'lchamlar",
-      href: "/materials",
-      icon: Layers,
-      color: "text-amber-500 bg-amber-500/10",
-    },
-    {
-      title: t("nav_dispatch", locale),
-      desc: "Xaridorlarga sotuv va jo'natish",
-      href: "/dispatch",
-      icon: Truck,
-      color: "text-indigo-500 bg-indigo-500/10",
-    },
-    {
-      title: t("nav_workers", locale),
-      desc: "Ishchilar ro'yxati va oylik hisob-kitob",
-      href: "/workers",
-      icon: Users,
-      color: "text-purple-500 bg-purple-500/10",
-    },
-    {
-      title: t("nav_reports", locale),
-      desc: "Foyda tahlili va davriy hisobotlar",
-      href: "/reports",
-      icon: BarChart3,
-      color: "text-rose-500 bg-rose-500/10",
-    },
-  ];
+  const locale = user.locale ?? "uz";
+  const canManage = can(user.role, "teraks.manage");
+
+  // 1. Sozlamalar (foyda hisoblash usuli: taxminiy / haqiqiy)
+  const settings = await getSettings(deps.db);
+
+  // 2. Faol teraklar
+  const activeTeraks = await deps.db
+    .select({
+      id: teraks.id,
+      name: teraks.name,
+      purchasePrice: teraks.purchasePrice,
+    })
+    .from(teraks)
+    .where(isNull(teraks.deletedAt))
+    .orderBy(desc(teraks.purchaseDate));
+
+  // 3. Har bir terak bo'yicha ma'lumotlar
+  const teraksData: TerakDashboardData[] = await Promise.all(
+    activeTeraks.map(async (tr) => {
+      // 3.1. Qo'shimcha xarajatlar
+      const [costsRow] = await deps.db
+        .select({ total: sql<number>`coalesce(sum(${terakCosts.amount}), 0)` })
+        .from(terakCosts)
+        .where(eq(terakCosts.terakId, tr.id));
+      const additionalCosts = Number(costsRow?.total ?? 0);
+
+      // 3.2. Ish haqi xarajatlari
+      const [workRow] = await deps.db
+        .select({ total: sql<number>`coalesce(sum(${workEntries.amount}), 0)` })
+        .from(workEntries)
+        .where(eq(workEntries.terakId, tr.id));
+      const workCosts = Number(workRow?.total ?? 0);
+
+      // 3.3. Yuk chiqarish tushumi
+      const [dispRow] = await deps.db
+        .select({ total: sql<number>`coalesce(sum(${dispatches.totalAmount}), 0)` })
+        .from(dispatches)
+        .where(eq(dispatches.terakId, tr.id));
+      const dispatchRevenue = Number(dispRow?.total ?? 0);
+
+      // 3.4. Ombor materiallari va ombor qiymati
+      const stockRows = await deps.db
+        .select({
+          materialId: materials.id,
+          name: materials.name,
+          unit: materials.unit,
+          thicknessCm: materials.thicknessCm,
+          widthCm: materials.widthCm,
+          lengthCm: materials.lengthCm,
+          quantity: terakMaterials.quantity,
+          sellingPrice: terakMaterials.sellingPrice,
+          cubePrice: terakMaterials.cubePrice,
+          goal: terakMaterials.goal,
+        })
+        .from(terakMaterials)
+        .innerJoin(materials, eq(materials.id, terakMaterials.materialId))
+        .where(eq(terakMaterials.terakId, tr.id));
+
+      let totalStockValue = 0;
+      const stockList = stockRows.map((s) => {
+        const qty = Number(s.quantity ?? 0);
+        const goalNum = s.goal ? Number(s.goal) : null;
+        const progress = goalNum && goalNum > 0 ? Math.min(1, qty / goalNum) : 0;
+
+        const vol = pieceVolumeM3({
+          thicknessCm: s.thicknessCm ? Number(s.thicknessCm) : null,
+          widthCm: s.widthCm ? Number(s.widthCm) : null,
+          lengthCm: s.lengthCm ? Number(s.lengthCm) : null,
+        });
+
+        let sVal = 0;
+        if (s.sellingPrice > 0) {
+          sVal = qty * s.sellingPrice;
+        } else if (s.cubePrice > 0 && vol) {
+          sVal = qty * vol * s.cubePrice;
+        }
+        totalStockValue += sVal;
+
+        return {
+          materialId: s.materialId,
+          name: s.name,
+          unit: s.unit,
+          quantity: qty,
+          goal: goalNum,
+          progress,
+          stockValue: Math.round(sVal),
+        };
+      });
+
+      return {
+        id: tr.id,
+        name: tr.name,
+        purchasePrice: Number(tr.purchasePrice),
+        additionalCosts,
+        workCosts,
+        dispatchRevenue,
+        stockValue: Math.round(totalStockValue),
+        stock: stockList,
+      };
+    }),
+  );
+
+  // 4. Umumiy xarajatlar (K14: general_expenses)
+  const [genExpRow] = await deps.db
+    .select({ total: sql<number>`coalesce(sum(${generalExpenses.amount}), 0)` })
+    .from(generalExpenses);
+  const generalExpensesTotal = Number(genExpRow?.total ?? 0);
+
+  // 5. Oxirgi 7 kunlik yuk chiqarishlar (K11: haftalik grafik)
+  const today = new Date();
+  const sevenDaysAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+  const sevenDaysAgoStr = sevenDaysAgo.toISOString().slice(0, 10);
+
+  const recentDispatches = await deps.db
+    .select({
+      date: dispatches.date,
+      quantity: dispatches.quantity,
+      totalAmount: dispatches.totalAmount,
+    })
+    .from(dispatches)
+    .where(gte(dispatches.date, sevenDaysAgoStr));
+
+  const dispatchesLast7Days = recentDispatches.map((d) => ({
+    date: d.date,
+    quantity: Number(d.quantity),
+    totalAmount: Number(d.totalAmount),
+  }));
+
+  // 6. Diqqat talab zakazlar (bajarilmagan va (tayyor yoki muddati <= 2 kun))
+  const uncompletedOrders = await deps.db
+    .select({
+      id: orders.id,
+      customerName: orders.customerName,
+      materialId: orders.materialId,
+      materialName: materials.name,
+      materialUnit: materials.unit,
+      quantity: orders.quantity,
+      dueDate: orders.dueDate,
+      completedAt: orders.completedAt,
+      stockQuantity: terakMaterials.quantity,
+    })
+    .from(orders)
+    .innerJoin(materials, eq(materials.id, orders.materialId))
+    .leftJoin(
+      terakMaterials,
+      and(
+        eq(terakMaterials.terakId, orders.terakId),
+        eq(terakMaterials.materialId, orders.materialId),
+      ),
+    )
+    .where(isNull(orders.completedAt))
+    .orderBy(desc(orders.createdAt));
+
+  const attentionOrders: AttentionOrderData[] = [];
+  for (const o of uncompletedOrders) {
+    const qty = Number(o.quantity);
+    const stockQty = Number(o.stockQuantity ?? 0);
+    const status = getOrderStatus({ quantity: qty, completedAt: o.completedAt }, stockQty);
+    const dueSoon = isOrderDueSoon(o.dueDate, today);
+
+    if (status === "ready" || dueSoon) {
+      attentionOrders.push({
+        id: o.id,
+        customerName: o.customerName,
+        materialName: o.materialName,
+        quantity: qty,
+        materialUnit: o.materialUnit,
+        stockQuantity: stockQty,
+        status,
+        isDueSoon: dueSoon,
+        dueDate: o.dueDate,
+      });
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Card */}
-      <div className="rounded-3xl bg-gradient-to-r from-[var(--primary)] to-emerald-700 text-white p-6 sm:p-8 shadow-xl relative overflow-hidden">
-        <div className="relative z-10 max-w-2xl">
-          <Badge tone="neutral" className="bg-white/20 text-white border-none mb-3 backdrop-blur-xs">
-            v0.1.0 • S0 Skelet
-          </Badge>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-            {tenant.name}
-          </h1>
-          <p className="mt-2 text-sm sm:text-base text-white/90 leading-relaxed">
-            {t("home_welcome_desc", locale)}
-          </p>
-        </div>
-      </div>
-
-      {/* Feature Navigation Grid */}
-      <div>
-        <h2 className="text-sm font-bold text-[var(--text-primary)] mb-4">
-          {t("nav_group_main", locale)}
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {cards.map((c) => {
-            const Icon = c.icon;
-            return (
-              <Link key={c.href} href={c.href} className="group">
-                <Card className="h-full border border-[var(--border-subtle)] hover:border-[var(--primary)] hover:shadow-md transition-all">
-                  <CardHeader className="flex flex-row items-center justify-between pb-2">
-                    <CardTitle className="text-sm font-bold text-[var(--text-primary)] group-hover:text-[var(--primary)]">
-                      {c.title}
-                    </CardTitle>
-                    <div className={`size-9 rounded-xl flex items-center justify-center ${c.color}`}>
-                      <Icon className="size-5" />
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-1">
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      {c.desc}
-                    </p>
-                    <div className="mt-3 flex items-center text-xs font-semibold text-[var(--primary)] gap-1">
-                      <span>Ochish</span>
-                      <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    <DashboardClient
+      teraks={teraksData}
+      generalExpensesTotal={generalExpensesTotal}
+      profitMethod={settings.profitMode === "actual" ? "real" : "estimated"}
+      dispatchesLast7Days={dispatchesLast7Days}
+      attentionOrders={attentionOrders}
+      canManage={canManage}
+      locale={locale}
+    />
   );
 }

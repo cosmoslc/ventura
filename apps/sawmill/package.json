@@ -22,6 +22,7 @@
     "@ventura/ui": "workspace:*",
     "better-auth": "^1.7.7",
     "drizzle-orm": "^0.45.4",
+    "exceljs": "4.4.0",
     "lucide-react": "^1.55.0",
     "next": "16.4.3",
     "react": "^19.3.0",

@@ -8,7 +8,7 @@ export default async function TeraksPage() {
   const { deps } = await currentDeps();
   if (!deps) return null;
 
-  const { active, trashed } = await getTeraksList(deps.db);
+  const { active, trashed, generalExpensesTotal } = await getTeraksList(deps.db);
   const canManage = can(user.role, "teraks.manage");
   const canDelete = can(user.role, "teraks.delete");
   const locale = user.locale ?? "uz";
@@ -17,6 +17,7 @@ export default async function TeraksPage() {
     <TeraksClient
       activeTeraks={active}
       trashedTeraks={trashed}
+      generalExpensesTotal={generalExpensesTotal}
       canManage={canManage}
       canDelete={canDelete}
       locale={locale}
