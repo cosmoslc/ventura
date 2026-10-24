@@ -142,7 +142,9 @@ const trialInputSchema = z.object({
     .max(128, "Parol 128 ta belgidan oshmasligi kerak"),
 });
 
-export async function startFreeTrialAction(input: unknown): Promise<Result<{ slug: string; url: string; centerName: string }>> {
+export async function startFreeTrialAction(
+  input: unknown,
+): Promise<Result<{ slug: string; url: string; centerName: string; projectId: string; deploymentId: string | null }>> {
   const parsed = trialInputSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Ma'lumotlar noto'g'ri kiritildi" };
@@ -259,6 +261,7 @@ export async function startFreeTrialAction(input: unknown): Promise<Result<{ slu
 
   // 7. Queue deployment job
   let queueError: string | null = null;
+  let deploymentId: string | null = null;
   try {
     const q = await queue();
     const deployRes = await requestDeployment(db, q, {
@@ -268,6 +271,8 @@ export async function startFreeTrialAction(input: unknown): Promise<Result<{ slu
     });
     if (!deployRes.ok) {
       queueError = deployRes.reason;
+    } else {
+      deploymentId = deployRes.id;
     }
   } catch (err) {
     console.error("[crm-trial] Deploy navbatiga qo'shishda xato:", err);
@@ -287,6 +292,7 @@ export async function startFreeTrialAction(input: unknown): Promise<Result<{ slu
       phone: normalizedPhone,
       trialEndsAt: trialEndsAt.toISOString(),
       queueError,
+      deploymentId,
     },
   });
 
@@ -306,5 +312,162 @@ export async function startFreeTrialAction(input: unknown): Promise<Result<{ slu
     slug: v.slug,
     url: `https://${primaryHostname}`,
     centerName: v.centerName,
+    projectId,
+    deploymentId,
+  };
+}
+
+export type ProvisionStatusResult =
+  | {
+      ok: true;
+      ready: boolean;
+      status: "queued" | "building" | "deploying" | "ready" | "failed";
+      step: string | null;
+      stageIndex: number;
+      error?: string | null;
+      url: string;
+    }
+  | {
+      ok: false;
+      error: string;
+    };
+
+export async function checkTrialProvisionStatus(input: {
+  slug: string;
+  deploymentId?: string | null;
+}): Promise<ProvisionStatusResult> {
+  const slug = (input?.slug || "").trim().toLowerCase();
+  if (!slug || !SLUG_REGEX.test(slug)) {
+    return { ok: false, error: "Noto'g'ri subdomen" };
+  }
+
+  const { db } = deps();
+  const [project] = await db
+    .select({
+      id: projects.id,
+      status: projects.status,
+      deletedAt: projects.deletedAt,
+    })
+    .from(projects)
+    .where(and(eq(projects.slug, slug), isNull(projects.deletedAt)))
+    .limit(1);
+
+  if (!project) {
+    return { ok: false, error: "Loyiha topilmadi" };
+  }
+
+  const primaryHostname = `${slug}.${BASE_DOMAIN}`;
+  const targetUrl = `https://${primaryHostname}`;
+
+  // Agar loyiha allaqachon active bo'lsa — tayyor
+  if (project.status === "active") {
+    return {
+      ok: true,
+      ready: true,
+      status: "ready",
+      step: "route",
+      stageIndex: 5,
+      url: targetUrl,
+    };
+  }
+
+  let dep: { id: string; status: string; error: string | null } | null = null;
+  if (input.deploymentId) {
+    const [found] = await db
+      .select({
+        id: deployments.id,
+        status: deployments.status,
+        error: deployments.error,
+      })
+      .from(deployments)
+      .where(and(eq(deployments.id, input.deploymentId), eq(deployments.projectId, project.id)))
+      .limit(1);
+    dep = found ?? null;
+  }
+
+  if (!dep) {
+    const [latest] = await db
+      .select({
+        id: deployments.id,
+        status: deployments.status,
+        error: deployments.error,
+      })
+      .from(deployments)
+      .where(eq(deployments.projectId, project.id))
+      .orderBy(desc(deployments.number))
+      .limit(1);
+    dep = latest ?? null;
+  }
+
+  if (!dep) {
+    return {
+      ok: true,
+      ready: false,
+      status: "queued",
+      step: "prepare",
+      stageIndex: 0,
+      url: targetUrl,
+    };
+  }
+
+  if (dep.status === "failed" || dep.status === "canceled") {
+    return {
+      ok: true,
+      ready: false,
+      status: "failed",
+      step: null,
+      stageIndex: 0,
+      error: dep.error || "Deploy jarayonida xatolik yuz berdi",
+      url: targetUrl,
+    };
+  }
+
+  if (dep.status === "ready") {
+    return {
+      ok: true,
+      ready: true,
+      status: "ready",
+      step: "cleanup",
+      stageIndex: 5,
+      url: targetUrl,
+    };
+  }
+
+  const steps = await db
+    .select({
+      step: deploymentSteps.step,
+      status: deploymentSteps.status,
+      position: deploymentSteps.position,
+    })
+    .from(deploymentSteps)
+    .where(eq(deploymentSteps.deploymentId, dep.id))
+    .orderBy(desc(deploymentSteps.position));
+
+  const runningStep = steps.find((s) => s.status === "running")?.step;
+  const lastOkStep = steps.find((s) => s.status === "ok")?.step;
+  const currentStep = runningStep || lastOkStep || "prepare";
+
+  // Stages:
+  // 0: Building your system (prepare)
+  // 1: Securing isolation & storage (fetch / env)
+  // 2: Migrating your database (migrate)
+  // 3: Configuring Cloudflare tunnel & routes (route)
+  // 4: Deploying core services & health check (build / release / health)
+  // 5: Finalizing your workspace (ready)
+  let stageIndex = 0;
+  if (currentStep === "prepare") stageIndex = 0;
+  else if (currentStep === "fetch" || currentStep === "env") stageIndex = 1;
+  else if (currentStep === "migrate") stageIndex = 2;
+  else if (currentStep === "route") stageIndex = 3;
+  else if (currentStep === "build" || currentStep === "release" || currentStep === "health") stageIndex = 4;
+  else if (currentStep === "cleanup") stageIndex = 5;
+
+  return {
+    ok: true,
+    ready: false,
+    status: dep.status as "queued" | "building" | "deploying",
+    step: currentStep,
+    stageIndex,
+    url: targetUrl,
   };
 }

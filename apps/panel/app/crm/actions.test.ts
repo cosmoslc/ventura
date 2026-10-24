@@ -10,7 +10,7 @@ beforeAll(() => {
   }
 });
 
-import { checkCrmSlugAvailability } from "./actions";
+import { checkCrmSlugAvailability, checkTrialProvisionStatus } from "./actions";
 
 describe("checkCrmSlugAvailability", () => {
   it("bo'sh yoki qisqa subdomenni rad etadi", async () => {
@@ -51,5 +51,22 @@ describe("checkCrmSlugAvailability", () => {
     const res = await checkCrmSlugAvailability(uniqueSlug);
     expect(res.available).toBe(true);
     expect(res.error).toBeUndefined();
+  });
+});
+
+describe("checkTrialProvisionStatus", () => {
+  it("noto'g'ri yoki bo'sh slug uchun xatolik qaytaradi", async () => {
+    const resEmpty = await checkTrialProvisionStatus({ slug: "" });
+    expect(resEmpty.ok).toBe(false);
+    expect((resEmpty as { error: string }).error).toContain("Noto'g'ri");
+
+    const resInvalid = await checkTrialProvisionStatus({ slug: "invalid slug!" });
+    expect(resInvalid.ok).toBe(false);
+  });
+
+  it("mavjud bo'lmagan loyiha uchun loyiha topilmadi deb qaytaradi", async () => {
+    const res = await checkTrialProvisionStatus({ slug: "nonexistent-center-12345" });
+    expect(res.ok).toBe(false);
+    expect((res as { error: string }).error).toContain("topilmadi");
   });
 });
