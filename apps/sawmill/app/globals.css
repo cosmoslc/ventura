@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@import "@ventura/config/theme.css";
+@import "@ventura/config/tokens/ventura.css";
+
+@source "../../../packages/ui/src";
+
+:root,
+[data-brand="ventura"],
+[data-brand="ventura"].dark {
+  --nav-icon-color: #9595a2;
+}

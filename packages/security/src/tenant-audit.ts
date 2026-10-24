@@ -1,5 +1,5 @@
 import { asc, desc, sql } from "drizzle-orm";
-import type { TenantDb } from "@ventura/db";
+import type { SawmillDb, TenantDb } from "@ventura/db";
 import { auditEvents } from "@ventura/db/schema/tenant";
 import type { AuditInput } from "./audit";
 import { type ChainLink, type ChainPayload, type ChainVerdict, hashLink, verifyChain } from "./chain";
@@ -12,7 +12,7 @@ import { type ChainLink, type ChainPayload, type ChainVerdict, hashLink, verifyC
 
 const LOCK_CLASS = 7_420_002;
 
-export async function recordTenant(db: TenantDb, input: AuditInput) {
+export async function recordTenant(db: TenantDb | SawmillDb, input: AuditInput) {
   return db.transaction(async (tx) => {
     await tx.execute(sql`select pg_advisory_xact_lock(${LOCK_CLASS}, hashtext(current_setting('app.tenant_id')))`);
     const [last] = await tx
@@ -42,7 +42,7 @@ export async function recordTenant(db: TenantDb, input: AuditInput) {
   });
 }
 
-export async function verifyTenant(db: TenantDb): Promise<ChainVerdict> {
+export async function verifyTenant(db: TenantDb | SawmillDb): Promise<ChainVerdict> {
   const rows = await db.select().from(auditEvents).orderBy(asc(auditEvents.seq));
   const links: ChainLink[] = rows.map((r) => ({
     seq: r.seq,

@@ -7,7 +7,9 @@
     ".": "./src/index.ts",
     "./schema/panel": "./src/schema/panel/index.ts",
     "./schema/tenant": "./src/schema/tenant/index.ts",
-    "./migrate": "./src/tenant-migrate.ts"
+    "./schema/sawmill": "./src/schema/sawmill/index.ts",
+    "./migrate": "./src/tenant-migrate.ts",
+    "./migrate/sawmill": "./src/sawmill-migrate.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -16,6 +18,8 @@
     "db:migrate": "node --env-file-if-exists=../../.env node_modules/drizzle-kit/bin.cjs migrate",
     "db:generate:tenant": "drizzle-kit generate --config drizzle.tenant.config.ts",
     "db:migrate:tenant": "node --env-file-if-exists=../../.env node_modules/drizzle-kit/bin.cjs migrate --config drizzle.tenant.config.ts",
+    "db:generate:sawmill": "drizzle-kit generate --config drizzle.sawmill.config.ts",
+    "db:migrate:sawmill": "node --env-file-if-exists=../../.env node_modules/drizzle-kit/bin.cjs migrate --config drizzle.sawmill.config.ts",
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {

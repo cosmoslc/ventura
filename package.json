@@ -25,6 +25,8 @@
     "deploy:run": "pnpm --filter @ventura/scripts deploy:run",
     "db:generate:tenant": "pnpm --filter @ventura/db db:generate:tenant",
     "db:migrate:tenant": "pnpm --filter @ventura/db db:migrate:tenant",
+    "db:generate:sawmill": "pnpm --filter @ventura/db db:generate:sawmill",
+    "db:migrate:sawmill": "pnpm --filter @ventura/db db:migrate:sawmill",
     "edu:tenant": "pnpm --filter @ventura/scripts edu:tenant",
     "edu:staff": "pnpm --filter @ventura/scripts edu:staff",
     "edu:seed": "pnpm --filter @ventura/scripts edu:seed",
