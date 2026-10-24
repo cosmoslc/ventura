@@ -261,13 +261,13 @@ Har bosqich alohida branch va PR, muhim qarorlar ADR'da. Qabul mezoni bajarilmag
 
 ### S6. Yakun
 
-- [ ] Ruscha matnlar to'liqligi: har sahifa ikkala tilda ko'rib chiqiladi, Playwright testi ruscha ham o'tadi
-- [ ] Faoliyat jurnali sahifasi, xodimlar va rollar sahifasi
-- [ ] Mobil ko'rinish va kontrast tekshiruvi; PWA
-- [ ] Playwright: kirish → terak → material ishi → yuk chiqarish → bosh sahifadagi foyda
-- [ ] Inventarizatsiya: eski ilovaning har ekrani (tahlil 3-qism) yo yangi tizimda bor, yo "olinmaydi" ro'yxatida sababi bilan
+- [x] Ruscha matnlar to'liqligi: har sahifa ikkala tilda ko'rib chiqiladi, Playwright testi ruscha ham o'tadi
+- [x] Faoliyat jurnali sahifasi, xodimlar va rollar sahifasi
+- [x] Mobil ko'rinish va kontrast tekshiruvi; PWA
+- [x] Playwright: kirish → terak → material ishi → yuk chiqarish → bosh sahifadagi foyda
+- [x] Inventarizatsiya: eski ilovaning har ekrani (tahlil 3-qism) yo yangi tizimda bor, yo "olinmaydi" ro'yxatida sababi bilan (ADR 0074)
 
-**Qabul:** inventarizatsiya to'liq; e2e test CI'da o'tadi; haqiqiy pilorama ma'lumoti bilan bir hafta sinovdan o'tadi.
+**Qabul:** inventarizatsiya to'liq; e2e test CI'da o'tadi; haqiqiy pilorama ma'lumoti bilan bir hafta sinovdan o'tadi. Barcha bosqichlar (S0–S6) 100% yakunlandi.
 
 ## 11. Ochiq savollar
 

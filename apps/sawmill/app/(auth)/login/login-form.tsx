@@ -32,7 +32,12 @@ export function LoginForm({ initialLocale = "uz" }: { initialLocale?: Locale }) 
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => setLocale("uz")}
+            onClick={() => {
+              setLocale("uz");
+              if (typeof document !== "undefined") {
+                document.cookie = "sawmill_locale=uz; path=/; max-age=31536000; SameSite=Lax";
+              }
+            }}
             className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
               locale === "uz"
                 ? "bg-[var(--primary)] text-white"
@@ -43,7 +48,12 @@ export function LoginForm({ initialLocale = "uz" }: { initialLocale?: Locale }) 
           </button>
           <button
             type="button"
-            onClick={() => setLocale("ru")}
+            onClick={() => {
+              setLocale("ru");
+              if (typeof document !== "undefined") {
+                document.cookie = "sawmill_locale=ru; path=/; max-age=31536000; SameSite=Lax";
+              }
+            }}
             className={`text-xs font-semibold px-2.5 py-1 rounded-md transition-colors ${
               locale === "ru"
                 ? "bg-[var(--primary)] text-white"

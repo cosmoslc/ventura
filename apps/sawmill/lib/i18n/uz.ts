@@ -377,6 +377,40 @@ export const uz = {
   reports_all_teraks: "Barcha teraklar",
   reports_empty: "Ma'lumot topilmadi",
   reports_total: "Jami",
+
+  // S6: Faoliyat jurnali (Audit)
+  nav_audit: "Faoliyat jurnali",
+  audit_title: "Faoliyat jurnali",
+  audit_subtitle: "Tizimdagi barcha o'zgarishlar va xavfsizlik auditi (o'chmas xesh zanjiri)",
+  audit_verify_btn: "Zanjir butunligini tekshirish",
+  audit_verify_success: "Zanjir butun: barcha yozuvlar xesh bo'yicha to'liq tasdiqlandi",
+  audit_verify_failed: "Zanjirda nomuvofiqlik aniqlandi",
+  audit_col_seq: "№",
+  audit_col_date: "Sana va vaqt",
+  audit_col_actor: "Foydalanuvchi",
+  audit_col_action: "Amal",
+  audit_col_target: "Obyekt",
+  audit_col_details: "Tafsilotlar",
+  audit_empty: "Faoliyat jurnali bo'sh",
+
+  // S6: Foydalanuvchilar va rollar (Team/Users)
+  nav_users: "Xodimlar va rollar",
+  users_title: "Foydalanuvchilar va rollar",
+  users_subtitle: "Tizimga kirish huquqiga ega xodimlar va ularning rollari",
+  users_add: "Yangi foydalanuvchi",
+  users_edit: "Foydalanuvchini tahrirlash",
+  users_name: "F.I.Sh.",
+  users_phone: "Telefon raqami",
+  users_role: "Rol",
+  users_password: "Parol",
+  users_password_hint: "O'zgartirmaslik uchun bo'sh qoldiring",
+  users_lock: "Bloklash",
+  users_unlock: "Blokdan chiqarish",
+  users_locked_status: "Bloklangan",
+  users_active_status: "Faol",
+  users_empty: "Foydalanuvchilar yo'q",
+  users_delete: "Arxivlash",
+  users_delete_confirm: "Haqiqatan ham ushbu foydalanuvchini arxivlamoqchimisiz?",
 } as const;
 
 export type TranslationKey = keyof typeof uz;

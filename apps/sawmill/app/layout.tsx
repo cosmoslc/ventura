@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
 import { themeScript } from "@ventura/ui/lib/theme";
 import { Toaster } from "@ventura/ui/toast";
@@ -6,11 +6,23 @@ import { fontVariables } from "@/lib/fonts";
 import { currentTenant } from "@/lib/server/tenant";
 import "./globals.css";
 
+export const viewport: Viewport = {
+  themeColor: "#10b981",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export async function generateMetadata(): Promise<Metadata> {
   const tenant = await currentTenant();
   return {
     title: tenant?.name ? `${tenant.name} — Pilorama` : "Pilorama Boshqaruvi",
     description: "Pilorama Boshqaruvi — Yog'och tilish sexi hisob-kitob tizimi",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "default",
+      title: "Pilorama",
+    },
   };
 }
 

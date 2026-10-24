@@ -190,6 +190,16 @@ export function DashboardClient({
 
   return (
     <div className="space-y-6">
+      {/* Sarlavha */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+          {t("nav_home", locale)}
+        </h1>
+        <p className="text-caption text-muted-foreground mt-0.5">
+          Yog'och partiyalari, ombor qoldiqlari va sof foyda tahlili
+        </p>
+      </div>
+
       {/* 1. Yuqori qism: Terak tanlash va foyda usuli toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card p-4 rounded-control border border-border shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">

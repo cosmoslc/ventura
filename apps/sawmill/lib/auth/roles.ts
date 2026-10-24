@@ -34,7 +34,9 @@ export type SawmillPermission =
   | "reports.view"
   | "settings.view"
   | "settings.manage"
-  | "users.manage";
+  | "users.view"
+  | "users.manage"
+  | "audit.view";
 
 const ACCOUNTANT_PERMISSIONS: ReadonlySet<SawmillPermission> = new Set([
   "teraks.view",
@@ -55,6 +57,8 @@ const ACCOUNTANT_PERMISSIONS: ReadonlySet<SawmillPermission> = new Set([
   "orders.manage",
   "reports.view",
   "settings.view",
+  "users.view",
+  "audit.view",
 ]);
 
 export function can(role: SawmillRole, permission: SawmillPermission): boolean {

@@ -13,9 +13,11 @@ import {
   Plus,
   Receipt,
   Settings,
+  ShieldCheck,
   ShoppingCart,
   TreePine,
   Truck,
+  UserCog,
   Users,
   X,
 } from "lucide-react";
@@ -39,7 +41,15 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [quickActionOpen, setQuickActionOpen] = React.useState(false);
-  const [locale, setLocale] = React.useState<Locale>(user.locale ?? "uz");
+  const locale: Locale = user.locale ?? "uz";
+
+  const switchLocale = async (newLocale: Locale) => {
+    if (typeof document !== "undefined") {
+      document.cookie = `sawmill_locale=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    }
+    await setLocaleAction(newLocale);
+    router.refresh();
+  };
 
   // Navigatsiya bandlari
   const navSections = [
@@ -71,6 +81,8 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
       title: t("nav_group_analytics", locale),
       items: [
         { label: t("nav_reports", locale), href: "/reports", icon: BarChart3, feature: "reports" },
+        { label: t("nav_audit", locale), href: "/audit", icon: ShieldCheck, feature: "teraks" },
+        { label: t("nav_users", locale), href: "/users", icon: UserCog, feature: "teraks" },
         { label: t("nav_settings", locale), href: "/settings", icon: Settings, feature: "teraks" },
       ],
     },
@@ -183,11 +195,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
             <div className="flex items-center gap-1 bg-muted p-0.5 rounded-btn border border-border">
               <button
                 type="button"
-                onClick={async () => {
-                  setLocale("uz");
-                  await setLocaleAction("uz");
-                  router.refresh();
-                }}
+                onClick={() => switchLocale("uz")}
                 className={`text-caption font-bold px-2 py-0.5 rounded-nav transition-colors cursor-pointer ${
                   locale === "uz" ? "bg-card text-primary shadow-xs" : "text-muted-foreground"
                 }`}
@@ -196,11 +204,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  setLocale("ru");
-                  await setLocaleAction("ru");
-                  router.refresh();
-                }}
+                onClick={() => switchLocale("ru")}
                 className={`text-caption font-bold px-2 py-0.5 rounded-nav transition-colors cursor-pointer ${
                   locale === "ru" ? "bg-card text-primary shadow-xs" : "text-muted-foreground"
                 }`}
