@@ -1,5 +1,5 @@
 import "server-only";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { cache } from "react";
 import { eq } from "drizzle-orm";
@@ -61,6 +61,10 @@ export const currentSession = cache(async () => {
 
     if (!u || u.archivedAt || u.lockedAt) return null;
 
+    const cookieStore = await cookies();
+    const cookieLocale = cookieStore.get("sawmill_locale")?.value as SawmillLocale | undefined;
+    const finalLocale = (cookieLocale === "uz" || cookieLocale === "ru" ? cookieLocale : u.locale ?? "uz") as SawmillLocale;
+
     return {
       session: session.session,
       user: {
@@ -68,7 +72,7 @@ export const currentSession = cache(async () => {
         name: u.name,
         phone: u.phone ?? "",
         role: u.role as SawmillRole,
-        locale: (u.locale ?? "uz") as SawmillLocale,
+        locale: finalLocale,
       } satisfies SawmillUser,
       tenant,
       deps,

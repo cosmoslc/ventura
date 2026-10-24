@@ -1,19 +1,25 @@
-import { redirect } from "next/navigation";
-import { hasFeature } from "@ventura/tenants";
-import { SectionPlaceholder } from "@/components/section-placeholder";
-import { requireUser } from "@/lib/server/session";
+import { can } from "@/lib/auth/roles";
+import { currentDeps, requireUser } from "@/lib/server/session";
+import { getTeraksList } from "./actions";
+import { TeraksClient } from "./teraks-client";
 
 export default async function TeraksPage() {
-  const { tenant } = await requireUser();
-  if (!(await hasFeature(tenant, "teraks"))) {
-    redirect("/bolim-yopiq");
-  }
+  const { user } = await requireUser();
+  const { deps } = await currentDeps();
+  if (!deps) return null;
+
+  const { active, trashed } = await getTeraksList(deps.db);
+  const canManage = can(user.role, "teraks.manage");
+  const canDelete = can(user.role, "teraks.delete");
+  const locale = user.locale ?? "uz";
 
   return (
-    <SectionPlaceholder
-      title="Teraklar (Yog'och partiyalari)"
-      stage="S2 Bosqich"
-      description="Yog'och partiyalarini xarid qilish, narxlar, ombor va xarajatlar tahlili."
+    <TeraksClient
+      activeTeraks={active}
+      trashedTeraks={trashed}
+      canManage={canManage}
+      canDelete={canDelete}
+      locale={locale}
     />
   );
 }

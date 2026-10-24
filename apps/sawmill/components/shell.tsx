@@ -22,6 +22,7 @@ import { Badge } from "@ventura/ui/badge";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { logoutAction } from "@/app/(auth)/login/actions";
 import { type Locale, t } from "@/lib/i18n";
+import { setLocaleAction } from "@/lib/i18n/actions";
 import type { SawmillUser } from "@/lib/server/session";
 import { QuickActionsModal } from "./quick-actions-modal";
 
@@ -180,7 +181,11 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
             <div className="flex items-center gap-1 bg-muted p-0.5 rounded-btn border border-border">
               <button
                 type="button"
-                onClick={() => setLocale("uz")}
+                onClick={async () => {
+                  setLocale("uz");
+                  await setLocaleAction("uz");
+                  router.refresh();
+                }}
                 className={`text-caption font-bold px-2 py-0.5 rounded-nav transition-colors cursor-pointer ${
                   locale === "uz" ? "bg-card text-primary shadow-xs" : "text-muted-foreground"
                 }`}
@@ -189,7 +194,11 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
               </button>
               <button
                 type="button"
-                onClick={() => setLocale("ru")}
+                onClick={async () => {
+                  setLocale("ru");
+                  await setLocaleAction("ru");
+                  router.refresh();
+                }}
                 className={`text-caption font-bold px-2 py-0.5 rounded-nav transition-colors cursor-pointer ${
                   locale === "ru" ? "bg-card text-primary shadow-xs" : "text-muted-foreground"
                 }`}

@@ -216,11 +216,11 @@ Har bosqich alohida branch va PR, muhim qarorlar ADR'da. Qabul mezoni bajarilmag
 
 ### S2. Teraklar, ombor, xarajatlar
 
-- [ ] Teraklar: ro'yxat (foyda ustuni S5 da to'ladi), qo'shish (standart nom "Terak N"), tahrirlash, savat
-- [ ] Terak sahifasi, Ombor tabi: material kartalari, narxlar (ishchi/sotish × dona/kub), maqsad va progress, material qo'shish (hamma teraklarga), arxiv
-- [ ] `stock_movements` va kesh; qo'lda tuzatish (`adjust`) — faqat egasi, sabab bilan
-- [ ] Xarajatlar tabi: Tashish / Res olib kelish (reys × narx) / Boshqa; res soni
-- [ ] `lib/calc/stock.ts`: ombor qiymati, maqsad progressi, res soni — Vitest
+- [x] Teraklar: ro'yxat (foyda ustuni S5 da to'ladi), qo'shish (standart nom "Terak N"), tahrirlash, savat
+- [x] Terak sahifasi, Ombor tabi: material kartalari, narxlar (ishchi/sotish × dona/kub), maqsad va progress, material qo'shish (hamma teraklarga), arxiv
+- [x] `stock_movements` va kesh; qo'lda tuzatish (`adjust`) — faqat egasi, sabab bilan
+- [x] Xarajatlar tabi: Tashish / Res olib kelish (reys × narx) / Boshqa; res soni
+- [x] `lib/calc/stock.ts`: ombor qiymati, maqsad progressi, res soni — Vitest (ADR 0070)
 
 **Qabul:** ombor qoldig'i har doim harakatlar yig'indisiga teng (test); terak savatdan to'liq tiklanadi.
 
