@@ -5,6 +5,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { type Locale, t } from "@/lib/i18n";
 import { updateMaterialPricesAction } from "../actions";
 
@@ -30,10 +31,10 @@ interface PriceDialogProps {
 }
 
 function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDialogProps) {
-  const [workerPrice, setWorkerPrice] = React.useState(String(item?.workerPrice ?? 0));
-  const [sellingPrice, setSellingPrice] = React.useState(String(item?.sellingPrice ?? 0));
-  const [cubeWorkerPrice, setCubeWorkerPrice] = React.useState(String(item?.cubeWorkerPrice ?? 0));
-  const [cubePrice, setCubePrice] = React.useState(String(item?.cubePrice ?? 0));
+  const [workerPrice, setWorkerPrice] = React.useState<number | null>(item?.workerPrice ?? 0);
+  const [sellingPrice, setSellingPrice] = React.useState<number | null>(item?.sellingPrice ?? 0);
+  const [cubeWorkerPrice, setCubeWorkerPrice] = React.useState<number | null>(item?.cubeWorkerPrice ?? 0);
+  const [cubePrice, setCubePrice] = React.useState<number | null>(item?.cubePrice ?? 0);
   const [goal, setGoal] = React.useState(String(item?.goal ?? 0));
 
   const [submitting, setSubmitting] = React.useState(false);
@@ -51,10 +52,10 @@ function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDi
     const formData = new FormData();
     formData.append("terakId", terakId);
     formData.append("materialId", item.materialId);
-    formData.append("workerPrice", workerPrice);
-    formData.append("sellingPrice", sellingPrice);
-    formData.append("cubeWorkerPrice", cubeWorkerPrice);
-    formData.append("cubePrice", cubePrice);
+    formData.append("workerPrice", String(workerPrice ?? 0));
+    formData.append("sellingPrice", String(sellingPrice ?? 0));
+    formData.append("cubeWorkerPrice", String(cubeWorkerPrice ?? 0));
+    formData.append("cubePrice", String(cubePrice ?? 0));
     formData.append("goal", goal);
 
     const res = await updateMaterialPricesAction(formData);
@@ -95,15 +96,12 @@ function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDi
             <Label htmlFor="stock-worker-price">
               {t("stock_worker_price", locale)} ({item?.unit})
             </Label>
-            <Input
+            <MoneyInput
               id="stock-worker-price"
-              type="number"
-              min="0"
-              step="500"
               value={workerPrice}
-              onChange={(e) => setWorkerPrice(e.target.value)}
+              onValueChange={setWorkerPrice}
+              suffix="so'm"
               placeholder="0"
-              required
               autoFocus
             />
           </div>
@@ -112,15 +110,12 @@ function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDi
             <Label htmlFor="stock-selling-price">
               {t("stock_selling_price", locale)} ({item?.unit})
             </Label>
-            <Input
+            <MoneyInput
               id="stock-selling-price"
-              type="number"
-              min="0"
-              step="1000"
               value={sellingPrice}
-              onChange={(e) => setSellingPrice(e.target.value)}
+              onValueChange={setSellingPrice}
+              suffix="so'm"
               placeholder="0"
-              required
             />
           </div>
         </div>
@@ -134,26 +129,22 @@ function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDi
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label htmlFor="stock-cube-worker-price">{t("stock_cube_worker_price", locale)}</Label>
-                <Input
+                <MoneyInput
                   id="stock-cube-worker-price"
-                  type="number"
-                  min="0"
-                  step="5000"
                   value={cubeWorkerPrice}
-                  onChange={(e) => setCubeWorkerPrice(e.target.value)}
+                  onValueChange={setCubeWorkerPrice}
+                  suffix="so'm"
                   placeholder="0"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <Label htmlFor="stock-cube-price">{t("stock_cube_price", locale)}</Label>
-                <Input
+                <MoneyInput
                   id="stock-cube-price"
-                  type="number"
-                  min="0"
-                  step="10000"
                   value={cubePrice}
-                  onChange={(e) => setCubePrice(e.target.value)}
+                  onValueChange={setCubePrice}
+                  suffix="so'm"
                   placeholder="0"
                 />
               </div>

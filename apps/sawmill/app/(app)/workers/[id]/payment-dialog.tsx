@@ -5,8 +5,8 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { t } from "@/lib/i18n";
-import { formatMoney } from "@/lib/calc/units";
 import { recordPaymentAction } from "./actions";
 
 interface PaymentDialogProps {
@@ -23,7 +23,7 @@ function InnerPaymentDialog({
   locale,
 }: PaymentDialogProps) {
   const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
-  const [amount, setAmount] = React.useState("");
+  const [amount, setAmount] = React.useState<number | null>(null);
   const [note, setNote] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -31,7 +31,7 @@ function InnerPaymentDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const numAmount = Number(amount);
+    const numAmount = Number(amount ?? 0);
     if (!numAmount || numAmount <= 0) {
       setError("To'lov summasi 0 dan katta bo'lishi kerak");
       return;
@@ -54,8 +54,6 @@ function InnerPaymentDialog({
 
     onOpenChange(false);
   }
-
-  const numAmount = Number(amount) || 0;
 
   return (
     <Modal
@@ -82,22 +80,15 @@ function InnerPaymentDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="payment-amount">{t("payment_amount", locale)} (so'm)</Label>
-          <Input
+          <Label htmlFor="payment-amount">{t("payment_amount", locale)}</Label>
+          <MoneyInput
             id="payment-amount"
-            type="number"
-            step="1000"
-            min="1"
-            required
-            placeholder="Masalan: 500000"
             value={amount}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
+            onValueChange={setAmount}
+            suffix="so'm"
+            placeholder="Masalan: 500 000"
+            required
           />
-          {numAmount > 0 && (
-            <p className="text-2xs text-muted-foreground mt-1 font-mono">
-              {formatMoney(numAmount)}
-            </p>
-          )}
         </div>
 
         <div className="space-y-1.5">

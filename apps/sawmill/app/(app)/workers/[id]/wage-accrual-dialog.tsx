@@ -5,6 +5,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { t } from "@/lib/i18n";
 import { formatMoney } from "@/lib/calc/units";
 import { accrueWageAction } from "./actions";
@@ -61,13 +62,13 @@ function InnerWageAccrualDialog({
   }, [periodStart, periodEnd, salaryType]);
 
   const [units, setUnits] = React.useState(String(defaultUnits));
-  const [rate, setRate] = React.useState(String(defaultRate));
+  const [rate, setRate] = React.useState<number | null>(defaultRate);
   const [terakId, setTerakId] = React.useState<string>("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const numUnits = Number(units) || 0;
-  const numRate = Number(rate) || 0;
+  const numRate = Number(rate ?? 0);
   const totalAmount = Math.round(numUnits * numRate);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -155,15 +156,14 @@ function InnerWageAccrualDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="wage-rate">{t("wage_accrual_rate", locale)} (so'm)</Label>
-            <Input
+            <Label htmlFor="wage-rate">{t("wage_accrual_rate", locale)}</Label>
+            <MoneyInput
               id="wage-rate"
-              type="number"
-              step="1000"
-              min="0"
-              required
               value={rate}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRate(e.target.value)}
+              onValueChange={setRate}
+              suffix="so'm"
+              placeholder="0"
+              required
             />
           </div>
         </div>

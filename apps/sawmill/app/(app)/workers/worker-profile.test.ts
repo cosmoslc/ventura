@@ -57,15 +57,14 @@ describe("worker profile, payments, wage accruals and balance operations", () =>
       expect(pay1.amount).toBe(1000000);
       expect(pay1.date).toBe("2026-10-15");
 
-      const [pay2] = await db
+      await db
         .insert(payments)
         .values({
           workerId: w.id,
           amount: 500000,
           date: "2026-10-20",
           note: "Qo'shimcha to'lov",
-        })
-        .returning();
+        });
 
       // 3. Maosh hisoblash (K1)
       const periodStart = "2026-10-01";

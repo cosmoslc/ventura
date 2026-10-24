@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
-import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { t } from "@/lib/i18n";
-import { formatMoney } from "@/lib/calc/units";
 import { setWorkerSpecialPriceAction } from "./actions";
 
 interface SpecialPriceDialogProps {
@@ -29,11 +28,9 @@ function InnerSpecialPriceDialog({
   locale,
 }: SpecialPriceDialogProps) {
   const [materialId, setMaterialId] = React.useState(initialMaterialId ?? allMaterials[0]?.id ?? "");
-  const [price, setPrice] = React.useState(initialPrice ? String(initialPrice) : "");
+  const [price, setPrice] = React.useState<number | null>(initialPrice ?? null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-
-  const numPrice = Number(price) || 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +44,7 @@ function InnerSpecialPriceDialog({
     const fd = new FormData();
     fd.set("workerId", workerId);
     fd.set("materialId", materialId);
-    fd.set("price", String(numPrice));
+    fd.set("price", String(price ?? 0));
 
     const res = await setWorkerSpecialPriceAction(fd);
     setLoading(false);
@@ -91,22 +88,14 @@ function InnerSpecialPriceDialog({
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="sp-price">{t("special_price_val", locale)} (so'm)</Label>
-          <Input
+          <Label htmlFor="sp-price">{t("special_price_val", locale)}</Label>
+          <MoneyInput
             id="sp-price"
-            type="number"
-            step="100"
-            min="0"
-            required
-            placeholder="0 kiritilsa maxsus narx o'chiriladi"
             value={price}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPrice(e.target.value)}
+            onValueChange={setPrice}
+            suffix="so'm"
+            placeholder="0 kiritilsa maxsus narx o'chiriladi"
           />
-          {numPrice > 0 && (
-            <p className="text-2xs text-muted-foreground mt-1 font-mono">
-              {formatMoney(numPrice)}
-            </p>
-          )}
           <p className="text-2xs text-muted-foreground mt-1">
             {t("special_price_hint", locale)}
           </p>

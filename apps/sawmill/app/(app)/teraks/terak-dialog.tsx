@@ -6,6 +6,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { type Locale, t } from "@/lib/i18n";
 import { createTerakAction, updateTerakAction } from "./actions";
 
@@ -31,7 +32,9 @@ function TerakDialogInner({ open, onOpenChange, terak, locale }: TerakDialogProp
   const [purchaseDate, setPurchaseDate] = React.useState(
     terak?.purchaseDate ?? new Date().toISOString().slice(0, 10),
   );
-  const [purchasePrice, setPurchasePrice] = React.useState(String(terak?.purchasePrice ?? 0));
+  const [purchasePrice, setPurchasePrice] = React.useState<number | null>(
+    terak?.purchasePrice ?? 0,
+  );
   const [note, setNote] = React.useState(terak?.note ?? "");
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -45,7 +48,7 @@ function TerakDialogInner({ open, onOpenChange, terak, locale }: TerakDialogProp
     if (terak?.id) formData.append("id", terak.id);
     if (name) formData.append("name", name);
     formData.append("purchaseDate", purchaseDate);
-    formData.append("purchasePrice", purchasePrice);
+    formData.append("purchasePrice", String(purchasePrice ?? 0));
     if (note) formData.append("note", note);
 
     const res = isEdit ? await updateTerakAction(formData) : await createTerakAction(formData);
@@ -103,14 +106,12 @@ function TerakDialogInner({ open, onOpenChange, terak, locale }: TerakDialogProp
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="terak-price">{t("teraks_purchase_price", locale)} (so'm)</Label>
-            <Input
+            <Label htmlFor="terak-price">{t("teraks_purchase_price", locale)}</Label>
+            <MoneyInput
               id="terak-price"
-              type="number"
-              min="0"
-              step="10000"
               value={purchasePrice}
-              onChange={(e) => setPurchasePrice(e.target.value)}
+              onValueChange={setPurchasePrice}
+              suffix="so'm"
               placeholder="0"
               required
             />

@@ -5,6 +5,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { type Locale, t } from "@/lib/i18n";
 import { createTruckAction, updateTruckAction } from "./actions";
 
@@ -24,7 +25,7 @@ interface TruckDialogProps {
 function TruckDialogInner({ open, onOpenChange, truck, locale }: TruckDialogProps) {
   const isEdit = !!truck?.id;
   const [name, setName] = React.useState(truck?.name ?? "");
-  const [amount, setAmount] = React.useState(String(truck?.amount ?? 0));
+  const [amount, setAmount] = React.useState<number | null>(truck?.amount ?? 0);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -36,7 +37,7 @@ function TruckDialogInner({ open, onOpenChange, truck, locale }: TruckDialogProp
     const formData = new FormData();
     if (truck?.id) formData.append("id", truck.id);
     formData.append("name", name);
-    formData.append("amount", amount);
+    formData.append("amount", String(amount ?? 0));
 
     const res = isEdit ? await updateTruckAction(formData) : await createTruckAction(formData);
 
@@ -76,14 +77,12 @@ function TruckDialogInner({ open, onOpenChange, truck, locale }: TruckDialogProp
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="truck-amount">{t("trucks_amount", locale)} (so'm)</Label>
-          <Input
+          <Label htmlFor="truck-amount">{t("trucks_amount", locale)}</Label>
+          <MoneyInput
             id="truck-amount"
-            type="number"
-            min="0"
-            step="1000"
             value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            onValueChange={setAmount}
+            suffix="so'm"
             placeholder="150000"
             required
           />

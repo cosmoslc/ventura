@@ -5,6 +5,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { PhoneInput } from "@ventura/ui/phone-input";
 import { type Locale, t } from "@/lib/i18n";
 import { createWorkerAction, updateWorkerAction } from "./actions";
@@ -31,7 +32,7 @@ function WorkerDialogInner({ open, onOpenChange, worker, locale }: WorkerDialogP
   const [salaryType, setSalaryType] = React.useState<"piecework" | "daily" | "weekly" | "monthly">(
     worker?.salaryType ?? "piecework",
   );
-  const [wageAmount, setWageAmount] = React.useState(String(worker?.wageAmount ?? 0));
+  const [wageAmount, setWageAmount] = React.useState<number | null>(worker?.wageAmount ?? 0);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -45,7 +46,7 @@ function WorkerDialogInner({ open, onOpenChange, worker, locale }: WorkerDialogP
     formData.append("name", name);
     formData.append("phone", phone);
     formData.append("salaryType", salaryType);
-    formData.append("wageAmount", wageAmount);
+    formData.append("wageAmount", String(wageAmount ?? 0));
 
     const res = isEdit ? await updateWorkerAction(formData) : await createWorkerAction(formData);
 
@@ -110,14 +111,12 @@ function WorkerDialogInner({ open, onOpenChange, worker, locale }: WorkerDialogP
 
         {salaryType !== "piecework" && (
           <div className="space-y-1.5 animate-in fade-in duration-150">
-            <Label htmlFor="worker-wage-amount">{t("workers_wage_amount", locale)} (so'm)</Label>
-            <Input
+            <Label htmlFor="worker-wage-amount">{t("workers_wage_amount", locale)}</Label>
+            <MoneyInput
               id="worker-wage-amount"
-              type="number"
-              min="0"
-              step="1000"
               value={wageAmount}
-              onChange={(e) => setWageAmount(e.target.value)}
+              onValueChange={setWageAmount}
+              suffix="so'm"
               placeholder="0"
               required
             />

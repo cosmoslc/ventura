@@ -92,7 +92,7 @@ describe("kunlik ishlar (work) database operations and business logic", () => {
       expect(initRes).toBe(0);
 
       // Terakka 2 ta res xarajati qo'shamiz
-      const [resCost] = await db
+      await db
         .insert(terakCosts)
         .values({
           terakId: trk.id,
@@ -102,8 +102,7 @@ describe("kunlik ishlar (work) database operations and business logic", () => {
           pricePerTrip: 300000,
           amount: 600000,
           date: "2026-10-24",
-        })
-        .returning();
+        });
 
       const resAfterCost = await getRemainingRes(db, trk.id);
       expect(resAfterCost).toBe(2);

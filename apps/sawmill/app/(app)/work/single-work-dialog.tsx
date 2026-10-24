@@ -5,6 +5,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { t } from "@/lib/i18n";
 import { calculateSingleWork, resolveWorkerCubePrice, resolveWorkerPrice } from "@/lib/calc/pay";
 import { formatMoney, pieceVolumeM3 } from "@/lib/calc/units";
@@ -58,7 +59,7 @@ function InnerSingleWorkDialog({
 
   // Regular work state
   const [workTypeId, setWorkTypeId] = React.useState(workTypes[0]?.id ?? "");
-  const [manualAmount, setManualAmount] = React.useState("");
+  const [manualAmount, setManualAmount] = React.useState<number | null>(null);
 
   // Material work state
   const [materialId, setMaterialId] = React.useState(materials[0]?.id ?? "");
@@ -168,7 +169,7 @@ function InnerSingleWorkDialog({
     if (kind === "regular") {
       if (terakId) fd.set("terakId", terakId);
       if (workTypeId) fd.set("workTypeId", workTypeId);
-      fd.set("manualAmount", String(Number(manualAmount) || 0));
+      fd.set("manualAmount", String(manualAmount ?? 0));
     } else {
       if (!terakId) {
         setError("Terak tanlanishi shart");
@@ -472,16 +473,14 @@ function InnerSingleWorkDialog({
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="single-amount">{t("work_amount", locale)} (so'm)</Label>
-              <Input
+              <Label htmlFor="single-amount">{t("work_amount", locale)}</Label>
+              <MoneyInput
                 id="single-amount"
-                type="number"
-                step="1000"
-                min="0"
-                required
-                placeholder="Masalan: 80000"
                 value={manualAmount}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setManualAmount(e.target.value)}
+                onValueChange={setManualAmount}
+                suffix="so'm"
+                placeholder="Masalan: 80 000"
+                required
               />
             </div>
           </div>

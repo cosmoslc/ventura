@@ -6,6 +6,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { t } from "@/lib/i18n";
 import { calculateGroupWork } from "@/lib/calc/pay";
 import { formatMoney, pieceVolumeM3 } from "@/lib/calc/units";
@@ -63,7 +64,7 @@ function InnerGroupWorkDialog({
 
   // Regular
   const [workTypeId, setWorkTypeId] = React.useState(workTypes[0]?.id ?? "");
-  const [totalAmountInput, setTotalAmountInput] = React.useState("");
+  const [totalAmountInput, setTotalAmountInput] = React.useState<number | null>(null);
 
   // Material
   const [materialId, setMaterialId] = React.useState(materials[0]?.id ?? "");
@@ -188,7 +189,7 @@ function InnerGroupWorkDialog({
     if (kind === "regular") {
       if (terakId) fd.set("terakId", terakId);
       if (workTypeId) fd.set("workTypeId", workTypeId);
-      fd.set("totalAmountInput", String(Number(totalAmountInput) || 0));
+      fd.set("totalAmountInput", String(totalAmountInput ?? 0));
     } else {
       if (!terakId) {
         setError("Terak tanlanishi shart");
@@ -519,16 +520,14 @@ function InnerGroupWorkDialog({
             )}
 
             <div className="space-y-1.5">
-              <Label htmlFor="group-total-amount">Jami ish haqi summasi (so'm)</Label>
-              <Input
+              <Label htmlFor="group-total-amount">Jami ish haqi summasi</Label>
+              <MoneyInput
                 id="group-total-amount"
-                type="number"
-                step="1000"
-                min="0"
-                required
-                placeholder="Masalan: 150000"
                 value={totalAmountInput}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTotalAmountInput(e.target.value)}
+                onValueChange={setTotalAmountInput}
+                suffix="so'm"
+                placeholder="Masalan: 150 000"
+                required
               />
             </div>
           </div>

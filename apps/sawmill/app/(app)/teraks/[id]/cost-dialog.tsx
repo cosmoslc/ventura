@@ -5,6 +5,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { MoneyInput } from "@ventura/ui/money-input";
 import { type Locale, t } from "@/lib/i18n";
 import { addTerakCostAction } from "../actions";
 
@@ -20,8 +21,8 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
   const [title, setTitle] = React.useState("");
   const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
   const [trips, setTrips] = React.useState("1");
-  const [pricePerTrip, setPricePerTrip] = React.useState("");
-  const [amount, setAmount] = React.useState("");
+  const [pricePerTrip, setPricePerTrip] = React.useState<number | null>(null);
+  const [amount, setAmount] = React.useState<number | null>(null);
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -30,10 +31,10 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
   const totalAmount = React.useMemo(() => {
     if (kind === "res") {
       const tr = Number(trips);
-      const pr = Number(pricePerTrip);
+      const pr = Number(pricePerTrip ?? 0);
       if (tr > 0 && pr > 0) return String(tr * pr);
     }
-    return amount;
+    return String(amount ?? 0);
   }, [kind, trips, pricePerTrip, amount]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,7 +50,7 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
     formData.append("amount", totalAmount);
     if (kind === "res") {
       formData.append("trips", trips);
-      formData.append("pricePerTrip", pricePerTrip);
+      formData.append("pricePerTrip", String(pricePerTrip ?? 0));
     }
 
     const res = await addTerakCostAction(formData);
@@ -134,14 +135,12 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="cost-price-per-trip">{t("cost_price_per_trip", locale)} (so'm) *</Label>
-              <Input
+              <Label htmlFor="cost-price-per-trip">{t("cost_price_per_trip", locale)}</Label>
+              <MoneyInput
                 id="cost-price-per-trip"
-                type="number"
-                min="0"
-                step="5000"
                 value={pricePerTrip}
-                onChange={(e) => setPricePerTrip(e.target.value)}
+                onValueChange={setPricePerTrip}
+                suffix="so'm"
                 placeholder="0"
                 required
               />
@@ -154,14 +153,12 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
           </div>
         ) : (
           <div className="space-y-1.5">
-            <Label htmlFor="cost-amount">{t("cost_amount", locale)} (so'm) *</Label>
-            <Input
+            <Label htmlFor="cost-amount">{t("cost_amount", locale)}</Label>
+            <MoneyInput
               id="cost-amount"
-              type="number"
-              min="0"
-              step="5000"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onValueChange={setAmount}
+              suffix="so'm"
               placeholder="0"
               required
             />
