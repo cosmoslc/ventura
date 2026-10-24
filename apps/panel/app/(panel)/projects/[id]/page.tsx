@@ -7,6 +7,7 @@ import { hasSecret } from "@ventura/security";
 import type { Feature } from "@ventura/tenants";
 import { Badge } from "@ventura/ui/badge";
 import { PageHeader } from "@ventura/ui/page-header";
+import { parseProjectBilling } from "@/lib/project-billing";
 import { listDeployments, workerAlive } from "@/lib/server/deployments-query";
 import { deps } from "@/lib/server/deps";
 import { getProjectDirectorInfo } from "@/lib/server/project-tenant";
@@ -122,6 +123,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         secretNames={secretNames}
         director={directorInfo}
         trial={trialInfo}
+        billing={parseProjectBilling(p.settings, p.status)}
         deploys={{
           rows: deployRows,
           workerAlive: alive,

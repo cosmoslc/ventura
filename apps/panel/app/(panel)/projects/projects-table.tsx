@@ -121,6 +121,7 @@ export function ProjectsTable({
                   <Th>{uz.projects.template}</Th>
                   <Th>{uz.projects.target}</Th>
                   <Th>{uz.projects.status}</Th>
+                  <Th>Obuna / Muddat</Th>
                   <Th>{mode === "trash" ? uz.projects.deleted : uz.projects.created}</Th>
                   {canWrite ? <Th className="text-right">{uz.common.actions}</Th> : null}
                 </tr>
@@ -162,6 +163,59 @@ export function ProjectsTable({
                       <Badge tone={STATUS_TONE[r.status]} dot>
                         {uz.projects.statusLabels[r.status]}
                       </Badge>
+                    </Td>
+                    <Td>
+                      {r.billing.kind === "subscription" ? (
+                        <div className="space-y-0.5">
+                          <Badge
+                            tone={
+                              r.status === "paused" || r.billing.expired
+                                ? "danger"
+                                : (r.billing.daysLeft ?? 0) <= 2
+                                  ? "warning"
+                                  : "success"
+                            }
+                            dot
+                          >
+                            {r.status === "paused"
+                              ? "Muzlatilgan"
+                              : r.billing.expired
+                                ? "Muddati tugagan"
+                                : `${r.billing.daysLeft} kun qoldi`}
+                          </Badge>
+                          {r.billing.expiresAt ? (
+                            <div className="font-mono text-caption text-muted-foreground">
+                              {formatDate(r.billing.expiresAt)}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : r.billing.kind === "trial" ? (
+                        <div className="space-y-0.5">
+                          <Badge
+                            tone={r.status === "paused" || r.billing.expired ? "danger" : "warning"}
+                            dot
+                          >
+                            {r.status === "paused"
+                              ? "Muzlatilgan"
+                              : r.billing.expired
+                                ? "Sinov tugagan"
+                                : `Sinov: ${r.billing.daysLeft} kun`}
+                          </Badge>
+                          {r.billing.expiresAt ? (
+                            <div className="font-mono text-caption text-muted-foreground">
+                              {formatDate(r.billing.expiresAt)}
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <div className="text-caption text-muted-foreground">
+                          {r.status === "paused" ? (
+                            <Badge tone="danger" dot>Muzlatilgan</Badge>
+                          ) : (
+                            <Badge tone="neutral">Doimiy</Badge>
+                          )}
+                        </div>
+                      )}
                     </Td>
                     <Td>
                       <span className="font-mono">

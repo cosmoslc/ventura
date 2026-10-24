@@ -1,11 +1,13 @@
 // Muallif / Agent: Google Gemini
 "use server";
 
-import { and, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { normalizeUzPhone, notifySuperAdmins } from "@ventura/auth";
 import {
   clients,
+  deploymentSteps,
+  deployments,
   domains,
   projectFeatures,
   projects,

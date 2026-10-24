@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import {
+  AlertCircle,
   ArrowRight,
   Award,
   BookOpen,
@@ -10,7 +11,6 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
-  Copy,
   ExternalLink,
   Eye,
   EyeOff,
@@ -32,10 +32,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { PhoneInput, formatUzPhone } from "@ventura/ui/phone-input";
+import { PhoneInput } from "@ventura/ui/phone-input";
 import { slugify } from "@/lib/project-rules";
 import type { CrmContacts } from "@/lib/server/crm-contacts";
-import { checkCrmSlugAvailability, startFreeTrialAction } from "./actions";
+import { checkCrmSlugAvailability, checkTrialProvisionStatus, startFreeTrialAction } from "./actions";
 
 /* Theme hook based on document.documentElement.classList */
 function useTheme() {
@@ -190,8 +190,9 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
 
           {/* Concise Subtitle */}
           <p className="mt-5 text-base sm:text-lg md:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            O'quvchi va o'qituvchi shaxsiy kabinetlari, davomat, moliya, Telegram botlar, uy vazifalariga fayl almashinuvi
-            va har bir markazga <strong className="text-slate-900 dark:text-white font-semibold">alohida mustaqil xavfsiz baza</strong>.
+            O'quvchi va o'qituvchi shaxsiy kabinetlari, davomat, moliya, Telegram botlar, uy vazifalariga fayl
+            almashinuvi va har bir markazga{" "}
+            <strong className="text-slate-900 dark:text-white font-semibold">alohida mustaqil xavfsiz baza</strong>.
           </p>
 
           {/* Interactive Subdomain Quick Starter */}
@@ -227,7 +228,10 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
       </section>
 
       {/* 4. Features Grid */}
-      <section id="features" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950/60 transition-colors">
+      <section
+        id="features"
+        className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950/60 transition-colors"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2.5">
@@ -290,7 +294,10 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
       </section>
 
       {/* 5. Portals Showcase */}
-      <section id="portals" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/30 transition-colors">
+      <section
+        id="portals"
+        className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-100/50 dark:bg-slate-900/30 transition-colors"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -312,7 +319,9 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
                     <GraduationCap className="size-5 text-indigo-600 dark:text-indigo-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">Fayl yuklab topshirish</h3>
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">
+                      Fayl yuklab topshirish
+                    </h3>
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                       O'quvchi vazifani ko'radi, rasm yoki PDF yuklaydi va tekshirish holatini kuzatib boradi.
                     </p>
@@ -324,9 +333,12 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
                     <BookOpen className="size-5 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">Topshiriqlarni tekshirib baholash</h3>
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">
+                      Topshiriqlarni tekshirib baholash
+                    </h3>
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
-                      O'qituvchi faylni yuklab oladi, izoh yozadi va baho qo'yadi. Natija darhol o'quvchi portalida aks etadi.
+                      O'qituvchi faylni yuklab oladi, izoh yozadi va baho qo'yadi. Natija darhol o'quvchi portalida aks
+                      etadi.
                     </p>
                   </div>
                 </div>
@@ -336,7 +348,9 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
                     <Award className="size-5 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">Coinlar va Motivatsiya</h3>
+                    <h3 className="font-semibold text-sm sm:text-base text-slate-900 dark:text-white">
+                      Coinlar va Motivatsiya
+                    </h3>
                     <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-0.5">
                       Vaqtida to'lov, 100% davomat va a'lo baholar uchun avtomatik Ventura Coinlar beriladi.
                     </p>
@@ -362,7 +376,9 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
               <div className="mt-5 space-y-3.5">
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/70 dark:border-slate-800">
                   <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 mb-1.5">
-                    <span className="font-semibold text-slate-800 dark:text-slate-200">Ingliz tili - Grammar Practice</span>
+                    <span className="font-semibold text-slate-800 dark:text-slate-200">
+                      Ingliz tili - Grammar Practice
+                    </span>
                     <span>Muddat: Bugun, 18:00</span>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300">
@@ -375,16 +391,21 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
                 </div>
 
                 <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/70 dark:border-slate-800">
-                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Topshirilgan javob</span>
+                  <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Topshirilgan javob
+                  </span>
                   <div className="mt-1.5 flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60 text-xs">
                     <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200">
                       <FileText className="size-4 text-emerald-600 dark:text-emerald-400" />
                       <span className="font-mono">javob_farrux.pdf (2.4 MB)</span>
                     </div>
-                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">✓ Qabul qilingan</span>
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                      ✓ Qabul qilingan
+                    </span>
                   </div>
                   <div className="mt-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-500/20 text-xs text-slate-700 dark:text-slate-300">
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">O'qituvchi izohi:</span> Barakalla, barcha qoidalar to'g'ri! +10 Coin qo'shildi.
+                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">O'qituvchi izohi:</span>{" "}
+                    Barakalla, barcha qoidalar to'g'ri! +10 Coin qo'shildi.
                   </div>
                 </div>
               </div>
@@ -405,7 +426,10 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
       </section>
 
       {/* 6. Pricing Section */}
-      <section id="pricing" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950 transition-colors">
+      <section
+        id="pricing"
+        className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950 transition-colors"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-2.5">
@@ -480,7 +504,10 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
       </section>
 
       {/* 7. NEW: Contacts & Office Address Section (Ventura Panel Sozlamalaridan) */}
-      <section id="contacts" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-100/60 dark:bg-slate-900/40 transition-colors">
+      <section
+        id="contacts"
+        className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-slate-100/60 dark:bg-slate-900/40 transition-colors"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2.5">
@@ -600,14 +627,19 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
       </section>
 
       {/* 8. FAQ Section */}
-      <section id="faq" className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950 transition-colors">
+      <section
+        id="faq"
+        className="py-16 md:py-24 border-t border-slate-200 dark:border-slate-900 bg-white/50 dark:bg-slate-950 transition-colors"
+      >
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 mb-2">
               <HelpCircle className="size-3.5" />
               <span>Savol-Javob</span>
             </div>
-            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Ko'p so'raladigan savollar</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Ko'p so'raladigan savollar
+            </h2>
           </div>
 
           <div className="space-y-3.5">
@@ -697,9 +729,7 @@ export function CrmLanding({ contacts }: { contacts: CrmContacts }) {
             </a>
           </div>
 
-          <p className="text-slate-400 dark:text-slate-600">
-            © {new Date().getFullYear()} Ventura EDU CRM.
-          </p>
+          <p className="text-slate-400 dark:text-slate-600">© {new Date().getFullYear()} Ventura EDU CRM.</p>
         </div>
       </footer>
 
@@ -810,8 +840,12 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">O'quvchi shaxsiy portali</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Dars jadvali, davomat, baholar va uy vazifalari</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  O'quvchi shaxsiy portali
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Dars jadvali, davomat, baholar va uy vazifalari
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-500/20">
@@ -857,8 +891,12 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">O'qituvchi ishchi kabineti</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Guruhlar, davomat, vazifa berish va tekshirish</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  O'qituvchi ishchi kabineti
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Guruhlar, davomat, vazifa berish va tekshirish
+                </p>
               </div>
               <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/10 dark:bg-purple-500/20 text-purple-700 dark:text-purple-300 font-semibold border border-purple-500/20">
                 Faol guruhlar: 4 ta · 48 o'quvchi
@@ -874,11 +912,15 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
                 <div className="space-y-1.5 text-xs">
                   <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <span>Rustam Karimov</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">Bor (K)</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">
+                      Bor (K)
+                    </span>
                   </div>
                   <div className="flex items-center justify-between p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                     <span>Zilola Mahmudova</span>
-                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">Bor (K)</span>
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold">
+                      Bor (K)
+                    </span>
                   </div>
                 </div>
               </div>
@@ -894,7 +936,9 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
                       <span className="font-medium text-slate-800 dark:text-slate-200">Farrux Saidov</span>
                       <p className="text-[10px] text-slate-400">vazifa_unit4.pdf (1.4 MB)</p>
                     </div>
-                    <span className="px-2.5 py-1 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-semibold">Baho qo'yish</span>
+                    <span className="px-2.5 py-1 rounded bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 font-semibold">
+                      Baho qo'yish
+                    </span>
                   </div>
                 </div>
               </div>
@@ -940,7 +984,9 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Telegram Bot Ekotizimi</h4>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  Telegram Bot Ekotizimi
+                </h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Har bir markazning shaxsiy Telegram boti</p>
               </div>
               <span className="text-xs px-2.5 py-1 rounded-full bg-sky-500/10 dark:bg-sky-500/20 text-sky-700 dark:text-sky-300 font-semibold border border-sky-500/20">
@@ -960,8 +1006,12 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
                 📢 <strong>Eslatma:</strong> Bugun soat 15:30 da IELTS guruhingizda dars boshlanadi. Xona: #2.
               </div>
               <div className="grid grid-cols-2 gap-2 text-center pt-1.5">
-                <div className="p-2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[11px] font-semibold">📅 Dars jadvali</div>
-                <div className="p-2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[11px] font-semibold">💳 To'lov holati</div>
+                <div className="p-2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[11px] font-semibold">
+                  📅 Dars jadvali
+                </div>
+                <div className="p-2 rounded bg-slate-200/80 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-[11px] font-semibold">
+                  💳 To'lov holati
+                </div>
               </div>
             </div>
           </div>
@@ -971,8 +1021,12 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
           <div className="space-y-5 animate-in fade-in duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 dark:border-slate-800">
               <div>
-                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">Fayllar va Xotira (/storage)</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">10 GB disk, monitoring va avtomatik tozalash</p>
+                <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+                  Fayllar va Xotira (/storage)
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  10 GB disk, monitoring va avtomatik tozalash
+                </p>
               </div>
               <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-semibold border border-amber-500/20">
                 10 GB Limiti
@@ -982,15 +1036,23 @@ function InteractiveMockup({ onOpenTrial }: { onOpenTrial: () => void }) {
             <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3.5">
               <div className="flex justify-between items-center text-xs">
                 <span className="text-slate-700 dark:text-slate-300 font-medium">Disk bandligi</span>
-                <span className="text-amber-600 dark:text-amber-400 font-semibold font-mono">1.84 GB / 10 GB (18%)</span>
+                <span className="text-amber-600 dark:text-amber-400 font-semibold font-mono">
+                  1.84 GB / 10 GB (18%)
+                </span>
               </div>
               <div className="w-full bg-slate-200 dark:bg-slate-950 rounded-full h-2.5 p-0.5 overflow-hidden">
                 <div className="bg-gradient-to-r from-amber-400 to-indigo-500 h-2 rounded-full w-[18%]" />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1.5 text-xs text-slate-600 dark:text-slate-400">
-                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">📚 Darsliklar: 840 MB</div>
-                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">📝 Uy vazifalari: 720 MB</div>
-                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">🧾 Kvitansiyalar: 280 MB</div>
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                  📚 Darsliklar: 840 MB
+                </div>
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                  📝 Uy vazifalari: 720 MB
+                </div>
+                <div className="p-2 rounded-lg bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                  🧾 Kvitansiyalar: 280 MB
+                </div>
               </div>
             </div>
           </div>
@@ -1099,7 +1161,9 @@ function PricingCard({
         <div className="mt-5 pb-5 border-b border-slate-100 dark:border-slate-800">
           <span className="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white">{price}</span>
           <span className="text-xs sm:text-sm text-slate-500 ml-1">{period}</span>
-          <div className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">⭐ 7 kun to'liq bepul sinov</div>
+          <div className="mt-1 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+            ⭐ 7 kun to'liq bepul sinov
+          </div>
         </div>
 
         <ul className="mt-5 space-y-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
@@ -1140,13 +1204,204 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
         className="w-full p-4 sm:p-5 flex items-center justify-between text-left font-semibold text-slate-900 dark:text-white text-sm sm:text-base hover:text-indigo-600 dark:hover:text-indigo-300 transition-colors cursor-pointer"
       >
         <span>{question}</span>
-        <ChevronDown className={`size-5 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`size-5 text-slate-400 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+        />
       </button>
       {open && (
         <div className="px-4 pb-4 sm:px-5 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
           {answer}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------- Fullscreen Building Animation Screen ---------- */
+
+const BUILD_STAGES = [
+  "Building your system.",
+  "Securing isolation & storage.",
+  "Migrating your database.",
+  "Configuring Cloudflare tunnel & routes.",
+  "Deploying core services & health check.",
+  "Finalizing your workspace.",
+  "Redirecting to your CRM...",
+] as const;
+
+const PROGRESS_MAP = [15, 32, 52, 70, 85, 96, 100];
+
+function BuildingScreen({
+  info,
+  error,
+  onRetry,
+}: {
+  info: { centerName: string; slug: string; url: string; deploymentId?: string | null };
+  error: string | null;
+  onRetry: () => void;
+}) {
+  const [stageIndex, setStageIndex] = React.useState(0);
+  const [failedError, setFailedError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    let active = true;
+    let pollInterval: NodeJS.Timeout | null = null;
+    let currentStage = 0;
+    let serverReady = false;
+
+    // Har bir qadam kamida 1.4 soniya chiroyli o'tishi uchun taymer
+    const stageTimer = setInterval(() => {
+      if (!active) return;
+      if (currentStage < 5) {
+        currentStage += 1;
+        setStageIndex(currentStage);
+      } else if (serverReady && currentStage === 5) {
+        currentStage = 6;
+        setStageIndex(6);
+        clearInterval(stageTimer);
+        setTimeout(() => {
+          if (active) {
+            window.location.href = info.url;
+          }
+        }, 1200);
+      }
+    }, 1400);
+
+    // Orqa fonda serverdagi deploy va tunnel holatini polling qilish
+    const poll = async () => {
+      try {
+        const statusRes = await checkTrialProvisionStatus({
+          slug: info.slug,
+          deploymentId: info.deploymentId,
+        });
+
+        if (!active) return;
+
+        if (!statusRes.ok) return;
+
+        if (statusRes.status === "failed") {
+          setFailedError(statusRes.error || "Deploy jarayonida xatolik yuz berdi");
+          clearInterval(stageTimer);
+          if (pollInterval) clearInterval(pollInterval);
+          return;
+        }
+
+        if (statusRes.ready) {
+          serverReady = true;
+          if (currentStage >= 5) {
+            currentStage = 6;
+            setStageIndex(6);
+            clearInterval(stageTimer);
+            if (pollInterval) clearInterval(pollInterval);
+            setTimeout(() => {
+              if (active) {
+                window.location.href = info.url;
+              }
+            }, 1200);
+          }
+        }
+      } catch {
+        // tarmoq uzilishi bo'lsa keyingi intervalda qayta so'raydi
+      }
+    };
+
+    const initialPoll = setTimeout(() => {
+      poll();
+      pollInterval = setInterval(poll, 1600);
+    }, 800);
+
+    return () => {
+      active = false;
+      clearInterval(stageTimer);
+      clearTimeout(initialPoll);
+      if (pollInterval) clearInterval(pollInterval);
+    };
+  }, [info.slug, info.deploymentId, info.url]);
+
+  const displayError = error || failedError;
+
+  return (
+    <div className="fixed inset-0 z-[100] bg-white text-slate-900 flex flex-col items-center justify-center p-6 select-none font-[family-name:var(--font-display)] animate-in fade-in duration-300">
+      <div className="w-full max-w-3xl flex flex-col items-center text-center">
+        {/* CRM shriftidagi markaziy katta H1 sarlavha */}
+        <div className="relative min-h-[90px] sm:min-h-[120px] flex items-center justify-center">
+          <h1
+            key={stageIndex}
+            className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-slate-900 font-[family-name:var(--font-display)] text-center animate-in fade-in slide-in-from-bottom-3 duration-500"
+          >
+            {BUILD_STAGES[stageIndex]}
+          </h1>
+        </div>
+
+        {/* Markaz nomi va subdomen manzili */}
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-2 font-mono text-xs sm:text-sm text-slate-500">
+          <span className="font-semibold text-slate-700">{info.centerName}</span>
+          <span className="text-slate-300">•</span>
+          <span className="text-indigo-600 font-semibold">{info.url}</span>
+        </div>
+
+        {/* Minimalist Progress Bar */}
+        <div className="w-64 sm:w-80 h-1.5 bg-slate-100 rounded-full overflow-hidden mt-8">
+          <div
+            className="h-full bg-indigo-600 rounded-full transition-all duration-700 ease-out"
+            style={{ width: `${PROGRESS_MAP[stageIndex]}%` }}
+          />
+        </div>
+
+        {/* Progress foiz ko'rsatkichi */}
+        <div className="mt-3.5 flex items-center gap-2 text-xs font-mono text-slate-400">
+          {stageIndex < 6 ? (
+            <>
+              <span className="size-2 rounded-full bg-indigo-600 animate-ping" />
+              <span>{PROGRESS_MAP[stageIndex]}% yakunlandi</span>
+            </>
+          ) : (
+            <span className="text-emerald-600 font-semibold flex items-center gap-1.5">
+              <CheckCircle2 className="size-3.5" />
+              100% tayyor
+            </span>
+          )}
+        </div>
+
+        {/* Avtomatik yo'naltirish ma'lumoti */}
+        {stageIndex === 6 && (
+          <div className="mt-6 flex flex-col items-center gap-2 animate-in fade-in duration-300">
+            <div className="text-xs text-slate-400 font-mono">CRM kabinetingizga yo'naltirilmoqda...</div>
+            <a
+              href={info.url}
+              className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline inline-flex items-center gap-1 font-mono"
+            >
+              <span>Agar sahifa ochilmasa, bu yerni bosing</span>
+              <ExternalLink className="size-3" />
+            </a>
+          </div>
+        )}
+
+        {/* Xatolik yuz bergandagi ko'rinish */}
+        {displayError && (
+          <div className="mt-6 max-w-md w-full p-5 rounded-2xl bg-red-50 border border-red-200 text-center animate-in fade-in duration-200">
+            <AlertCircle className="size-8 text-red-500 mx-auto mb-2" />
+            <h3 className="text-sm font-bold text-red-900">Deploy jarayonida to'xtalish bo'ldi</h3>
+            <p className="text-xs text-red-700 mt-1">{displayError}</p>
+            <div className="mt-4 flex items-center justify-center gap-3">
+              <button
+                onClick={onRetry}
+                className="px-4 py-2 rounded-xl bg-white border border-red-200 text-xs font-semibold text-slate-800 hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                Orqaga qaytish
+              </button>
+              <a
+                href="https://t.me/ventura_support"
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 rounded-xl bg-indigo-600 text-xs font-semibold text-white hover:bg-indigo-500 transition-colors"
+              >
+                Qo'llab-quvvatlash
+              </a>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1177,12 +1432,16 @@ function FreeTrialModal({
   const [checkingSlug, setCheckingSlug] = React.useState(false);
   const [slugStatus, setSlugStatus] = React.useState<{ available?: boolean; error?: string } | null>(null);
 
-  const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
-  const [successResult, setSuccessResult] = React.useState<{ slug: string; url: string; centerName: string } | null>(
-    null,
-  );
-  const [copied, setCopied] = React.useState(false);
+
+  const [isBuilding, setIsBuilding] = React.useState(false);
+  const [buildingInfo, setBuildingInfo] = React.useState<{
+    centerName: string;
+    slug: string;
+    url: string;
+    deploymentId?: string | null;
+  } | null>(null);
+  const [buildError, setBuildError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!slug || slug.length < 3) {
@@ -1247,308 +1506,240 @@ function FreeTrialModal({
       return;
     }
 
-    setSubmitting(true);
+    const targetSlug = slug.trim().toLowerCase();
+    const targetCenter = centerName.trim();
+    const initialUrl = `https://${targetSlug}.ventura.uz`;
+
+    setIsBuilding(true);
+    setBuildingInfo({
+      centerName: targetCenter,
+      slug: targetSlug,
+      url: initialUrl,
+    });
+    setBuildError(null);
 
     try {
       const res = await startFreeTrialAction({
-        centerName: centerName.trim(),
-        slug: slug.trim().toLowerCase(),
+        centerName: targetCenter,
+        slug: targetSlug,
         ownerName: ownerName.trim(),
         ownerPhone: cleanDigits,
         ownerPassword,
       });
 
       if (!res.ok) {
-        setSubmitError(res.error);
-        setSubmitting(false);
+        setBuildError(res.error);
         return;
       }
 
-      setSuccessResult(res);
+      setBuildingInfo({
+        centerName: res.centerName,
+        slug: res.slug,
+        url: res.url,
+        deploymentId: res.deploymentId,
+      });
     } catch (err) {
-      setSubmitError((err as Error).message || "Kutilmagan xatolik yuz berdi");
-    } finally {
-      setSubmitting(false);
+      setBuildError((err as Error).message || "Kutilmagan xatolik yuz berdi");
     }
   };
 
-  const handleCopyUrl = () => {
-    if (!successResult) return;
-    navigator.clipboard.writeText(successResult.url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  if (isBuilding && buildingInfo) {
+    return (
+      <BuildingScreen
+        info={buildingInfo}
+        error={buildError}
+        onRetry={() => {
+          setIsBuilding(false);
+          setBuildError(null);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 text-slate-900 dark:text-slate-100 max-h-[92vh] overflow-y-auto">
         <button
           onClick={onClose}
-          disabled={submitting}
+          disabled={isBuilding}
           className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
         >
           <X className="size-5" />
         </button>
 
-        {!successResult ? (
-          <div>
-            <div className="flex items-center gap-2.5 mb-2">
-              <div className="size-9 rounded-xl bg-indigo-500/10 dark:bg-indigo-600/20 border border-indigo-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-                <Sparkles className="size-5" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white">7 kunlik bepul sinov</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Karta talab etilmaydi · 30 soniyada tayyor</p>
-              </div>
+        <div>
+          <div className="flex items-center gap-2.5 mb-2">
+            <div className="size-9 rounded-xl bg-indigo-500/10 dark:bg-indigo-600/20 border border-indigo-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <Sparkles className="size-5" />
             </div>
-
-            {/* Post-login notice */}
-            <div className="my-3 p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2.5 text-xs text-indigo-900 dark:text-indigo-200">
-              <Bot className="size-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold">Oson va tez boshlash:</span>
-                <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
-                  Telegram bot, 2FA xavfsizlik va boshqa sozlamalar loyihangiz ochilgandan so'ng, tizim ichida oson ulanadi.
-                </p>
-              </div>
-            </div>
-
-            {submitError && (
-              <div className="my-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs">
-                ⚠️ {submitError}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className="mt-3.5 space-y-3.5 text-xs sm:text-sm">
-              {/* 1. Markaz nomi va avtomatik subdomen */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  O'quv markaz nomi *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={centerName}
-                  onChange={handleCenterNameChange}
-                  placeholder="Masalan: Registon Academy"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
-                />
-
-                {/* Subdomain automatic preview & edit toggle */}
-                <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                      <Globe className="size-3.5 text-indigo-500" />
-                      <span>Web manzil:</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomSlug(!showCustomSlug)}
-                      className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                    >
-                      {showCustomSlug ? "Avtomatik" : "Subdomenni o'zgartirish"}
-                    </button>
-                  </div>
-
-                  {!showCustomSlug ? (
-                    <div className="mt-1.5 flex items-center gap-1 font-mono text-xs">
-                      <span className="text-slate-400 select-none">https://</span>
-                      <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
-                        {slug || "markaz"}
-                      </span>
-                      <span className="text-slate-500 select-none">.ventura.uz</span>
-                    </div>
-                  ) : (
-                    <div className="mt-1.5 flex items-center rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2.5 py-1.5 focus-within:border-indigo-500">
-                      <span className="text-slate-400 font-mono text-xs select-none">https://</span>
-                      <input
-                        type="text"
-                        value={slug}
-                        onChange={(e) => {
-                          setSlugTouched(true);
-                          setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
-                        }}
-                        placeholder="markaz"
-                        className="w-full bg-transparent text-slate-900 dark:text-white font-mono text-xs px-1 focus:outline-none"
-                      />
-                      <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0">
-                        .ventura.uz
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Availability badge */}
-                  <div className="mt-1 min-h-[16px] text-[11px]">
-                    {checkingSlug && <span className="text-slate-400">Tekshirilmoqda...</span>}
-                    {!checkingSlug && slugStatus && slugStatus.available && (
-                      <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                        <Check className="size-3 text-emerald-500" /> <strong>{slug}.ventura.uz</strong> bo'sh, markazingiz uchun tayyor
-                      </span>
-                    )}
-                    {!checkingSlug && slugStatus && !slugStatus.available && (
-                      <span className="text-red-500">❌ {slugStatus.error}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Rahbar ismi */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Rahbar ismi va familiyasi *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={ownerName}
-                  onChange={(e) => setOwnerName(e.target.value)}
-                  placeholder="Masalan: Javohir Alimov"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              {/* 3. Telefon raqami — PhoneInput (paneldagi loyiha kabi) */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Telefon raqami * <span className="text-[11px] text-slate-400 font-normal">(kabinetga kirish logini)</span>
-                </label>
-                <PhoneInput
-                  value={ownerPhone}
-                  onValueChange={(val) => {
-                    setOwnerPhone(val);
-                    if (phoneError) setPhoneError(null);
-                  }}
-                  invalid={!!phoneError}
-                  className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-within:border-indigo-500"
-                />
-                {phoneError ? (
-                  <p className="mt-1 text-xs text-red-500">{phoneError}</p>
-                ) : (
-                  <p className="mt-1 text-[11px] text-slate-400">9 ta raqam (masalan, 90 123 45 67)</p>
-                )}
-              </div>
-
-              {/* 4. Parol */}
-              <div>
-                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                  Kabinet paroli *
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    minLength={8}
-                    value={ownerPassword}
-                    onChange={(e) => setOwnerPassword(e.target.value)}
-                    placeholder="Kamida 8 ta belgi"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                  >
-                    {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting || checkingSlug || (slugStatus !== null && !slugStatus.available)}
-                  className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg shadow-indigo-600/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                >
-                  {submitting ? (
-                    <>
-                      <div className="size-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Markaz tayyorlanmoqda...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>7 kunlik bepul sinovni boshlash</span>
-                      <ArrowRight className="size-4" />
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          </div>
-        ) : (
-          <div className="text-center py-4 space-y-4 animate-in zoom-in-95 duration-200">
-            <div className="size-16 rounded-2xl bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="size-9" />
-            </div>
-
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Tabriklaymiz!</span>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mt-1">O'quv markazingiz yaratildi!</h3>
-              <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1.5">
-                <strong>{successResult.centerName}</strong> uchun 7 kunlik to'liq bepul sinov davri boshlandi.
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">7 kunlik bepul sinov</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Karta talab etilmaydi · 30 soniyada tayyor</p>
+            </div>
+          </div>
+
+          {/* Post-login notice */}
+          <div className="my-3 p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2.5 text-xs text-indigo-900 dark:text-indigo-200">
+            <Bot className="size-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold">Oson va tez boshlash:</span>
+              <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
+                Telegram bot, 2FA xavfsizlik va boshqa sozlamalar loyihangiz ochilgandan so'ng, tizim ichida oson
+                ulanadi.
               </p>
             </div>
+          </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-left space-y-2.5 font-mono text-xs">
-              <div>
-                <span className="text-slate-400 block text-[10px] uppercase">CRM Tizim manzili</span>
-                <div className="flex items-center justify-between mt-1 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
-                  <a
-                    href={successResult.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline truncate"
-                  >
-                    {successResult.url}
-                  </a>
+          {submitError && (
+            <div className="my-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs">
+              ⚠️ {submitError}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-3.5 space-y-3.5 text-xs sm:text-sm">
+            {/* 1. Markaz nomi va avtomatik subdomen */}
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">O'quv markaz nomi *</label>
+              <input
+                type="text"
+                required
+                value={centerName}
+                onChange={handleCenterNameChange}
+                placeholder="Masalan: Registon Academy"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
+              />
+
+              {/* Subdomain automatic preview & edit toggle */}
+              <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <Globe className="size-3.5 text-indigo-500" />
+                    <span>Web manzil:</span>
+                  </span>
                   <button
-                    onClick={handleCopyUrl}
-                    className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-white shrink-0 ml-2 cursor-pointer"
+                    type="button"
+                    onClick={() => setShowCustomSlug(!showCustomSlug)}
+                    className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                   >
-                    {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                    {showCustomSlug ? "Avtomatik" : "Subdomenni o'zgartirish"}
                   </button>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-2 pt-1 text-slate-700 dark:text-slate-300">
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase">Login</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    +998 {formatUzPhone(ownerPhone)}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-slate-400 block text-[10px] uppercase">Parol</span>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">
-                    {ownerPassword ? "••••••••" : "Siz kiritgan parol"}
-                  </span>
-                </div>
-              </div>
+                {!showCustomSlug ? (
+                  <div className="mt-1.5 flex items-center gap-1 font-mono text-xs">
+                    <span className="text-slate-400 select-none">https://</span>
+                    <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
+                      {slug || "markaz"}
+                    </span>
+                    <span className="text-slate-500 select-none">.ventura.uz</span>
+                  </div>
+                ) : (
+                  <div className="mt-1.5 flex items-center rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2.5 py-1.5 focus-within:border-indigo-500">
+                    <span className="text-slate-400 font-mono text-xs select-none">https://</span>
+                    <input
+                      type="text"
+                      value={slug}
+                      onChange={(e) => {
+                        setSlugTouched(true);
+                        setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                      }}
+                      placeholder="markaz"
+                      className="w-full bg-transparent text-slate-900 dark:text-white font-mono text-xs px-1 focus:outline-none"
+                    />
+                    <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0">
+                      .ventura.uz
+                    </span>
+                  </div>
+                )}
 
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-1.5 font-sans">
-                <Bot className="size-3.5 text-indigo-500 shrink-0 mt-0.5" />
-                <span>Kabinetingizga kirgach, Sozlamalar bo'limidan o'z Telegram botingizni va 2FA xavfsizlikni 1 daqiqada ulab olasiz.</span>
+                {/* Availability badge */}
+                <div className="mt-1 min-h-[16px] text-[11px]">
+                  {checkingSlug && <span className="text-slate-400">Tekshirilmoqda...</span>}
+                  {!checkingSlug && slugStatus && slugStatus.available && (
+                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                      <Check className="size-3 text-emerald-500" /> <strong>{slug}.ventura.uz</strong> bo'sh,
+                      markazingiz uchun tayyor
+                    </span>
+                  )}
+                  {!checkingSlug && slugStatus && !slugStatus.available && (
+                    <span className="text-red-500">❌ {slugStatus.error}</span>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="pt-1.5 flex flex-col sm:flex-row gap-2.5">
-              <a
-                href={successResult.url}
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 inline-flex items-center justify-center py-3.5 px-4 rounded-xl font-semibold text-sm text-white bg-emerald-600 hover:bg-emerald-500 transition-all shadow-lg shadow-emerald-600/30 active:scale-95"
-              >
-                <span>CRM Tizimiga Kirish</span>
-                <ExternalLink className="size-4 ml-2" />
-              </a>
+            {/* 2. Rahbar ismi */}
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Rahbar ismi va familiyasi *
+              </label>
+              <input
+                type="text"
+                required
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+                placeholder="Masalan: Javohir Alimov"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+
+            {/* 3. Telefon raqami — PhoneInput (paneldagi loyiha kabi) */}
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                Telefon raqami *{" "}
+                <span className="text-[11px] text-slate-400 font-normal">(kabinetga kirish logini)</span>
+              </label>
+              <PhoneInput
+                value={ownerPhone}
+                onValueChange={(val) => {
+                  setOwnerPhone(val);
+                  if (phoneError) setPhoneError(null);
+                }}
+                invalid={!!phoneError}
+                className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-within:border-indigo-500"
+              />
+              {phoneError ? (
+                <p className="mt-1 text-xs text-red-500">{phoneError}</p>
+              ) : (
+                <p className="mt-1 text-[11px] text-slate-400">9 ta raqam (masalan, 90 123 45 67)</p>
+              )}
+            </div>
+
+            {/* 4. Parol */}
+            <div>
+              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Kabinet paroli *</label>
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  minLength={8}
+                  value={ownerPassword}
+                  onChange={(e) => setOwnerPassword(e.target.value)}
+                  placeholder="Kamida 8 ta belgi"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="pt-2">
               <button
-                onClick={onClose}
-                className="py-3.5 px-4 rounded-xl font-semibold text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                type="submit"
+                disabled={isBuilding || checkingSlug || (slugStatus !== null && !slugStatus.available)}
+                className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg shadow-indigo-600/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
               >
-                Yopish
+                <span>7 kunlik bepul sinovni boshlash</span>
+                <ArrowRight className="size-4" />
               </button>
             </div>
-          </div>
-        )}
+          </form>
+        </div>
       </div>
     </div>
   );

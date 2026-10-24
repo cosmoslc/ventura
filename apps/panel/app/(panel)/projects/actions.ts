@@ -411,3 +411,116 @@ export async function resetDirectorPasswordAction(id: string, newPassword: strin
   return { ok: true };
 }
 
+/** Oylik abonent to'lovini qabul qilib, obuna muddatini uzaytirish */
+export async function extendSubscriptionAction(
+  id: string,
+  months: number = 1,
+  amount?: number,
+): Promise<Result<{ paidUntil: string }>> {
+  const { actor, meta, db } = await ctx();
+  const [before] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
+    .limit(1);
+  if (!before) return { ok: false, error: uz.common.loadError };
+
+  const currentSettings = (before.settings ?? {}) as Record<string, unknown>;
+  const currentSub = (currentSettings.subscription ?? {}) as Record<string, unknown>;
+  const monthlyPrice = typeof currentSub.monthlyPrice === "number" ? currentSub.monthlyPrice : 300_000;
+  const paymentAmount = amount ?? monthlyPrice * months;
+
+  const now = new Date();
+  const baseDate =
+    currentSub.paidUntil && new Date(currentSub.paidUntil as string) > now
+      ? new Date(currentSub.paidUntil as string)
+      : now;
+
+  const nextPaidUntil = new Date(baseDate);
+  nextPaidUntil.setMonth(nextPaidUntil.getMonth() + months);
+
+  const nextSettings = {
+    ...currentSettings,
+    subscription: {
+      ...currentSub,
+      active: true,
+      plan: currentSub.plan ?? "Standart",
+      monthlyPrice,
+      paidUntil: nextPaidUntil.toISOString(),
+      lastPaidAt: now.toISOString(),
+      lastPaymentAmount: paymentAmount,
+      reminderSentFor: null,
+      autoFreeze: true,
+    },
+    trial: {
+      ...((currentSettings.trial as Record<string, unknown> | undefined) ?? {}),
+      active: false,
+      activatedAt: currentSettings.trial
+        ? ((currentSettings.trial as Record<string, unknown>).activatedAt ?? now.toISOString())
+        : now.toISOString(),
+    },
+  };
+
+  await db
+    .update(projects)
+    .set({
+      status: "active",
+      settings: nextSettings,
+    })
+    .where(eq(projects.id, id));
+
+  await audit.record(db, {
+    actor,
+    action: "project.subscription_extended",
+    target: { type: "project", id },
+    ...meta,
+    metadata: {
+      slug: before.slug,
+      name: before.name,
+      months,
+      amount: paymentAmount,
+      newPaidUntil: nextPaidUntil.toISOString(),
+    },
+  });
+
+  revalidatePath(`/projects/${id}`);
+  revalidatePath("/projects");
+  return { ok: true, paidUntil: nextPaidUntil.toISOString() };
+}
+
+/** Loyihani tezkor muzlatish / eritish (freeze / unfreeze) */
+export async function toggleProjectFreezeAction(id: string): Promise<Result<{ status: "active" | "paused" }>> {
+  const { actor, meta, db } = await ctx();
+  const [before] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.id, id), isNull(projects.deletedAt)))
+    .limit(1);
+  if (!before) return { ok: false, error: uz.common.loadError };
+
+  const nextStatus: "active" | "paused" = before.status === "active" ? "paused" : "active";
+
+  await db
+    .update(projects)
+    .set({ status: nextStatus })
+    .where(eq(projects.id, id));
+
+  await audit.record(db, {
+    actor,
+    action: nextStatus === "paused" ? "project.frozen" : "project.unfrozen",
+    target: { type: "project", id },
+    ...meta,
+    metadata: {
+      slug: before.slug,
+      name: before.name,
+      previousStatus: before.status,
+      nextStatus,
+    },
+  });
+
+  revalidatePath(`/projects/${id}`);
+  revalidatePath("/projects");
+  return { ok: true, status: nextStatus };
+}
+
+

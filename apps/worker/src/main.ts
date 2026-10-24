@@ -84,7 +84,7 @@ const monitor = async () => {
   monitoring = true;
   try {
     await monitorServers(db, notifyServers);
-    await checkTrialExpirations(db, notifyServers);
+    await checkTrialExpirations(db, notifyServers, telegram);
   } catch (e) {
     console.error("[monitor]", (e as Error).message);
   } finally {

@@ -1,6 +1,20 @@
 "use client";
 
-import { CheckCircle2, KeyRound, RefreshCw, ShieldCheck, Sparkles, Trash2, Unlock } from "lucide-react";
+import {
+  Calendar,
+  CheckCircle2,
+  CreditCard,
+  Flame,
+  KeyRound,
+  Plus,
+  RefreshCw,
+  ShieldAlert,
+  ShieldCheck,
+  Snowflake,
+  Sparkles,
+  Trash2,
+  Unlock,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import {
@@ -23,10 +37,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { toast } from "@ventura/ui/toast";
 import { randomSecret } from "@/lib/project-secrets";
 import { dbOptionsFor } from "@/lib/project-rules";
+import { type ProjectBillingSummary } from "@/lib/project-billing";
 import { uz } from "@/lib/uz";
 import {
   activateTrialProjectAction,
+  extendSubscriptionAction,
   resetDirectorPasswordAction,
+  toggleProjectFreezeAction,
   trashProjectAction,
   unlockDirectorAction,
   updateBrandAction,
@@ -86,6 +103,7 @@ interface EditorProps {
     expired: boolean;
     daysLeft: number | null;
   } | null;
+  billing?: ProjectBillingSummary;
 }
 
 function SaveBar({ onSave, pending, disabled }: { onSave: () => void; pending: boolean; disabled?: boolean }) {
@@ -110,6 +128,7 @@ export function ProjectEditor({
   deploys,
   director,
   trial,
+  billing,
 }: EditorProps) {
   const router = useRouter();
   const [pending, start] = React.useTransition();
@@ -117,6 +136,8 @@ export function ProjectEditor({
   const [activateTrialOpen, setActivateTrialOpen] = React.useState(false);
   const [passwordModalOpen, setPasswordModalOpen] = React.useState(false);
   const [newPassword, setNewPassword] = React.useState("");
+  const [extendOpen, setExtendOpen] = React.useState(false);
+  const [extendMonths, setExtendMonths] = React.useState<number>(1);
 
   const [general, setGeneral] = React.useState({
     name: project.name,
@@ -156,6 +177,30 @@ export function ProjectEditor({
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
       toast({ tone: "success", title: "Direktor paroli yangilandi!" });
       setPasswordModalOpen(false);
+      router.refresh();
+    });
+  }
+
+  function handleExtendSubscription() {
+    startActionTransition(async () => {
+      const res = await extendSubscriptionAction(project.id, extendMonths);
+      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      toast({ tone: "success", title: `Obuna ${extendMonths} oyga muvaffaqiyatli uzaytirildi!` });
+      setExtendOpen(false);
+      setGeneral((prev) => ({ ...prev, status: "active" }));
+      router.refresh();
+    });
+  }
+
+  function handleToggleFreeze() {
+    startActionTransition(async () => {
+      const res = await toggleProjectFreezeAction(project.id);
+      if (!res.ok) return void toast({ tone: "danger", title: res.error });
+      toast({
+        tone: res.status === "paused" ? "warning" : "success",
+        title: res.status === "paused" ? "Loyiha muzlatildi (to'xtatildi)" : "Loyiha faollashtirildi (eritildi)",
+      });
+      setGeneral((prev) => ({ ...prev, status: res.status }));
       router.refresh();
     });
   }
@@ -200,45 +245,123 @@ export function ProjectEditor({
             </TabsContent>
 
             <TabsContent value="overview" className="space-y-6">
-              {/* Sinov holati kartochkasi */}
-              {trial?.active ? (
-                <div className="flex flex-col gap-3 rounded-card border border-amber-500/30 bg-amber-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+              {/* Obuna va to'lov holati kartochkasi */}
+              <div className="rounded-card border border-border bg-card p-4 space-y-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="flex size-9 shrink-0 items-center justify-center rounded-control bg-amber-500/20 text-amber-500">
-                      <Sparkles className="size-5" />
+                    <div
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-control ${
+                        general.status === "paused"
+                          ? "bg-red-500/10 text-red-500"
+                          : billing?.kind === "trial"
+                            ? "bg-amber-500/10 text-amber-500"
+                            : "bg-primary/10 text-primary"
+                      }`}
+                    >
+                      {general.status === "paused" ? (
+                        <Snowflake className="size-5" />
+                      ) : billing?.kind === "trial" ? (
+                        <Sparkles className="size-5" />
+                      ) : (
+                        <CreditCard className="size-5" />
+                      )}
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-body font-semibold text-foreground">7 kunlik bepul sinov</span>
-                        <Badge tone={trial.expired ? "danger" : "warning"} dot>
-                          {trial.expired ? "Sinov muddati tugagan" : `${trial.daysLeft} kun qoldi`}
-                        </Badge>
+                        <span className="text-body font-semibold text-foreground">Obuna va To'lovlar</span>
+                        {general.status === "paused" ? (
+                          <Badge tone="danger" dot>
+                            Muzlatilgan
+                          </Badge>
+                        ) : billing?.expired ? (
+                          <Badge tone="danger" dot>
+                            Muddati tugagan
+                          </Badge>
+                        ) : billing?.kind === "trial" ? (
+                          <Badge tone="warning" dot>
+                            Sinov: {billing.daysLeft} kun qoldi
+                          </Badge>
+                        ) : billing?.kind === "subscription" ? (
+                          <Badge tone={(billing.daysLeft ?? 0) <= 2 ? "warning" : "success"} dot>
+                            {billing.daysLeft} kun qoldi
+                          </Badge>
+                        ) : (
+                          <Badge tone="neutral">Doimiy tarif</Badge>
+                        )}
                       </div>
                       <div className="text-caption text-muted-foreground">
-                        {trial.expiresAt ? `Amal qilish muddati: ${new Date(trial.expiresAt).toLocaleDateString("uz-UZ")} gacha` : ""}
+                        {billing?.expiresAt
+                          ? `Amal qilish muddati: ${new Date(billing.expiresAt).toLocaleDateString("uz-UZ")} gacha`
+                          : "Amal qilish muddati cheklanmagan"}
                       </div>
                     </div>
                   </div>
+
                   {canWrite ? (
-                    <Button
-                      size="sm"
-                      className="shrink-0"
-                      disabled={pendingAction}
-                      onClick={() => setActivateTrialOpen(true)}
-                    >
-                      <CheckCircle2 className="size-4" /> To'liq faollashtirish
-                    </Button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {general.status === "paused" ? (
+                        <Button size="sm" disabled={pendingAction} onClick={handleToggleFreeze}>
+                          <Flame className="size-4 text-amber-500" /> Muzdan chiqarish
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={pendingAction}
+                          onClick={handleToggleFreeze}
+                          title="Loyihani vaqtincha to'xtatish"
+                        >
+                          <Snowflake className="size-4 text-blue-500" /> Muzlatish
+                        </Button>
+                      )}
+
+                      <Button size="sm" disabled={pendingAction} onClick={() => setExtendOpen(true)}>
+                        <Plus className="size-4" /> Obunani uzaytirish
+                      </Button>
+
+                      {billing?.kind === "trial" ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={pendingAction}
+                          onClick={() => setActivateTrialOpen(true)}
+                        >
+                          <CheckCircle2 className="size-4" /> Faollashtirish
+                        </Button>
+                      ) : null}
+                    </div>
                   ) : null}
                 </div>
-              ) : trial?.activatedAt ? (
-                <div className="flex items-center justify-between rounded-card border border-emerald-500/30 bg-emerald-500/10 px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="size-5 text-emerald-500" />
-                    <span className="text-body font-semibold text-foreground">Loyiha to'liq faollashtirilgan (Doimiy tarif)</span>
+
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 pt-2 border-t border-border-soft">
+                  <div>
+                    <div className="text-caption text-muted-foreground">Tarif rejasi</div>
+                    <div className="text-body font-medium text-foreground">{billing?.plan ?? "Standart"}</div>
                   </div>
-                  <Badge tone="success" dot>Faol</Badge>
+                  <div>
+                    <div className="text-caption text-muted-foreground">Oylik to'lov</div>
+                    <div className="text-body font-medium text-foreground">
+                      {billing?.monthlyPrice ? `${billing.monthlyPrice.toLocaleString("uz-UZ")} so'm` : "Bepul"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-caption text-muted-foreground">Qolgan muddat</div>
+                    <div className="text-body font-medium text-foreground">
+                      {billing?.daysLeft !== null && billing?.daysLeft !== undefined
+                        ? billing.daysLeft > 0
+                          ? `${billing.daysLeft} kun`
+                          : "Muddati tugagan"
+                        : "Cheksiz"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-caption text-muted-foreground">Tizim holati</div>
+                    <div className="text-body font-medium text-foreground">
+                      {general.status === "paused" ? "Muzlatilgan (Paused)" : "Faol (Active)"}
+                    </div>
+                  </div>
                 </div>
-              ) : null}
+              </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -561,6 +684,52 @@ export function ProjectEditor({
               onClick={handleResetPassword}
             >
               Saqlash
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      {/* Obuna muddatini uzaytirish modali */}
+      <Modal
+        open={extendOpen}
+        onOpenChange={setExtendOpen}
+        title="Obuna muddatini uzaytirish"
+        description="Mijoz to'lovini qabul qilib, loyiha faoliyatini uzaytirish. Muzlatilgan loyihalar avtomatik faollashtiriladi."
+      >
+        <div className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label>Uzaytirish muddati</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { months: 1, label: "1 oy", price: billing?.monthlyPrice ?? 300_000 },
+                { months: 3, label: "3 oy", price: (billing?.monthlyPrice ?? 300_000) * 3 },
+                { months: 6, label: "6 oy", price: (billing?.monthlyPrice ?? 300_000) * 6 },
+                { months: 12, label: "1 yil (12 oy)", price: (billing?.monthlyPrice ?? 300_000) * 12 },
+              ].map((opt) => (
+                <button
+                  key={opt.months}
+                  type="button"
+                  onClick={() => setExtendMonths(opt.months)}
+                  className={`flex flex-col items-start p-3 rounded-control border text-left transition-all ${
+                    extendMonths === opt.months
+                      ? "border-primary bg-primary/10 text-primary-text ring-1 ring-primary"
+                      : "border-border hover:border-border-hover bg-background"
+                  }`}
+                >
+                  <span className="font-semibold text-body">{opt.label}</span>
+                  <span className="text-caption text-muted-foreground font-mono">
+                    {opt.price.toLocaleString("uz-UZ")} so'm
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" size="sm" onClick={() => setExtendOpen(false)}>
+              Bekor qilish
+            </Button>
+            <Button size="sm" disabled={pendingAction} onClick={handleExtendSubscription}>
+              To'lovni tasdiqlash (+{extendMonths} oy)
             </Button>
           </div>
         </div>
