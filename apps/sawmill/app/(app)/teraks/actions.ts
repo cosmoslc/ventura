@@ -3,7 +3,7 @@
 import { desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { materials, terakCosts, terakMaterials, teraks, workEntries, workTypes } from "@ventura/db/schema/sawmill";
+import { materials, terakCosts, terakMaterials, teraks, workers, workEntries, workTypes } from "@ventura/db/schema/sawmill";
 import { tenantAudit } from "@ventura/security";
 import { can } from "@/lib/auth/roles";
 import { pieceVolumeM3 } from "@/lib/calc/units";
@@ -513,6 +513,34 @@ export async function getTerakDetail(
 
   const remainingRes = Math.max(0, totalRes - sartirofkaSoni);
 
+  // Terakka tegishli ishlar ro'yxati (S3)
+  const terakWorks = await db
+    .select({
+      id: workEntries.id,
+      date: workEntries.date,
+      workerId: workEntries.workerId,
+      workerName: workers.name,
+      workTypeId: workEntries.workTypeId,
+      workTypeName: workTypes.name,
+      kind: workEntries.kind,
+      groupId: workEntries.groupId,
+      amount: workEntries.amount,
+      materialId: workEntries.materialId,
+      materialName: materials.name,
+      quantity: workEntries.quantity,
+      rows: workEntries.rows,
+      payUnit: workEntries.payUnit,
+      note: workEntries.note,
+    })
+    .from(workEntries)
+    .innerJoin(workers, eq(workers.id, workEntries.workerId))
+    .leftJoin(workTypes, eq(workTypes.id, workEntries.workTypeId))
+    .leftJoin(materials, eq(materials.id, workEntries.materialId))
+    .where(eq(workEntries.terakId, terakId))
+    .orderBy(desc(workEntries.date), desc(workEntries.createdAt));
+
+  const totalWorkAmount = terakWorks.reduce((acc, w) => acc + Number(w.amount), 0);
+
   return {
     terak,
     stock: stockWithVolumes,
@@ -521,5 +549,10 @@ export async function getTerakDetail(
     totalRes,
     sartirofkaSoni,
     remainingRes,
+    works: terakWorks.map((w) => ({
+      ...w,
+      amount: Number(w.amount),
+    })),
+    totalWorkAmount,
   };
 }

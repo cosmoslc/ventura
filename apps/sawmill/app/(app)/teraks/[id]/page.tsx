@@ -25,6 +25,8 @@ export default async function TerakDetailPage({ params }: { params: Promise<{ id
       totalRes={data.totalRes}
       sartirofkaSoni={data.sartirofkaSoni}
       remainingRes={data.remainingRes}
+      works={data.works}
+      totalWorkAmount={data.totalWorkAmount}
       canManage={canManage}
       locale={locale}
     />

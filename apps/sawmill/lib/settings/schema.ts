@@ -36,6 +36,8 @@ export async function getSawmillSettings(db: SawmillDb): Promise<SawmillSettings
   return parsed.success ? parsed.data : DEFAULT_SETTINGS;
 }
 
+export const getSettings = getSawmillSettings;
+
 /**
  * Sex sozlamalarini saqlaydi (upsert).
  */

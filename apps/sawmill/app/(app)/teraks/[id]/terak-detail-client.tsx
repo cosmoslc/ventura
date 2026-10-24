@@ -59,6 +59,24 @@ interface CostItem {
   pricePerTrip: number | null;
 }
 
+interface TerakWorkItem {
+  id: string;
+  date: string;
+  workerId: string;
+  workerName: string;
+  workTypeId: string | null;
+  workTypeName: string | null;
+  kind: "regular" | "material";
+  groupId: string | null;
+  amount: number;
+  materialId: string | null;
+  materialName: string | null;
+  quantity: string | null;
+  rows: string | null;
+  payUnit: "piece" | "row" | "cube" | null;
+  note: string | null;
+}
+
 interface TerakDetailClientProps {
   terak: TerakData;
   stock: StockItem[];
@@ -67,6 +85,8 @@ interface TerakDetailClientProps {
   totalRes: number;
   sartirofkaSoni: number;
   remainingRes: number;
+  works: TerakWorkItem[];
+  totalWorkAmount: number;
   canManage: boolean;
   locale: Locale;
 }
@@ -79,6 +99,8 @@ export function TerakDetailClient({
   totalRes,
   sartirofkaSoni: _sartirofkaSoni,
   remainingRes,
+  works = [],
+  totalWorkAmount = 0,
   canManage,
   locale,
 }: TerakDetailClientProps) {
@@ -231,8 +253,7 @@ export function TerakDetailClient({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span>{t("teraks_work_tab", locale)}</span>
-          <span className="text-2xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-mono">S3</span>
+          <span>{t("teraks_work_tab", locale)} ({works.length})</span>
         </button>
 
         <button
@@ -436,14 +457,91 @@ export function TerakDetailClient({
         </div>
       )}
 
-      {/* Tab 3, 4, 5: Placeholders */}
+      {/* Tab 3: Work */}
       {activeTab === "work" && (
-        <Card className="p-8 text-center text-muted-foreground">
-          <p className="text-body font-semibold">Ushbu terakka tegishli ishlar ro'yxati</p>
-          <span className="text-2xs bg-muted px-2 py-1 rounded-control font-mono mt-2 inline-block">
-            S3 bosqichida to'liq ishga tushadi
-          </span>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-body font-bold text-foreground">
+                Ushbu terakka tegishli ishlar
+              </h2>
+              <p className="text-caption text-muted-foreground">
+                Jami hisoblangan ish haqi: <strong className="text-foreground font-mono">{formatMoney(totalWorkAmount)}</strong>
+              </p>
+            </div>
+
+            {canManage && (
+              <Link href="/work">
+                <Button className="gap-2">
+                  <Plus className="size-4" />
+                  <span>{t("work_add_single", locale)}</span>
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          {works.length === 0 ? (
+            <Card className="p-8 text-center text-muted-foreground">
+              <p className="text-body font-semibold">{t("work_empty", locale)}</p>
+            </Card>
+          ) : (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-body">
+                  <thead className="bg-muted/50 border-b border-border text-caption font-semibold text-muted-foreground">
+                    <tr>
+                      <th className="px-4 py-3">{t("work_date", locale)}</th>
+                      <th className="px-4 py-3">{t("work_worker", locale)}</th>
+                      <th className="px-4 py-3">{t("work_type", locale)}</th>
+                      <th className="px-4 py-3">{t("work_quantity", locale)}</th>
+                      <th className="px-4 py-3 text-right">{t("work_amount", locale)}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border font-mono text-caption">
+                    {works.map((w) => (
+                      <tr key={w.id} className="hover:bg-muted/20">
+                        <td className="px-4 py-3 text-foreground whitespace-nowrap">{w.date}</td>
+                        <td className="px-4 py-3 text-foreground font-sans font-semibold">
+                          <Link href={`/workers/${w.workerId}`} className="hover:text-primary transition-colors">
+                            {w.workerName}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-foreground font-sans">
+                          {w.kind === "material" ? w.materialName ?? "Material" : w.workTypeName ?? "Oddiy ish"}
+                          {w.note && <span className="text-2xs text-muted-foreground block">{w.note}</span>}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground">
+                          {w.kind === "material" ? (
+                            <>
+                              {w.payUnit === "row" && w.rows && `${w.rows} qator`}
+                              {w.payUnit === "piece" && w.quantity && `${w.quantity} dona`}
+                              {w.payUnit === "cube" && w.quantity && `${w.quantity} dona`}
+                            </>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">
+                          {formatMoney(w.amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-muted/30 border-t border-border font-mono text-caption font-bold">
+                    <tr>
+                      <td colSpan={4} className="px-4 py-3 text-foreground font-sans">
+                        Jami ish haqi xarajati:
+                      </td>
+                      <td className="px-4 py-3 text-right text-foreground">
+                        {formatMoney(totalWorkAmount)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </Card>
+          )}
+        </div>
       )}
 
       {activeTab === "dispatch" && (

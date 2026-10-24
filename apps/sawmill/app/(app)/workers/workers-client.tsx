@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Archive, ArchiveRestore, Edit2, Plus, Users } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
@@ -145,7 +146,12 @@ export function WorkersClient({
               <div className="space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <h3 className="font-bold text-body text-foreground">{w.name}</h3>
+                    <Link
+                      href={`/workers/${w.id}`}
+                      className="font-bold text-body text-foreground hover:text-primary transition-colors block"
+                    >
+                      {w.name}
+                    </Link>
                     <p className="text-caption text-muted-foreground font-mono">
                       {w.phone ?? "Telefon kiritilmagan"}
                     </p>

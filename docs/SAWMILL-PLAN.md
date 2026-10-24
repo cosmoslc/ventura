@@ -226,14 +226,14 @@ Har bosqich alohida branch va PR, muhim qarorlar ADR'da. Qabul mezoni bajarilmag
 
 ### S3. Kunlik ishlar va ish haqi
 
-- [ ] Ish qo'shish — yakka: oddiy tur (qo'lda summa) va material (dona / qator / kub, ikki kub usuli), o'lcham tanlash; summa oldindan ko'rinadi
-- [ ] Ish qo'shish — guruh: ishchilar, "har biriga to'liq", `work_groups`, ombor bir marta
-- [ ] Sartirofka va res tekshiruvi (`kind = sorting`)
-- [ ] Ishlar ro'yxati: umumiy va terak bo'yicha, filtr (ishchi, sana), tahrirlash (K13), o'chirish (ombor qaytadi)
-- [ ] Ishchi profili: balans, ishlar, to'lovlar, maxsus material narxlari
-- [ ] To'lov ("Pul berish"): summa, sana, izoh; tahrir va o'chirish (K6)
-- [ ] "Maosh hisoblash" (K1): davr, soni, summa oldindan ko'rinadi; takror davr rad etiladi; bekor qilish — egasi
-- [ ] `lib/calc/pay.ts`, `balance.ts`: ishchi narxi, yakka va guruh summasi, balans, terak bo'yicha mutanosib balans — Vitest (eski testlar + har jadval qatori)
+- [x] Ish qo'shish — yakka: oddiy tur (qo'lda summa) va material (dona / qator / kub, ikki kub usuli), o'lcham tanlash; summa oldindan ko'rinadi
+- [x] Ish qo'shish — guruh: ishchilar, "har biriga to'liq", `work_groups`, ombor bir marta
+- [x] Sartirofka va res tekshiruvi (`kind = sorting`)
+- [x] Ishlar ro'yxati: umumiy va terak bo'yicha, filtr (ishchi, sana), tahrirlash (K13), o'chirish (ombor qaytadi)
+- [x] Ishchi profili: balans, ishlar, to'lovlar, maxsus material narxlari
+- [x] To'lov ("Pul berish"): summa, sana, izoh; tahrir va o'chirish (K6)
+- [x] "Maosh hisoblash" (K1): davr, soni, summa oldindan ko'rinadi; takror davr rad etiladi; bekor qilish — egasi
+- [x] `lib/calc/pay.ts`, `balance.ts`: ishchi narxi, yakka va guruh summasi, balans, terak bo'yicha mutanosib balans — Vitest (ADR 0071)
 
 **Qabul:** tahlil 6–7-qismlaridagi har jadval qatori testda; bir xil ish forma ko'rsatgan va bazaga yozilgan summa bilan teng; ishchi balansi = ishlar − to'lovlar.
 
