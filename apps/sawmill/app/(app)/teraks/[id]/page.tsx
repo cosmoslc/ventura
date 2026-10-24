@@ -14,6 +14,9 @@ export default async function TerakDetailPage({ params }: { params: Promise<{ id
   if (!data) notFound();
 
   const canManage = can(user.role, "teraks.manage");
+  const canManageDispatch = can(user.role, "dispatch.manage");
+  const canDeleteDispatch = can(user.role, "dispatch.delete");
+  const canManageOrders = can(user.role, "orders.manage");
   const locale = user.locale ?? "uz";
 
   return (
@@ -27,7 +30,14 @@ export default async function TerakDetailPage({ params }: { params: Promise<{ id
       remainingRes={data.remainingRes}
       works={data.works}
       totalWorkAmount={data.totalWorkAmount}
+      dispatches={data.dispatches}
+      totalDispatchedAmount={data.totalDispatchedAmount}
+      orders={data.orders}
+      trucks={data.trucks}
       canManage={canManage}
+      canManageDispatch={canManageDispatch}
+      canDeleteDispatch={canDeleteDispatch}
+      canManageOrders={canManageOrders}
       locale={locale}
     />
   );

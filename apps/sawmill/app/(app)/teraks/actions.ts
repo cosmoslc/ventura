@@ -3,9 +3,21 @@
 import { desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { materials, terakCosts, terakMaterials, teraks, workers, workEntries, workTypes } from "@ventura/db/schema/sawmill";
+import {
+  dispatches,
+  materials,
+  orders,
+  terakCosts,
+  terakMaterials,
+  teraks,
+  trucks,
+  workers,
+  workEntries,
+  workTypes,
+} from "@ventura/db/schema/sawmill";
 import { tenantAudit } from "@ventura/security";
 import { can } from "@/lib/auth/roles";
+import { getOrderStatus, isOrderDueSoon, type OrderStatus } from "@/lib/calc/orders";
 import { pieceVolumeM3 } from "@/lib/calc/units";
 import { currentDeps, requireUser } from "@/lib/server/session";
 
@@ -541,6 +553,128 @@ export async function getTerakDetail(
 
   const totalWorkAmount = terakWorks.reduce((acc, w) => acc + Number(w.amount), 0);
 
+  // Terakka tegishli yuk chiqarishlar (S4)
+  const dispatchRows = await db
+    .select({
+      id: dispatches.id,
+      date: dispatches.date,
+      materialId: dispatches.materialId,
+      materialName: materials.name,
+      materialUnit: materials.unit,
+      thicknessCm: materials.thicknessCm,
+      widthCm: materials.widthCm,
+      lengthCm: materials.lengthCm,
+      quantity: dispatches.quantity,
+      enteredUnit: dispatches.enteredUnit,
+      enteredQty: dispatches.enteredQty,
+      totalAmount: dispatches.totalAmount,
+      recipientName: dispatches.recipientName,
+      phone: dispatches.phone,
+      address: dispatches.address,
+      truckId: dispatches.truckId,
+      truckName: trucks.name,
+      createdAt: dispatches.createdAt,
+    })
+    .from(dispatches)
+    .innerJoin(materials, eq(materials.id, dispatches.materialId))
+    .leftJoin(trucks, eq(trucks.id, dispatches.truckId))
+    .where(eq(dispatches.terakId, terakId))
+    .orderBy(desc(dispatches.date), desc(dispatches.createdAt));
+
+  const totalDispatchedAmount = dispatchRows.reduce(
+    (acc, d) => acc + Number(d.totalAmount),
+    0,
+  );
+
+  const dispatchesList = dispatchRows.map((d) => {
+    const vol = pieceVolumeM3({
+      thicknessCm: d.thicknessCm ? Number(d.thicknessCm) : null,
+      widthCm: d.widthCm ? Number(d.widthCm) : null,
+      lengthCm: d.lengthCm ? Number(d.lengthCm) : null,
+    });
+    const qtyPiece = Number(d.quantity);
+    const volumeTotalM3 = vol ? Math.round(qtyPiece * vol * 1000) / 1000 : null;
+
+    return {
+      ...d,
+      terakId,
+      terakName: terak.name,
+      quantity: qtyPiece,
+      enteredQty: Number(d.enteredQty),
+      totalAmount: Number(d.totalAmount),
+      volumeM3: vol,
+      volumeTotalM3,
+    };
+  });
+
+  // Terakka tegishli zakazlar (S4)
+  const orderRows = await db
+    .select({
+      id: orders.id,
+      materialId: orders.materialId,
+      materialName: materials.name,
+      materialUnit: materials.unit,
+      thicknessCm: materials.thicknessCm,
+      widthCm: materials.widthCm,
+      lengthCm: materials.lengthCm,
+      quantity: orders.quantity,
+      customerName: orders.customerName,
+      phone: orders.phone,
+      address: orders.address,
+      dueDate: orders.dueDate,
+      completedAt: orders.completedAt,
+      readyNotifiedAt: orders.readyNotifiedAt,
+      dueNotifiedAt: orders.dueNotifiedAt,
+      createdAt: orders.createdAt,
+    })
+    .from(orders)
+    .innerJoin(materials, eq(materials.id, orders.materialId))
+    .where(eq(orders.terakId, terakId))
+    .orderBy(desc(orders.createdAt));
+
+  const today = new Date();
+  const stockByMatId = new Map(stockRows.map((s) => [s.materialId, Number(s.quantity ?? 0)]));
+
+  const ordersList = orderRows.map((o) => {
+    const qty = Number(o.quantity);
+    const stockQty = stockByMatId.get(o.materialId) ?? 0;
+    const status: OrderStatus = getOrderStatus(
+      { quantity: qty, completedAt: o.completedAt },
+      stockQty,
+    );
+    const dueSoon = isOrderDueSoon(o.dueDate, today);
+
+    const vol = pieceVolumeM3({
+      thicknessCm: o.thicknessCm ? Number(o.thicknessCm) : null,
+      widthCm: o.widthCm ? Number(o.widthCm) : null,
+      lengthCm: o.lengthCm ? Number(o.lengthCm) : null,
+    });
+    const volumeTotalM3 = vol ? Math.round(qty * vol * 1000) / 1000 : null;
+
+    return {
+      ...o,
+      terakId,
+      terakName: terak.name,
+      quantity: qty,
+      stockQuantity: stockQty,
+      status,
+      isDueSoon: dueSoon,
+      volumeM3: vol,
+      volumeTotalM3,
+    };
+  });
+
+  // Faol yuk mashinalari
+  const activeTrucks = await db
+    .select({
+      id: trucks.id,
+      name: trucks.name,
+      amount: trucks.amount,
+    })
+    .from(trucks)
+    .where(isNull(trucks.archivedAt))
+    .orderBy(trucks.name);
+
   return {
     terak,
     stock: stockWithVolumes,
@@ -554,5 +688,12 @@ export async function getTerakDetail(
       amount: Number(w.amount),
     })),
     totalWorkAmount,
+    dispatches: dispatchesList,
+    totalDispatchedAmount,
+    orders: ordersList,
+    trucks: activeTrucks.map((tr) => ({
+      ...tr,
+      amount: Number(tr.amount),
+    })),
   };
 }

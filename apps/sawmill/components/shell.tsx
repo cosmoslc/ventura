@@ -13,6 +13,7 @@ import {
   Plus,
   Receipt,
   Settings,
+  ShoppingCart,
   TreePine,
   Truck,
   Users,
@@ -55,6 +56,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
       items: [
         { label: t("nav_materials", locale), href: "/materials", icon: Layers, feature: "stock" },
         { label: t("nav_dispatch", locale), href: "/dispatch", icon: Truck, feature: "dispatch" },
+        { label: t("nav_orders", locale), href: "/orders", icon: ShoppingCart, feature: "orders" },
         { label: t("nav_trucks", locale), href: "/trucks", icon: Truck, feature: "trucks" },
       ],
     },

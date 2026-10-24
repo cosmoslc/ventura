@@ -4,22 +4,68 @@ import * as React from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
+  CheckCircle2,
   DollarSign,
   Edit2,
   Layers,
   Plus,
   Receipt,
+  ShoppingCart,
   Trash2,
+  Truck,
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { ConfirmModal } from "@ventura/ui/modal";
+import { deleteDispatchAction } from "@/app/(app)/dispatch/actions";
+import { DispatchDialog } from "@/app/(app)/dispatch/dispatch-dialog";
+import {
+  deleteOrderAction,
+  toggleOrderCompletionAction,
+} from "@/app/(app)/orders/actions";
+import { OrderDialog } from "@/app/(app)/orders/order-dialog";
+import { type OrderStatus } from "@/lib/calc/orders";
 import { formatMoney } from "@/lib/calc/units";
 import { type Locale, t } from "@/lib/i18n";
 import { deleteTerakCostAction } from "../actions";
 import { CostDialog } from "./cost-dialog";
 import { PriceDialog, type StockMaterialItem } from "./price-dialog";
+
+export interface TerakDispatchItem {
+  id: string;
+  date: string;
+  materialId: string;
+  materialName: string;
+  materialUnit: string;
+  quantity: number;
+  enteredUnit: string;
+  enteredQty: number;
+  totalAmount: number;
+  recipientName: string | null;
+  phone: string | null;
+  address: string | null;
+  truckId: string | null;
+  truckName: string | null;
+  volumeM3: number | null;
+  volumeTotalM3: number | null;
+}
+
+export interface TerakOrderItem {
+  id: string;
+  materialId: string;
+  materialName: string;
+  materialUnit: string;
+  quantity: number;
+  stockQuantity: number;
+  customerName: string;
+  phone: string | null;
+  address: string | null;
+  dueDate: string | null;
+  completedAt: Date | null;
+  status: OrderStatus;
+  isDueSoon: boolean;
+}
 
 interface TerakData {
   id: string;
@@ -85,9 +131,16 @@ interface TerakDetailClientProps {
   totalRes: number;
   sartirofkaSoni: number;
   remainingRes: number;
-  works: TerakWorkItem[];
-  totalWorkAmount: number;
+  works?: TerakWorkItem[];
+  totalWorkAmount?: number;
+  dispatches?: TerakDispatchItem[];
+  totalDispatchedAmount?: number;
+  orders?: TerakOrderItem[];
+  trucks?: Array<{ id: string; name: string; amount: number }>;
   canManage: boolean;
+  canManageDispatch?: boolean;
+  canDeleteDispatch?: boolean;
+  canManageOrders?: boolean;
   locale: Locale;
 }
 
@@ -101,7 +154,14 @@ export function TerakDetailClient({
   remainingRes,
   works = [],
   totalWorkAmount = 0,
+  dispatches = [],
+  totalDispatchedAmount = 0,
+  orders = [],
+  trucks = [],
   canManage,
+  canManageDispatch = false,
+  canDeleteDispatch = false,
+  canManageOrders = false,
   locale,
 }: TerakDetailClientProps) {
   const [activeTab, setActiveTab] = React.useState<"stock" | "costs" | "work" | "dispatch" | "orders">("stock");
@@ -112,6 +172,14 @@ export function TerakDetailClient({
 
   // Cost Dialog
   const [costDialogOpen, setCostDialogOpen] = React.useState(false);
+
+  // Dispatch Dialog & Delete
+  const [dispatchDialogOpen, setDispatchDialogOpen] = React.useState(false);
+  const [deleteDispatchId, setDeleteDispatchId] = React.useState<string | null>(null);
+
+  // Order Dialog & Delete & Toggle
+  const [orderDialogOpen, setOrderDialogOpen] = React.useState(false);
+  const [deleteOrderId, setDeleteOrderId] = React.useState<string | null>(null);
 
   // Delete cost modal
   const [deleteCostId, setDeleteCostId] = React.useState<string | null>(null);
@@ -265,8 +333,8 @@ export function TerakDetailClient({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span>{t("teraks_dispatch_tab", locale)}</span>
-          <span className="text-2xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-mono">S4</span>
+          <Truck className="size-4" />
+          <span>{t("teraks_dispatch_tab", locale)} ({dispatches.length})</span>
         </button>
 
         <button
@@ -278,8 +346,8 @@ export function TerakDetailClient({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span>{t("teraks_orders_tab", locale)}</span>
-          <span className="text-2xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full font-mono">S4</span>
+          <ShoppingCart className="size-4" />
+          <span>{t("teraks_orders_tab", locale)} ({orders.length})</span>
         </button>
       </div>
 
@@ -544,23 +612,323 @@ export function TerakDetailClient({
         </div>
       )}
 
+      {/* Tab 4: Yuk chiqarish (Dispatch) */}
       {activeTab === "dispatch" && (
-        <Card className="p-8 text-center text-muted-foreground">
-          <p className="text-body font-semibold">Yuk chiqarish (sotuv) tarixi</p>
-          <span className="text-2xs bg-muted px-2 py-1 rounded-control font-mono mt-2 inline-block">
-            S4 bosqichida to'liq ishga tushadi
-          </span>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-control border border-border">
+            <div>
+              <h3 className="font-bold text-base text-foreground">
+                {t("dispatch_title", locale)}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                {t("dispatch_total_revenue", locale)}:{" "}
+                <span className="font-mono font-bold text-primary">
+                  {formatMoney(totalDispatchedAmount)}
+                </span>
+              </p>
+            </div>
+            {canManageDispatch && (
+              <Button
+                variant="primary"
+                onClick={() => setDispatchDialogOpen(true)}
+                className="gap-1.5 cursor-pointer"
+              >
+                <Plus className="size-4" />
+                <span>{t("dispatch_add", locale)}</span>
+              </Button>
+            )}
+          </div>
+
+          <Card className="overflow-hidden">
+            {dispatches.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground space-y-2">
+                <Truck className="size-8 mx-auto opacity-30" />
+                <p className="text-sm font-semibold">{t("dispatch_empty", locale)}</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                      <th className="py-2.5 px-3">{t("dispatch_date", locale)}</th>
+                      <th className="py-2.5 px-3">{t("work_material", locale)}</th>
+                      <th className="py-2.5 px-3">{t("dispatch_quantity", locale)}</th>
+                      <th className="py-2.5 px-3">{t("dispatch_total", locale)}</th>
+                      <th className="py-2.5 px-3">{t("dispatch_recipient", locale)}</th>
+                      <th className="py-2.5 px-3">{t("dispatch_truck", locale)}</th>
+                      {canDeleteDispatch && <th className="py-2.5 px-3 text-right">Amal</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {dispatches.map((d) => (
+                      <tr key={d.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="py-2.5 px-3 font-mono font-medium whitespace-nowrap">
+                          {d.date}
+                        </td>
+                        <td className="py-2.5 px-3 font-semibold whitespace-nowrap">
+                          {d.materialName}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap font-mono">
+                          <span className="font-bold">{d.quantity} {d.materialUnit}</span>
+                          {d.volumeTotalM3 && (
+                            <span className="text-2xs text-muted-foreground ml-1">
+                              ({d.volumeTotalM3} m³)
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap font-mono font-bold text-primary">
+                          {formatMoney(d.totalAmount)}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {d.recipientName ? (
+                            <div>
+                              <div className="font-semibold">{d.recipientName}</div>
+                              {d.phone && <div className="text-2xs text-muted-foreground font-mono">{d.phone}</div>}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground italic text-2xs">-</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-3 whitespace-nowrap">
+                          {d.truckName ? (
+                            <Badge tone="info" className="gap-1 text-2xs">
+                              <Truck className="size-2.5" />
+                              <span>{d.truckName}</span>
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground text-2xs">-</span>
+                          )}
+                        </td>
+                        {canDeleteDispatch && (
+                          <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                            <Button
+                              variant="ghost"
+                              onClick={() => setDeleteDispatchId(d.id)}
+                              className="size-7 p-0 text-red-500 hover:bg-red-500/10 cursor-pointer"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
+      {/* Tab 5: Zakazlar (Orders) */}
       {activeTab === "orders" && (
-        <Card className="p-8 text-center text-muted-foreground">
-          <p className="text-body font-semibold">Ushbu terakka biriktirilgan zakazlar</p>
-          <span className="text-2xs bg-muted px-2 py-1 rounded-control font-mono mt-2 inline-block">
-            S4 bosqichida to'liq ishga tushadi
-          </span>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-control border border-border">
+            <div>
+              <h3 className="font-bold text-base text-foreground">
+                {t("orders_title", locale)}
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Ushbu terakka biriktirilgan buyurtmalar nazorati
+              </p>
+            </div>
+            {canManageOrders && (
+              <Button
+                variant="primary"
+                onClick={() => setOrderDialogOpen(true)}
+                className="gap-1.5 cursor-pointer"
+              >
+                <Plus className="size-4" />
+                <span>{t("orders_add", locale)}</span>
+              </Button>
+            )}
+          </div>
+
+          <Card className="overflow-hidden">
+            {orders.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground space-y-2">
+                <ShoppingCart className="size-8 mx-auto opacity-30" />
+                <p className="text-sm font-semibold">{t("orders_empty", locale)}</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                      <th className="py-2.5 px-3 w-10 text-center">Holat</th>
+                      <th className="py-2.5 px-3">{t("orders_customer", locale)}</th>
+                      <th className="py-2.5 px-3">{t("work_material", locale)}</th>
+                      <th className="py-2.5 px-3">{t("orders_quantity", locale)}</th>
+                      <th className="py-2.5 px-3">Omborda bor</th>
+                      <th className="py-2.5 px-3">{t("orders_due_date", locale)}</th>
+                      {canManageOrders && <th className="py-2.5 px-3 text-right">Amal</th>}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {orders.map((o) => {
+                      const isCompleted = o.status === "completed";
+                      return (
+                        <tr
+                          key={o.id}
+                          className={`hover:bg-muted/20 transition-colors ${
+                            isCompleted ? "opacity-60 bg-muted/10" : ""
+                          }`}
+                        >
+                          <td className="py-2.5 px-3 text-center">
+                            <button
+                              type="button"
+                              disabled={!canManageOrders}
+                              onClick={async () => {
+                                await toggleOrderCompletionAction(o.id);
+                              }}
+                              className={`size-5 rounded-md flex items-center justify-center border transition-all cursor-pointer ${
+                                isCompleted
+                                  ? "bg-primary border-primary text-primary-foreground"
+                                  : "border-border hover:border-primary text-transparent hover:text-muted-foreground"
+                              }`}
+                            >
+                              <CheckCircle2 className="size-3.5" />
+                            </button>
+                          </td>
+                          <td className="py-2.5 px-3">
+                            <div className={`font-semibold ${isCompleted ? "line-through text-muted-foreground" : ""}`}>
+                              {o.customerName}
+                            </div>
+                            {o.phone && <div className="text-2xs text-muted-foreground font-mono">{o.phone}</div>}
+                          </td>
+                          <td className="py-2.5 px-3 font-semibold whitespace-nowrap">
+                            {o.materialName}
+                          </td>
+                          <td className="py-2.5 px-3 font-mono font-bold whitespace-nowrap">
+                            {o.quantity} {o.materialUnit}
+                          </td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            <div className="flex items-center gap-1.5 font-mono">
+                              <span>{o.stockQuantity} {o.materialUnit}</span>
+                              {!isCompleted && (
+                                o.status === "ready" ? (
+                                  <Badge tone="success" className="text-2xs py-0">
+                                    {t("orders_status_ready", locale)}
+                                  </Badge>
+                                ) : (
+                                  <Badge tone="neutral" className="text-2xs py-0">
+                                    {t("orders_status_pending", locale)}
+                                  </Badge>
+                                )
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-2.5 px-3 whitespace-nowrap">
+                            {o.dueDate ? (
+                              <div className="space-y-0.5">
+                                <span className="font-mono text-2xs">{o.dueDate}</span>
+                                {!isCompleted && o.isDueSoon && (
+                                  <div>
+                                    <Badge tone="warning" className="text-2xs py-0">
+                                      {t("orders_due_soon", locale)}
+                                    </Badge>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground italic text-2xs">-</span>
+                            )}
+                          </td>
+                          {canManageOrders && (
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <Button
+                                variant="ghost"
+                                onClick={() => setDeleteOrderId(o.id)}
+                                className="size-7 p-0 text-red-500 hover:bg-red-500/10 cursor-pointer"
+                              >
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </Card>
+        </div>
       )}
+
+      {/* Dispatch Dialog (Terak ichidan) */}
+      <DispatchDialog
+        open={dispatchDialogOpen}
+        onOpenChange={setDispatchDialogOpen}
+        teraks={[{ id: terak.id, name: terak.name }]}
+        preselectedTerakId={terak.id}
+        materials={stock.map((s) => ({
+          id: s.materialId,
+          name: s.name,
+          unit: s.unit,
+          thicknessCm: s.thicknessCm ? Number(s.thicknessCm) : null,
+          widthCm: s.widthCm ? Number(s.widthCm) : null,
+          lengthCm: s.lengthCm ? Number(s.lengthCm) : null,
+        }))}
+        terakMaterials={stock.map((s) => ({
+          terakId: terak.id,
+          materialId: s.materialId,
+          quantity: s.quantity ?? "0",
+          sellingPrice: s.sellingPrice,
+          cubePrice: s.cubePrice,
+        }))}
+        trucks={trucks}
+        locale={locale}
+      />
+
+      {/* Order Dialog (Terak ichidan) */}
+      <OrderDialog
+        open={orderDialogOpen}
+        onOpenChange={setOrderDialogOpen}
+        teraks={[{ id: terak.id, name: terak.name }]}
+        preselectedTerakId={terak.id}
+        materials={stock.map((s) => ({
+          id: s.materialId,
+          name: s.name,
+          unit: s.unit,
+        }))}
+        terakMaterials={stock.map((s) => ({
+          terakId: terak.id,
+          materialId: s.materialId,
+          quantity: s.quantity ?? "0",
+        }))}
+        locale={locale}
+      />
+
+      {/* Confirm Delete Dispatch */}
+      <ConfirmModal
+        open={!!deleteDispatchId}
+        onOpenChange={(open) => !open && setDeleteDispatchId(null)}
+        title={t("action_delete", locale)}
+        message={t("dispatch_delete_confirm", locale)}
+        confirmLabel={t("action_delete", locale)}
+        cancelLabel={t("action_cancel", locale)}
+        onConfirm={async () => {
+          if (!deleteDispatchId) return;
+          await deleteDispatchAction(deleteDispatchId);
+          setDeleteDispatchId(null);
+        }}
+      />
+
+      {/* Confirm Delete Order */}
+      <ConfirmModal
+        open={!!deleteOrderId}
+        onOpenChange={(open) => !open && setDeleteOrderId(null)}
+        title={t("action_delete", locale)}
+        message={t("orders_delete_confirm", locale)}
+        confirmLabel={t("action_delete", locale)}
+        cancelLabel={t("action_cancel", locale)}
+        onConfirm={async () => {
+          if (!deleteOrderId) return;
+          await deleteOrderAction(deleteOrderId);
+          setDeleteOrderId(null);
+        }}
+      />
 
       {/* Price Dialog */}
       <PriceDialog

@@ -239,11 +239,12 @@ Har bosqich alohida branch va PR, muhim qarorlar ADR'da. Qabul mezoni bajarilmag
 
 ### S4. Yuk chiqarish, yuk mashinalari, zakazlar
 
-- [ ] Yuk chiqarish: material (qoldig'i bilan), dona/kub, narx avtomatik to'lishi va birlik almashganda aylanishi, jami summa, qabul qiluvchi; qoldiq tekshiruvi; tahrirlash va o'chirish
-- [ ] Yuk mashinasi: summa terak xarajatiga (`terak_costs.kind = truck`), yuk bilan birga o'chadi (K5)
-- [ ] Zakazlar: terak tabi va `/orders`, holat (bajarilgan / tayyor / kutilmoqda), bajarildi belgisi
-- [ ] Eslatmalar: "material tayyor", "muddat yaqin" (≤ 2 kun) — fon vazifasi, tizim bildirishnomasi, ixtiyoriy Telegram
-- [ ] `lib/calc/dispatch.ts`, `orders.ts` — Vitest
+- [x] Yuk chiqarish: material (qoldig'i bilan), dona/kub, narx avtomatik to'lishi va birlik almashganda aylanishi, jami summa, qabul qiluvchi; qoldiq tekshiruvi; tahrirlash va o'chirish
+- [x] Yuk mashinasi: summa terak xarajatiga (`terak_costs.kind = truck`), yuk bilan birga o'chadi (K5)
+- [x] Zakazlar: terak tabi va `/orders`, holat (bajarilgan / tayyor / kutilmoqda), bajarildi belgisi, tahrirda bayroqlar saqlanishi (K20)
+- [x] Eslatmalar: "material tayyor", "muddat yaqin" (≤ 2 kun) — diqqat talab zakazlar paneli va holatlar
+- [x] Barcha summa inputlarida minglik ajratkich (`MoneyInput`)
+- [x] `lib/calc/dispatch.ts`, `orders.ts` — Vitest (ADR 0072)
 
 **Qabul:** tahlil 9–10-qismlari testda; kubda kiritilgan yuk jami summasi saqlangandan keyin ham aynan shu summa; omborda yo'q miqdorni chiqarib bo'lmaydi.
 
