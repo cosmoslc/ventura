@@ -11,8 +11,14 @@ import {
   dbNameFor,
   dbPasswordOwner,
   enqueueServerJob,
+  buildSupabaseDatabaseUrl,
+  getSupabasePoolerConfig,
+  getSupabaseProject,
+  listSupabaseProjects,
+  testSupabaseConnection,
+  type SupabaseProject,
 } from "@ventura/deploy";
-import { audit, readSecret } from "@ventura/security";
+import { audit, putSecret, readSecret } from "@ventura/security";
 import { deps, queue } from "@/lib/server/deps";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
@@ -204,6 +210,133 @@ export async function moveProjectDbAction(input: unknown, confirm: string): Prom
   } catch {
     return { ok: false, error: t.queueError };
   }
+  revalidatePath("/databases", "layout");
+  return { ok: true };
+}
+
+const SYSTEM_OWNER = { type: "system", id: "00000000-0000-0000-0000-000000000000" };
+const SUPABASE_TOKEN_KEY = "supabase:token";
+
+export async function getSupabaseTokenAction(): Promise<{ ok: true; hasToken: boolean; preview: string | null } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const token = await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY);
+  if (!token) return { ok: true, hasToken: false, preview: null };
+  const preview = token.length > 8 ? `${token.slice(0, 4)}...${token.slice(-4)}` : "••••••••";
+  return { ok: true, hasToken: true, preview };
+}
+
+export async function saveSupabaseTokenAction(token: string): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const clean = token.trim();
+  if (!clean) {
+    // Tokendan voz kechish
+    await putSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY, "");
+    revalidatePath("/databases", "layout");
+    return { ok: true, count: 0 };
+  }
+  try {
+    const list = await listSupabaseProjects(clean);
+    await putSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY, clean);
+    revalidatePath("/databases", "layout");
+    return { ok: true, count: list.length };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function listSupabaseProjectsAction(customToken?: string): Promise<{ ok: true; projects: SupabaseProject[] } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const token = customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase boshqaruv tokeni (Personal Access Token) topilmadi" };
+  try {
+    const projects = await listSupabaseProjects(token);
+    return { ok: true, projects };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function testSupabaseConnectionAction(input: {
+  projectRef: string;
+  dbPassword: string;
+  customToken?: string;
+}): Promise<{ ok: true; version: string } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const token = input.customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase tokeni kiritilmagan" };
+  try {
+    const proj = await getSupabaseProject(token, input.projectRef);
+    const pooler = await getSupabasePoolerConfig(token, input.projectRef);
+    const url = buildSupabaseDatabaseUrl({
+      projectRef: input.projectRef,
+      region: proj.region,
+      dbPassword: input.dbPassword,
+      poolerHost: pooler?.db_host,
+      poolerPort: pooler?.db_port,
+    });
+    return await testSupabaseConnection(url);
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+const moveToSupabaseSchema = z.object({
+  projectId: z.uuid(),
+  projectRef: z.string().min(1),
+  dbPassword: z.string().min(1),
+  mode: z.enum(["full", "schema_only"]),
+  customToken: z.string().optional(),
+});
+
+export async function moveProjectToSupabaseAction(input: unknown, confirm: string): Promise<CreateResult> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const parsed = moveToSupabaseSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: uz.common.loadError };
+  const { db } = deps();
+
+  const [p] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      slug: projects.slug,
+      serverId: projects.serverId,
+    })
+    .from(projects)
+    .where(and(eq(projects.id, parsed.data.projectId), isNull(projects.deletedAt)));
+
+  if (!p?.serverId) return { ok: false, error: t.moveNoServer };
+  if (confirm.trim() !== p.slug) return { ok: false, error: t.moveMismatch };
+
+  const token = parsed.data.customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase boshqaruv tokeni kerak" };
+
+  try {
+    await enqueueServerJob(db, await queue(), {
+      serverId: p.serverId,
+      kind: "db_move_supabase",
+      projectId: p.id,
+      project: p.name,
+      supabase: {
+        token,
+        projectRef: parsed.data.projectRef,
+        dbPassword: parsed.data.dbPassword,
+        mode: parsed.data.mode,
+      },
+      actor: { type: "user", id: viewer.id, name: viewer.name },
+    });
+  } catch {
+    return { ok: false, error: t.queueError };
+  }
+
   revalidatePath("/databases", "layout");
   return { ok: true };
 }

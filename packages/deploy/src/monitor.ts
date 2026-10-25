@@ -31,6 +31,7 @@ import {
 } from "./databases";
 import { type AlertEvent, METRICS_SCRIPT, nextAlerts, parseMetrics } from "./metrics";
 import { moveProjectDb } from "./move";
+import { moveProjectToSupabase } from "./move-supabase";
 import { dropDatabase, purgeProject } from "./purge";
 import { type Queue, SERVER_QUEUE } from "./queue";
 import { type ServerRow, checkServer, openSession } from "./servers";
@@ -57,6 +58,12 @@ export interface ServerJobData {
   project?: string;
   /** db_move: qayerga — alohida baza yoki umumiy */
   target?: "own" | "shared";
+  supabase?: {
+    token: string;
+    projectRef: string;
+    dbPassword: string;
+    mode: "full" | "schema_only";
+  };
   actor: AuditActor;
 }
 
@@ -300,6 +307,26 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
       },
     });
     await recordProbe(db, server, await probeServer(db, server), notify);
+  } else if (data.kind === "db_move_supabase" && data.supabase) {
+    const res = await moveProjectToSupabase(db, server, data.projectId ?? "", data.supabase);
+    if (!res.ok) {
+      status = "error";
+      message = res.error;
+    } else message = res.detail;
+    await audit.record(db, {
+      actor: data.actor,
+      action: "project.db_move_supabase",
+      target: { type: "project", id: data.projectId ?? "" },
+      metadata: {
+        server: server.name,
+        project: data.project,
+        mode: data.supabase.mode,
+        supabaseProjectRef: data.supabase.projectRef,
+        ok: res.ok,
+        ...(res.ok ? { detail: res.detail } : { error: res.error }),
+      },
+    });
+    await recordProbe(db, server, await probeServer(db, server), notify);
   } else if (data.kind === "db_drop" || data.kind === "project_purge") {
     // Qaytarib bo'lmaydigan amallar (ADR 0058): faqat super admin navbatga qo'yadi
     const res =
@@ -354,7 +381,7 @@ export async function runServerJob(db: PanelDb, data: ServerJobData, notify?: No
     });
     // Holat darhol yangilansin (yoqilgan bo'lsa — metrika, o'chirilgan bo'lsa — oflayn)
     if (status === "ok") await recordProbe(db, server, await probeServer(db, server), notify);
-  } else {
+  } else if (data.kind === "reload" || data.kind === "stop" || data.kind === "start") {
     const kind = data.kind;
     const app = data.app ?? "";
     const [known] = APP_NAME.test(app)

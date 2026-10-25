@@ -79,6 +79,23 @@ export {
 
 export { activeProjectsOn, dropDatabase, purgeProject, trashedProject } from "./purge";
 export { moveProjectDb } from "./move";
+export { moveProjectToSupabase, type MoveToSupabaseOptions } from "./move-supabase";
+export {
+  SUPABASE_API_BASE,
+  buildSupabaseDatabaseUrl,
+  createSupabaseProject,
+  executeSupabaseSql,
+  getSupabaseApiKeys,
+  getSupabasePoolerConfig,
+  getSupabaseProject,
+  listSupabaseOrganizations,
+  listSupabaseProjects,
+  testSupabaseConnection,
+  type SupabaseApiKey,
+  type SupabaseOrg,
+  type SupabasePoolerConfig,
+  type SupabaseProject,
+} from "./supabase";
 
 /** Har deploy uchun yangi drayver beradi. Noma'lum nom — xato (deploy "yiqilgan" bo'lib yoziladi). */
 export function createDrivers(deps: SshDriverDeps): DriverFactory {
