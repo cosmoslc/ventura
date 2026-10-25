@@ -10,9 +10,9 @@ import { toast } from "@ventura/ui/toast";
 import { cn } from "@ventura/ui/lib/utils";
 import type { ReasonCategoryId, ReasonsConfig, SwitchableCategoryId } from "@/lib/reasons";
 import { uz } from "@/lib/uz";
-import { forgetReasonsConfig } from "../reason-field";
-import { forgetLeaveReasons } from "../groups/leave-reason-fields";
-import { ReasonsModal } from "../reasons-modal";
+import { forgetReasonsConfig } from "@/app/(crm)/reason-field";
+import { forgetLeaveReasons } from "@/app/(crm)/groups/leave-reason-fields";
+import { ReasonsModal } from "@/app/(crm)/reasons-modal";
 import { saveReasonListAction, saveReasonSwitchAction } from "./actions";
 
 /*

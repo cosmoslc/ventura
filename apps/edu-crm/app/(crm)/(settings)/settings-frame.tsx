@@ -10,6 +10,7 @@ import {
   GraduationCap,
   HardDrive,
   DoorOpen,
+  ListChecks,
   type LucideIcon,
   MessageSquareText,
   Search,
@@ -38,6 +39,7 @@ const ICONS: Record<SettingsIcon, LucideIcon> = {
   profile: UserRound,
   security: ShieldCheck,
   storage: HardDrive,
+  reasons: ListChecks,
 };
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);

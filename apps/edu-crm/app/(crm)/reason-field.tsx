@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@ventura/ui/textarea";
 import { type ReasonCategoryId, type ReasonsConfig, reasonOptions } from "@/lib/reasons";
 import { uz } from "@/lib/uz";
-import { reasonsConfigAction } from "./reasons/actions";
+import { reasonsConfigAction } from "./(settings)/reasons/actions";
 
 /*
  * Dialoglardagi sabab maydoni (ADR 0035). Shu tur uchun sabab so'rash yoqilgan va ro'yxat bo'sh bo'lmasa — ro'yxatdan
