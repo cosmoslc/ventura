@@ -76,6 +76,7 @@ export const projectInputSchema = z
     brand: z.object({
       primary: z.string().regex(/^#[0-9a-f]{6}$/i),
       appearance: z.enum(["light", "dark", "system"]),
+      logoUrl: z.string().nullable().optional(),
     }),
     ownerName: z.string().trim().min(2, uz.projects.ownerNameInvalid).max(120),
     /** 9 raqam (PhoneInput): 901234567 */

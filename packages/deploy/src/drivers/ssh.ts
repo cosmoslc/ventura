@@ -281,17 +281,18 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `mkdir -p ${sh(`${root}/releases`)} ${sh(`${root}/shared`)}`);
     const current = await probe(`readlink -f ${sh(`${root}/current`)}`);
     const deployed = await probe(`cat ${sh(`${root}/current/.ventura-commit`)}`);
-    plan.previous = current.startsWith(`${root}/releases/`) ? current : null;
-    if (plan.previous && deployed === sha) {
-      plan.reuse = true;
-      plan.release = plan.previous;
+    const p = plan!;
+    p.previous = current.startsWith(`${root}/releases/`) ? current : null;
+    if (p.previous && deployed === sha) {
+      p.reuse = true;
+      p.release = p.previous;
       log(`Server allaqachon shu versiyada (${sha.slice(0, 7)}): kod va build qayta bajarilmaydi.`, "info");
     } else {
       const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
-      plan.release = `${root}/releases/${stamp}-${sha.slice(0, 7)}`;
-      log(`Yangi reliz: ${plan.release}`, "info");
+      p.release = `${root}/releases/${stamp}-${sha.slice(0, 7)}`;
+      log(`Yangi reliz: ${p.release}`, "info");
     }
-    return { releasePath: plan.release, commitSha: sha };
+    return { releasePath: p.release, commitSha: sha };
   }
 
   async function fetch(log: StepLog) {

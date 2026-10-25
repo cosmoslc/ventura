@@ -13,10 +13,11 @@ export const tenantSchema = z.object({
   brand: z.object({
     primary: z.string().regex(/^#[0-9a-f]{6}$/i),
     appearance: z.enum(["light", "dark", "system"]),
-    /** Logotip: https manzil yoki ilova ichidagi yo'l. Berilmasa Ventura belgisi. */
+    /** Logotip: https manzil, ilova ichidagi yo'l yoki data:image. Berilmasa Ventura belgisi. */
     logoUrl: z
       .string()
-      .regex(/^(https:\/\/|\/(?!\/))\S+$/, "logo: https:// yoki / bilan boshlanadi")
+      .regex(/^(https:\/\/|\/(?!\/)|data:image\/)\S+$/, "logo: https://, / yoki data:image bilan boshlanadi")
+      .nullable()
       .optional(),
   }),
   /** Yoqilgan bo'limlar kalitlari */

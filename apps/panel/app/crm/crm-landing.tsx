@@ -28,7 +28,9 @@ import {
   Shield,
   Sparkles,
   Sun,
+  Trash2,
   TriangleAlert,
+  Upload,
   Users,
   Wallet,
   X,
@@ -44,6 +46,7 @@ import { PhoneInput } from "@ventura/ui/phone-input";
 import { Stepper } from "@ventura/ui/stepper";
 import { cn } from "@ventura/ui/lib/utils";
 import { BRAND_PRESETS, contrastWithWhite, slugify } from "@/lib/project-rules";
+import { processLogoFile } from "@/lib/logo";
 import type { CrmContacts } from "@/lib/server/crm-contacts";
 import { checkCrmSlugAvailability, checkTrialProvisionStatus, startFreeTrialAction } from "./actions";
 
@@ -1430,6 +1433,8 @@ function FreeTrialModal({
   const { isDark } = useTheme();
   const [step, setStep] = React.useState<1 | 2>(1);
   const [primaryColor, setPrimaryColor] = React.useState("#3f6df6");
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
+  const [logoError, setLogoError] = React.useState<string | null>(null);
 
   const [centerName, setCenterName] = React.useState(initialCenterName);
   const [slug, setSlug] = React.useState(initialSlug || (initialCenterName ? slugify(initialCenterName) : ""));
@@ -1583,6 +1588,7 @@ function FreeTrialModal({
         ownerPhone: cleanDigits,
         ownerPassword,
         primaryColor,
+        logoUrl,
       });
 
       if (!res.ok) {
@@ -1618,7 +1624,7 @@ function FreeTrialModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-modal border border-border bg-card p-6 sm:p-7 text-card-foreground shadow-modal max-h-[92vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" className="relative w-full max-w-lg rounded-modal border border-border bg-card p-6 sm:p-7 text-card-foreground shadow-modal max-h-[92vh] overflow-y-auto">
         <Button
           variant="ghost"
           size="icon-sm"
@@ -1847,6 +1853,61 @@ function FreeTrialModal({
                     )}
                   </div>
 
+                  {/* Markaz logotipi */}
+                  <div>
+                    <Label>Markaz logotipi (ixtiyoriy)</Label>
+                    {logoUrl ? (
+                      <div className="mt-1.5 flex items-center gap-3 rounded-control border border-border bg-input-bg p-3">
+                        <img
+                          src={logoUrl}
+                          alt="Logotip"
+                          className="size-11 rounded-btn object-cover border border-border bg-card shrink-0 shadow-xs"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-foreground truncate">Markaz logotipi yuklandi</p>
+                          <p className="text-caption text-muted-foreground">Tizim yuqori sarlavhasida aks etadi</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setLogoUrl(null)}
+                          className="gap-1.5 text-destructive hover:text-destructive h-8 px-2.5 cursor-pointer"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span className="text-xs">O'chirish</span>
+                        </Button>
+                      </div>
+                    ) : (
+                      <label className="mt-1.5 flex flex-col items-center justify-center gap-1.5 rounded-control border border-dashed border-border bg-input-bg/40 p-3.5 cursor-pointer hover:border-primary/50 hover:bg-secondary/40 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                          className="sr-only"
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            setLogoError(null);
+                            try {
+                              const dataUrl = await processLogoFile(file);
+                              setLogoUrl(dataUrl);
+                            } catch (err) {
+                              setLogoError((err as Error).message || "Faylni yuklashda xatolik");
+                            }
+                          }}
+                        />
+                        <div className="size-8 rounded-btn bg-secondary flex items-center justify-center text-muted-foreground">
+                          <Upload className="size-4" />
+                        </div>
+                        <div className="text-center">
+                          <span className="text-xs font-semibold text-primary hover:underline">Logotip yuklash</span>
+                          <p className="text-caption text-muted-foreground mt-0.5">PNG, JPG, WebP yoki SVG (maks. 2 MB)</p>
+                        </div>
+                      </label>
+                    )}
+                    {logoError && <FieldHint error className="mt-1.5">{logoError}</FieldHint>}
+                  </div>
+
                   {/* Jonli ko'rinish (Live preview) */}
                   <div>
                     <Label>Jonli ko'rinish (CRM interfeysi namunasi)</Label>
@@ -1860,12 +1921,20 @@ function FreeTrialModal({
                     >
                       <div className="flex items-center justify-between pb-3 border-b border-border">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <Avatar
-                            name={centerName.trim() || "O'quv markazi"}
-                            size={36}
-                            variant="brand"
-                            className="shrink-0"
-                          />
+                          {logoUrl ? (
+                            <img
+                              src={logoUrl}
+                              alt=""
+                              className="size-9 rounded-btn object-cover border border-border bg-card shrink-0 shadow-xs"
+                            />
+                          ) : (
+                            <Avatar
+                              name={centerName.trim() || "O'quv markazi"}
+                              size={36}
+                              variant="brand"
+                              className="shrink-0"
+                            />
+                          )}
                           <div className="min-w-0">
                             <div className="font-bold text-sm text-foreground truncate">
                               {centerName.trim() || "O'quv markazi"}

@@ -212,6 +212,7 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
 const brandSchema = z.object({
   primary: z.string().regex(/^#[0-9a-f]{6}$/i),
   appearance: z.enum(["light", "dark", "system"]),
+  logoUrl: z.string().nullable().optional(),
 });
 
 export async function updateBrandAction(id: string, input: unknown): Promise<Result> {

@@ -73,6 +73,7 @@ export const PROJECT_STATUSES = ["draft", "active", "paused"] as const;
 export interface ProjectBrand {
   primary: string;
   appearance: "light" | "dark" | "system";
+  logoUrl?: string | null;
 }
 
 export const projects = pgTable(

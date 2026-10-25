@@ -146,6 +146,7 @@ const trialInputSchema = z.object({
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, "Rang kodi noto'g'ri")
     .default("#3f6df6"),
+  logoUrl: z.string().nullable().optional(),
 });
 
 export async function startFreeTrialAction(
@@ -240,6 +241,7 @@ export async function startFreeTrialAction(
         brand: {
           primary: v.primaryColor,
           appearance: "light",
+          logoUrl: v.logoUrl ?? null,
         },
         settings: {
           trial: {
