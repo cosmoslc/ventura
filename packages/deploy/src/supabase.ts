@@ -21,6 +21,8 @@ export interface SupabaseProject {
   region: string;
   created_at: string;
   status: string; // 'ACTIVE_HEALTHY' | 'COMING_UP' | 'RESTORING' | 'INACTIVE'
+  sizeBytes?: number | null;
+  tableCount?: number | null;
 }
 
 export interface SupabaseApiKey {
@@ -100,6 +102,34 @@ export async function executeSupabaseSql<T = unknown>(token: string, ref: string
     method: "POST",
     body: JSON.stringify({ query: sqlQuery }),
   });
+}
+
+export interface SupabaseDatabaseUsage {
+  sizeBytes: number;
+  tableCount: number;
+}
+
+/**
+ * Supabase bazasining xotira hajmi (disk/database size) va jadvallar sonini olish.
+ * Management API (/database/query) orqali SQL bajariladi — to'g'ridan-to'g'ri port ochish shart emas.
+ */
+export async function getSupabaseDatabaseUsage(token: string, ref: string): Promise<SupabaseDatabaseUsage | null> {
+  try {
+    const res = await executeSupabaseSql<[{ size_bytes: string | number; table_count: string | number }]>(
+      token,
+      ref,
+      "SELECT pg_database_size(current_database())::bigint as size_bytes, (SELECT count(*)::int FROM information_schema.tables WHERE table_schema = 'public') as table_count;",
+    );
+    if (Array.isArray(res) && res[0]) {
+      return {
+        sizeBytes: Number(res[0].size_bytes) || 0,
+        tableCount: Number(res[0].table_count) || 0,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /**

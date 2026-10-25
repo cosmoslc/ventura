@@ -136,6 +136,7 @@ export function DatabasesView({
   const totalVps = allVps.reduce((sum, r) => sum + r.sizeBytes, 0);
   const large = allVps.filter((r) => r.large).length;
   const connectedToSupabase = allProjects.filter((p) => !!p.supabase);
+  const totalSupabaseBytes = supabase.projects.reduce((sum, p) => sum + (p.sizeBytes ?? 0), 0);
 
   return (
     <div className="space-y-section">
@@ -174,10 +175,14 @@ export function DatabasesView({
           icon={<Cloud />}
           tone={2}
           label={t.supabaseTitle}
-          value={supabase.hasToken ? `${supabase.projects.length} ta loyiha` : "Ulanmagan"}
+          value={
+            supabase.hasToken
+              ? `${supabase.projects.length} ta loyiha`
+              : "Ulanmagan"
+          }
           hint={
             supabase.hasToken
-              ? `${connectedToSupabase.length} ta markaz ulangan · Bulutda`
+              ? `${connectedToSupabase.length} ta markaz · ${totalSupabaseBytes > 0 ? formatBytes(totalSupabaseBytes) + " xotira" : "Bulutda"}`
               : "Token ulanmagan — sozlang"
           }
         />
@@ -508,6 +513,7 @@ function SupabaseSection({
                 <Th>Supabase Loyihasi</Th>
                 <Th>Mintaqa (Region)</Th>
                 <Th>Holat</Th>
+                <Th className="text-right">Xotirasi / Hajmi</Th>
                 <Th>Ulangan Ventura Loyihasi</Th>
                 {canManage ? <Th className="text-right">{uz.common.actions}</Th> : null}
               </Tr>
@@ -539,6 +545,20 @@ function SupabaseSection({
                       <Badge tone={proj.status === "ACTIVE_HEALTHY" ? "success" : "warning"} dot>
                         {proj.status === "ACTIVE_HEALTHY" ? "Faol (Active)" : proj.status}
                       </Badge>
+                    </Td>
+                    <Td className="text-right whitespace-nowrap">
+                      {proj.sizeBytes != null ? (
+                        <div>
+                          <span className="font-mono font-semibold text-foreground">
+                            {formatBytes(proj.sizeBytes)}
+                          </span>
+                          {proj.tableCount != null ? (
+                            <div className="text-caption text-muted-foreground">{proj.tableCount} ta jadval</div>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
                     </Td>
                     <Td>
                       {linked ? (

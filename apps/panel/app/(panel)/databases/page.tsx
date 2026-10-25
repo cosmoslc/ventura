@@ -4,6 +4,7 @@ import { projects, secrets, servers } from "@ventura/db/schema/panel";
 import {
   DB_SIZE_ALERT_BYTES,
   dbNameFor,
+  getSupabaseDatabaseUsage,
   listSupabaseProjects,
   serverState,
   type SupabaseProject,
@@ -59,7 +60,20 @@ export default async function DatabasesPage() {
 
   if (supaToken) {
     try {
-      supabaseProjects = await listSupabaseProjects(supaToken);
+      const rawProjects = await listSupabaseProjects(supaToken);
+      const usages = await Promise.allSettled(
+        rawProjects.map((p) =>
+          p.status === "ACTIVE_HEALTHY" ? getSupabaseDatabaseUsage(supaToken, p.id) : Promise.resolve(null),
+        ),
+      );
+      supabaseProjects = rawProjects.map((p, idx) => {
+        const u = usages[idx]?.status === "fulfilled" ? usages[idx]?.value : null;
+        return {
+          ...p,
+          sizeBytes: u?.sizeBytes ?? null,
+          tableCount: u?.tableCount ?? null,
+        };
+      });
     } catch (e) {
       supabaseError = (e as Error).message;
     }
