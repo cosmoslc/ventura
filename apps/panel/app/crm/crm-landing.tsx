@@ -4,6 +4,7 @@
 import * as React from "react";
 import {
   AlertCircle,
+  ArrowLeft,
   ArrowRight,
   Award,
   BookOpen,
@@ -27,13 +28,22 @@ import {
   Shield,
   Sparkles,
   Sun,
+  TriangleAlert,
   Users,
   Wallet,
   X,
   Zap,
 } from "lucide-react";
+import { Avatar } from "@ventura/ui/avatar";
+import { Badge } from "@ventura/ui/badge";
+import { Button } from "@ventura/ui/button";
+import { Input } from "@ventura/ui/input";
+import { FieldHint, Label } from "@ventura/ui/label";
+import { Notice } from "@ventura/ui/notice";
 import { PhoneInput } from "@ventura/ui/phone-input";
-import { slugify } from "@/lib/project-rules";
+import { Stepper } from "@ventura/ui/stepper";
+import { cn } from "@ventura/ui/lib/utils";
+import { BRAND_PRESETS, contrastWithWhite, slugify } from "@/lib/project-rules";
 import type { CrmContacts } from "@/lib/server/crm-contacts";
 import { checkCrmSlugAvailability, checkTrialProvisionStatus, startFreeTrialAction } from "./actions";
 
@@ -1417,6 +1427,10 @@ function FreeTrialModal({
   initialSlug?: string;
   onClose: () => void;
 }) {
+  const { isDark } = useTheme();
+  const [step, setStep] = React.useState<1 | 2>(1);
+  const [primaryColor, setPrimaryColor] = React.useState("#3f6df6");
+
   const [centerName, setCenterName] = React.useState(initialCenterName);
   const [slug, setSlug] = React.useState(initialSlug || (initialCenterName ? slugify(initialCenterName) : ""));
   const [slugTouched, setSlugTouched] = React.useState(false);
@@ -1475,8 +1489,7 @@ function FreeTrialModal({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleNext = () => {
     setSubmitError(null);
     setPhoneError(null);
 
@@ -1487,6 +1500,11 @@ function FreeTrialModal({
 
     if (!slug || slug.length < 3) {
       setSubmitError("Subdomen kamida 3 ta belgidan iborat bo'lishi kerak");
+      return;
+    }
+
+    if (slugStatus && !slugStatus.available) {
+      setSubmitError(slugStatus.error || "Ushbu subdomen band, boshqasini tanlang");
       return;
     }
 
@@ -1503,6 +1521,45 @@ function FreeTrialModal({
 
     if (ownerPassword.length < 8) {
       setSubmitError("Parol kamida 8 ta belgidan iborat bo'lishi kerak");
+      return;
+    }
+
+    setStep(2);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+    setPhoneError(null);
+
+    if (centerName.trim().length < 2) {
+      setSubmitError("O'quv markaz nomini kiriting (kamida 2 ta belgi)");
+      setStep(1);
+      return;
+    }
+
+    if (!slug || slug.length < 3) {
+      setSubmitError("Subdomen kamida 3 ta belgidan iborat bo'lishi kerak");
+      setStep(1);
+      return;
+    }
+
+    if (ownerName.trim().length < 2) {
+      setSubmitError("Rahbar ismini kiriting (kamida 2 ta belgi)");
+      setStep(1);
+      return;
+    }
+
+    const cleanDigits = ownerPhone.replace(/\D/g, "");
+    if (!/^\d{9}$/.test(cleanDigits)) {
+      setPhoneError("Telefon raqami 9 ta raqamdan iborat bo'lishi kerak (masalan, 90 123 45 67)");
+      setStep(1);
+      return;
+    }
+
+    if (ownerPassword.length < 8) {
+      setSubmitError("Parol kamida 8 ta belgidan iborat bo'lishi kerak");
+      setStep(1);
       return;
     }
 
@@ -1525,6 +1582,7 @@ function FreeTrialModal({
         ownerName: ownerName.trim(),
         ownerPhone: cleanDigits,
         ownerPassword,
+        primaryColor,
       });
 
       if (!res.ok) {
@@ -1556,188 +1614,322 @@ function FreeTrialModal({
     );
   }
 
+  const isLowContrast = contrastWithWhite(primaryColor) < 3;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-7 text-slate-900 dark:text-slate-100 max-h-[92vh] overflow-y-auto">
-        <button
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg rounded-modal border border-border bg-card p-6 sm:p-7 text-card-foreground shadow-modal max-h-[92vh] overflow-y-auto">
+        <Button
+          variant="ghost"
+          size="icon-sm"
           onClick={onClose}
           disabled={isBuilding}
-          className="absolute top-5 right-5 p-2 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+          className="absolute top-4 right-4 text-muted-foreground hover:text-foreground cursor-pointer"
+          aria-label="Yopish"
         >
-          <X className="size-5" />
-        </button>
+          <X className="size-4" />
+        </Button>
 
         <div>
-          <div className="flex items-center gap-2.5 mb-2">
-            <div className="size-9 rounded-xl bg-indigo-500/10 dark:bg-indigo-600/20 border border-indigo-500/20 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="size-10 rounded-btn bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
               <Sparkles className="size-5" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">7 kunlik bepul sinov</h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Karta talab etilmaydi · 30 soniyada tayyor</p>
+              <h3 className="type-heading text-lg font-bold text-foreground">7 kunlik bepul sinov</h3>
+              <p className="type-caption text-muted-foreground">Karta talab etilmaydi · 30 soniyada tayyor</p>
             </div>
           </div>
 
-          {/* Post-login notice */}
-          <div className="my-3 p-3 rounded-2xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/50 flex items-start gap-2.5 text-xs text-indigo-900 dark:text-indigo-200">
-            <Bot className="size-4 text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
-            <div>
-              <span className="font-semibold">Oson va tez boshlash:</span>
-              <p className="text-[11px] text-indigo-700/80 dark:text-indigo-300/80 mt-0.5">
-                Telegram bot, 2FA xavfsizlik va boshqa sozlamalar loyihangiz ochilgandan so'ng, tizim ichida oson
-                ulanadi.
-              </p>
-            </div>
+          <div className="mb-5">
+            <Stepper
+              steps={["Ma'lumotlar", "Brend rangi"]}
+              current={step - 1}
+              canGoTo={(i) => i === 0}
+              onStepClick={(i) => {
+                if (i === 0) setStep(1);
+              }}
+            />
           </div>
 
           {submitError && (
-            <div className="my-3 p-3 rounded-xl bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-200 text-xs">
-              ⚠️ {submitError}
-            </div>
+            <Notice tone="danger" className="mb-4">
+              {submitError}
+            </Notice>
           )}
 
-          <form onSubmit={handleSubmit} className="mt-3.5 space-y-3.5 text-xs sm:text-sm">
-            {/* 1. Markaz nomi va avtomatik subdomen */}
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">O'quv markaz nomi *</label>
-              <input
-                type="text"
-                required
-                value={centerName}
-                onChange={handleCenterNameChange}
-                placeholder="Masalan: Registon Academy"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
-              />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {step === 1 ? (
+              <>
+                {/* 1. Markaz nomi va avtomatik subdomen */}
+                <div>
+                  <Label htmlFor="trial-center-name">O'quv markaz nomi *</Label>
+                  <Input
+                    id="trial-center-name"
+                    type="text"
+                    required
+                    value={centerName}
+                    onChange={handleCenterNameChange}
+                    placeholder="Masalan: Registon Academy"
+                  />
 
-              {/* Subdomain automatic preview & edit toggle */}
-              <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                    <Globe className="size-3.5 text-indigo-500" />
-                    <span>Web manzil:</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setShowCustomSlug(!showCustomSlug)}
-                    className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
-                  >
-                    {showCustomSlug ? "Avtomatik" : "Subdomenni o'zgartirish"}
-                  </button>
+                  {/* Subdomain automatic preview & edit toggle */}
+                  <div className="mt-2 rounded-control border border-border bg-input-bg p-2.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
+                        <Globe className="size-3.5 text-primary" />
+                        <span>Web manzil:</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setShowCustomSlug(!showCustomSlug)}
+                        className="text-caption font-semibold text-primary hover:underline cursor-pointer"
+                      >
+                        {showCustomSlug ? "Avtomatik" : "Subdomenni o'zgartirish"}
+                      </button>
+                    </div>
+
+                    {!showCustomSlug ? (
+                      <div className="mt-1.5 flex items-center gap-1 font-mono text-xs">
+                        <span className="text-muted-foreground select-none">https://</span>
+                        <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-btn">
+                          {slug || "markaz"}
+                        </span>
+                        <span className="text-muted-foreground select-none">.ventura.uz</span>
+                      </div>
+                    ) : (
+                      <div className="mt-1.5 flex items-center rounded-control bg-card border border-input px-2.5 py-1.5 focus-within:border-(--ring-border) focus-within:shadow-(--ring-shadow)">
+                        <span className="text-muted-foreground font-mono text-xs select-none">https://</span>
+                        <input
+                          type="text"
+                          value={slug}
+                          onChange={(e) => {
+                            setSlugTouched(true);
+                            setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
+                          }}
+                          placeholder="markaz"
+                          className="w-full bg-transparent text-foreground font-mono text-xs px-1 focus:outline-none"
+                        />
+                        <span className="text-primary font-mono text-xs font-semibold select-none shrink-0">
+                          .ventura.uz
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Availability badge */}
+                    <div className="mt-1.5 min-h-[16px] text-caption">
+                      {checkingSlug && <span className="text-muted-foreground">Tekshirilmoqda...</span>}
+                      {!checkingSlug && slugStatus && slugStatus.available && (
+                        <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                          <Check className="size-3 text-emerald-500" /> <strong>{slug}.ventura.uz</strong> bo'sh,
+                          markazingiz uchun tayyor
+                        </span>
+                      )}
+                      {!checkingSlug && slugStatus && !slugStatus.available && (
+                        <span className="text-destructive-text font-medium">❌ {slugStatus.error}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
-                {!showCustomSlug ? (
-                  <div className="mt-1.5 flex items-center gap-1 font-mono text-xs">
-                    <span className="text-slate-400 select-none">https://</span>
-                    <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded">
-                      {slug || "markaz"}
-                    </span>
-                    <span className="text-slate-500 select-none">.ventura.uz</span>
+                {/* 2. Rahbar ismi */}
+                <div>
+                  <Label htmlFor="trial-owner-name">Rahbar ismi va familiyasi *</Label>
+                  <Input
+                    id="trial-owner-name"
+                    type="text"
+                    required
+                    value={ownerName}
+                    onChange={(e) => setOwnerName(e.target.value)}
+                    placeholder="Masalan: Javohir Alimov"
+                  />
+                </div>
+
+                {/* 3. Telefon raqami — PhoneInput */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <Label htmlFor="trial-owner-phone" className="mb-0">
+                      Telefon raqami *
+                    </Label>
+                    <span className="text-caption text-muted-foreground">(kabinetga kirish logini)</span>
                   </div>
-                ) : (
-                  <div className="mt-1.5 flex items-center rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 px-2.5 py-1.5 focus-within:border-indigo-500">
-                    <span className="text-slate-400 font-mono text-xs select-none">https://</span>
-                    <input
-                      type="text"
-                      value={slug}
-                      onChange={(e) => {
-                        setSlugTouched(true);
-                        setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""));
-                      }}
-                      placeholder="markaz"
-                      className="w-full bg-transparent text-slate-900 dark:text-white font-mono text-xs px-1 focus:outline-none"
+                  <PhoneInput
+                    id="trial-owner-phone"
+                    value={ownerPhone}
+                    onValueChange={(val) => {
+                      setOwnerPhone(val);
+                      if (phoneError) setPhoneError(null);
+                    }}
+                    invalid={!!phoneError}
+                  />
+                  {phoneError && <FieldHint error>{phoneError}</FieldHint>}
+                </div>
+
+                {/* 4. Parol */}
+                <div>
+                  <Label htmlFor="trial-owner-password">Kabinet paroli *</Label>
+                  <div className="relative">
+                    <Input
+                      id="trial-owner-password"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      minLength={8}
+                      value={ownerPassword}
+                      onChange={(e) => setOwnerPassword(e.target.value)}
+                      placeholder="Kamida 8 ta belgi"
+                      className="pr-10"
                     />
-                    <span className="text-indigo-600 dark:text-indigo-400 font-mono text-xs font-semibold select-none shrink-0">
-                      .ventura.uz
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer transition-colors"
+                      aria-label={showPassword ? "Parolni yashirish" : "Parolni ko'rsatish"}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
                   </div>
-                )}
-
-                {/* Availability badge */}
-                <div className="mt-1 min-h-[16px] text-[11px]">
-                  {checkingSlug && <span className="text-slate-400">Tekshirilmoqda...</span>}
-                  {!checkingSlug && slugStatus && slugStatus.available && (
-                    <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                      <Check className="size-3 text-emerald-500" /> <strong>{slug}.ventura.uz</strong> bo'sh,
-                      markazingiz uchun tayyor
-                    </span>
-                  )}
-                  {!checkingSlug && slugStatus && !slugStatus.available && (
-                    <span className="text-red-500">❌ {slugStatus.error}</span>
-                  )}
                 </div>
-              </div>
-            </div>
 
-            {/* 2. Rahbar ismi */}
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Rahbar ismi va familiyasi *
-              </label>
-              <input
-                type="text"
-                required
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
-                placeholder="Masalan: Javohir Alimov"
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
+                <div className="pt-2">
+                  <Button
+                    type="button"
+                    variant="primary"
+                    onClick={handleNext}
+                    disabled={isBuilding || checkingSlug || (slugStatus !== null && !slugStatus.available)}
+                    className="w-full h-11 text-sm font-semibold justify-center gap-2 cursor-pointer"
+                  >
+                    <span>Keyingisi</span>
+                    <ArrowRight className="size-4" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Step 2: Brend rangini tanlash */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Markazingiz asosiy rangi</Label>
+                    <p className="text-caption text-muted-foreground mb-2">
+                      Tizim logotipi, asosiy tugmalari va faol bo'limlari tanlangan rangda ko'rinadi.
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {BRAND_PRESETS.map((c) => (
+                        <button
+                          key={c}
+                          type="button"
+                          aria-label={c}
+                          aria-pressed={primaryColor.toLowerCase() === c.toLowerCase()}
+                          onClick={() => setPrimaryColor(c)}
+                          className={cn(
+                            "size-9 cursor-pointer rounded-btn border-2 transition-transform hover:scale-105",
+                            primaryColor.toLowerCase() === c.toLowerCase()
+                              ? "border-foreground ring-2 ring-primary/40 scale-105"
+                              : "border-transparent",
+                          )}
+                          style={{ background: c }}
+                        />
+                      ))}
+                      <label className="flex h-9 cursor-pointer items-center gap-2 rounded-btn border border-border px-2.5 text-xs font-semibold text-secondary-foreground hover:bg-secondary transition-colors">
+                        <input
+                          type="color"
+                          value={primaryColor}
+                          onChange={(e) => setPrimaryColor(e.target.value)}
+                          className="size-5 cursor-pointer border-0 bg-transparent p-0"
+                          aria-label="Boshqa rang"
+                        />
+                        <span className="font-mono">{primaryColor}</span>
+                      </label>
+                    </div>
+                    {isLowContrast && (
+                      <p className="mt-2 flex items-center gap-1.5 text-caption font-semibold text-(--warning-fg)">
+                        <TriangleAlert className="size-3.5" /> Oq matn bilan kontrast past (och ranglarda matn qiyin o'qilishi mumkin)
+                      </p>
+                    )}
+                  </div>
 
-            {/* 3. Telefon raqami — PhoneInput (paneldagi loyiha kabi) */}
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                Telefon raqami *{" "}
-                <span className="text-[11px] text-slate-400 font-normal">(kabinetga kirish logini)</span>
-              </label>
-              <PhoneInput
-                value={ownerPhone}
-                onValueChange={(val) => {
-                  setOwnerPhone(val);
-                  if (phoneError) setPhoneError(null);
-                }}
-                invalid={!!phoneError}
-                className="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 focus-within:border-indigo-500"
-              />
-              {phoneError ? (
-                <p className="mt-1 text-xs text-red-500">{phoneError}</p>
-              ) : (
-                <p className="mt-1 text-[11px] text-slate-400">9 ta raqam (masalan, 90 123 45 67)</p>
-              )}
-            </div>
+                  {/* Jonli ko'rinish (Live preview) */}
+                  <div>
+                    <Label>Jonli ko'rinish (CRM interfeysi namunasi)</Label>
+                    <div
+                      data-brand="ventura"
+                      className={cn(
+                        "mt-1.5 rounded-card border border-border p-4 bg-background transition-colors",
+                        isDark && "dark",
+                      )}
+                      style={{ "--primary": primaryColor, colorScheme: isDark ? "dark" : "light" } as React.CSSProperties}
+                    >
+                      <div className="flex items-center justify-between pb-3 border-b border-border">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <Avatar
+                            name={centerName.trim() || "O'quv markazi"}
+                            size={36}
+                            variant="brand"
+                            className="shrink-0"
+                          />
+                          <div className="min-w-0">
+                            <div className="font-bold text-sm text-foreground truncate">
+                              {centerName.trim() || "O'quv markazi"}
+                            </div>
+                            <div className="text-caption text-muted-foreground font-mono truncate">
+                              https://{slug || "markaz"}.ventura.uz
+                            </div>
+                          </div>
+                        </div>
+                        <Badge tone="success" dot className="shrink-0">
+                          Faol
+                        </Badge>
+                      </div>
 
-            {/* 4. Parol */}
-            <div>
-              <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Kabinet paroli *</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  minLength={8}
-                  value={ownerPassword}
-                  onChange={(e) => setOwnerPassword(e.target.value)}
-                  placeholder="Kamida 8 ta belgi"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-none focus:border-indigo-500 pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
-                >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                </button>
-              </div>
-            </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+                        <div className="nav-active-surface flex items-center justify-between rounded-nav p-2.5 font-semibold text-(--nav-active-fg) shadow-xs">
+                          <span>Faol o'quvchilar</span>
+                          <span className="font-bold text-sm">128</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-nav p-2.5 font-medium bg-secondary text-foreground">
+                          <span>Guruhlar</span>
+                          <span className="font-bold text-sm">12</span>
+                        </div>
+                      </div>
 
-            <div className="pt-2">
-              <button
-                type="submit"
-                disabled={isBuilding || checkingSlug || (slugStatus !== null && !slugStatus.available)}
-                className="w-full py-3.5 px-4 rounded-xl font-semibold text-sm text-white bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:pointer-events-none transition-all shadow-lg shadow-indigo-600/30 active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <span>7 kunlik bepul sinovni boshlash</span>
-                <ArrowRight className="size-4" />
-              </button>
-            </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        <Button size="sm" className="pointer-events-none">
+                          Yangi to'lov
+                        </Button>
+                        <Button size="sm" variant="ghost" className="pointer-events-none">
+                          Davomat
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tugmalar: Orqaga va Sinovni boshlash */}
+                  <div
+                    data-brand="ventura"
+                    style={{ "--primary": primaryColor } as React.CSSProperties}
+                    className="flex items-center gap-3 pt-3"
+                  >
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => setStep(1)}
+                      className="gap-2 cursor-pointer"
+                    >
+                      <ArrowLeft className="size-4" />
+                      <span>Orqaga</span>
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      disabled={isBuilding}
+                      className="flex-1 h-11 text-sm font-semibold justify-center gap-2 cursor-pointer"
+                    >
+                      <span>7 kunlik bepul sinovni boshlash</span>
+                      <Sparkles className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
           </form>
         </div>
       </div>

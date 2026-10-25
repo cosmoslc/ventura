@@ -142,6 +142,10 @@ const trialInputSchema = z.object({
     .string()
     .min(8, "Parol kamida 8 ta belgidan iborat bo'lishi kerak")
     .max(128, "Parol 128 ta belgidan oshmasligi kerak"),
+  primaryColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Rang kodi noto'g'ri")
+    .default("#3f6df6"),
 });
 
 export async function startFreeTrialAction(
@@ -169,12 +173,22 @@ export async function startFreeTrialAction(
   const { db, telegram } = deps();
   const meta = await requestMeta();
 
-  // 3. Find active server (vps1)
-  const [server] = await db
+  // 3. Find active server (vps1 / asosiy server)
+  const [vpsServer] = await db
     .select({ id: servers.id, name: servers.name })
     .from(servers)
-    .where(eq(servers.status, "ready"))
+    .where(and(eq(servers.status, "ready"), eq(servers.name, "vps1")))
     .limit(1);
+
+  const server =
+    vpsServer ??
+    (
+      await db
+        .select({ id: servers.id, name: servers.name })
+        .from(servers)
+        .where(eq(servers.status, "ready"))
+        .limit(1)
+    )[0];
 
   if (!server) {
     return { ok: false, error: "Hozirda serverda texnik ishlar olib borilmoqda. Iltimos, keyinroq urinib ko'ring." };
@@ -224,7 +238,7 @@ export async function startFreeTrialAction(
         dbStrategy: "shared_db",
         status: "draft",
         brand: {
-          primary: "#4f46e5",
+          primary: v.primaryColor,
           appearance: "light",
         },
         settings: {

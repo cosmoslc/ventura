@@ -371,7 +371,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `cd ${sh(p.release)} && pnpm install --frozen-lockfile --filter ${filter}`, 15 * MINUTE);
     await remote(
       log,
-      `cd ${sh(p.release)} && NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 pnpm --filter ${sh(`{${p.appPath}}`)} build`,
+      `cd ${sh(p.release)} && NEXT_TELEMETRY_DISABLED=1 NEXT_CPU_COUNT=2 NODE_OPTIONS=--max-old-space-size=2048 pnpm --filter ${sh(`{${p.appPath}}`)} build`,
       15 * MINUTE,
     );
   }

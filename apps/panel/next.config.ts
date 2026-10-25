@@ -20,6 +20,9 @@ const config: NextConfig = {
   ],
   serverExternalPackages: ["postgres", "pg", "pg-boss"],
   devIndicators: false,
+  experimental: {
+    agentUpgrade: "security",
+  },
 };
 
 export default config;
