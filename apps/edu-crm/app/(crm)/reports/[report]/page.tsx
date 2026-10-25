@@ -1,5 +1,3 @@
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { can, canAny } from "@ventura/auth/staff/policy";
 import { hasFeature } from "@ventura/tenants";
@@ -99,15 +97,7 @@ export default async function ReportPage({
 
   const page = (
     <div className="space-y-section">
-      <div>
-        <Link
-          href="/reports"
-          className="inline-flex items-center gap-1 text-caption font-semibold text-muted-foreground hover:text-primary-text"
-        >
-          <ArrowLeft className="size-3.5" /> {t.back}
-        </Link>
-        <PageHeader title={t.titles[report]!} description={`${t.hints[report]} · ${period.label}`} />
-      </div>
+      <PageHeader title={t.titles[report]!} description={`${t.hints[report]} · ${period.label}`} />
 
       <ReportFilters
         mode={def.periodMode}

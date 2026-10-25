@@ -138,12 +138,12 @@ function sections(
       .map((l) => {
         const { icon, hue } = HREF_ICONS[l.href] ?? ICONS[l.feature] ?? FALLBACK;
         const item = { id: l.href, label: l.label, icon, color: `var(--nav-hue-${hue})` };
-        // Hisobotlar — ichma-ich menyu; band o'zi ochiladigan sarlavha, umumiy sahifa — birinchi bola
+        // Hisobotlar — ichma-ich menyu; band o'zi ochiladigan sarlavha, ichki hisobotlar to'g'ridan-to'g'ri ko'rsatiladi
         if (l.href === "/reports" && reportMenu.length)
           return {
             ...item,
             id: "menu:/reports",
-            children: [{ id: "/reports", label: uz.reports.navAll }, ...reportMenu],
+            children: reportMenu,
           };
         return item;
       });
