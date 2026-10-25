@@ -11,6 +11,7 @@ import {
   HardDrive,
   KeyRound,
   Loader2,
+  Pencil,
   Plus,
   RefreshCw,
   Server,
@@ -44,6 +45,7 @@ import {
   createDatabaseAction,
   dropDatabaseAction,
   moveProjectToSupabaseAction,
+  renameSupabaseProjectAction,
   revealDatabaseUrlAction,
   saveSupabaseTokenAction,
   testSupabaseConnectionAction,
@@ -130,6 +132,7 @@ export function DatabasesView({
     slug: string;
     targetRef?: string;
   } | null>(null);
+  const [renameTarget, setRenameTarget] = React.useState<{ id: string; name: string } | null>(null);
   const [tokenModalOpen, setTokenModalOpen] = React.useState(false);
 
   const allVps = servers.flatMap((s) => s.rows.filter((r) => !r.missing));
@@ -236,6 +239,7 @@ export function DatabasesView({
             canManage={canReveal}
             onOpenTokenModal={() => setTokenModalOpen(true)}
             onMigrate={(p, targetRef) => setMoveToSupabaseTarget({ ...p, targetRef })}
+            onRename={(proj) => setRenameTarget({ id: proj.id, name: proj.name })}
           />
         </TabsContent>
       </Tabs>
@@ -269,6 +273,11 @@ export function DatabasesView({
             allProjects={allProjects}
             supabaseProjects={supabase.projects}
             hasStoredToken={supabase.hasToken}
+          />
+
+          <RenameSupabaseModal
+            target={renameTarget}
+            onClose={() => setRenameTarget(null)}
           />
 
           <SupabaseTokenModal
@@ -450,12 +459,14 @@ function SupabaseSection({
   canManage,
   onOpenTokenModal,
   onMigrate,
+  onRename,
 }: {
   supabase: SupabaseBlock;
   allProjects: ProjectDatabaseInfo[];
   canManage: boolean;
   onOpenTokenModal: () => void;
   onMigrate: (p: ProjectDatabaseInfo, targetRef?: string) => void;
+  onRename: (proj: SupabaseProject) => void;
 }) {
   const byRef = new Map<string, ProjectDatabaseInfo>();
   for (const p of allProjects) {
@@ -525,7 +536,18 @@ function SupabaseSection({
                   <Tr key={proj.id}>
                     <Td>
                       <div className="font-semibold text-foreground flex items-center gap-2">
-                        {proj.name}
+                        <span>{proj.name}</span>
+                        {canManage ? (
+                          <button
+                            type="button"
+                            onClick={() => onRename(proj)}
+                            title="Nomini o'zgartirish"
+                            aria-label={`${proj.name} nomini o'zgartirish`}
+                            className="text-muted-foreground hover:text-foreground p-1 rounded hover:bg-muted transition-colors inline-flex items-center"
+                          >
+                            <Pencil className="size-3.5" />
+                          </button>
+                        ) : null}
                         <a
                           href={`https://supabase.com/dashboard/project/${proj.id}`}
                           target="_blank"
@@ -577,6 +599,14 @@ function SupabaseSection({
                     {canManage ? (
                       <Td className="text-right">
                         <div className="flex justify-end gap-1.5">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            title="Nomini o'zgartirish"
+                            onClick={() => onRename(proj)}
+                          >
+                            <Pencil className="size-4" /> Nomini o'zgartirish
+                          </Button>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -1116,5 +1146,90 @@ function RevealModal({ target, onClose }: { target: { serverId: string; name: st
         ) : null}
       </Modal>
     </>
+  );
+}
+
+function RenameSupabaseModal({
+  target,
+  onClose,
+}: {
+  target: { id: string; name: string } | null;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [name, setName] = React.useState(target?.name ?? "");
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (target) {
+      setName(target.name);
+      setError(null);
+    }
+  }, [target]);
+
+  if (!target) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) {
+      setError("Loyiha nomini kiriting");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    const res = await renameSupabaseProjectAction({
+      projectRef: target.id,
+      newName: name.trim(),
+    });
+    setLoading(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    toast({
+      tone: "success",
+      title: "Supabase loyiha nomi o'zgartirildi",
+      description: `Yangi nom: ${res.name}`,
+    });
+    onClose();
+    router.refresh();
+  };
+
+  return (
+    <Modal
+      open={target !== null}
+      onOpenChange={(open) => !open && onClose()}
+      title="Supabase loyiha nomini o'zgartirish"
+      description="Supabase bulutidagi loyiha nomi to'g'ridan-to'g'ri yangilanadi va Ventura bilan sinxronlashtiriladi."
+    >
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {error ? <Notice tone="danger">{error}</Notice> : null}
+        <div className="space-y-1.5">
+          <Label htmlFor="supabase-rename-input">Yangi loyiha nomi</Label>
+          <Input
+            id="supabase-rename-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Masalan: EduCRM-Cloud-DB"
+            autoFocus
+            disabled={loading}
+          />
+          <FieldHint>
+            Project Ref: <span className="font-mono">{target.id}</span>
+          </FieldHint>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button type="button" variant="subtle" onClick={onClose} disabled={loading}>
+            {uz.common.cancel}
+          </Button>
+          <Button type="submit" disabled={loading || !name.trim() || name.trim() === target.name}>
+            {loading ? <Loader2 className="animate-spin size-4" /> : null}
+            {uz.common.save}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   );
 }

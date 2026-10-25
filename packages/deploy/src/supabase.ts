@@ -79,6 +79,21 @@ export async function getSupabaseProject(token: string, ref: string): Promise<Su
   return supabaseFetch<SupabaseProject>(token, `/projects/${ref}`);
 }
 
+/**
+ * Supabase loyihasi nomini o'zgartirish (Rename project).
+ * Supabase Management API: PATCH /projects/{ref}
+ */
+export async function updateSupabaseProjectName(
+  token: string,
+  ref: string,
+  name: string,
+): Promise<{ id: string; name: string }> {
+  return supabaseFetch<{ id: string; name: string }>(token, `/projects/${ref}`, {
+    method: "PATCH",
+    body: JSON.stringify({ name: name.trim() }),
+  });
+}
+
 /** Loyihaning anon va service_role API kalitlari */
 export async function getSupabaseApiKeys(token: string, ref: string): Promise<SupabaseApiKey[]> {
   return supabaseFetch<SupabaseApiKey[]>(token, `/projects/${ref}/api-keys`);

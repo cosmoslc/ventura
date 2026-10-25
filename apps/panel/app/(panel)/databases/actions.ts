@@ -16,6 +16,7 @@ import {
   getSupabaseProject,
   listSupabaseProjects,
   testSupabaseConnection,
+  updateSupabaseProjectName,
   type SupabaseProject,
 } from "@ventura/deploy";
 import { audit, putSecret, readSecret } from "@ventura/security";
@@ -339,4 +340,61 @@ export async function moveProjectToSupabaseAction(input: unknown, confirm: strin
 
   revalidatePath("/databases", "layout");
   return { ok: true };
+}
+
+const renameSupabaseSchema = z.object({
+  projectRef: z.string().min(1),
+  newName: z.string().trim().min(2, "Loyiha nomi kamida 2 ta belgidan iborat bo'lishi kerak").max(100),
+  customToken: z.string().optional(),
+});
+
+export async function renameSupabaseProjectAction(
+  input: unknown,
+): Promise<{ ok: true; name: string } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const parsed = renameSupabaseSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.loadError };
+  const { projectRef, newName, customToken } = parsed.data;
+
+  const { db } = deps();
+  const token = customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase boshqaruv tokeni kerak" };
+
+  try {
+    const updated = await updateSupabaseProjectName(token, projectRef, newName);
+
+    // Ventura'da ulangan loyihalar bo'lsa, ularning settings.supabase.projectName qiymatini ham yangilaymiz
+    const all = await db
+      .select({ id: projects.id, settings: projects.settings })
+      .from(projects)
+      .where(isNull(projects.deletedAt));
+
+    for (const p of all) {
+      const s = p.settings as Record<string, any> | null;
+      if (s?.supabase?.projectRef === projectRef) {
+        const nextSettings = {
+          ...s,
+          supabase: {
+            ...s.supabase,
+            projectName: updated.name,
+          },
+        };
+        await db.update(projects).set({ settings: nextSettings }).where(eq(projects.id, p.id));
+      }
+    }
+
+    await audit.record(db, {
+      actor: { type: "user", id: viewer.id, name: viewer.name },
+      action: "supabase.project.rename",
+      target: { type: "system", id: SYSTEM_OWNER.id },
+      ...(await requestMeta()),
+      metadata: { projectRef, newName: updated.name },
+    });
+
+    revalidatePath("/databases", "layout");
+    return { ok: true, name: updated.name };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }

@@ -92,6 +92,7 @@ export {
   listSupabaseOrganizations,
   listSupabaseProjects,
   testSupabaseConnection,
+  updateSupabaseProjectName,
   type SupabaseApiKey,
   type SupabaseDatabaseUsage,
   type SupabaseOrg,
