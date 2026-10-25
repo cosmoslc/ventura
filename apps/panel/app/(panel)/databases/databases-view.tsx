@@ -653,6 +653,7 @@ function MoveToSupabaseModal({
   const router = useRouter();
   const [selectedProjectId, setSelectedProjectId] = React.useState(project?.id ?? allProjects[0]?.id ?? "");
   const [projectRef, setProjectRef] = React.useState(project?.targetRef || supabaseProjects[0]?.id || "");
+  const [autoPassword, setAutoPassword] = React.useState(true);
   const [dbPassword, setDbPassword] = React.useState("");
   const [mode, setMode] = React.useState<"full" | "schema_only">("full");
   const [customToken, setCustomToken] = React.useState("");
@@ -707,7 +708,8 @@ function MoveToSupabaseModal({
         {
           projectId: currentProject.id,
           projectRef: projectRef.trim(),
-          dbPassword: dbPassword.trim(),
+          dbPassword: autoPassword ? undefined : dbPassword.trim(),
+          autoResetPassword: autoPassword,
           mode,
           customToken: customToken.trim() || undefined,
         },
@@ -748,7 +750,7 @@ function MoveToSupabaseModal({
               pending ||
               !currentProject ||
               !projectRef.trim() ||
-              !dbPassword.trim() ||
+              (!autoPassword && !dbPassword.trim()) ||
               confirmSlug.trim() !== currentProject.slug
             }
           >
@@ -822,38 +824,84 @@ function MoveToSupabaseModal({
           </div>
         ) : null}
 
-        {/* 3. Baza Paroli va Aloqani Sinash */}
-        <div>
-          <Label htmlFor="db-password">{t.supabasePassword}</Label>
-          <div className="flex gap-2">
-            <Input
-              id="db-password"
-              type="password"
-              value={dbPassword}
-              onChange={(e) => {
-                setDbPassword(e.target.value);
+        {/* 3. Baza Paroli (Avtomatik yoki Qo'lda) */}
+        <div className="space-y-2">
+          <Label>{t.supabasePassword}</Label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setAutoPassword(true);
                 setTestResult(null);
               }}
-              placeholder="••••••••••••"
-              required
-            />
-            <Button
-              type="button"
-              variant="subtle"
-              disabled={testing || !projectRef.trim() || !dbPassword.trim()}
-              onClick={handleTestConnection}
+              className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                autoPassword
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border hover:border-muted-foreground/30"
+              }`}
             >
-              {testing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-              {t.testConnection}
-            </Button>
-          </div>
-          <FieldHint>{t.supabasePasswordHint}</FieldHint>
+              <div className="font-medium text-foreground text-caption flex items-center justify-between">
+                <span>Avtomatik o'rnatish</span>
+                <Badge tone="success" className="text-[10px]">Tavsiya etiladi</Badge>
+              </div>
+              <p className="mt-1 text-caption text-muted-foreground text-xs">
+                Parolni bilish shart emas. Token orqali yangi kuchli parol o'rnatiladi.
+              </p>
+            </button>
 
-          {testResult ? (
-            <div className="mt-2">
-              <Notice tone={testResult.ok ? "success" : "danger"}>{testResult.message}</Notice>
+            <button
+              type="button"
+              onClick={() => setAutoPassword(false)}
+              className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                !autoPassword
+                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                  : "border-border hover:border-muted-foreground/30"
+              }`}
+            >
+              <div className="font-medium text-foreground text-caption">Mavjud parolni kiritish</div>
+              <p className="mt-1 text-caption text-muted-foreground text-xs">
+                Agar o'zingiz o'rnatgan parolni saqlab qolmoqchi bo'lsangiz.
+              </p>
+            </button>
+          </div>
+
+          {autoPassword ? (
+            <Notice tone="info">
+              Parolni eslab qolish shart emas. Supabase boshqaruv tokeni (sbp_...) orqali yangi 24 belgili xavfsiz parol generatsiya qilinadi va Supabase bazasiga avtomatik o'rnatiladi.
+            </Notice>
+          ) : (
+            <div>
+              <div className="flex gap-2">
+                <Input
+                  id="db-password"
+                  type="password"
+                  value={dbPassword}
+                  onChange={(e) => {
+                    setDbPassword(e.target.value);
+                    setTestResult(null);
+                  }}
+                  placeholder="••••••••••••"
+                  required={!autoPassword}
+                />
+                <Button
+                  type="button"
+                  variant="subtle"
+                  disabled={testing || !projectRef.trim() || !dbPassword.trim()}
+                  onClick={handleTestConnection}
+                >
+                  {testing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                  {t.testConnection}
+                </Button>
+              </div>
+              <FieldHint>{t.supabasePasswordHint}</FieldHint>
+
+              {testResult ? (
+                <div className="mt-2">
+                  <Notice tone={testResult.ok ? "success" : "danger"}>{testResult.message}</Notice>
+                </div>
+              ) : null}
             </div>
-          ) : null}
+          )}
         </div>
 
         {/* 4. Ko'chirish Rejimi (User Talabi: Ma'lumotli vs Ma'lumotsiz) */}

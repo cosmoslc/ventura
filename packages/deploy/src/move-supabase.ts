@@ -12,6 +12,7 @@ import {
   getSupabaseApiKeys,
   getSupabasePoolerConfig,
   getSupabaseProject,
+  resetSupabaseDatabasePassword,
   testSupabaseConnection,
 } from "./supabase";
 
@@ -32,7 +33,8 @@ import {
 export interface MoveToSupabaseOptions {
   token: string;
   projectRef: string;
-  dbPassword: string;
+  dbPassword?: string;
+  autoResetPassword?: boolean;
   mode: "full" | "schema_only";
 }
 
@@ -80,10 +82,20 @@ export async function moveProjectToSupabase(
   const poolerPort = pooler?.db_port || 5432;
   const poolerUser = `postgres.${opts.projectRef}`;
 
+  // Parol ko'rsatilmagan bo'lsa yoki autoReset bo'lsa — yangi kuchli parol generatsiya qilib Supabase'da yangilaymiz
+  let dbPassword = opts.dbPassword?.trim();
+  if (!dbPassword || opts.autoResetPassword) {
+    try {
+      dbPassword = await resetSupabaseDatabasePassword(opts.token, opts.projectRef);
+    } catch (e) {
+      return { ok: false, error: `Supabase parolini avtomatik o'rnatib bo'lmadi: ${(e as Error).message}` };
+    }
+  }
+
   const dstUrl = buildSupabaseDatabaseUrl({
     projectRef: opts.projectRef,
     region: supaProject.region,
-    dbPassword: opts.dbPassword,
+    dbPassword,
     poolerHost,
     poolerPort,
   });
@@ -160,7 +172,7 @@ export async function moveProjectToSupabase(
         SUPA_HOST=${sh(poolerHost)}
         SUPA_PORT=${sh(String(poolerPort))}
         SUPA_USER=${sh(poolerUser)}
-        SUPA_PASS=${sh(opts.dbPassword)}
+        SUPA_PASS=${sh(dbPassword)}
 
         work=$(mktemp -d)
         trap 'rm -rf "$work"' EXIT

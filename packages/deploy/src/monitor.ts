@@ -61,7 +61,8 @@ export interface ServerJobData {
   supabase?: {
     token: string;
     projectRef: string;
-    dbPassword: string;
+    dbPassword?: string;
+    autoResetPassword?: boolean;
     mode: "full" | "schema_only";
   };
   actor: AuditActor;

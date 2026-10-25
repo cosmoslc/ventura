@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import postgres from "postgres";
 
 /*
@@ -92,6 +93,37 @@ export async function updateSupabaseProjectName(
     method: "PATCH",
     body: JSON.stringify({ name: name.trim() }),
   });
+}
+
+/**
+ * Xavfsiz, URL-encoding muammolari chiqarmaydigan 24 belgili alfanumerik parol generatsiya qilish.
+ */
+export function generateSecureDbPassword(length = 24): string {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const bytes = crypto.randomBytes(length);
+  let res = "";
+  for (let i = 0; i < length; i++) {
+    res += chars[bytes[i]! % chars.length];
+  }
+  return res;
+}
+
+/**
+ * Supabase bazasining PostgreSQL parolini o'zgartirish/yangilash (Reset password).
+ * Supabase Management API: PATCH /projects/{ref}/database/password
+ * Agar yangi parol berilmagan bo'lsa, avtomatik 24 belgili kuchli parol generatsiya qilinadi.
+ */
+export async function resetSupabaseDatabasePassword(
+  token: string,
+  ref: string,
+  newPassword?: string,
+): Promise<string> {
+  const password = newPassword?.trim() || generateSecureDbPassword(24);
+  await supabaseFetch(token, `/projects/${ref}/database/password`, {
+    method: "PATCH",
+    body: JSON.stringify({ password }),
+  });
+  return password;
 }
 
 /** Loyihaning anon va service_role API kalitlari */

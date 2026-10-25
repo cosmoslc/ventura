@@ -292,7 +292,8 @@ export async function testSupabaseConnectionAction(input: {
 const moveToSupabaseSchema = z.object({
   projectId: z.uuid(),
   projectRef: z.string().min(1),
-  dbPassword: z.string().min(1),
+  dbPassword: z.string().optional(),
+  autoResetPassword: z.boolean().optional(),
   mode: z.enum(["full", "schema_only"]),
   customToken: z.string().optional(),
 });
@@ -330,6 +331,7 @@ export async function moveProjectToSupabaseAction(input: unknown, confirm: strin
         token,
         projectRef: parsed.data.projectRef,
         dbPassword: parsed.data.dbPassword,
+        autoResetPassword: parsed.data.autoResetPassword ?? !parsed.data.dbPassword?.trim(),
         mode: parsed.data.mode,
       },
       actor: { type: "user", id: viewer.id, name: viewer.name },
