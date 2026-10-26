@@ -26,14 +26,48 @@ export interface StaffAuthDeps {
 }
 
 export function createStaffAuth({ db, telegram, appName, secret, baseURL }: StaffAuthDeps) {
+  const schema = { user: users, session: sessions, account: accounts, verification: verifications, twoFactor: twoFactors };
+  const baseAdapter = drizzleAdapter(db as any, {
+    provider: "pg",
+    schema,
+  });
+
+  const tenantAdapter = (options: any) => {
+    const raw = baseAdapter(options);
+    if (!("run" in db)) return raw;
+
+    const wrapped: any = { ...raw };
+    const methods = [
+      "create",
+      "update",
+      "updateMany",
+      "findOne",
+      "findMany",
+      "delete",
+      "deleteMany",
+      "consumeOne",
+      "incrementOne",
+      "count",
+    ] as const;
+
+    for (const m of methods) {
+      if (typeof (raw as any)[m] === "function") {
+        wrapped[m] = async (...args: any[]) => {
+          return db.run(async (tx) => {
+            const txAdapter = drizzleAdapter(tx as any, { provider: "pg", schema })(options);
+            return (txAdapter as any)[m](...args);
+          });
+        };
+      }
+    }
+    return wrapped;
+  };
+
   return betterAuth({
     appName,
     secret,
     baseURL,
-    database: drizzleAdapter(db, {
-      provider: "pg",
-      schema: { user: users, session: sessions, account: accounts, verification: verifications, twoFactor: twoFactors },
-    }),
+    database: tenantAdapter,
     advanced: {
       cookiePrefix: "edu",
       useSecureCookies: baseURL.startsWith("https://"),

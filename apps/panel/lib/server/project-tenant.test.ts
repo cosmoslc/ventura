@@ -11,7 +11,7 @@ describe.skipIf(!live)("project-tenant director management", () => {
   it("fetches director info and resets password for Supabase tenant", async () => {
     const db = createPanelDb(process.env.PANEL_DATABASE_URL || "postgres://ventura_app:svjVhAShSnkUHhtfmUBA8WBn@localhost:5432/ventura_panel");
     const [p] = await db.select().from(projects).where(eq(projects.slug, "kun-uz"));
-    expect(p).toBeDefined();
+    if (!p) throw new Error("kun-uz not found");
 
     const info = await getProjectDirectorInfo(db, p);
     expect(info).not.toBeNull();
