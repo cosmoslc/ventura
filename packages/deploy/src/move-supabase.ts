@@ -1,7 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import type { PanelDb } from "@ventura/db";
 import { apps, domains, projects, templates } from "@ventura/db/schema/panel";
-import { readSecret } from "@ventura/security";
+import { putSecret, readSecret } from "@ventura/security";
 import { parseSecrets } from "@ventura/tenants";
 import { DB_NAME_RE, DB_PASSWORD_RE, dbNameFor, dbPasswordOwner } from "./databases";
 import { instanceName } from "./drivers/ssh";
@@ -292,7 +292,9 @@ export async function moveProjectToSupabase(
     await session.writeFile(`${secretsFile}.tmp`, `${JSON.stringify(secrets, null, 2)}\n`, 0o600);
     await run(session, `chmod 600 ${sh(`${secretsFile}.tmp`)} && mv -f ${sh(`${secretsFile}.tmp`)} ${sh(secretsFile)}`);
 
-    // 7. Ventura panel bazasida loyiha sozlamalarini yangilash
+    // 7. Ventura panel sirlari va sozlamalarini yangilash
+    await putSecret(db, { type: "project", id: p.id }, "db_password", dbPassword);
+
     const updatedSettings = {
       ...p.settings,
       supabase: {

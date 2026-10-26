@@ -3,8 +3,8 @@ import { and, eq, isNull } from "drizzle-orm";
 import { createStaffAuth, setStaffPassword } from "@ventura/auth/staff";
 import { type PanelDb, type TenantDb, createTenantDb } from "@ventura/db";
 import { projects } from "@ventura/db/schema/panel";
-import { users } from "@ventura/db/schema/tenant";
-import { dbNameFor, dbPasswordOwner } from "@ventura/deploy";
+import { accounts, users } from "@ventura/db/schema/tenant";
+import { buildSupabaseDatabaseUrl, dbNameFor, dbPasswordOwner } from "@ventura/deploy";
 import { type AuditActor, audit, putSecret, readSecret } from "@ventura/security";
 
 /*
@@ -24,9 +24,25 @@ export interface ProjectDirectorInfo {
 
 export async function getProjectTenantDb(
   panelDb: PanelDb,
-  project: { id: string; templateKey: string; slug: string; dbStrategy: string; serverId: string | null },
+  project: { id: string; templateKey: string; slug: string; dbStrategy: string; serverId: string | null; settings?: any },
 ): Promise<TenantDb | null> {
   try {
+    // 1. Agar loyiha Supabase'ga ko'chirilgan bo'lsa (settings.supabase)
+    if (project.settings?.supabase?.projectRef) {
+      const supa = project.settings.supabase;
+      const dbPassword = await readSecret(panelDb, { type: "project", id: project.id }, "db_password");
+      if (!dbPassword) return null;
+      const databaseUrl = buildSupabaseDatabaseUrl({
+        projectRef: supa.projectRef,
+        region: supa.region,
+        dbPassword,
+        poolerHost: supa.poolerHost,
+        poolerPort: supa.poolerPort,
+      });
+      return createTenantDb(databaseUrl, project.slug, { max: 1 });
+    }
+
+    // 2. Mahalliy VPS serveridagi PostgreSQL bazasi
     const dbName = dbNameFor(project.templateKey, project.slug, project.dbStrategy);
     const pwOwner = dbPasswordOwner(
       project.dbStrategy === "shared_db" ? "shared" : "project",
@@ -44,23 +60,25 @@ export async function getProjectTenantDb(
 
 export async function getProjectDirectorInfo(
   panelDb: PanelDb,
-  project: { id: string; templateKey: string; slug: string; dbStrategy: string; serverId: string | null; ownerPhone: string | null },
+  project: { id: string; templateKey: string; slug: string; dbStrategy: string; serverId: string | null; ownerPhone?: string | null; settings?: any },
 ): Promise<ProjectDirectorInfo | null> {
   const tenantDb = await getProjectTenantDb(panelDb, project);
   if (!tenantDb) return null;
   try {
-    const [director] = await tenantDb
-      .select({
-        id: users.id,
-        name: users.name,
-        phone: users.phoneNumber,
-        lockedAt: users.lockedAt,
-        failedAttempts: users.failedAttempts,
-        mustChangePassword: users.mustChangePassword,
-      })
-      .from(users)
-      .where(eq(users.role, "director"))
-      .limit(1);
+    const [director] = await tenantDb.run(async (tx) =>
+      tx
+        .select({
+          id: users.id,
+          name: users.name,
+          phone: users.phoneNumber,
+          lockedAt: users.lockedAt,
+          failedAttempts: users.failedAttempts,
+          mustChangePassword: users.mustChangePassword,
+        })
+        .from(users)
+        .where(eq(users.role, "director"))
+        .limit(1),
+    );
 
     if (!director) return null;
 
@@ -97,21 +115,25 @@ export async function unlockProjectDirector(
   if (!tenantDb) return { ok: false, error: "Mijoz bazasiga ulanib bo'lmadi" };
 
   try {
-    const [director] = await tenantDb
-      .select({ id: users.id, name: users.name, phone: users.phoneNumber })
-      .from(users)
-      .where(eq(users.role, "director"))
-      .limit(1);
+    const [director] = await tenantDb.run(async (tx) =>
+      tx
+        .select({ id: users.id, name: users.name, phone: users.phoneNumber })
+        .from(users)
+        .where(eq(users.role, "director"))
+        .limit(1),
+    );
 
     if (!director) return { ok: false, error: "Direktor topilmadi" };
 
-    await tenantDb
-      .update(users)
-      .set({
-        failedAttempts: 0,
-        lockedAt: null,
-      })
-      .where(eq(users.id, director.id));
+    await tenantDb.run(async (tx) =>
+      tx
+        .update(users)
+        .set({
+          failedAttempts: 0,
+          lockedAt: null,
+        })
+        .where(eq(users.id, director.id)),
+    );
 
     await audit.record(panelDb, {
       actor,
@@ -155,11 +177,13 @@ export async function resetProjectDirectorPassword(
   if (!tenantDb) return { ok: false, error: "Mijoz bazasiga ulanib bo'lmadi" };
 
   try {
-    const [director] = await tenantDb
-      .select({ id: users.id, name: users.name, phone: users.phoneNumber })
-      .from(users)
-      .where(eq(users.role, "director"))
-      .limit(1);
+    const [director] = await tenantDb.run(async (tx) =>
+      tx
+        .select({ id: users.id, name: users.name, phone: users.phoneNumber })
+        .from(users)
+        .where(eq(users.role, "director"))
+        .limit(1),
+    );
 
     if (!director) return { ok: false, error: "Direktor topilmadi" };
 
@@ -174,16 +198,20 @@ export async function resetProjectDirectorPassword(
       baseURL: "http://localhost",
     });
 
-    await setStaffPassword(auth, director.id, newPassword);
+    const ctx = await auth.$context;
+    const hash = await ctx.password.hash(newPassword);
 
-    await tenantDb
-      .update(users)
-      .set({
-        failedAttempts: 0,
-        lockedAt: null,
-        mustChangePassword: false,
-      })
-      .where(eq(users.id, director.id));
+    await tenantDb.run(async (tx) => {
+      await tx.update(accounts).set({ password: hash }).where(eq(accounts.userId, director.id));
+      await tx
+        .update(users)
+        .set({
+          failedAttempts: 0,
+          lockedAt: null,
+          mustChangePassword: false,
+        })
+        .where(eq(users.id, director.id));
+    });
 
     // Panel sirlar jadvalida ham owner_password ni yangilaymiz (sinxronlik uchun)
     await putSecret(panelDb, { type: "project", id: projectId }, "owner_password", newPassword);

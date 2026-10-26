@@ -47,6 +47,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       dbStrategy: p.dbStrategy,
       serverId: p.serverId,
       ownerPhone: p.ownerPhone,
+      settings: p.settings,
     }),
   ]);
   const primary = doms.find((d) => d.isPrimary) ?? doms[0];
