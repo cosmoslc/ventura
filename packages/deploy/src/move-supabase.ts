@@ -9,6 +9,7 @@ import { type ServerRow, openSession } from "./servers";
 import { type SshSession, sh } from "./ssh";
 import {
   buildSupabaseDatabaseUrl,
+  executeSupabaseSql,
   getSupabaseApiKeys,
   getSupabasePoolerConfig,
   getSupabaseProject,
@@ -163,7 +164,22 @@ export async function moveProjectToSupabase(
     session = await openSession(db, server);
     const appDir = `${root}/current/${tpl.appPath}`;
 
-    // 3. Supabase'da jadvallar sxemasi va RLS ni yaratish (provisioning)
+    // 3. Supabase'da jadvallarni avtomatik tozalash (agar eski qoldiqlar bo'lsa) va sxema/RLS yaratish
+    try {
+      await executeSupabaseSql(
+        opts.token,
+        opts.projectRef,
+        `DROP SCHEMA IF EXISTS drizzle CASCADE;
+         DROP SCHEMA IF EXISTS public CASCADE;
+         CREATE SCHEMA public;
+         GRANT ALL ON SCHEMA public TO postgres;
+         GRANT ALL ON SCHEMA public TO public;
+         COMMENT ON SCHEMA public IS 'standard public schema';`,
+      );
+    } catch {
+      // Management API orqali tozalash imkoni bo'lmasa, provisioning to'g'ridan-to'g'ri urinib ko'radi
+    }
+
     await run(
       session,
       `cd ${sh(appDir)} && node_modules/.bin/tsx scripts/provision.ts`,

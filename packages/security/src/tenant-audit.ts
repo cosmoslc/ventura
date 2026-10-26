@@ -14,7 +14,9 @@ const LOCK_CLASS = 7_420_002;
 
 export async function recordTenant(db: TenantDb | SawmillDb, input: AuditInput) {
   return db.transaction(async (tx) => {
-    await tx.execute(sql`select pg_advisory_xact_lock(${LOCK_CLASS}, hashtext(current_setting('app.tenant_id')))`);
+    await tx.execute(
+      sql`select pg_advisory_xact_lock(${LOCK_CLASS}, hashtext(coalesce(nullif(current_setting('app.tenant_id', true), ''), 'default')))`,
+    );
     const [last] = await tx
       .select({ hash: auditEvents.hash })
       .from(auditEvents)
