@@ -72,20 +72,20 @@ try {
       console.log("Ega (telefon va ism) kiritilmagan — direktor yaratilmadi");
     } else {
       const auth = createStaffAuth({
-        db,
+        db: tx as any,
         telegram: null,
         appName: input.name,
         secret: input.authSecret,
         baseURL: "http://localhost",
       });
-      const user = await createStaffUser(auth, db, {
+      const user = await createStaffUser(auth, tx as any, {
         phone: input.owner.phone,
         name: input.owner.name,
         password: input.owner.password,
         role: "director",
         mustChangePassword: false,
       });
-      await tenantAudit.record(db, {
+      await tenantAudit.record(tx as any, {
         actor: { type: "system", name: "Ventura deploy" },
         action: "user.create",
         target: { type: "user", id: user.id },

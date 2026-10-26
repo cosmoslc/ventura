@@ -180,11 +180,17 @@ export async function moveProjectToSupabase(
       // Management API orqali tozalash imkoni bo'lmasa, provisioning to'g'ridan-to'g'ri urinib ko'radi
     }
 
+    const ownerPassword = await readSecret(db, { type: "project", id: p.id }, "owner_password");
+    const owner =
+      p.ownerName && p.ownerPhone && ownerPassword
+        ? { name: p.ownerName, phone: p.ownerPhone, password: ownerPassword }
+        : null;
+
     await run(
       session,
       `cd ${sh(appDir)} && node_modules/.bin/tsx scripts/provision.ts`,
       5 * 60_000,
-      JSON.stringify({ slug: p.slug, name: p.name, databaseUrl: dstUrl, authSecret, owner: null }),
+      JSON.stringify({ slug: p.slug, name: p.name, databaseUrl: dstUrl, authSecret, owner }),
     );
 
     // 4. Saytni vaqtincha yopish (yangi ma'lumot tushmasligi uchun)
