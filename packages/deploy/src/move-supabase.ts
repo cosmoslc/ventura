@@ -206,6 +206,7 @@ export async function moveProjectToSupabase(
       const copyScript = `
         set -e
         SRC_DB=${sh(srcDb)}
+        SRC_PASS=${sh(srcPassword)}
         TENANT=${sh(p.slug)}
         SUPA_HOST=${sh(poolerHost)}
         SUPA_PORT=${sh(String(poolerPort))}
@@ -216,7 +217,7 @@ export async function moveProjectToSupabase(
         trap 'rm -rf "$work"' EXIT
 
         # tenant_id ustuni bor jadvallarni aniqlash
-        tables=$(runuser -u postgres -- psql -XAtq -d "$SRC_DB" -c "
+        tables=$(PGPASSWORD="$SRC_PASS" psql -h 127.0.0.1 -p 5432 -U "$SRC_DB" -d "$SRC_DB" -XAtq -c "
           SELECT c.table_name 
           FROM information_schema.columns c 
           JOIN information_schema.tables t ON t.table_schema = c.table_schema AND t.table_name = c.table_name 
@@ -226,16 +227,16 @@ export async function moveProjectToSupabase(
 
         total=0
         for tbl in $tables; do
-          n=$(runuser -u postgres -- psql -XAtq -d "$SRC_DB" -c "SELECT count(*) FROM public.\\"$tbl\\" WHERE tenant_id = '$TENANT'")
+          n=$(PGPASSWORD="$SRC_PASS" psql -h 127.0.0.1 -p 5432 -U "$SRC_DB" -d "$SRC_DB" -XAtq -c "SELECT count(*) FROM public.\\"$tbl\\" WHERE tenant_id = '$TENANT'")
           if [ "$n" -gt 0 ]; then
-            cols=$(runuser -u postgres -- psql -XAtq -d "$SRC_DB" -c "
+            cols=$(PGPASSWORD="$SRC_PASS" psql -h 127.0.0.1 -p 5432 -U "$SRC_DB" -d "$SRC_DB" -XAtq -c "
               SELECT string_agg(quote_ident(column_name), ',' ORDER BY ordinal_position) 
               FROM information_schema.columns 
               WHERE table_schema = 'public' AND table_name = '$tbl';
             ")
             
             # Manbadan CSV ga olish
-            runuser -u postgres -- psql -Xq -d "$SRC_DB" -c "\\\\copy (SELECT $cols FROM public.\\"$tbl\\" WHERE tenant_id = '$TENANT') TO '$work/$tbl.csv' WITH (FORMAT csv)"
+            PGPASSWORD="$SRC_PASS" psql -h 127.0.0.1 -p 5432 -U "$SRC_DB" -d "$SRC_DB" -Xq -c "\\\\copy (SELECT $cols FROM public.\\"$tbl\\" WHERE tenant_id = '$TENANT') TO '$work/$tbl.csv' WITH (FORMAT csv)"
             
             # Supabase'da mavjud qoldiq bo'lsa tozalab, CSV dan yuklash
             PGPASSWORD="$SUPA_PASS" psql -h "$SUPA_HOST" -p "$SUPA_PORT" -U "$SUPA_USER" -d postgres -v ON_ERROR_STOP=1 -c "DELETE FROM public.\\"$tbl\\" WHERE tenant_id = '$TENANT';" >/dev/null 2>&1 || true
