@@ -276,14 +276,29 @@ export async function testSupabaseConnectionAction(input: {
   try {
     const proj = await getSupabaseProject(token, input.projectRef);
     const pooler = await getSupabasePoolerConfig(token, input.projectRef);
-    const url = buildSupabaseDatabaseUrl({
+    let poolerHost = pooler?.db_host || `aws-0-${proj.region}.pooler.supabase.com`;
+    let poolerPort = pooler?.db_port || 5432;
+    let url = buildSupabaseDatabaseUrl({
       projectRef: input.projectRef,
       region: proj.region,
       dbPassword: input.dbPassword,
-      poolerHost: pooler?.db_host,
-      poolerPort: pooler?.db_port,
+      poolerHost,
+      poolerPort,
     });
-    return await testSupabaseConnection(url);
+    let res = await testSupabaseConnection(url);
+    if (!res.ok && res.error.includes("not found") && poolerHost.includes("aws-0-")) {
+      const altHost = poolerHost.replace("aws-0-", "aws-1-");
+      const altUrl = buildSupabaseDatabaseUrl({
+        projectRef: input.projectRef,
+        region: proj.region,
+        dbPassword: input.dbPassword,
+        poolerHost: altHost,
+        poolerPort,
+      });
+      const altRes = await testSupabaseConnection(altUrl);
+      if (altRes.ok) return altRes;
+    }
+    return res;
   } catch (e) {
     return { ok: false, error: (e as Error).message };
   }

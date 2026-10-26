@@ -46,7 +46,10 @@ const INSTANCE_RE = /^[a-z0-9][a-z0-9-]{1,80}[a-z0-9]$/;
 
 async function run(session: SshSession, command: string, timeoutMs = 180_000, input?: string): Promise<string> {
   const out = await session.exec(`bash -lc ${sh(command)}`, { timeoutMs, input });
-  if (out.code !== 0) throw new Error(out.stderr.trim().split("\n").pop() || `Kod ${out.code}`);
+  if (out.code !== 0) {
+    const cleanErr = out.stderr.trim() || out.stdout.trim() || `Kod ${out.code}`;
+    throw new Error(cleanErr);
+  }
   return out.stdout;
 }
 
@@ -78,8 +81,8 @@ export async function moveProjectToSupabase(
   const anonKey = keys.find((k) => k.name === "anon")?.api_key;
   const serviceKey = keys.find((k) => k.name === "service_role")?.api_key;
 
-  const poolerHost = pooler?.db_host || `aws-0-${supaProject.region}.pooler.supabase.com`;
-  const poolerPort = pooler?.db_port || 5432;
+  let poolerHost = pooler?.db_host || `aws-0-${supaProject.region}.pooler.supabase.com`;
+  let poolerPort = pooler?.db_port || 5432;
   const poolerUser = `postgres.${opts.projectRef}`;
 
   // Parol ko'rsatilmagan bo'lsa yoki autoReset bo'lsa — yangi kuchli parol generatsiya qilib Supabase'da yangilaymiz
@@ -87,12 +90,14 @@ export async function moveProjectToSupabase(
   if (!dbPassword || opts.autoResetPassword) {
     try {
       dbPassword = await resetSupabaseDatabasePassword(opts.token, opts.projectRef);
+      // Parol Supabase Supavisor poolerga to'liq yetib borishi uchun qisqa pauza
+      await new Promise((r) => setTimeout(r, 1500));
     } catch (e) {
       return { ok: false, error: `Supabase parolini avtomatik o'rnatib bo'lmadi: ${(e as Error).message}` };
     }
   }
 
-  const dstUrl = buildSupabaseDatabaseUrl({
+  let dstUrl = buildSupabaseDatabaseUrl({
     projectRef: opts.projectRef,
     region: supaProject.region,
     dbPassword,
@@ -101,7 +106,24 @@ export async function moveProjectToSupabase(
   });
 
   // 2. Oldindan ulanishni tekshirish (Noto'g'ri parol bo'lsa hozir to'xtaymiz)
-  const connTest = await testSupabaseConnection(dstUrl);
+  let connTest = await testSupabaseConnection(dstUrl);
+  // Agar aws-0 da tenant topilmasa, avtomatik ravishda aws-1 klasterini ham sinab ko'ramiz
+  if (!connTest.ok && connTest.error.includes("not found") && poolerHost.includes("aws-0-")) {
+    const altHost = poolerHost.replace("aws-0-", "aws-1-");
+    const altUrl = buildSupabaseDatabaseUrl({
+      projectRef: opts.projectRef,
+      region: supaProject.region,
+      dbPassword,
+      poolerHost: altHost,
+      poolerPort,
+    });
+    const altTest = await testSupabaseConnection(altUrl);
+    if (altTest.ok) {
+      poolerHost = altHost;
+      dstUrl = altUrl;
+      connTest = altTest;
+    }
+  }
   if (!connTest.ok) {
     return { ok: false, error: `Supabase bazasiga ulanib bo'lmadi: ${connTest.error}` };
   }

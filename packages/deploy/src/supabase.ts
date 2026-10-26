@@ -134,7 +134,14 @@ export async function getSupabaseApiKeys(token: string, ref: string): Promise<Su
 /** Loyihaning connection pooling (Supavisor) konfiguratsiyasi */
 export async function getSupabasePoolerConfig(token: string, ref: string): Promise<SupabasePoolerConfig | null> {
   try {
-    return await supabaseFetch<SupabasePoolerConfig>(token, `/projects/${ref}/config/database/pooler`);
+    const raw = await supabaseFetch<SupabasePoolerConfig | SupabasePoolerConfig[]>(
+      token,
+      `/projects/${ref}/config/database/pooler`,
+    );
+    if (Array.isArray(raw)) {
+      return raw.find((p) => p && p.db_host) ?? raw[0] ?? null;
+    }
+    return raw;
   } catch {
     return null;
   }
@@ -221,26 +228,38 @@ export function buildSupabaseDatabaseUrl(input: {
   const port = poolerPort || 5432;
   const user = `postgres.${projectRef}`;
   const encodedPass = encodeURIComponent(dbPassword);
-  return `postgres://${user}:${encodedPass}@${host}:${port}/postgres`;
+  return `postgres://${user}:${encodedPass}@${host}:${port}/postgres?sslmode=require`;
 }
 
 /**
- * Supabase PostgreSQL ulanishini tekshirish (1 soniya ichida ping)
+ * Supabase PostgreSQL ulanishini tekshirish.
+ * Parol yangilangan bo'lsa Supavisor'ga yetib borishi 1-2 soniya olishi mumkin, shuning uchun qayta urinish bor.
  */
-export async function testSupabaseConnection(databaseUrl: string): Promise<{ ok: true; version: string } | { ok: false; error: string }> {
-  try {
-    const sql = postgres(databaseUrl, {
-      max: 1,
-      connect_timeout: 5,
-      idle_timeout: 3,
-    });
-    try {
-      const rows = await sql<{ version: string }[]>`SELECT version()`;
-      return { ok: true, version: rows[0]?.version ?? "unknown" };
-    } finally {
-      await sql.end({ timeout: 3 });
+export async function testSupabaseConnection(
+  databaseUrl: string,
+  retries = 3,
+): Promise<{ ok: true; version: string } | { ok: false; error: string }> {
+  let lastError = "";
+  for (let attempt = 0; attempt < retries; attempt++) {
+    if (attempt > 0) {
+      await new Promise((r) => setTimeout(r, 1200));
     }
-  } catch (e) {
-    return { ok: false, error: (e as Error).message };
+    try {
+      const sql = postgres(databaseUrl, {
+        max: 1,
+        connect_timeout: 5,
+        idle_timeout: 3,
+      });
+      try {
+        const rows = await sql<{ version: string }[]>`SELECT version()`;
+        return { ok: true, version: rows[0]?.version ?? "unknown" };
+      } finally {
+        await sql.end({ timeout: 3 }).catch(() => {});
+      }
+    } catch (e) {
+      lastError = (e as Error).message;
+      if (attempt < retries - 1) continue;
+    }
   }
+  return { ok: false, error: lastError };
 }
