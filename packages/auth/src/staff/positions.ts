@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
-import type { TenantDb } from "@ventura/db";
+import type { TenantDb, TenantTx } from "@ventura/db";
 import { positions, userPositions, users } from "@ventura/db/schema/tenant";
 import { LEGACY_ROLE_TEMPLATE, POSITION_TEMPLATES, VIEW_PERMISSIONS } from "./policy";
 
@@ -13,8 +13,8 @@ const VIEWER_CODE = "viewer";
 const VIEWER_NAME = "Kuzatuvchi";
 const LEGACY_ROLES = ["manager", "cashier", "viewer"] as const;
 
-export async function ensurePositions(db: TenantDb): Promise<void> {
-  await db.transaction(async (tx) => {
+export async function ensurePositions(db: TenantDb | TenantTx): Promise<void> {
+  const executeInTx = async (tx: TenantTx) => {
     const existing = await tx.select({ id: positions.id }).from(positions).limit(1);
     if (!existing.length) {
       await tx.insert(positions).values(
@@ -56,7 +56,13 @@ export async function ensurePositions(db: TenantDb): Promise<void> {
       }
       await tx.update(users).set({ role: "staff" }).where(eq(users.id, u.id));
     }
-  });
+  };
+
+  if ("run" in db && typeof db.run === "function") {
+    await db.run(executeInTx);
+  } else {
+    await executeInTx(db as TenantTx);
+  }
 }
 
 /** Xodim lavozimlari ruxsatlarining birlashmasi (direktor uchun ishlatilmaydi) */

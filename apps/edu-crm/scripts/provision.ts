@@ -54,7 +54,7 @@ const input = parsed.data;
 await migrateTenantDb(input.databaseUrl);
 console.log("Migratsiyalar qo'llandi");
 
-const db = createTenantDb(input.databaseUrl, input.slug, { max: 1 });
+const db = createTenantDb(input.databaseUrl, input.slug);
 try {
   await db.run(async (tx) => {
     const [branch] = await tx.select({ id: branches.id }).from(branches).limit(1);
@@ -63,7 +63,7 @@ try {
       console.log("Birinchi filial yaratildi: Asosiy filial");
     }
 
-    await ensurePositions(db);
+    await ensurePositions(tx);
 
     const [director] = await tx.select({ id: users.id }).from(users).where(eq(users.role, "director")).limit(1);
     if (director) {
