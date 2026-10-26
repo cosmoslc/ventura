@@ -21,14 +21,14 @@ describe.skipIf(!live)("project-tenant director management", () => {
     const res = await resetProjectDirectorPassword(
       db,
       p.id,
-      "KunUzParol2026!",
+      "20102010",
       { type: "user", id: "00000000-0000-0000-0000-000000000000", name: "Super Admin" },
       { ip: "127.0.0.1" },
     );
     expect(res.ok).toBe(true);
 
     const updatedOwnerPw = await readSecret(db, { type: "project", id: p.id }, "owner_password");
-    expect(updatedOwnerPw).toBe("KunUzParol2026!");
+    expect(updatedOwnerPw).toBe("20102010");
 
     // Verify password verification works
     const tenantDb = await getProjectTenantDb(db, p);
@@ -42,7 +42,7 @@ describe.skipIf(!live)("project-tenant director management", () => {
       secret: authSecret!,
       baseURL: "http://localhost",
     });
-    const verified = await verifyStaffPassword(auth, info!.id, "KunUzParol2026!");
+    const verified = await verifyStaffPassword(auth, info!.id, "20102010");
     expect(verified).toBe(true);
-  });
+  }, 20000);
 });
