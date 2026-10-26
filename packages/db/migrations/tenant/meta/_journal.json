@@ -239,6 +239,13 @@
       "when": 1792680000000,
       "tag": "0033_homework_attachments_and_submissions",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1793005086055,
+      "tag": "0034_talented_toro",
+      "breakpoints": true
     }
   ]
 }
