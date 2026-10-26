@@ -193,11 +193,13 @@ export async function linkTokenAction(): Promise<{ url: string } | { error: stri
   if (!r.telegram) return { error: uz.auth.noBot };
   const { deps, telegram } = r;
   const token = randomBytes(9).toString("base64url");
-  await deps.db.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + staff.id));
-  await deps.db.insert(verifications).values({
-    identifier: LINK_PREFIX + staff.id,
-    value: token,
-    expiresAt: new Date(Date.now() + 10 * 60_000),
+  await deps.db.run(async (tx) => {
+    await tx.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + staff.id));
+    await tx.insert(verifications).values({
+      identifier: LINK_PREFIX + staff.id,
+      value: token,
+      expiresAt: new Date(Date.now() + 10 * 60_000),
+    });
   });
   const me = await telegram.getMe().catch(() => null);
   if (!me?.username) return { error: uz.auth.telegramDown };
@@ -220,11 +222,13 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
     return { error: locked ? uz.auth.lockedNow : uz.auth.wrongPassword };
   }
 
-  const [pending] = await deps.db
-    .select({ value: verifications.value })
-    .from(verifications)
-    .where(and(eq(verifications.identifier, LINK_PREFIX + user.id), gt(verifications.expiresAt, new Date())))
-    .limit(1);
+  const [pending] = await deps.db.run(async (tx) =>
+    tx
+      .select({ value: verifications.value })
+      .from(verifications)
+      .where(and(eq(verifications.identifier, LINK_PREFIX + user.id), gt(verifications.expiresAt, new Date())))
+      .limit(1),
+  );
   if (!pending) return { error: uz.auth.notStarted };
 
   // Botga kelgan /start <token> xabarini qidiramiz (bot webhook'siz — long polling)
@@ -241,8 +245,10 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
   }
   if (!chatId) return { error: uz.auth.notStarted };
 
-  await deps.db.update(users).set({ telegramChatId: chatId, twoFactorEnabled: true }).where(eq(users.id, user.id));
-  await deps.db.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + user.id));
+  await deps.db.run(async (tx) => {
+    await tx.update(users).set({ telegramChatId: chatId, twoFactorEnabled: true }).where(eq(users.id, user.id));
+    await tx.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + user.id));
+  });
   await tenantAudit.record(deps.db, {
     actor: staffActor(user),
     action: "user.telegram_linked",
@@ -287,7 +293,9 @@ export async function changePasswordAction(_prev: FormState, form: FormData): Pr
   if (await verifyStaffPassword(auth, user.id, next)) return { error: uz.auth.samePassword };
 
   await setStaffPassword(auth, user.id, next);
-  await deps.db.update(users).set({ mustChangePassword: false }).where(eq(users.id, user.id));
+  await deps.db.run(async (tx) => {
+    await tx.update(users).set({ mustChangePassword: false }).where(eq(users.id, user.id));
+  });
   await tenantAudit.record(deps.db, {
     actor: staffActor(user),
     action: "user.password_change",

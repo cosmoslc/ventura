@@ -290,6 +290,8 @@ export async function unlockStaff(db: TenantDb, userId: string) {
 
 /** Telegramni uzish: xodim keyingi kirishda botni qayta ulaydi; ochiq sessiyalar yopiladi */
 export async function resetStaffTelegram(db: TenantDb, userId: string) {
-  await db.update(users).set({ telegramChatId: null, twoFactorEnabled: false }).where(eq(users.id, userId));
-  await revokeStaffSessions(db, userId);
+  await db.run(async (tx) => {
+    await tx.update(users).set({ telegramChatId: null, twoFactorEnabled: false }).where(eq(users.id, userId));
+    await tx.delete(sessions).where(eq(sessions.userId, userId));
+  });
 }

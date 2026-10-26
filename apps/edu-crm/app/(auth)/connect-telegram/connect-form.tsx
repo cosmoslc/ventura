@@ -45,11 +45,17 @@ export function ConnectForm({ nextPath }: { nextPath?: string }) {
       <FormMessage error={state.error ?? linkError} />
       <Step n={1}>
         <div className="text-body font-semibold text-foreground">{uz.auth.connectStep1}</div>
-        <Button variant="ghost" className="w-full" asChild disabled={!link}>
-          <a href={link ?? "#"} target="_blank" rel="noreferrer">
+        {link ? (
+          <Button variant="ghost" className="w-full" asChild>
+            <a href={link} target="_blank" rel="noreferrer">
+              {uz.auth.openBot} <ExternalLink />
+            </a>
+          </Button>
+        ) : (
+          <Button variant="ghost" className="w-full" disabled>
             {uz.auth.openBot} <ExternalLink />
-          </a>
-        </Button>
+          </Button>
+        )}
       </Step>
       <Step n={2}>
         <div className="text-body font-semibold text-foreground">{uz.auth.connectStep2}</div>

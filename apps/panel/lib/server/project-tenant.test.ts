@@ -44,5 +44,38 @@ describe.skipIf(!live)("project-tenant director management", () => {
     });
     const verified = await verifyStaffPassword(auth, info!.id, "20102010");
     expect(verified).toBe(true);
-  }, 20000);
+
+    // Test verifications table standalone operations and Telegram token flow
+    const { verifications } = await import("@ventura/db/schema/tenant");
+    const { randomBytes } = await import("node:crypto");
+    const token = randomBytes(9).toString("base64url");
+    const LINK_PREFIX = "tg-link:";
+
+    await tenantDb!.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
+    const [inserted] = await tenantDb!.insert(verifications).values({
+      identifier: LINK_PREFIX + info!.id,
+      value: token,
+      expiresAt: new Date(Date.now() + 10 * 60_000),
+    }).returning();
+    expect(inserted).toBeDefined();
+    expect(inserted?.tenantId).toBe("kun-uz");
+    expect(inserted?.value).toBe(token);
+
+    const [selected] = await tenantDb!.select().from(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
+    expect(selected).toBeDefined();
+    expect(selected?.value).toBe(token);
+
+    await tenantDb!.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
+    const [afterDel] = await tenantDb!.select().from(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
+    expect(afterDel).toBeUndefined();
+
+    // Verify Telegram bot getMe()
+    const botToken = await readSecret(db, { type: "project", id: p.id }, "telegram_bot_token");
+    if (botToken) {
+      const { createTelegram } = await import("@ventura/integrations");
+      const tg = createTelegram(botToken);
+      const me = await tg.getMe();
+      expect(me?.username).toBe("ventura_uz_bot");
+    }
+  }, 25000);
 });

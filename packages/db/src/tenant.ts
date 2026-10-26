@@ -25,27 +25,62 @@ export interface TenantDbOptions {
 type Db = PostgresJsDatabase<typeof tenantSchema>;
 export type TenantTx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
-const shared = new Map<string, { client: postgres.Sql; db: Db }>();
+const sharedClients = new Map<string, postgres.Sql>();
 
-function getShared(url: string, o: TenantDbOptions) {
-  let entry = shared.get(url);
-  if (!entry) {
-    const client = postgres(url, {
+function getSharedClient(url: string, o: TenantDbOptions) {
+  let client = sharedClients.get(url);
+  if (!client) {
+    client = postgres(url, {
       max: o.max ?? TENANT_POOL.max,
       idle_timeout: o.idleTimeoutSec ?? TENANT_POOL.idleTimeoutSec,
       max_lifetime: o.maxLifetimeSec ?? TENANT_POOL.maxLifetimeSec,
       prepare: false, // transaction mode (6543) da prepared statement ishlamaydi
     });
-    entry = { client, db: drizzle(client, { schema: tenantSchema }) };
-    shared.set(url, entry);
+    sharedClients.set(url, client);
   }
-  return entry;
+  return client;
 }
 
 export function createTenantDb(url: string, tenantId: string, options: TenantDbOptions = {}) {
   if (!url) throw new Error("Mijoz bazasi manzili berilmagan");
   if (!tenantId) throw new Error("tenant_id berilmagan");
-  const { client, db } = getShared(url, options);
+  const client = getSharedClient(url, options);
+  const db = drizzle(client, { schema: tenantSchema });
+
+  // Standalone so'rovlar (tranzaksiyadan tashqari chaqirilgan select/insert/update/delete):
+  // Supabase pooler (6543, transaction mode) sessiya holatini saqlamaydi.
+  // Har qanday mustaqil so'rov avtomatik o'z tranzaksiyasida set_config bilan bajariladi.
+  const session = (db as any).session;
+  const origPrepare = session.prepareQuery.bind(session);
+  session.prepareQuery = function (...args: any[]) {
+    const pq = origPrepare(...args);
+    const origExec = pq.execute.bind(pq);
+    const origAll = pq.all.bind(pq);
+
+    pq.execute = async function (placeholderValues: any) {
+      if (typeof this.client?.begin === "function") {
+        return this.client.begin(async (txSql: any) => {
+          await txSql`select set_config(${TENANT_SETTING}, ${tenantId}, true)`;
+          this.client = txSql;
+          return origExec(placeholderValues);
+        });
+      }
+      return origExec(placeholderValues);
+    };
+
+    pq.all = async function (placeholderValues: any) {
+      if (typeof this.client?.begin === "function") {
+        return this.client.begin(async (txSql: any) => {
+          await txSql`select set_config(${TENANT_SETTING}, ${tenantId}, true)`;
+          this.client = txSql;
+          return origAll(placeholderValues);
+        });
+      }
+      return origAll(placeholderValues);
+    };
+
+    return pq;
+  };
 
   const runner = {
     $client: client,
@@ -70,8 +105,8 @@ export function createTenantDb(url: string, tenantId: string, options: TenantDbO
 }
 
 export async function closeTenantClients() {
-  await Promise.all([...shared.values()].map((e) => e.client.end({ timeout: 5 })));
-  shared.clear();
+  await Promise.all([...sharedClients.values()].map((c) => c.end({ timeout: 5 })));
+  sharedClients.clear();
 }
 
 export type TenantDb = ReturnType<typeof createTenantDb>;
