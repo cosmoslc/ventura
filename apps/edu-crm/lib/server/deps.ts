@@ -44,7 +44,7 @@ export function tenantDeps(tenant: Tenant): TenantDeps | null {
   if (existing?.fingerprint === fp) return existing.deps;
   if (existing) void existing.deps.db.close().catch(() => {});
 
-  const db = createTenantDb(secret.databaseUrl, tenant.slug);
+  const db = createTenantDb(secret.databaseUrl, tenant.slug, { idleTimeoutSec: 300 });
   let telegram = secret.telegramBotToken ? createTelegram(secret.telegramBotToken) : null;
   const auths = new Map<string, StaffAuth>();
   const deps: TenantDeps = {

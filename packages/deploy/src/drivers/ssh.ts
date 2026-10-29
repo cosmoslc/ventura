@@ -407,15 +407,26 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       `curl -fs --retry 20 --retry-delay 1 --retry-connrefused --max-time 5 ${probe} || curl -fsS --max-time 5 ${probe}`,
       MINUTE,
     );
-    let body: { ok?: boolean; tenant?: string | null; commit?: string | null; configured?: boolean };
+    let body: {
+      ok?: boolean;
+      status?: string;
+      tenant?: string | null;
+      tenantSlug?: string | null;
+      commit?: string | null;
+      configured?: boolean;
+      hasSecret?: boolean;
+      hasDbUrl?: boolean;
+    };
     try {
       body = JSON.parse(out);
     } catch {
       throw new StepError("Ilova kutilmagan javob qaytardi");
     }
-    if (body.tenant !== p.slug) throw new StepError(`Ilova bu domenni "${p.slug}" deb tanimadi`);
+    const tenant = body.tenant ?? body.tenantSlug;
+    if (tenant !== p.slug) throw new StepError(`Ilova bu domenni "${p.slug}" deb tanimadi`);
     if (body.commit !== p.sha) throw new StepError("Ilova eski versiyada ishlayapti");
-    if (p.provisioned && body.configured !== true) {
+    const configured = body.configured ?? (body.hasSecret && body.hasDbUrl);
+    if (p.provisioned && configured !== true) {
       throw new StepError("Ilova mijozning baza sozlamasini ko'rmayapti (VENTURA_TENANT_SECRETS_FILE)");
     }
   }
