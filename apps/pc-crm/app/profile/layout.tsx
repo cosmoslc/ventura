@@ -23,17 +23,19 @@ const PROFILE_NAV = [
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
 
   const user = session?.user;
-  const displayName = user?.name || "Sardorbek Rahimov";
-  const displayEmailOrPhone = user?.email || "+998 90 123 45 67";
-  const initials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const displayName = user?.name || (isPending ? "" : "Mijoz");
+  const displayEmailOrPhone = user?.email || (isPending ? "" : "Profil hisobi");
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "U";
 
   const handleLogout = async () => {
     try {
@@ -54,29 +56,41 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             <aside className="lg:col-span-3 space-y-4">
               <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
                 {/* Foydalanuvchi mini kartasi */}
-                <div className="flex items-center gap-3 pb-4 border-b border-border">
-                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-black text-lg overflow-hidden border border-primary/20">
-                    {user?.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={user.image}
-                        alt={displayName}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      initials
-                    )}
-                    <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-card" />
+                {isPending ? (
+                  <div className="flex items-center gap-3 pb-4 border-b border-border animate-pulse">
+                    <div className="h-12 w-12 rounded-full bg-muted shrink-0" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="h-4 w-28 bg-muted rounded" />
+                      <div className="h-3 w-36 bg-muted rounded" />
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-bold text-sm text-foreground truncate">
-                      {displayName}
-                    </h3>
-                    <span className="font-mono text-xs text-muted-foreground block truncate">
-                      {displayEmailOrPhone}
-                    </span>
+                ) : (
+                  <div className="flex items-center gap-3 pb-4 border-b border-border">
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-black text-lg overflow-hidden border border-primary/20">
+                      {user?.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={user.image}
+                          alt={displayName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        initials
+                      )}
+                      {user && (
+                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-card" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-sm text-foreground truncate">
+                        {displayName}
+                      </h3>
+                      <span className="font-mono text-xs text-muted-foreground block truncate">
+                        {displayEmailOrPhone}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Navigatsiya havolalari */}
                 <nav className="mt-4 space-y-1">

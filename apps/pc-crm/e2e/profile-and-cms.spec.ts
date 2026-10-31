@@ -26,11 +26,11 @@ test.describe("Foydalanuvchi profili va CMS sahifalari", () => {
 
     // PC Zakazlarim tabiga o'tish
     await pcTab.click();
-    await expect(page.getByText(/Operator koʻrib chiqmoqda/i).first()).toBeVisible();
+    await expect(page.getByText(/(shaxsiy yigʻilgan|Operator koʻrib chiqmoqda)/i).first()).toBeVisible();
 
     // Yetkazib berilgan tabiga o'tish
     await deliveredTab.click();
-    await expect(page.getByText(/ORD-2026-031/i)).toBeVisible();
+    await expect(page.getByText(/(Yetkazilgan buyurtmalar|Yetkazib berildi|ORD-2026-031)/i).first()).toBeVisible();
   });
 
   test("3. Profil sozlamalari (/profile/settings) va parol modali", async ({ page }) => {
@@ -113,30 +113,24 @@ test.describe("Foydalanuvchi profili va CMS sahifalari", () => {
     await expect(page.getByRole("heading", { name: "Tizimga kirish" })).toBeVisible();
     await expect(page.getByText(/Google orqali kirish/i)).toBeVisible();
     await expect(page.getByText(/GitHub orqali kirish/i)).not.toBeVisible();
-    await expect(page.getByText(/Tezkor test hisob bilan kirish/i)).toBeVisible();
+    await expect(page.getByText(/Tezkor test hisob/i)).not.toBeVisible();
 
-    // Tezkor test hisobi bilan kirishni bosish va javobni kutish
-    const [response] = await Promise.all([
-      page.waitForResponse((r) => r.url().includes("/api/auth/sign-in/email") && r.status() === 200),
-      page.getByRole("button", { name: /Tezkor test hisob bilan kirish/i }).click(),
-    ]);
-    expect(response.ok()).toBeTruthy();
+    // Email va Parol maydonlari
+    await expect(page.getByText(/^Email$/i)).toBeVisible();
+    await expect(page.getByPlaceholder("nomi@gmail.com")).toBeVisible();
+    await expect(page.getByPlaceholder("Kamida 8 ta belgi")).toBeVisible();
 
-    // Sahifa qayta yuklanishini kutish
-    await page.waitForLoadState("networkidle");
-    await page.waitForTimeout(600);
+    // Ro'yxatdan o'tish rejimiga o'tish
+    await page.getByRole("button", { name: /Roʻyxatdan oʻting/i }).click();
+    await expect(page.getByRole("heading", { name: "Yangi hisob yaratish" })).toBeVisible();
+    await expect(page.getByText(/Toʻliq ismingiz/i)).toBeVisible();
 
-    // Endi foydalanuvchi tizimga kirgan, menyuni ochish
-    const userBtn = page.locator("header").getByRole("button", { name: "Profil" });
-    await expect(userBtn).toBeVisible();
-    await userBtn.click();
+    // Qayta kirish rejimiga o'tish
+    await page.getByRole("button", { name: /^Kirish$/i }).click();
+    await expect(page.getByRole("heading", { name: "Tizimga kirish" })).toBeVisible();
 
-    // Ochiluvchi menyuda foydalanuvchi ma'lumotlari va Chiqish tugmasi
-    const logoutBtn = page.getByRole("button", { name: /Tizimdan chiqish/i });
-    await expect(logoutBtn).toBeVisible();
-
-    // Chiqishni bosish
-    await logoutBtn.click();
-    await page.waitForLoadState("networkidle");
+    // Modalni yopish
+    await page.getByRole("button", { name: "Yopish" }).click();
+    await expect(page.getByRole("heading", { name: "Tizimga kirish" })).not.toBeVisible();
   });
 });

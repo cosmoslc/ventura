@@ -8,9 +8,7 @@ import {
   Lock,
   MapPin,
   Save,
-  ShieldCheck,
   User,
-  X,
 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -19,13 +17,13 @@ import { Modal } from "@ventura/ui/modal";
 import { useSession } from "@/lib/auth-client";
 
 export default function ProfileSettingsPage() {
-  const { data: session } = useSession();
-  const [firstName, setFirstName] = useState("Sardorbek");
-  const [lastName, setLastName] = useState("Rahimov");
-  const [phone, setPhone] = useState("+998 90 123 45 67");
-  const [email, setEmail] = useState("sardor@example.com");
+  const { data: session, isPending } = useSession();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [region, setRegion] = useState("Toshkent shahri");
-  const [address, setAddress] = useState("Chilonzor tumani, 9-mavze, 14-uy");
+  const [address, setAddress] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -74,6 +72,10 @@ export default function ProfileSettingsPage() {
     }, 1500);
   };
 
+  const userInitials =
+    `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() ||
+    (session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "U");
+
   return (
     <div className="space-y-6">
       {/* Sarlavha */}
@@ -92,193 +94,218 @@ export default function ProfileSettingsPage() {
         </div>
       )}
 
-      {/* Forma */}
-      <form onSubmit={handleSaveProfile} className="space-y-6">
-        {/* 1. Shaxsiy ma'lumotlar va Rasm */}
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-5">
-          <h2 className="font-bold text-base flex items-center gap-2">
-            <User size={18} className="text-primary" />
-            Asosiy maʼlumotlar
-          </h2>
-
-          <div className="flex flex-col sm:flex-row items-center gap-5 pb-4 border-b border-border">
-            <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-black text-2xl border-2 border-primary/20">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={avatarUrl} alt="Avatar" className="h-full w-full rounded-full object-cover" />
-              ) : (
-                `${firstName?.[0] || ""}${lastName?.[0] || ""}`.toUpperCase() || "SR"
-              )}
-              <label className="absolute bottom-0 right-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:scale-110 transition-transform">
-                <Camera size={14} />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) setAvatarUrl(URL.createObjectURL(file));
-                  }}
-                />
-              </label>
+      {/* Forma yoki Skeleton */}
+      {isPending ? (
+        <div className="space-y-6 animate-pulse">
+          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4">
+            <div className="h-6 w-32 bg-muted rounded" />
+            <div className="flex items-center gap-4">
+              <div className="h-20 w-20 rounded-full bg-muted shrink-0" />
+              <div className="space-y-2">
+                <div className="h-4 w-24 bg-muted rounded" />
+                <div className="h-3 w-40 bg-muted rounded" />
+              </div>
             </div>
-
-            <div className="space-y-1 text-center sm:text-left">
-              <h3 className="font-bold text-sm">Profil rasmi</h3>
-              <p className="text-xs text-muted-foreground">JPG, PNG formatida maksimal 2 MB</p>
-              {avatarUrl && (
-                <button
-                  type="button"
-                  onClick={() => setAvatarUrl(null)}
-                  className="text-xs text-rose-500 hover:underline font-semibold"
-                >
-                  Rasmni oʻchirish
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Ism *
-              </Label>
-              <Input
-                required
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Familiya *
-              </Label>
-              <Input
-                required
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Telefon raqam *
-              </Label>
-              <Input
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="font-mono text-xs"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Elektron pochta
-              </Label>
-              <Input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="font-mono text-xs"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
+              <div className="h-10 bg-muted rounded" />
+              <div className="h-10 bg-muted rounded" />
+              <div className="h-10 bg-muted rounded" />
+              <div className="h-10 bg-muted rounded" />
             </div>
           </div>
         </div>
-
-        {/* 2. Yetkazib berish manzili va Yandex Xarita */}
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4">
-          <h2 className="font-bold text-base flex items-center gap-2">
-            <MapPin size={18} className="text-primary" />
-            Standart yetkazib berish manzili
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5 sm:col-span-1">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Viloyat / Shahar
-              </Label>
-              <select
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-              >
-                <option value="Toshkent shahri">Toshkent shahri</option>
-                <option value="Toshkent viloyati">Toshkent viloyati</option>
-                <option value="Samarqand viloyati">Samarqand viloyati</option>
-                <option value="Fargʻona viloyati">Fargʻona viloyati</option>
-                <option value="Andijon viloyati">Andijon viloyati</option>
-                <option value="Buxoro viloyati">Buxoro viloyati</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Toʻliq manzil (koʻcha, uy, xonadon)
-              </Label>
-              <Input
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="Masalan: Chilonzor 9, 14-uy, 28-xonadon"
-              />
-            </div>
-          </div>
-
-          {/* Yandex Xarita (Iframe) */}
-          <div className="space-y-1.5 pt-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Xaritadagi joylashuv (Geolokatsiya)
-            </Label>
-            <div className="h-56 w-full overflow-hidden rounded-[var(--r-card,12px)] border border-border">
-              <iframe
-                title="Yandex Maps Joylashuv"
-                src="https://yandex.uz/map-widget/v1/?ll=69.2401%2C41.2995&z=13"
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                loading="lazy"
-                className="h-full w-full grayscale-[20%]"
-              />
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Xaritadan uyingiz yoki ofisingizni belgilashingiz mumkin, kuryer shu nuqta boʻyicha yetkazadi.
-            </p>
-          </div>
-        </div>
-
-        {/* 3. Xavfsizlik bo'limi */}
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="font-bold text-sm flex items-center gap-2">
-              <KeyRound size={16} className="text-primary" />
-              Kirish paroli
+      ) : (
+        <form onSubmit={handleSaveProfile} className="space-y-6">
+          {/* 1. Shaxsiy ma'lumotlar va Rasm */}
+          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-5">
+            <h2 className="font-bold text-base flex items-center gap-2">
+              <User size={18} className="text-primary" />
+              Asosiy maʼlumotlar
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Parolingiz xavfsizligini taʼminlash uchun uni har 3-6 oyda yangilab turing.
-            </p>
+
+            <div className="flex flex-col sm:flex-row items-center gap-5 pb-4 border-b border-border">
+              <div className="relative flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-black text-2xl border-2 border-primary/20">
+                {avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full rounded-full object-cover" />
+                ) : (
+                  userInitials
+                )}
+                <label className="absolute bottom-0 right-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:scale-110 transition-transform">
+                  <Camera size={14} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) setAvatarUrl(URL.createObjectURL(file));
+                    }}
+                  />
+                </label>
+              </div>
+
+              <div className="space-y-1 text-center sm:text-left">
+                <h3 className="font-bold text-sm">Profil rasmi</h3>
+                <p className="text-xs text-muted-foreground">JPG, PNG formatida maksimal 2 MB</p>
+                {avatarUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setAvatarUrl(null)}
+                    className="text-xs text-rose-500 hover:underline font-semibold"
+                  >
+                    Rasmni oʻchirish
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Ism *
+                </Label>
+                <Input
+                  required
+                  value={firstName}
+                  placeholder="Ismingizni kiriting"
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Familiya *
+                </Label>
+                <Input
+                  required
+                  value={lastName}
+                  placeholder="Familiyangizni kiriting"
+                  onChange={(e) => setLastName(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Telefon raqam *
+                </Label>
+                <Input
+                  required
+                  value={phone}
+                  placeholder="+998 90 123 45 67"
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="font-mono text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Elektron pochta
+                </Label>
+                <Input
+                  type="email"
+                  value={email}
+                  placeholder="namuna@domain.uz"
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="font-mono text-xs"
+                />
+              </div>
+            </div>
           </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsPasswordModalOpen(true)}
-            className="text-xs font-semibold gap-1.5"
-          >
-            <Lock size={14} />
-            Parolni oʻzgartirish
-          </Button>
-        </div>
+          {/* 2. Yetkazib berish manzili va Yandex Xarita */}
+          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4">
+            <h2 className="font-bold text-base flex items-center gap-2">
+              <MapPin size={18} className="text-primary" />
+              Standart yetkazib berish manzili
+            </h2>
 
-        {/* Saqlash tugmasi */}
-        <div className="flex justify-end pt-2">
-          <Button type="submit" variant="primary" size="default" className="gap-2 font-bold shadow-xs">
-            <Save size={16} />
-            Oʻzgarishlarni saqlash
-          </Button>
-        </div>
-      </form>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5 sm:col-span-1">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Viloyat / Shahar
+                </Label>
+                <select
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+                >
+                  <option value="Toshkent shahri">Toshkent shahri</option>
+                  <option value="Toshkent viloyati">Toshkent viloyati</option>
+                  <option value="Samarqand viloyati">Samarqand viloyati</option>
+                  <option value="Fargʻona viloyati">Fargʻona viloyati</option>
+                  <option value="Andijon viloyati">Andijon viloyati</option>
+                  <option value="Buxoro viloyati">Buxoro viloyati</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Toʻliq manzil (koʻcha, uy, xonadon)
+                </Label>
+                <Input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Masalan: Chilonzor tumani, 9-mavze, 14-uy"
+                />
+              </div>
+            </div>
+
+            {/* Yandex Xarita (Iframe) */}
+            <div className="space-y-1.5 pt-2">
+              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Xaritadagi joylashuv (Geolokatsiya)
+              </Label>
+              <div className="h-56 w-full overflow-hidden rounded-[var(--r-card,12px)] border border-border">
+                <iframe
+                  title="Yandex Maps Joylashuv"
+                  src="https://yandex.uz/map-widget/v1/?ll=69.2401%2C41.2995&z=13"
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  loading="lazy"
+                  className="h-full w-full grayscale-[20%]"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Xaritadan uyingiz yoki ofisingizni belgilashingiz mumkin, kuryer shu nuqta boʻyicha yetkazadi.
+              </p>
+            </div>
+          </div>
+
+          {/* 3. Xavfsizlik bo'limi */}
+          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="font-bold text-sm flex items-center gap-2">
+                <KeyRound size={16} className="text-primary" />
+                Kirish paroli
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Parolingiz xavfsizligini taʼminlash uchun uni har 3-6 oyda yangilab turing.
+              </p>
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsPasswordModalOpen(true)}
+              className="text-xs font-semibold gap-1.5"
+            >
+              <Lock size={14} />
+              Parolni oʻzgartirish
+            </Button>
+          </div>
+
+          {/* Saqlash tugmasi */}
+          <div className="flex justify-end pt-2">
+            <Button type="submit" variant="primary" size="default" className="gap-2 font-bold shadow-xs">
+              <Save size={16} />
+              Oʻzgarishlarni saqlash
+            </Button>
+          </div>
+        </form>
+      )}
 
       {/* Parolni o'zgartirish modali */}
       <Modal

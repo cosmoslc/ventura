@@ -9,10 +9,8 @@ import {
   Loader2,
   Lock,
   Mail,
-  Sparkles,
   User,
   X,
-  Zap,
 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { authClient, signIn, signUp } from "@/lib/auth-client";
@@ -85,6 +83,11 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
       return;
     }
 
+    if (password.trim().length < 8) {
+      setErrorMsg("Parol kamida 8 ta belgidan iborat boʻlishi kerak.");
+      return;
+    }
+
     setIsLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
@@ -134,37 +137,6 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
       }
     } catch (err: any) {
       setErrorMsg(err?.message || "Xatolik yuz berdi.");
-      setIsLoading(false);
-    }
-  };
-
-  // 4. Tezkor Demo / Test hisob bilan kirish (1 bosishda)
-  const handleQuickDemoLogin = async () => {
-    setIsLoading(true);
-    setErrorMsg("");
-    try {
-      // Avval mavjud test akkauntga kirishga urinish
-      let res = await signIn.email({
-        email: "test@ventura.uz",
-        password: "password123",
-      });
-
-      // Agar hali yaratilmagan bo'lsa, yaratish
-      if (res.error) {
-        await signUp.email({
-          email: "test@ventura.uz",
-          password: "password123",
-          name: "Sardorbek Alimov",
-        });
-      }
-
-      setSuccessMsg("Test hisobi bilan kirildi!");
-      setTimeout(() => {
-        onClose();
-        window.location.reload();
-      }, 700);
-    } catch {
-      setErrorMsg("Tezkor kirishda xatolik yuz berdi.");
       setIsLoading(false);
     }
   };
@@ -220,7 +192,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
 
         {successMsg && (
           <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
-            <CheckCircle2 size={16} className="shrink-0" />
+            <CheckCircle2 size={16} />
             <span>{successMsg}</span>
           </div>
         )}
@@ -280,7 +252,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Masalan: Sardorbek Alimov"
+                  placeholder="Ismingizni kiriting"
                   className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
                   required
                 />
@@ -290,7 +262,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
 
           <div>
             <label className="mb-1 block text-xs font-semibold text-foreground">
-              Elektron pochta (Email)
+              Email
             </label>
             <div className="relative flex items-center">
               <Mail size={15} className="absolute left-3 text-muted-foreground" />
@@ -315,7 +287,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Kamida 6 ta belgi"
+                placeholder="Kamida 8 ta belgi"
+                minLength={8}
                 className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
                 required
               />
@@ -340,19 +313,6 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
             )}
           </Button>
         </form>
-
-        {/* 3. TEZKOR TEST LOGIN (Dev) */}
-        <div className="mt-3 pt-3 border-t border-border/70">
-          <button
-            type="button"
-            onClick={handleQuickDemoLogin}
-            disabled={isLoading}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-primary/5 py-2 text-xs font-bold text-primary hover:bg-primary/10 transition-colors"
-          >
-            <Zap size={14} />
-            <span>Tezkor test hisob bilan kirish (1 bosishda)</span>
-          </button>
-        </div>
 
         {/* Mode almashtirish (Kirish <-> Ro'yxatdan o'tish) */}
         <div className="mt-4 text-center text-xs text-muted-foreground">
