@@ -59,10 +59,10 @@ test.describe("Storefront asosiy oqimi: Bosh sahifa -> Katalog -> Mahsulot -> Sa
     await expect(page.getByText(/Intel Core i7/i).first()).toBeVisible();
     await expect(page.getByText(/RTX 4070/i)).not.toBeVisible();
 
-    // 3. Brend bo'yicha filtrlash (desktop aside)
+    // 3. Brend bo'yicha filtrlash (Headerdagi Brend filtri)
     const allCatFilter = page.locator("aside").getByRole("button", { name: /Barcha toifalar/i });
     await allCatFilter.click();
-    const samsungFilter = page.locator("aside").getByText(/Samsung/i).first();
+    const samsungFilter = page.getByRole("button", { name: "Samsung" });
     await samsungFilter.click();
     await expect(page.getByText(/Samsung 990 PRO/i).first()).toBeVisible();
   });

@@ -498,28 +498,77 @@ function ProductsCatalogContent() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
               onClick={() => setMobileFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 rounded-[var(--r-btn,8px)] border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary"
+              className="lg:hidden flex items-center gap-1.5 rounded-[var(--r-btn,8px)] border border-border px-3 py-2 text-xs font-semibold text-foreground hover:bg-secondary"
             >
               <SlidersHorizontal size={14} />
               Filtrlar {hasActiveFilters && "(Faol)"}
             </button>
 
+            {/* Brend filtri (Headerda) */}
+            <div className="flex items-center gap-1.5">
+              <label htmlFor="brand-filter" className="text-xs font-bold text-muted-foreground hidden sm:inline">
+                Brend:
+              </label>
+              <select
+                id="brand-filter"
+                value={selectedBrand}
+                onChange={(e) => handleSelectBrand(e.target.value)}
+                className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
+              >
+                {BRANDS.map((b) => (
+                  <option key={b} value={b}>
+                    {b === "all" ? "Barcha brendlar" : b}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Saralash */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="popular">Ommabopligi boʻyicha</option>
-              <option value="price_asc">Narx: Arzondan qimmatga</option>
-              <option value="price_desc">Narx: Qimmatdan arzonga</option>
-              <option value="rating">Reyting boʻyicha</option>
-            </select>
+            <div className="flex items-center gap-1.5">
+              <label htmlFor="sort-filter" className="text-xs font-bold text-muted-foreground hidden sm:inline">
+                Saralash:
+              </label>
+              <select
+                id="sort-filter"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-xs cursor-pointer"
+              >
+                <option value="popular">Ommabopligi boʻyicha</option>
+                <option value="price_asc">Narx: Arzondan qimmatga</option>
+                <option value="price_desc">Narx: Qimmatdan arzonga</option>
+                <option value="rating">Reyting boʻyicha</option>
+              </select>
+            </div>
           </div>
+        </div>
+
+        {/* Gorizontal Brend pillari (Tezkor tanlash) */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none border-b border-border/50">
+          <span className="text-xs font-bold text-muted-foreground shrink-0 hidden md:inline">
+            Ommabop brendlar:
+          </span>
+          {BRANDS.map((b) => {
+            const isSelected = selectedBrand.toLowerCase() === b.toLowerCase();
+            return (
+              <button
+                key={b}
+                type="button"
+                onClick={() => handleSelectBrand(b)}
+                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                  isSelected
+                    ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                    : "bg-card text-muted-foreground hover:text-foreground hover:bg-secondary border border-border"
+                }`}
+              >
+                {b === "all" ? "Barcha brendlar" : b}
+              </button>
+            );
+          })}
         </div>
 
         {/* Asosiy kontent: Chap tomon filter + O'ng tomon grid */}
@@ -573,32 +622,6 @@ function ProductsCatalogContent() {
                     </button>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* Brendlar */}
-            <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4 shadow-xs">
-              <h3 className="mb-3 font-bold text-xs uppercase tracking-wider text-muted-foreground">
-                Brendlar
-              </h3>
-              <div className="flex flex-col gap-1.5 text-xs max-h-60 overflow-y-auto pr-1">
-                {BRANDS.map((b) => (
-                  <label
-                    key={b}
-                    className="flex items-center justify-between gap-2 cursor-pointer text-foreground hover:text-primary py-0.5"
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="brand"
-                        checked={selectedBrand === b}
-                        onChange={() => handleSelectBrand(b)}
-                        className="accent-primary"
-                      />
-                      <span className="capitalize">{b === "all" ? "Barcha brendlar" : b}</span>
-                    </div>
-                  </label>
-                ))}
               </div>
             </div>
 
@@ -695,26 +718,23 @@ function ProductsCatalogContent() {
 
               {/* Mobil Brendlar */}
               <div className="mb-6">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Brendlar
-                </h3>
-                <div className="flex flex-col gap-1.5 text-xs max-h-48 overflow-y-auto">
+                <label htmlFor="mobile-brand-select" className="font-bold text-xs uppercase tracking-wider text-muted-foreground block mb-2">
+                  Brend
+                </label>
+                <select
+                  id="mobile-brand-select"
+                  value={selectedBrand}
+                  onChange={(e) => {
+                    handleSelectBrand(e.target.value);
+                  }}
+                  className="w-full h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                >
                   {BRANDS.map((b) => (
-                    <label key={b} className="flex items-center gap-2 py-1">
-                      <input
-                        type="radio"
-                        name="mobile_brand"
-                        checked={selectedBrand === b}
-                        onChange={() => {
-                          handleSelectBrand(b);
-                          setMobileFilterOpen(false);
-                        }}
-                        className="accent-primary"
-                      />
-                      <span className="capitalize">{b === "all" ? "Barcha brendlar" : b}</span>
-                    </label>
+                    <option key={b} value={b}>
+                      {b === "all" ? "Barcha brendlar" : b}
+                    </option>
                   ))}
-                </div>
+                </select>
               </div>
 
               {/* Mobil Chegirma */}
