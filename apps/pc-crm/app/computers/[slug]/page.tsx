@@ -157,9 +157,9 @@ export default function ComputerDetailPage({ params }: PageProps) {
 
         {/* Asosiy tafsilotlar bo'limi */}
         <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 py-8 sm:px-6">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             {/* Chap tomon: Galereya (5 ustun) */}
-            <div className="lg:col-span-6 space-y-4">
+            <div className="lg:col-span-5 space-y-4">
               {/* Katta asosiy rasm (zoom bilan) */}
               <div
                 className="relative flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[var(--r-card,12px)] border border-border bg-white p-6 cursor-crosshair select-none"
@@ -259,99 +259,97 @@ export default function ComputerDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            {/* O'ng tomon: Narx, Tavsif va Tugmalar (7 ustun) */}
-            <div className="lg:col-span-6 flex flex-col justify-between">
+            {/* O'ng tomon: Narx, Komponentlar va Xarid (7 ustun) */}
+            <div className="lg:col-span-7 flex flex-col space-y-4">
+              {/* 1. Sarlavha, Reyting va ID */}
               <div>
-                {/* Reyting va status */}
-                <div className="flex items-center justify-between mb-2">
-                  <RatingStars rating={pc.ratingAvg} count={pc.ratingCount} size="md" />
+                <div className="flex items-center justify-between mb-1.5">
+                  <RatingStars rating={pc.ratingAvg} count={pc.ratingCount} size="sm" />
                   <span className="text-xs font-mono text-muted-foreground">ID: {pc.id}</span>
                 </div>
 
-                {/* Sarlavha */}
-                <h1 className="text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
+                {/* Sarlavha (Kichikroq va toza) */}
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
                   {pc.name}
                 </h1>
 
-                {/* Qisqa spetsifikatsiyalar teglari */}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <Badge tone="neutral" className="gap-1.5 py-1 px-3 text-xs font-semibold">
-                    <Cpu size={14} className="text-primary" />
-                    {pc.cpu}
-                  </Badge>
-                  <Badge tone="neutral" className="gap-1.5 py-1 px-3 text-xs font-semibold">
-                    <Monitor size={14} className="text-primary" />
-                    {pc.gpu}
-                  </Badge>
-                  <Badge tone="neutral" className="gap-1.5 py-1 px-3 text-xs font-semibold">
-                    <MemoryStick size={14} className="text-primary" />
-                    {pc.ram}
-                  </Badge>
-                  <Badge tone="neutral" className="gap-1.5 py-1 px-3 text-xs font-semibold">
-                    <HardDrive size={14} className="text-primary" />
-                    {pc.storage}
-                  </Badge>
-                </div>
-
-                {/* Tavsif matni */}
                 {pc.description && (
-                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
                     {pc.description}
                   </p>
                 )}
+              </div>
 
-                {/* Narx qatori */}
-                <div className="mt-6 rounded-[var(--r-card,12px)] border border-border bg-card p-4 sm:p-5">
-                  <span className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">
-                    Umumiy narx:
-                  </span>
-                  <PriceView
-                    price={pc.sellPrice}
-                    originalPrice={originalPrice}
-                    discountPercent={pc.discountPercent}
-                    size="lg"
-                    className="mt-1"
-                  />
+              {/* 2. Narx va Tezkor Xarid kartasi */}
+              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-3.5 sm:p-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-bold block">
+                      Umumiy narx:
+                    </span>
+                    <PriceView
+                      price={pc.sellPrice}
+                      originalPrice={originalPrice}
+                      discountPercent={pc.discountPercent}
+                      size="md"
+                      className="mt-0.5"
+                    />
+                  </div>
 
-                  {/* Sotib olish amallari */}
-                  <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Amallar */}
+                  <div className="flex items-center gap-2">
                     <Button
                       variant="primary"
                       size="default"
                       disabled={!isAvailable}
                       onClick={handleAddToCart}
-                      className="w-full gap-2 font-bold shadow-md"
+                      className="gap-2 font-bold text-xs sm:text-sm px-4 py-2.5 shadow-xs"
                     >
-                      <ShoppingCart size={18} />
+                      <ShoppingCart size={16} />
                       Hozir sotib olish
                     </Button>
 
-                    <Link href={`https://t.me/venturapc_operator?text=Assalomu alaykum, men "${encodeURIComponent(pc.name)}" kompyuteri boʻyicha maʼlumot olmoqchiman.`} target="_blank">
-                      <Button variant="ghost" size="default" className="w-full gap-2 font-semibold">
-                        <Headphones size={18} />
-                        Mutaxassis bilan bogʻlanish
+                    <Link
+                      href={`https://t.me/venturapc_operator?text=Assalomu alaykum, men "${encodeURIComponent(
+                        pc.name
+                      )}" kompyuteri boʻyicha maʼlumot olmoqchiman.`}
+                      target="_blank"
+                    >
+                      <Button variant="ghost" size="default" className="gap-1.5 text-xs font-semibold px-3 py-2.5">
+                        <Headphones size={15} />
+                        Mutaxassis
                       </Button>
                     </Link>
                   </div>
                 </div>
               </div>
 
-              {/* Komponentlar ro'yxati (Kompyuter tarkibi) */}
-              <div className="mt-8">
-                <h3 className="text-lg font-bold mb-3 flex items-center gap-2">
-                  <PackageCheck size={20} className="text-primary" />
-                  Yigʻilgan komponentlar roʻyxati
-                </h3>
-                <div className="rounded-[var(--r-card,12px)] border border-border bg-card divide-y divide-border overflow-hidden">
+              {/* 3. Yigʻilgan komponentlar roʻyxati (Rasm yonida o'ng tomonda chiqadi) */}
+              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4 shadow-xs">
+                <div className="flex items-center justify-between border-b border-border pb-2.5 mb-2.5">
+                  <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
+                    <PackageCheck size={18} className="text-primary" />
+                    Yigʻilgan komponentlar roʻyxati ({pc.components.length} ta)
+                  </h3>
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    <CheckCircle2 size={13} />
+                    Barchasi sinovdan oʻtgan
+                  </span>
+                </div>
+
+                <div className="divide-y divide-border/60 text-xs">
                   {pc.components.map((c) => (
-                    <div key={c.role + c.productName} className="flex items-center justify-between p-3.5 text-xs sm:text-sm">
-                      <div className="flex items-center gap-3">
-                        <span className="rounded bg-muted px-2 py-1 text-[11px] font-bold text-muted-foreground uppercase min-w-[75px] text-center">
+                    <div
+                      key={c.role + c.productName}
+                      className="flex items-center justify-between py-2 transition-colors hover:bg-secondary/40 px-1 rounded-sm"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase shrink-0 min-w-[75px] text-center border border-border/50">
                           {c.roleNameUz}
                         </span>
-                        <span className="font-semibold text-foreground">{c.productName}</span>
+                        <span className="font-semibold text-foreground truncate">{c.productName}</span>
                       </div>
-                      <span className="font-mono text-xs text-muted-foreground shrink-0 ml-2">
+                      <span className="font-mono text-[11px] text-muted-foreground shrink-0 ml-1">
                         {c.qty} dona
                       </span>
                     </div>
