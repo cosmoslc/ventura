@@ -21,6 +21,7 @@ export interface ProductCardData {
   slug: string;
   name: string;
   brandName?: string;
+  categorySlug?: string;
   imageUrl: string;
   price: bigint | number;
   originalPrice?: bigint | number;

@@ -47,7 +47,21 @@ test.describe("Storefront asosiy oqimi: Bosh sahifa -> Katalog -> Mahsulot -> Sa
     const productCards = page.locator("div.group.relative.flex.flex-col");
     await expect(productCards.first()).toBeVisible();
 
-    // Brend bo'yicha filtrlash (desktop aside)
+    // 1. Kategoriya bo'yicha filtrlash (Videokartalar)
+    const gpuFilter = page.locator("aside").getByRole("button", { name: /Videokartalar/i });
+    await gpuFilter.click();
+    await expect(page.getByText(/RTX 4070/i).first()).toBeVisible();
+    await expect(page.getByText(/Intel Core i7/i)).not.toBeVisible();
+
+    // 2. Kategoriya bo'yicha filtrlash (Protsessorlar)
+    const cpuFilter = page.locator("aside").getByRole("button", { name: /Protsessorlar/i });
+    await cpuFilter.click();
+    await expect(page.getByText(/Intel Core i7/i).first()).toBeVisible();
+    await expect(page.getByText(/RTX 4070/i)).not.toBeVisible();
+
+    // 3. Brend bo'yicha filtrlash (desktop aside)
+    const allCatFilter = page.locator("aside").getByRole("button", { name: /Barcha toifalar/i });
+    await allCatFilter.click();
     const samsungFilter = page.locator("aside").getByText(/Samsung/i).first();
     await samsungFilter.click();
     await expect(page.getByText(/Samsung 990 PRO/i).first()).toBeVisible();

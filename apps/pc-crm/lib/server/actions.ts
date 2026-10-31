@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createDbOrder, updateDbOrderStatus, getDbUserOrders, type CreateOrderInput } from "./orders";
 import { getServerSession } from "./auth";
-import { createDbProduct, updateDbProduct, deleteDbProduct } from "./products";
+import { createDbProduct, updateDbProduct, deleteDbProduct, getDbProducts } from "./products";
 import { createDbPurchase, voidDbPurchase } from "./purchases";
 import { createDbSale, voidDbSale } from "./sales";
 import { createDbPcOrder, updateDbPcOrderStatus } from "./pcs";
@@ -227,5 +227,33 @@ export async function saveSettingAction(key: string, value: unknown) {
     return { success: true };
   } catch (err) {
     return { success: false, error: String(err) };
+  }
+}
+
+export async function getStorefrontProductsAction() {
+  try {
+    const list = await getDbProducts();
+    return {
+      success: true,
+      products: list.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        brandName: p.brandName,
+        categorySlug: p.categorySlug,
+        imageUrl: p.imageUrl,
+        price: Number(p.sellPrice),
+        discountPercent: p.discountPercent,
+        stock: p.stock,
+        ratingAvg: p.ratingAvg,
+        ratingCount: p.ratingCount,
+        isNew: p.isNew,
+        isHit: p.isHit,
+        variants: p.variants,
+      })),
+    };
+  } catch (err) {
+    console.error("getStorefrontProductsAction error:", err);
+    return { success: false, error: String(err), products: [] };
   }
 }
