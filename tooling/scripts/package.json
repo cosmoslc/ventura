@@ -19,7 +19,9 @@
     "edu:staff": "tsx src/edu-staff.ts",
     "edu:seed": "tsx src/edu-seed.ts",
     "edu:seed-reports": "tsx src/edu-seed-reports.ts",
-    "edu:e2e-seed": "tsx src/edu-e2e-seed.ts"
+    "edu:e2e-seed": "tsx src/edu-e2e-seed.ts",
+    "pc:tenant": "tsx src/pc-tenant.ts",
+    "pc:seed": "tsx src/pc-seed.ts"
   },
   "dependencies": {
     "@ventura/auth": "workspace:*",

@@ -1,0 +1,47 @@
+{
+  "name": "@ventura/pc-crm",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3004",
+    "build": "next build",
+    "start": "next start --port 3004",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@ventura/auth": "workspace:*",
+    "@ventura/config": "workspace:*",
+    "@ventura/db": "workspace:*",
+    "@ventura/integrations": "workspace:*",
+    "@ventura/security": "workspace:*",
+    "@ventura/tenants": "workspace:*",
+    "@ventura/ui": "workspace:*",
+    "better-auth": "^1.7.7",
+    "drizzle-orm": "^0.45.4",
+    "embla-carousel-react": "^8.6.0",
+    "lucide-react": "^1.55.0",
+    "next": "16.4.3",
+    "next-themes": "^0.4.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1",
+    "zod": "^4.1.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "eslint": "^9.39.0",
+    "postgres": "^3.4.9",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.3"
+  }
+}

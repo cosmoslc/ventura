@@ -20,6 +20,7 @@
     "e2e": "pnpm --filter @ventura/panel e2e",
     "e2e:edu": "pnpm --filter @ventura/edu-crm e2e",
     "e2e:sawmill": "pnpm --filter @ventura/sawmill e2e",
+    "e2e:pc": "pnpm --filter @ventura/pc-crm e2e",
     "worker": "pnpm --filter @ventura/worker start",
     "server:add": "pnpm --filter @ventura/scripts server:add",
     "server:check": "pnpm --filter @ventura/scripts server:check",
@@ -28,10 +29,14 @@
     "db:migrate:tenant": "pnpm --filter @ventura/db db:migrate:tenant",
     "db:generate:sawmill": "pnpm --filter @ventura/db db:generate:sawmill",
     "db:migrate:sawmill": "pnpm --filter @ventura/db db:migrate:sawmill",
+    "db:generate:pc-crm": "pnpm --filter @ventura/db db:generate:pc-crm",
+    "db:migrate:pc-crm": "pnpm --filter @ventura/db db:migrate:pc-crm",
     "edu:tenant": "pnpm --filter @ventura/scripts edu:tenant",
     "edu:staff": "pnpm --filter @ventura/scripts edu:staff",
     "edu:seed": "pnpm --filter @ventura/scripts edu:seed",
-    "edu:seed-reports": "pnpm --filter @ventura/scripts edu:seed-reports"
+    "edu:seed-reports": "pnpm --filter @ventura/scripts edu:seed-reports",
+    "pc:tenant": "pnpm --filter @ventura/scripts pc:tenant",
+    "pc:seed": "pnpm --filter @ventura/scripts pc:seed"
   },
   "devDependencies": {
     "turbo": "^2.11.7",

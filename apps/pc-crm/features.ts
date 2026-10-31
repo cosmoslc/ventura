@@ -1,0 +1,115 @@
+import type { FeatureManifest, TemplateInfo } from "@ventura/tenants";
+
+/**
+ * Kompyuter va Texnika Do'koni — bo'limlar manifesti (PC-CRM.md).
+ * Dedicated (Silo) model.
+ */
+export const template = {
+  key: "pc-crm",
+  name: "Kompyuter va Texnika Do'koni",
+  category: "E-tijorat va Savdo",
+  description: "Onlayn kompyuter va elektronika do'koni, PC konfigurator, ombor, kirim va sof foyda hisobi",
+  version: "0.1.0",
+} satisfies TemplateInfo;
+
+export const features = [
+  {
+    key: "catalog",
+    name: "Katalog va Mahsulotlar",
+    group: "Asos",
+    type: "permanent",
+    description: "Mahsulotlar katalogi, toifalar, brendlar, xususiyatlar va narxlar",
+    routes: ["/admin/products", "/api/products"],
+    nav: [{ label: "Mahsulotlar", href: "/admin/products", section: "Katalog" }],
+  },
+  {
+    key: "inventory",
+    name: "Ombor va Kirimlar",
+    group: "Asos",
+    type: "permanent",
+    description: "Kirimlar hisobi, zaxira va qoldiqlar nazorati",
+    routes: ["/admin/purchases", "/api/inventory"],
+    nav: [{ label: "Kirimlar", href: "/admin/purchases", section: "Ombor" }],
+  },
+  {
+    key: "sales",
+    name: "Sotuvlar va Sof foyda",
+    group: "Asos",
+    type: "permanent",
+    description: "Oflayn va onlayn sotuvlar, sof foyda hisob-kitobi",
+    routes: ["/admin/sales", "/api/sales"],
+    nav: [{ label: "Sotuvlar", href: "/admin/sales", section: "Moliya" }],
+  },
+  {
+    key: "orders",
+    name: "Sayt buyurtmalari",
+    group: "Savdo",
+    type: "core",
+    description: "Xaridorlar buyurtmalari, yetkazib berish va statuslar",
+    requires: ["catalog", "inventory"],
+    routes: ["/admin/orders", "/api/orders"],
+    nav: [{ label: "Buyurtmalar", href: "/admin/orders", section: "Savdo" }],
+  },
+  {
+    key: "pc_builder",
+    name: "PClar va Konfigurator",
+    group: "PC",
+    type: "core",
+    description: "Tayyor kompyuterlar yig'ish, komponentlar tannarxi va PC zakazlar",
+    requires: ["catalog", "inventory"],
+    routes: ["/admin/pcs", "/admin/pc-orders", "/api/pcs"],
+    nav: [
+      { label: "PClar", href: "/admin/pcs", section: "Kompyuterlar" },
+      { label: "PC zakazlar", href: "/admin/pc-orders", section: "Kompyuterlar" },
+    ],
+  },
+  {
+    key: "reviews",
+    name: "Sharhlar va Baholar",
+    group: "Mijozlar",
+    type: "regular",
+    description: "Xaridorlar tomonidan bildirilgan fikrlar va yulduzchali reyting",
+    requires: ["orders"],
+    routes: ["/admin/reviews", "/api/reviews"],
+    nav: [{ label: "Sharhlar", href: "/admin/reviews", section: "Mijozlar" }],
+  },
+  {
+    key: "cms",
+    name: "Sayt sahifalari va CMS",
+    group: "Sozlamalar",
+    type: "regular",
+    description: "Hero bannerlar, FAQ, Biz haqimizda, qidiruv mashhurlari",
+    requires: ["catalog"],
+    routes: ["/admin/cms", "/api/cms"],
+    nav: [{ label: "Sayt CMS", href: "/admin/cms", section: "Sozlamalar" }],
+  },
+  {
+    key: "notifications",
+    name: "Bildirishnomalar",
+    group: "Mijozlar",
+    type: "regular",
+    description: "Xaridorlarga chegirma va yangiliklar yuborish",
+    routes: ["/admin/notifications", "/api/notifications"],
+    nav: [{ label: "Bildirishnomalar", href: "/admin/notifications", section: "Mijozlar" }],
+  },
+  {
+    key: "payments",
+    name: "Onlayn to'lovlar",
+    group: "Moliya",
+    type: "regular",
+    description: "Click va Payme to'lov tizimlari",
+    requires: ["orders"],
+    routes: ["/admin/settings/payments"],
+    nav: [{ label: "To'lovlar", href: "/admin/settings/payments", section: "Moliya" }],
+  },
+  {
+    key: "finance",
+    name: "Kengaytirilgan Moliya/ERP",
+    group: "Moliya",
+    type: "regular",
+    description: "Xarajatlar, kassa, nasiya va moliyaviy hisobotlar",
+    requires: ["sales"],
+    routes: ["/admin/finance"],
+    nav: [{ label: "ERP / Moliya", href: "/admin/finance", section: "Moliya" }],
+  },
+] satisfies FeatureManifest;

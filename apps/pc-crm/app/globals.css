@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@ventura/config/theme.css";
+@import "@ventura/config/tokens/ventura.css";
+
+@source "../../../packages/ui/src";
+
+/* E-commerce Storefront va Admin uchun qo'shimcha token moslamalari */
+:root {
+  --storefront-max-w: 1320px;
+}
