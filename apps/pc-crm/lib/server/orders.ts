@@ -12,6 +12,7 @@ import {
 import { getDb } from "../db";
 
 export interface CreateOrderInput {
+  userId?: string;
   name: string;
   phone: string;
   region: string;
@@ -40,6 +41,7 @@ export async function createDbOrder(input: CreateOrderInput) {
     .insert(orders)
     .values({
       publicId,
+      userId: input.userId,
       name: input.name,
       phone: input.phone,
       region: input.region,
@@ -150,6 +152,58 @@ export async function getDbOrders(limit = 50) {
     .from(orders)
     .orderBy(desc(orders.createdAt))
     .limit(limit);
+
+  if (orderRows.length === 0) return [];
+
+  const orderIds = orderRows.map((o) => o.id);
+
+  const items = await db
+    .select()
+    .from(orderItems)
+    .where(sql`${orderItems.orderId} IN ${orderIds}`);
+
+  const itemMap = new Map<string, typeof items>();
+  for (const it of items) {
+    const list = itemMap.get(it.orderId) ?? [];
+    list.push(it);
+    itemMap.set(it.orderId, list);
+  }
+
+  return orderRows.map((o) => ({
+    id: o.id,
+    publicId: o.publicId,
+    status: o.status,
+    name: o.name,
+    phone: o.phone,
+    region: o.region,
+    address: o.address,
+    subtotal: o.subtotal,
+    shipping: o.shipping,
+    discount: o.discount,
+    tax: o.tax,
+    total: o.total,
+    paymentMethod: o.paymentMethod,
+    note: o.note,
+    createdAt: o.createdAt.toISOString(),
+    items: (itemMap.get(o.id) ?? []).map((it) => ({
+      id: it.id,
+      productId: it.productId,
+      name: it.nameSnapshot,
+      price: it.priceSnapshot,
+      cost: it.costSnapshot,
+      qty: it.qty,
+    })),
+  }));
+}
+
+export async function getDbUserOrders(userId: string) {
+  const db = getDb();
+
+  const orderRows = await db
+    .select()
+    .from(orders)
+    .where(eq(orders.userId, userId))
+    .orderBy(desc(orders.createdAt));
 
   if (orderRows.length === 0) return [];
 

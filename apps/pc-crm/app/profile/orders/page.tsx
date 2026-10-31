@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -20,6 +20,8 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Modal } from "@ventura/ui/modal";
 import { formatMoney } from "@/lib/format";
+import { useSession } from "@/lib/auth-client";
+import { getMyOrdersAction } from "@/lib/server/actions";
 
 interface OrderItem {
   id: string;
@@ -112,7 +114,9 @@ const SAMPLE_USER_PC_ORDERS = [
 ];
 
 export default function ProfileOrdersPage() {
+  const { data: session } = useSession();
   const [activeTab, setActiveTab] = useState<"in_progress" | "delivered" | "custom_pc">("in_progress");
+  const [userOrders, setUserOrders] = useState<OrderItem[]>(SAMPLE_USER_ORDERS);
 
   // Sharh qoldirish modali
   const [reviewingProduct, setReviewingProduct] = useState<string | null>(null);
@@ -120,8 +124,59 @@ export default function ProfileOrdersPage() {
   const [comment, setComment] = useState("");
   const [reviewSuccess, setReviewSuccess] = useState(false);
 
-  const inProgressOrders = SAMPLE_USER_ORDERS.filter((o) => o.status === "shipping");
-  const deliveredOrders = SAMPLE_USER_ORDERS.filter((o) => o.status === "delivered");
+  useEffect(() => {
+    if (!session?.user) {
+      setUserOrders(SAMPLE_USER_ORDERS);
+      return;
+    }
+
+    let isMounted = true;
+    getMyOrdersAction().then((res) => {
+      if (!isMounted) return;
+      if (res.success && res.orders) {
+        if (res.orders.length > 0) {
+          const mapped: OrderItem[] = res.orders.map((o) => {
+            const isDelivered = o.status === "delivered";
+            return {
+              id: o.id,
+              orderNumber: o.publicId,
+              date: o.createdAt.split("T")[0] ?? "2026-10-31",
+              status: (isDelivered ? "delivered" : "shipping") as any,
+              statusLabel:
+                o.status === "delivered"
+                  ? "Yetkazib berildi"
+                  : o.status === "confirmed"
+                  ? "Tasdiqlandi"
+                  : o.status === "shipping"
+                  ? "Yetkazilmoqda (Kuryerda)"
+                  : "Yangi (Qabul qilindi)",
+              statusTone: (isDelivered ? "success" : o.status === "new" ? "info" : "warning") as any,
+              total: BigInt(o.total),
+              address: o.address ? `${o.region ?? ""}, ${o.address}` : "Toshkent shahri",
+              products: o.items.map((it) => ({
+                name: it.name,
+                qty: it.qty,
+                price: BigInt(it.price),
+                imageUrl:
+                  "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=300&q=80",
+                canReview: isDelivered,
+              })),
+            };
+          });
+          setUserOrders(mapped);
+        } else {
+          setUserOrders([]);
+        }
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
+
+  const inProgressOrders = userOrders.filter((o) => o.status !== "delivered");
+  const deliveredOrders = userOrders.filter((o) => o.status === "delivered");
 
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();

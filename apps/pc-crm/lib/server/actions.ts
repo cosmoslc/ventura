@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createDbOrder, updateDbOrderStatus, type CreateOrderInput } from "./orders";
+import { createDbOrder, updateDbOrderStatus, getDbUserOrders, type CreateOrderInput } from "./orders";
+import { getServerSession } from "./auth";
 import { createDbProduct, updateDbProduct, deleteDbProduct } from "./products";
 import { createDbPurchase, voidDbPurchase } from "./purchases";
 import { createDbSale, voidDbSale } from "./sales";
@@ -12,14 +13,32 @@ import type { OrderStatus, PaymentProvider, PurchaseType, SaleSource, SaleType, 
 
 export async function createOrderAction(input: CreateOrderInput) {
   try {
-    const res = await createDbOrder(input);
+    const session = await getServerSession();
+    const userId = session?.user?.id ?? input.userId;
+    const res = await createDbOrder({ ...input, userId });
     revalidatePath("/admin/orders");
     revalidatePath("/admin/sales");
+    revalidatePath("/profile/orders");
+    revalidatePath("/profile");
     revalidatePath("/products");
     return { success: true, orderId: res.orderId };
   } catch (err) {
     console.error("createOrderAction error:", err);
     return { success: false, error: String(err) };
+  }
+}
+
+export async function getMyOrdersAction() {
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
+      return { success: true, orders: [] };
+    }
+    const userOrders = await getDbUserOrders(session.user.id);
+    return { success: true, orders: userOrders };
+  } catch (err) {
+    console.error("getMyOrdersAction error:", err);
+    return { success: false, error: String(err), orders: [] };
   }
 }
 

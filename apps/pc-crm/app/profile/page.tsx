@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -17,11 +18,36 @@ import { Button } from "@ventura/ui/button";
 import { formatMoney } from "@/lib/format";
 import { useSession } from "@/lib/auth-client";
 import { useLiked } from "@/lib/liked-context";
+import { getMyOrdersAction } from "@/lib/server/actions";
 
 export default function ProfileOverviewPage() {
   const { data: session } = useSession();
   const { likedCount } = useLiked();
   const displayName = session?.user?.name ? session.user.name.split(" ")[0] : "Sardorbek";
+
+  const [ordersCount, setOrdersCount] = useState<number | null>(null);
+  const [spentTotal, setSpentTotal] = useState<bigint | null>(null);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    let isMounted = true;
+    getMyOrdersAction().then((res) => {
+      if (!isMounted) return;
+      if (res.success && res.orders) {
+        setOrdersCount(res.orders.length);
+        const sum = res.orders.reduce((acc, o) => acc + BigInt(o.total), 0n);
+        setSpentTotal(sum);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
+
+  const displayOrdersCount = ordersCount !== null ? ordersCount : 4;
+  const displaySpentTotal = spentTotal !== null ? spentTotal : 28_950_000n;
 
   return (
     <div className="space-y-6">
@@ -43,7 +69,7 @@ export default function ProfileOverviewPage() {
             Jami buyurtmalar
           </span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">4 ta</span>
+            <span className="text-2xl font-black">{displayOrdersCount} ta</span>
             <Package size={20} className="text-primary" />
           </div>
           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 block">
@@ -89,7 +115,7 @@ export default function ProfileOverviewPage() {
           </span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-lg font-black font-mono text-foreground truncate">
-              {formatMoney(28_950_000n)}
+              {formatMoney(displaySpentTotal)}
             </span>
             <ShieldCheck size={20} className="text-emerald-500 shrink-0 ml-1" />
           </div>
