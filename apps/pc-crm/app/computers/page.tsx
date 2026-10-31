@@ -20,6 +20,7 @@ import { Navbar } from "@/components/storefront/navbar";
 import { type PcBuildCardData, PcCard } from "@/components/storefront/pc-card";
 import { SearchModal } from "@/components/storefront/search-modal";
 import { useCart } from "@/lib/cart-context";
+import { useLiked } from "@/lib/liked-context";
 import { formatMoney } from "@/lib/format";
 import { SAMPLE_PC_BUILDS } from "@/lib/pc-data";
 
@@ -32,7 +33,7 @@ export default function ComputersListingPage() {
   const [selectedGpu, setSelectedGpu] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"featured" | "price_asc" | "price_desc" | "rating">("featured");
   const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
-  const [likedBuilds, setLikedBuilds] = useState<Set<string>>(new Set());
+  const { isLiked, toggleLike } = useLiked();
 
   // CPU va GPU toifalari
   const cpuOptions = [
@@ -102,14 +103,19 @@ export default function ComputersListingPage() {
   };
 
   const handleToggleLike = (pcId: string) => {
-    setLikedBuilds((prev) => {
-      const next = new Set(prev);
-      if (next.has(pcId)) {
-        next.delete(pcId);
-      } else {
-        next.add(pcId);
-      }
-      return next;
+    const build = SAMPLE_PC_BUILDS.find((b) => b.id === pcId);
+    if (!build) return;
+    toggleLike({
+      id: build.id,
+      type: "pc",
+      name: build.name,
+      slug: build.slug,
+      imageUrl: build.images[0] ?? "",
+      price: build.sellPrice,
+      ratingAvg: build.ratingAvg,
+      ratingCount: build.ratingCount,
+      isAvailable: build.status === "available",
+      specs: `${build.cpu} / ${build.gpu} / ${build.ram}`,
     });
   };
 
@@ -122,7 +128,7 @@ export default function ComputersListingPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <Navbar likedCount={likedBuilds.size} />
+      <Navbar />
 
       <main className="flex-1">
         {/* Sarlavha & Konfigurator Banneri */}
@@ -347,7 +353,7 @@ export default function ComputersListingPage() {
                         pc={cardData}
                         onAddToCart={handleAddToCart}
                         onToggleLike={handleToggleLike}
-                        isLiked={likedBuilds.has(build.id)}
+                        isLiked={isLiked(build.id)}
                       />
                     );
                   })}

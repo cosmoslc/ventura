@@ -25,6 +25,7 @@ import { Navbar } from "@/components/storefront/navbar";
 import { PriceView } from "@/components/storefront/price-view";
 import { RatingStars } from "@/components/storefront/rating-stars";
 import { useCart } from "@/lib/cart-context";
+import { useLiked } from "@/lib/liked-context";
 import { formatMoney } from "@/lib/format";
 
 // Namunaviy to'liq mahsulot ma'lumoti
@@ -93,7 +94,8 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState(PRODUCT_DATA.variants[0]);
   const [qty, setQty] = useState(1);
-  const [isLiked, setIsLiked] = useState(false);
+  const { isLiked: checkIsLiked, toggleLike } = useLiked();
+  const isLiked = checkIsLiked(PRODUCT_DATA.id);
 
   // Texnik xususiyatlar bo'yicha yordam modali
   const [activeHelp, setActiveHelp] = useState<{ title: string; text: string } | null>(null);
@@ -261,7 +263,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
 
                 <button
                   type="button"
-                  onClick={() => setIsLiked(!isLiked)}
+                  onClick={() =>
+                    toggleLike({
+                      id: PRODUCT_DATA.id,
+                      type: "product",
+                      name: PRODUCT_DATA.name,
+                      slug: PRODUCT_DATA.slug,
+                      imageUrl: PRODUCT_DATA.images[0] ?? "",
+                      price: PRODUCT_DATA.price,
+                      originalPrice: PRODUCT_DATA.originalPrice,
+                      brandName: PRODUCT_DATA.brandName,
+                      ratingAvg: PRODUCT_DATA.ratingAvg,
+                      ratingCount: PRODUCT_DATA.ratingCount,
+                    })
+                  }
                   className="flex h-10 w-10 items-center justify-center rounded-lg border border-border text-foreground hover:bg-secondary transition-colors"
                   aria-label="Sevimlilar"
                 >

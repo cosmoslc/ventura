@@ -53,10 +53,16 @@ test.describe("Foydalanuvchi profili va CMS sahifalari", () => {
   });
 
   test("4. Saralanganlar (/profile/liked)", async ({ page }) => {
-    await page.goto("/profile/liked");
+    // 1. Avval bosh sahifada biror mahsulotga like bosish
+    await page.goto("/");
+    const likeBtn = page.locator("button[aria-label=\"Sevimlilarga qo'shish\"]").first();
+    await expect(likeBtn).toBeVisible();
+    await likeBtn.click();
 
+    // 2. /profile/liked sahifasiga o'tish
+    await page.goto("/profile/liked");
     await expect(page.locator("h1")).toContainText(/Saralanganlar/i);
-    await expect(page.getByText(/Tayyor kompyuterlar/i).first()).toBeVisible();
+    await expect(page.getByText(/(Tayyor kompyuterlar|Komponentlar va ehtiyot qismlar)/i).first()).toBeVisible();
   });
 
   test("5. FAQ (/faq) savol-javoblar akordeoni", async ({ page }) => {

@@ -16,9 +16,11 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { formatMoney } from "@/lib/format";
 import { useSession } from "@/lib/auth-client";
+import { useLiked } from "@/lib/liked-context";
 
 export default function ProfileOverviewPage() {
   const { data: session } = useSession();
+  const { likedCount } = useLiked();
   const displayName = session?.user?.name ? session.user.name.split(" ")[0] : "Sardorbek";
 
   return (
@@ -73,7 +75,7 @@ export default function ProfileOverviewPage() {
             Saralanganlar
           </span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">3 ta</span>
+            <span className="text-2xl font-black">{likedCount} ta</span>
             <Heart size={20} className="text-rose-500" />
           </div>
           <span className="text-[11px] text-muted-foreground mt-1 block">

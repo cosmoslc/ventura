@@ -7,6 +7,7 @@ import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 import { type ProductCardData, ProductCard } from "@/components/storefront/product-card";
 import { useCart } from "@/lib/cart-context";
+import { useLiked } from "@/lib/liked-context";
 
 const ALL_PRODUCTS: ProductCardData[] = [
   {
@@ -95,6 +96,7 @@ const ALL_PRODUCTS: ProductCardData[] = [
 
 export default function ProductsCatalogPage() {
   const { addItem } = useCart();
+  const { isLiked, toggleLike } = useLiked();
   const [category, setCategory] = useState("all");
   const [selectedBrand, setSelectedBrand] = useState("all");
   const [sortBy, setSortBy] = useState("popular");
@@ -258,6 +260,8 @@ export default function ProductsCatalogPage() {
                   <ProductCard
                     key={prod.id}
                     product={prod}
+                    isLiked={isLiked(prod.id)}
+                    onToggleLike={() => toggleLike({ ...prod, type: "product" })}
                     onAddToCart={handleAddToCart}
                   />
                 ))}

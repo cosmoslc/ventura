@@ -3,6 +3,7 @@ import { themeInitScript } from "@ventura/ui/lib/theme";
 import { Toaster } from "@ventura/ui/toast";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
 import { CartProvider } from "@/lib/cart-context";
+import { LikedProvider } from "@/lib/liked-context";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
@@ -25,9 +26,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-quicksand)]">
         <CartProvider>
-          {children}
-          <CartDrawer />
-          <Toaster />
+          <LikedProvider>
+            {children}
+            <CartDrawer />
+            <Toaster />
+          </LikedProvider>
         </CartProvider>
       </body>
     </html>

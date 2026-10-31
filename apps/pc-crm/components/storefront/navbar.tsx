@@ -18,6 +18,7 @@ import {
 import { Button } from "@ventura/ui/button";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { useCart } from "@/lib/cart-context";
+import { useLiked } from "@/lib/liked-context";
 import { useSession, signOut } from "@/lib/auth-client";
 import { AuthModal } from "./auth-modal";
 import { NavbarSearch } from "./navbar-search";
@@ -33,12 +34,13 @@ interface NavbarProps {
 
 export function Navbar({
   cartCount: propCartCount,
-  likedCount = 0,
+  likedCount: propLikedCount,
   unreadNotifsCount = 0,
   onOpenCart: propOnOpenCart,
   onOpenSearch: propOnOpenSearch,
 }: NavbarProps) {
   const { cartCount: contextCartCount, setIsCartDrawerOpen, setIsSearchOpen } = useCart();
+  const { likedCount: contextLikedCount } = useLiked();
   const { data: session } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -60,6 +62,7 @@ export function Navbar({
   }, []);
 
   const cartCount = propCartCount ?? contextCartCount;
+  const likedCount = propLikedCount ?? contextLikedCount;
   const onOpenCart = propOnOpenCart ?? (() => setIsCartDrawerOpen(true));
   const onOpenSearch = propOnOpenSearch ?? (() => setMobileSearchOpen((v) => !v));
 

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { calcFinalPrice, calcOrderTotal } from "./calc/formulas";
+import { useSession } from "./auth-client";
 
 export interface CartItem {
   id: string; // unique item key: `${productId}_${variantId ?? 'default'}`
@@ -40,48 +41,79 @@ const FREE_SHIPPING_LIMIT = 1_000_000n; // 1 mln so'mdan oshsa bepul
 const DEFAULT_SHIPPING_FEE = 35_000n;
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
+  const { data: session } = useSession();
+  const userId = session?.user?.id ?? "guest";
+  const storageKey = `venturapc_cart_${userId}`;
+
   const [items, setItems] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentKey, setCurrentKey] = useState<string>("");
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  // localStorage'dan savatchani o'qish (mehmon savat)
+  // Foydalanuvchi o'zgarganda (A kirsa, chiqsa, yoki B kirsa) uning savatchasini yuklash
   useEffect(() => {
     try {
-      const stored = localStorage.getItem(CART_STORAGE_KEY);
+      const stored = localStorage.getItem(storageKey);
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          // BigInt formatini tiklash
           const restored = parsed.map((item: any) => ({
             ...item,
             price: BigInt(item.price),
             originalPrice: item.originalPrice ? BigInt(item.originalPrice) : undefined,
           }));
           setItems(restored);
+        } else {
+          setItems([]);
         }
+      } else {
+        // Agar foydalanuvchi tizimga kirsa va mehmon savatchasida mahsulot bo'lsa, ularni ko'chirish
+        if (userId !== "guest") {
+          const guestStored =
+            localStorage.getItem("venturapc_cart_guest") ||
+            localStorage.getItem(CART_STORAGE_KEY);
+          if (guestStored) {
+            const parsed = JSON.parse(guestStored);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              const restored = parsed.map((item: any) => ({
+                ...item,
+                price: BigInt(item.price),
+                originalPrice: item.originalPrice ? BigInt(item.originalPrice) : undefined,
+              }));
+              setItems(restored);
+              localStorage.removeItem("venturapc_cart_guest");
+              localStorage.removeItem(CART_STORAGE_KEY);
+              setCurrentKey(storageKey);
+              setIsLoaded(true);
+              return;
+            }
+          }
+        }
+        setItems([]);
       }
     } catch {
-      // Ignored
+      setItems([]);
     } finally {
+      setCurrentKey(storageKey);
       setIsLoaded(true);
     }
-  }, []);
+  }, [storageKey, userId]);
 
-  // O'zgarishlarni localStorage'ga saqlash
+  // Faqat joriy hisob kalitiga saqlash
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || currentKey !== storageKey) return;
     try {
       const serialized = items.map((i) => ({
         ...i,
         price: i.price.toString(),
         originalPrice: i.originalPrice?.toString(),
       }));
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(serialized));
+      localStorage.setItem(storageKey, JSON.stringify(serialized));
     } catch {
       // Ignored
     }
-  }, [items, isLoaded]);
+  }, [items, isLoaded, currentKey, storageKey]);
 
   const addItem = (item: Omit<CartItem, "id" | "qty">, qty = 1) => {
     const id = `${item.productId}_${item.variantId ?? "default"}`;

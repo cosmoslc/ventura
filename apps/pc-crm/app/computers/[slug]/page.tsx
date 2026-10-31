@@ -35,6 +35,7 @@ import { PriceView } from "@/components/storefront/price-view";
 import { RatingStars } from "@/components/storefront/rating-stars";
 import { SearchModal } from "@/components/storefront/search-modal";
 import { useCart } from "@/lib/cart-context";
+import { useLiked } from "@/lib/liked-context";
 import { formatMoney } from "@/lib/format";
 import { type PcSpecItem, SAMPLE_PC_BUILDS } from "@/lib/pc-data";
 
@@ -52,12 +53,13 @@ export default function ComputerDetailPage({ params }: PageProps) {
   }
 
   const { addItem } = useCart();
+  const { isLiked: checkIsLiked, toggleLike } = useLiked();
+  const isLiked = checkIsLiked(pc.id);
 
   // Rasm galereyasi
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [zoomOrigin, setZoomOrigin] = useState("center");
   const [isZooming, setIsZooming] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
 
   // Texnik xususiyat "?" modali
   const [activeHelpSpec, setActiveHelpSpec] = useState<PcSpecItem | null>(null);
@@ -135,7 +137,7 @@ export default function ComputerDetailPage({ params }: PageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <Navbar likedCount={isLiked ? 1 : 0} />
+      <Navbar />
 
       <main className="flex-1">
         {/* Breadcrumb navigatsiya */}
@@ -191,7 +193,20 @@ export default function ComputerDetailPage({ params }: PageProps) {
                 <div className="absolute right-3 top-3">
                   <button
                     type="button"
-                    onClick={() => setIsLiked(!isLiked)}
+                    onClick={() =>
+                      toggleLike({
+                        id: pc.id,
+                        type: "pc",
+                        name: pc.name,
+                        slug: pc.slug,
+                        imageUrl: pc.images[0] ?? "",
+                        price: pc.sellPrice,
+                        ratingAvg: pc.ratingAvg,
+                        ratingCount: pc.ratingCount,
+                        isAvailable,
+                        specs: `${pc.cpu} / ${pc.gpu} / ${pc.ram}`,
+                      })
+                    }
                     className="flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm transition-transform hover:scale-110"
                     aria-label="Sevimlilar"
                   >

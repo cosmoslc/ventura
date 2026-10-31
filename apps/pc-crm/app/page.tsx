@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -19,6 +21,7 @@ import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 import { type PcBuildCardData, PcCard } from "@/components/storefront/pc-card";
 import { type ProductCardData, ProductCard } from "@/components/storefront/product-card";
+import { useLiked } from "@/lib/liked-context";
 
 // Namunaviy toifalar
 const SAMPLE_CATEGORIES = [
@@ -154,9 +157,11 @@ const SAMPLE_PCS: PcBuildCardData[] = [
 ];
 
 export default function StorefrontHomePage() {
+  const { isLiked, toggleLike } = useLiked();
+
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <Navbar cartCount={2} likedCount={3} />
+      <Navbar />
 
       <main className="flex-1">
         {/* 1. Hero Banner bo'limi */}
@@ -267,7 +272,12 @@ export default function StorefrontHomePage() {
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {SAMPLE_PRODUCTS.map((prod) => (
-                <ProductCard key={prod.id} product={prod} />
+                <ProductCard
+                  key={prod.id}
+                  product={prod}
+                  isLiked={isLiked(prod.id)}
+                  onToggleLike={() => toggleLike({ ...prod, type: "product" })}
+                />
               ))}
             </div>
           </div>
@@ -293,7 +303,12 @@ export default function StorefrontHomePage() {
 
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {SAMPLE_PCS.map((pc) => (
-                <PcCard key={pc.id} pc={pc} />
+                <PcCard
+                  key={pc.id}
+                  pc={pc}
+                  isLiked={isLiked(pc.id)}
+                  onToggleLike={() => toggleLike({ ...pc, type: "pc" })}
+                />
               ))}
             </div>
           </div>

@@ -1,75 +1,14 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { Heart, ShoppingBag, Trash2 } from "lucide-react";
+import { Heart } from "lucide-react";
 import { Button } from "@ventura/ui/button";
-import { type PcBuildCardData, PcCard } from "@/components/storefront/pc-card";
-import { type ProductCardData, ProductCard } from "@/components/storefront/product-card";
-import { useCart } from "@/lib/cart-context";
-import { formatMoney } from "@/lib/format";
-import { SAMPLE_PC_BUILDS } from "@/lib/pc-data";
+import { PcCard } from "@/components/storefront/pc-card";
+import { ProductCard } from "@/components/storefront/product-card";
+import { useLiked } from "@/lib/liked-context";
 
 export default function ProfileLikedPage() {
-  const { addItem } = useCart();
-
-  const [likedBuilds, setLikedBuilds] = useState<PcBuildCardData[]>([
-    {
-      id: SAMPLE_PC_BUILDS[0]!.id,
-      slug: SAMPLE_PC_BUILDS[0]!.slug,
-      name: SAMPLE_PC_BUILDS[0]!.name,
-      imageUrl: SAMPLE_PC_BUILDS[0]!.images[0] ?? "",
-      cpu: SAMPLE_PC_BUILDS[0]!.cpu,
-      gpu: SAMPLE_PC_BUILDS[0]!.gpu,
-      ram: SAMPLE_PC_BUILDS[0]!.ram,
-      storage: SAMPLE_PC_BUILDS[0]!.storage,
-      price: SAMPLE_PC_BUILDS[0]!.sellPrice,
-      ratingAvg: SAMPLE_PC_BUILDS[0]!.ratingAvg,
-      ratingCount: SAMPLE_PC_BUILDS[0]!.ratingCount,
-      isAvailable: true,
-    },
-    {
-      id: SAMPLE_PC_BUILDS[1]!.id,
-      slug: SAMPLE_PC_BUILDS[1]!.slug,
-      name: SAMPLE_PC_BUILDS[1]!.name,
-      imageUrl: SAMPLE_PC_BUILDS[1]!.images[0] ?? "",
-      cpu: SAMPLE_PC_BUILDS[1]!.cpu,
-      gpu: SAMPLE_PC_BUILDS[1]!.gpu,
-      ram: SAMPLE_PC_BUILDS[1]!.ram,
-      storage: SAMPLE_PC_BUILDS[1]!.storage,
-      price: SAMPLE_PC_BUILDS[1]!.sellPrice,
-      ratingAvg: SAMPLE_PC_BUILDS[1]!.ratingAvg,
-      ratingCount: SAMPLE_PC_BUILDS[1]!.ratingCount,
-      isAvailable: true,
-    },
-  ]);
-
-  const [likedProducts, setLikedProducts] = useState<ProductCardData[]>([
-    {
-      id: "p-2",
-      slug: "asus-rog-strix-geforce-rtx-4070-ti-super",
-      name: "ASUS ROG Strix GeForce RTX 4070 Ti SUPER 16GB GDDR6X",
-      brandName: "ASUS",
-      imageUrl: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&auto=format&fit=crop&q=80",
-      price: 13_500_000n,
-      originalPrice: 14_200_000n,
-      discountPercent: 5,
-      stock: 4,
-      ratingAvg: 5.0,
-      ratingCount: 22,
-      isHit: true,
-    },
-  ]);
-
-  const handleRemoveBuild = (id: string) => {
-    setLikedBuilds((prev) => prev.filter((b) => b.id !== id));
-  };
-
-  const handleRemoveProduct = (id: string) => {
-    setLikedProducts((prev) => prev.filter((p) => p.id !== id));
-  };
-
-  const totalLikedCount = likedBuilds.length + likedProducts.length;
+  const { likedBuilds, likedProducts, likedCount, toggleLike, removeLiked } = useLiked();
 
   return (
     <div className="space-y-6">
@@ -77,26 +16,26 @@ export default function ProfileLikedPage() {
       <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
         <h1 className="text-2xl font-black tracking-tight">Saralanganlar (Liked)</h1>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-          Siz yoqtirgan va keyinroq sotib olish uchun saqlab qoʻygan mahsulotlar ({totalLikedCount} ta)
+          Siz yoqtirgan va profilingizda saqlangan mahsulotlar ({likedCount} ta)
         </p>
       </div>
 
-      {totalLikedCount === 0 ? (
+      {likedCount === 0 ? (
         <div className="rounded-[var(--r-card,12px)] border border-dashed border-border bg-card p-12 text-center">
           <Heart size={44} className="text-muted-foreground/30 mx-auto mb-2" />
           <h3 className="font-bold text-base">Hozircha hech narsa yoqtirilmagan</h3>
           <p className="text-xs text-muted-foreground mt-1">
-            Mahsulotlar kartasidagi yurakcha belgisini bosib saralanganlarga qoʻshishingiz mumkin.
+            Mahsulotlar kartasidagi yurakcha belgisini bosib, ularni profilingizda saqlashingiz mumkin.
           </p>
           <div className="mt-4 flex justify-center gap-3">
             <Link href="/products">
               <Button variant="ghost" size="sm">
-                Mahsulotlar
+                Mahsulotlar katalogi
               </Button>
             </Link>
             <Link href="/computers">
               <Button variant="primary" size="sm">
-                Kompyuterlar
+                Tayyor kompyuterlar
               </Button>
             </Link>
           </div>
@@ -111,9 +50,18 @@ export default function ProfileLikedPage() {
                 {likedBuilds.map((b) => (
                   <PcCard
                     key={b.id}
-                    pc={b}
+                    pc={{
+                      id: b.id,
+                      slug: b.slug,
+                      name: b.name,
+                      imageUrl: b.imageUrl,
+                      price: b.price,
+                      ratingAvg: b.ratingAvg,
+                      ratingCount: b.ratingCount,
+                      isAvailable: b.isAvailable,
+                    }}
                     isLiked={true}
-                    onToggleLike={handleRemoveBuild}
+                    onToggleLike={() => removeLiked(b.id)}
                   />
                 ))}
               </div>
@@ -128,9 +76,20 @@ export default function ProfileLikedPage() {
                 {likedProducts.map((p) => (
                   <ProductCard
                     key={p.id}
-                    product={p}
+                    product={{
+                      id: p.id,
+                      slug: p.slug,
+                      name: p.name,
+                      brandName: p.brandName,
+                      imageUrl: p.imageUrl,
+                      price: p.price,
+                      originalPrice: p.originalPrice,
+                      stock: 10,
+                      ratingAvg: p.ratingAvg,
+                      ratingCount: p.ratingCount,
+                    }}
                     isLiked={true}
-                    onToggleLike={handleRemoveProduct}
+                    onToggleLike={() => removeLiked(p.id)}
                   />
                 ))}
               </div>
