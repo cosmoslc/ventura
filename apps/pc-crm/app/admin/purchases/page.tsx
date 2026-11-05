@@ -84,8 +84,8 @@ export default function AdminPurchasesPage() {
           </h1>
         </div>
 
-        <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} className="gap-1.5 font-bold">
-          <Plus size={15} />
+        <Button onClick={() => setModalOpen(true)}>
+          <Plus />
           Yangi kirim qilish
         </Button>
       </div>
@@ -202,14 +202,16 @@ export default function AdminPurchasesPage() {
                     </td>
                     <td className="p-3.5 text-right">
                       {!isVoided && (
-                        <button
-                          type="button"
+                        <Button
+                          variant="icon"
+                          size="icon-sm"
                           onClick={() => handleVoidPurchase(item.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-(--danger-bg) hover:text-(--danger-fg) transition-colors"
+                          className="hover:text-destructive"
                           title="Kirimni bekor qilish"
+                          aria-label="Kirimni bekor qilish"
                         >
-                          <Undo2 size={15} />
-                        </button>
+                          <Undo2 />
+                        </Button>
                       )}
                     </td>
                   </tr>

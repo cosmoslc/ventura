@@ -381,7 +381,6 @@ export function ImageUploadWithBgRemoval({
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                size="sm"
                 onClick={() => setModalOpen(false)}
                 disabled={processing}
               >
@@ -390,12 +389,10 @@ export function ImageUploadWithBgRemoval({
 
               <Button
                 variant="primary"
-                size="sm"
                 onClick={handleSaveProcessed}
                 disabled={loadingImage || processing}
-                className="gap-1.5"
               >
-                {processing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                {processing ? <Loader2 className="animate-spin" /> : <Check />}
                 Qabul qilish va saqlash
               </Button>
             </div>
@@ -523,13 +520,12 @@ export function ImageUploadWithBgRemoval({
 
                 <Button
                   type="button"
-                  variant={eyedropperActive ? "primary" : "subtle"}
+                  variant={eyedropperActive ? "primary" : "ghost"}
                   size="sm"
                   onClick={() => setEyedropperActive(!eyedropperActive)}
-                  className="gap-1.5 text-2xs h-7 border border-border"
                 >
-                  <Pipette size={12} />
-                  <span>{eyedropperActive ? "Tanlanmoqda..." : "Tomizgʻich (Pipette)"}</span>
+                  <Pipette />
+                  {eyedropperActive ? "Tanlanmoqda..." : "Tomizgʻich"}
                 </Button>
 
                 <Button
@@ -550,11 +546,10 @@ export function ImageUploadWithBgRemoval({
                       }
                     }
                   }}
-                  className="gap-1 text-2xs h-7 text-muted-foreground"
                   title="Burchaklardan avtomatik aniqlash"
                 >
-                  <RotateCcw size={12} />
-                  <span>Avto-rang</span>
+                  <RotateCcw />
+                  Avto-rang
                 </Button>
               </div>
 

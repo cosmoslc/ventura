@@ -225,27 +225,24 @@ export default function AdminUsersPage() {
 
                     {/* Bloklash / Tiklash */}
                     <td className="py-3.5 px-4 text-right">
-                      <button
-                        type="button"
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         onClick={() => toggleUserStatus(user.id)}
-                        className={`inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
-                          user.status === "active"
-                            ? "text-(--danger-fg) hover:bg-(--danger-bg)"
-                            : "text-(--success-fg) hover:bg-(--success-bg)"
-                        }`}
+                        className={user.status === "active" ? "text-destructive-text" : "text-(--success-fg)"}
                       >
                         {user.status === "active" ? (
                           <>
-                            <Ban size={13} />
+                            <Ban />
                             Bloklash
                           </>
                         ) : (
                           <>
-                            <Unlock size={13} />
+                            <Unlock />
                             Tiklash
                           </>
                         )}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))

@@ -402,8 +402,8 @@ export function ProductFormModal({
               <div className="text-body font-semibold text-foreground">Texnik xususiyatlar (Specs)</div>
               <FieldHint className="mt-0">Xaridor koʻradigan parametrlar va "?" tushuntirish modali matni</FieldHint>
             </div>
-            <Button variant="ghost" size="sm" type="button" onClick={addSpec} className="gap-1">
-              <Plus size={14} /> Xususiyat qoʻshish
+            <Button variant="ghost" size="sm" type="button" onClick={addSpec}>
+              <Plus /> Xususiyat qoʻshish
             </Button>
           </div>
 
@@ -446,12 +446,13 @@ export function ProductFormModal({
                 <Button
                   type="button"
                   variant="icon"
-                  size="icon"
+                  size="icon-sm"
                   onClick={() => setSpecs(specs.filter((_, idx) => idx !== i))}
-                  className="text-muted-foreground hover:text-destructive"
+                  className="hover:text-destructive"
                   title="Oʻchirish"
+                  aria-label="Oʻchirish"
                 >
-                  <Trash2 size={16} />
+                  <Trash2 />
                 </Button>
               </div>
             </div>

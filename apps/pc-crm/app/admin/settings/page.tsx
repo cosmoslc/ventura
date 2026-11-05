@@ -107,8 +107,8 @@ export default function AdminSettingsPage() {
           </p>
         </div>
 
-        <Button variant="primary" size="sm" onClick={handleSave} className="gap-1.5 font-bold">
-          {savedToast ? <Check size={14} /> : <Save size={14} />}
+        <Button onClick={handleSave}>
+          {savedToast ? <Check /> : <Save />}
           {savedToast ? "Saqlandi!" : "Saqlash"}
         </Button>
       </div>

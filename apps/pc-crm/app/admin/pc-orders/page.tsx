@@ -393,12 +393,11 @@ export default function AdminPcOrdersPage() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
-                            variant="subtle"
+                            variant="icon"
                             size="icon-sm"
                             aria-label="Amallar"
-                            className="size-7 text-muted-foreground hover:text-foreground"
                           >
-                            <MoreHorizontal size={16} />
+                            <MoreHorizontal />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">

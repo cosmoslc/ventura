@@ -146,8 +146,8 @@ export default function AdminProductsPage() {
           </h1>
         </div>
 
-        <Button variant="primary" size="sm" onClick={handleOpenNew} className="gap-1.5 font-bold">
-          <Plus size={15} />
+        <Button onClick={handleOpenNew}>
+          <Plus />
           Yangi mahsulot
         </Button>
       </div>
@@ -387,22 +387,25 @@ export default function AdminProductsPage() {
                     {/* Amallar */}
                     <td className="p-3.5 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
+                        <Button
+                          variant="icon"
+                          size="icon-sm"
                           onClick={() => handleOpenEdit(p)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                           title="Tahrirlash"
+                          aria-label="Tahrirlash"
                         >
-                          <Edit size={15} />
-                        </button>
-                        <button
-                          type="button"
+                          <Edit />
+                        </Button>
+                        <Button
+                          variant="icon"
+                          size="icon-sm"
                           onClick={() => handleDelete(p.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-(--danger-bg) hover:text-(--danger-fg) transition-colors"
+                          className="hover:text-destructive"
                           title="Oʻchirish"
+                          aria-label="Oʻchirish"
                         >
-                          <Trash2 size={15} />
-                        </button>
+                          <Trash2 />
+                        </Button>
                       </div>
                     </td>
                   </tr>

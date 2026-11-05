@@ -340,9 +340,8 @@ export function PcBuildFormModal({
               size="sm"
               onClick={handleAddComponentRow}
               disabled={parts.length === 0}
-              className="gap-1"
             >
-              <Plus size={14} /> Qator qoʻshish
+              <Plus /> Qator qoʻshish
             </Button>
           </div>
 
@@ -413,12 +412,13 @@ export function PcBuildFormModal({
                   <Button
                     type="button"
                     variant="icon"
-                    size="icon"
+                    size="icon-sm"
                     onClick={() => handleRemoveComponent(idx)}
-                    className="text-muted-foreground hover:text-destructive"
+                    className="hover:text-destructive"
                     title="Oʻchirish"
+                    aria-label="Oʻchirish"
                   >
-                    <Trash2 size={15} />
+                    <Trash2 />
                   </Button>
                 </div>
               </div>

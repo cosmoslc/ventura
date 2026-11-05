@@ -156,15 +156,12 @@ export default function AdminPcsPage() {
         </div>
 
         <Button
-          variant="primary"
-          size="default"
           onClick={() => {
             setEditingBuild(null);
             setIsFormOpen(true);
           }}
-          className="gap-2 font-bold shadow-control"
         >
-          <Plus size={16} />
+          <Plus />
           Yangi PC yigʻish
         </Button>
       </div>
@@ -351,28 +348,32 @@ export default function AdminPcsPage() {
                       <td className="py-3.5 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           {build.status === "available" && (
-                            <button
-                              type="button"
+                            <Button
+                              variant="success"
+                              size="sm"
                               onClick={() => setSellingBuild(build)}
-                              className="flex items-center gap-1 rounded bg-(--success-bg) hover:bg-(--success-bg) text-(--success-fg) px-2 py-1 text-xs font-semibold transition-colors"
                               title="Oflayn sotuvni qayd qilish"
+                              aria-label="Sotish"
                             >
-                              <Receipt size={13} />
+                              <Receipt />
                               Sotish
-                            </button>
+                            </Button>
                           )}
 
-                          {build.status !== "sold" && <button
-                            type="button"
-                            onClick={() => {
-                              setEditingBuild(build);
-                              setIsFormOpen(true);
-                            }}
-                            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
-                            title="Tahrirlash"
-                          >
-                            <Edit2 size={15} />
-                          </button>}
+                          {build.status !== "sold" && (
+                            <Button
+                              variant="icon"
+                              size="icon-sm"
+                              onClick={() => {
+                                setEditingBuild(build);
+                                setIsFormOpen(true);
+                              }}
+                              title="Tahrirlash"
+                              aria-label="Tahrirlash"
+                            >
+                              <Edit2 />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

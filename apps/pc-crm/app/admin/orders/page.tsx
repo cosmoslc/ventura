@@ -263,14 +263,15 @@ export default function AdminOrdersPage() {
                   </td>
 
                   <td className="p-3.5 text-right">
-                    <button
-                      type="button"
+                    <Button
+                      variant="icon"
+                      size="icon-sm"
                       onClick={() => setSelectedOrder(order)}
-                      className="rounded p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                       title="Koʻrish"
+                      aria-label="Koʻrish"
                     >
-                      <Eye size={16} />
-                    </button>
+                      <Eye />
+                    </Button>
                   </td>
                 </tr>
               ))

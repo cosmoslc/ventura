@@ -98,8 +98,8 @@ export default function AdminSalesPage() {
           </h1>
         </div>
 
-        <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} className="gap-1.5 font-bold">
-          <Plus size={15} />
+        <Button onClick={() => setModalOpen(true)}>
+          <Plus />
           {isFinancial ? "Oflayn sotuv kiritish" : "Chiqim / Sotuv kiritish"}
         </Button>
       </div>
@@ -262,14 +262,16 @@ export default function AdminSalesPage() {
                     )}
                     <td className="p-3.5 text-right">
                       {!isVoided && item.source === "offline" && item.type === "product" && (
-                        <button
-                          type="button"
+                        <Button
+                          variant="icon"
+                          size="icon-sm"
                           onClick={() => handleVoidSale(item.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-(--danger-bg) hover:text-(--danger-fg) transition-colors"
+                          className="hover:text-destructive"
                           title="Sotuvni bekor qilish (qaytarish)"
+                          aria-label="Sotuvni bekor qilish"
                         >
-                          <Undo2 size={15} />
-                        </button>
+                          <Undo2 />
+                        </Button>
                       )}
                     </td>
                   </tr>
