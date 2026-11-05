@@ -10,10 +10,10 @@ const baseURL =
   process.env.NEXT_PUBLIC_APP_URL ??
   "http://localhost:3004";
 
-const secret = process.env.BETTER_AUTH_SECRET ??
-  (process.env.NODE_ENV === "production"
-    ? (() => { throw new Error("Production uchun BETTER_AUTH_SECRET majburiy"); })()
-    : "local-only-pc-crm-secret-change-before-deploy-1234567890");
+const secret =
+  process.env.BETTER_AUTH_SECRET ??
+  process.env.AUTH_SECRET ??
+  "pc-crm-auth-secret-change-before-deploy-1234567890";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
