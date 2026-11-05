@@ -94,9 +94,12 @@ export function AdminShell({ children }: AdminShellProps) {
           icon: PackagePlus,
           color: "var(--nav-hue-green)",
         },
-        ...(isFinancial
-          ? [{ id: "/admin/sales", label: "Sotuvlar & Foyda", icon: Receipt, color: "var(--nav-hue-amber)" }]
-          : []),
+        {
+          id: "/admin/sales",
+          label: isFinancial ? "Sotuvlar & Foyda" : "Sotuvlar",
+          icon: Receipt,
+          color: "var(--nav-hue-amber)",
+        },
         { id: "/admin/pcs", label: "PClar (Tayyor)", icon: Monitor, color: "var(--nav-hue-sky)" },
         { id: "/admin/pc-orders", label: "PC Zakazlar", icon: Wrench, color: "var(--nav-hue-teal)" },
         { id: "/admin/orders", label: "Buyurtmalar", icon: ShoppingCart, color: "var(--nav-hue-pink)" },

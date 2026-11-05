@@ -71,14 +71,12 @@ export default async function AdminDashboardPage() {
             </Button>
           </Link>
 
-          {isFinancial && (
-            <Link href="/admin/sales?action=new">
-              <Button variant="ghost" size="sm" className="gap-1.5 font-semibold text-xs">
-                <Receipt size={14} />
-                Oflayn sotuv
-              </Button>
-            </Link>
-          )}
+          <Link href="/admin/sales?action=new">
+            <Button variant="ghost" size="sm" className="gap-1.5 font-semibold text-xs">
+              <Receipt size={14} />
+              {isFinancial ? "Oflayn sotuv" : "Sotuv kiritish"}
+            </Button>
+          </Link>
 
           <Link href="/admin/pcs?action=new">
             <Button variant="ghost" size="sm" className="gap-1.5 font-semibold text-xs">

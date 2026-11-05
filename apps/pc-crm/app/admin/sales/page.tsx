@@ -19,11 +19,9 @@ import { type SaleItemData, SaleFormModal } from "@/components/admin/sales/sale-
 import { formatDate, formatMoney } from "@/lib/format";
 import { getAdminProductsAction, getAdminSalesAction, saveSaleAction, voidSaleAction } from "@/lib/server/actions";
 import { useFinancialMode } from "@/lib/store-context";
-import { useRouter } from "next/navigation";
 
 export default function AdminSalesPage() {
   const isFinancial = useFinancialMode();
-  const router = useRouter();
   const [sales, setSales] = useState<(SaleItemData & { id: string; voidedAt?: string })[]>([]);
   const [products, setProducts] = useState<{ id: string; name: string; costPrice: bigint; sellPrice: bigint }[]>([]);
   const [error, setError] = useState("");
@@ -90,79 +88,75 @@ export default function AdminSalesPage() {
     await loadData();
   };
 
-  if (!isFinancial) {
-    return (
-      <div className="rounded-card border border-border bg-card p-12 text-center space-y-4 max-w-lg mx-auto my-12">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
-          <Receipt size={28} />
-        </div>
-        <div>
-          <h2 className="text-xl font-bold text-foreground">Moliyasiz rejim faol</h2>
-          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-            Ushbu doʻkon moliyasiz (faqat ombor va tovarlar aylanmasi) rejimida ishlamoqda.
-            Moliyaviy hisobotlar, narxlar va sof foyda jurnali oʻchirilgan.
-          </p>
-        </div>
-        <div className="pt-2">
-          <Button variant="subtle" onClick={() => router.push("/admin/products")}>
-            Mahsulotlar omboriga oʻtish
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {/* Sarlavha va qo'shish */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Sotuvlar va Sof Foyda hisobi
+            {isFinancial ? "Sotuvlar va Sof Foyda hisobi" : "Sotuvlar jurnali"}
           </h1>
         </div>
 
         <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} className="gap-1.5 font-bold">
           <Plus size={15} />
-          Oflayn sotuv kiritish
+          {isFinancial ? "Oflayn sotuv kiritish" : "Chiqim / Sotuv kiritish"}
         </Button>
       </div>
 
       {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
 
       {/* Statistika kartalari */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={<DollarSign />}
-          label="Jami tushum"
-          value={formatMoney(totalRevenue)}
-          tone={1}
-          valueClassName="whitespace-nowrap text-title"
-        />
+      {isFinancial ? (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            icon={<DollarSign />}
+            label="Jami tushum"
+            value={formatMoney(totalRevenue)}
+            tone={1}
+            valueClassName="whitespace-nowrap text-title"
+          />
 
-        <StatCard
-          icon={<TrendingUp />}
-          label="Sof daromad (Foyda)"
-          value={formatMoney(totalProfit)}
-          tone={2}
-          valueClassName="whitespace-nowrap text-title"
-        />
+          <StatCard
+            icon={<TrendingUp />}
+            label="Sof daromad (Foyda)"
+            value={formatMoney(totalProfit)}
+            tone={2}
+            valueClassName="whitespace-nowrap text-title"
+          />
 
-        <StatCard
-          icon={<Boxes />}
-          label="Sotilgan tovarlar tannarxi"
-          value={formatMoney(totalCost)}
-          tone={3}
-          valueClassName="whitespace-nowrap text-title"
-        />
+          <StatCard
+            icon={<Boxes />}
+            label="Sotilgan tovarlar tannarxi"
+            value={formatMoney(totalCost)}
+            tone={3}
+            valueClassName="whitespace-nowrap text-title"
+          />
 
-        <StatCard
-          icon={<Receipt />}
-          label="Bitimlar soni"
-          value={`${activeSales.length} ta`}
-          tone={4}
-        />
-      </div>
+          <StatCard
+            icon={<Receipt />}
+            label="Bitimlar soni"
+            value={`${activeSales.length} ta`}
+            tone={4}
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <StatCard
+            icon={<Receipt />}
+            label="Jami sotuvlar (bitimlar soni)"
+            value={`${activeSales.length} ta`}
+            tone={1}
+          />
+
+          <StatCard
+            icon={<Boxes />}
+            label="Sotilgan tovarlar umumiy soni"
+            value={`${totalUnits} dona`}
+            tone={2}
+          />
+        </div>
+      )}
 
       {/* Qidiruv va Manba filtri */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-card p-3 shadow-card">
@@ -200,9 +194,9 @@ export default function AdminSalesPage() {
               <th className="p-3.5">Sotilgan tovar / PC</th>
               <th className="p-3.5 text-center">Manba</th>
               <th className="p-3.5 text-center">Soni</th>
-              <th className="p-3.5 text-right">Sotilgan narx</th>
-              <th className="p-3.5 text-right">Tannarx snapshot</th>
-              <th className="p-3.5 text-right">Sof foyda</th>
+              {isFinancial && <th className="p-3.5 text-right">Sotilgan narx</th>}
+              {isFinancial && <th className="p-3.5 text-right">Tannarx snapshot</th>}
+              {isFinancial && <th className="p-3.5 text-right">Sof foyda</th>}
               <th className="p-3.5 text-right">Amal</th>
             </tr>
           </thead>
@@ -210,7 +204,7 @@ export default function AdminSalesPage() {
           <tbody className="divide-y divide-border/60">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="p-8 text-center text-muted-foreground">
+                <td colSpan={isFinancial ? 9 : 6} className="p-8 text-center text-muted-foreground">
                   Sotuvlar topilmadi
                 </td>
               </tr>
@@ -248,18 +242,24 @@ export default function AdminSalesPage() {
                     <td className="p-3.5 text-center font-bold text-foreground">
                       {item.qty} dona
                     </td>
-                    <td className="p-3.5 text-right font-black text-foreground">
-                      {formatMoney(item.soldPrice)}
-                    </td>
-                    <td className="p-3.5 text-right font-medium text-muted-foreground">
-                      {formatMoney(item.costSnapshot)}
-                    </td>
-                    <td className="p-3.5 text-right font-black text-(--success-fg)">
-                      +{formatMoney(item.profit)}
-                      <span className="block text-2xs text-muted-foreground font-normal">
-                        ({item.marginPercent}% marja)
-                      </span>
-                    </td>
+                    {isFinancial && (
+                      <td className="p-3.5 text-right font-black text-foreground">
+                        {formatMoney(item.soldPrice)}
+                      </td>
+                    )}
+                    {isFinancial && (
+                      <td className="p-3.5 text-right font-medium text-muted-foreground">
+                        {formatMoney(item.costSnapshot)}
+                      </td>
+                    )}
+                    {isFinancial && (
+                      <td className="p-3.5 text-right font-black text-(--success-fg)">
+                        +{formatMoney(item.profit)}
+                        <span className="block text-2xs text-muted-foreground font-normal">
+                          ({item.marginPercent}% marja)
+                        </span>
+                      </td>
+                    )}
                     <td className="p-3.5 text-right">
                       {!isVoided && item.source === "offline" && item.type === "product" && (
                         <button
@@ -286,6 +286,7 @@ export default function AdminSalesPage() {
         onOpenChange={setModalOpen}
         products={products}
         onSave={handleSaveSale}
+        isFinancial={isFinancial}
       />
     </div>
   );

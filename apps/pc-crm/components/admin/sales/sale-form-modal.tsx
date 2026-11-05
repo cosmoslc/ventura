@@ -8,6 +8,7 @@ import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { calcItemProfit, calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 
 export interface SaleItemData {
   id?: string;
@@ -31,9 +32,12 @@ interface SaleFormModalProps {
   onOpenChange: (open: boolean) => void;
   products: { id: string; name: string; costPrice: bigint; sellPrice: bigint }[];
   onSave: (sale: SaleItemData) => void;
+  isFinancial?: boolean;
 }
 
-export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleFormModalProps) {
+export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancial: isFinancialProp }: SaleFormModalProps) {
+  const contextIsFinancial = useFinancialMode();
+  const isFinancial = isFinancialProp ?? contextIsFinancial;
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("+998 ");
@@ -80,11 +84,11 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
       buyerName: buyerName.trim(),
       buyerPhone: buyerPhone.trim(),
       qty,
-      listPrice,
-      soldPrice,
-      costSnapshot,
-      profit,
-      marginPercent,
+      listPrice: isFinancial ? listPrice : 0n,
+      soldPrice: isFinancial ? soldPrice : 0n,
+      costSnapshot: isFinancial ? costSnapshot : 0n,
+      profit: isFinancial ? profit : 0n,
+      marginPercent: isFinancial ? marginPercent : 0,
       soldAt,
     });
 
@@ -95,8 +99,12 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Yangi oflayn sotuv kiritish"
-      description="Doʻkondan toʻgʻridan-toʻgʻri naqd/karta bilan sotilgan tovar hisobi"
+      title={isFinancial ? "Yangi oflayn sotuv kiritish" : "Yangi chiqim / sotuv kiritish"}
+      description={
+        isFinancial
+          ? "Doʻkondan toʻgʻridan-toʻgʻri naqd/karta bilan sotilgan tovar hisobi"
+          : "Doʻkondan tovar chiqimi (xaridor va soni hisobi)"
+      }
       wide
       footer={
         <div className="flex w-full items-center justify-between">
@@ -105,7 +113,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
           </Button>
 
           <Button variant="primary" size="sm" onClick={handleSubmit} className="font-bold">
-            Sotuvni saqlash
+            {isFinancial ? "Sotuvni saqlash" : "Chiqimni tasdiqlash"}
           </Button>
         </div>
       }
@@ -162,7 +170,37 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
         </div>
 
         {/* Narx va soni */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {isFinancial ? (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">Soni (dona) *</Label>
+              <Input
+                type="number"
+                min={1}
+                value={qty}
+                onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">Roʻyxat narxi (Katalogdagi)</Label>
+              <Input
+                disabled
+                value={formatMoney(listPrice)}
+                className="bg-muted text-muted-foreground"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-semibold">Haqiqiy sotilgan narx (soʻm) *</Label>
+              <Input
+                type="number"
+                value={soldPriceStr}
+                onChange={(e) => setSoldPriceStr(e.target.value)}
+              />
+            </div>
+          </div>
+        ) : (
           <div className="space-y-1">
             <Label className="text-xs font-semibold">Soni (dona) *</Label>
             <Input
@@ -172,45 +210,29 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
               onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
             />
           </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Roʻyxat narxi (Katalogdagi)</Label>
-            <Input
-              disabled
-              value={formatMoney(listPrice)}
-              className="bg-muted text-muted-foreground"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Haqiqiy sotilgan narx (soʻm) *</Label>
-            <Input
-              type="number"
-              value={soldPriceStr}
-              onChange={(e) => setSoldPriceStr(e.target.value)}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Sof foyda va Marja hisob-kitob kartasi */}
-        <div className="rounded-card border border-border bg-muted/20 p-4 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Tannarx snapshot (1 dona):</span>
-            <span className="font-semibold text-foreground">{formatMoney(costSnapshot)}</span>
-          </div>
+        {isFinancial && (
+          <div className="rounded-card border border-border bg-muted/20 p-4 space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Tannarx snapshot (1 dona):</span>
+              <span className="font-semibold text-foreground">{formatMoney(costSnapshot)}</span>
+            </div>
 
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">Jami tushum ({qty} dona):</span>
-            <span className="font-bold text-foreground">{formatMoney(totalRevenue)}</span>
-          </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Jami tushum ({qty} dona):</span>
+              <span className="font-bold text-foreground">{formatMoney(totalRevenue)}</span>
+            </div>
 
-          <div className="flex items-center justify-between border-t border-border/80 pt-2 text-sm font-bold">
-            <span>Ushbu sotuvdan sof daromad:</span>
-            <span className={profit >= 0n ? "text-(--success-fg) font-black" : "text-(--danger-fg) font-black"}>
-              {profit >= 0n ? "+" : ""}{formatMoney(profit)} ({marginPercent}% marja)
-            </span>
+            <div className="flex items-center justify-between border-t border-border/80 pt-2 text-sm font-bold">
+              <span>Ushbu sotuvdan sof daromad:</span>
+              <span className={profit >= 0n ? "text-(--success-fg) font-black" : "text-(--danger-fg) font-black"}>
+                {profit >= 0n ? "+" : ""}{formatMoney(profit)} ({marginPercent}% marja)
+              </span>
+            </div>
           </div>
-        </div>
+        )}
       </form>
     </Modal>
   );
