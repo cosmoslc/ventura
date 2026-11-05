@@ -23,8 +23,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
   try {
     await requireAdmin();
-  } catch (err) {
-    console.error("requireAdmin caught error:", err);
+  } catch {
     const session = await getServerSession();
     const [terminalAdmin] = await getDb()
       .select({ id: users.id })
