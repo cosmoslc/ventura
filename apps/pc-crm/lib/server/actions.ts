@@ -566,3 +566,43 @@ export async function getStoreBrandingAction() {
     return { success: false, error: "Branding yuklab bo'lmadi" };
   }
 }
+
+export async function getStorefrontNotificationsAction() {
+  try {
+    const session = await getServerSession();
+    const { getDbNotifications } = await import("./notifications");
+    const result = await getDbNotifications(session?.user?.id);
+    return { success: true, ...result };
+  } catch (err) {
+    console.error("getStorefrontNotificationsAction error:", err);
+    return { success: false, notifications: [], unreadCount: 0 };
+  }
+}
+
+export async function markNotificationReadAction(notificationId: string) {
+  try {
+    const session = await getServerSession();
+    if (session?.user?.id) {
+      const { markDbNotificationAsRead } = await import("./notifications");
+      await markDbNotificationAsRead(notificationId, session.user.id);
+    }
+    return { success: true };
+  } catch (err) {
+    console.error("markNotificationReadAction error:", err);
+    return { success: false };
+  }
+}
+
+export async function markAllNotificationsReadAction() {
+  try {
+    const session = await getServerSession();
+    if (session?.user?.id) {
+      const { markAllDbNotificationsAsRead } = await import("./notifications");
+      await markAllDbNotificationsAsRead(session.user.id);
+    }
+    return { success: true };
+  } catch (err) {
+    console.error("markAllNotificationsReadAction error:", err);
+    return { success: false };
+  }
+}

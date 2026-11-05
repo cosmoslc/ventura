@@ -5,6 +5,7 @@ import { Toaster } from "@ventura/ui/toast";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
 import { CartProvider } from "@/lib/cart-context";
 import { LikedProvider } from "@/lib/liked-context";
+import { NotificationProvider } from "@/lib/notification-context";
 import { StoreProvider } from "@/lib/store-context";
 import { getStoreBranding } from "@/lib/server/branding";
 import { fontVariables } from "@/lib/fonts";
@@ -38,9 +39,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <StoreProvider initialBranding={branding}>
           <CartProvider>
             <LikedProvider>
-              {children}
-              <CartDrawer />
-              <Toaster />
+              <NotificationProvider>
+                {children}
+                <CartDrawer />
+                <Toaster />
+              </NotificationProvider>
             </LikedProvider>
           </CartProvider>
         </StoreProvider>

@@ -28,6 +28,7 @@ import {
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { useCart } from "@/lib/cart-context";
 import { useLiked } from "@/lib/liked-context";
+import { useNotifications } from "@/lib/notification-context";
 import { useSession, signOut } from "@/lib/auth-client";
 import { AuthModal } from "./auth-modal";
 import { NavbarSearch } from "./navbar-search";
@@ -76,7 +77,7 @@ export function Navbar({
   storeName: propStoreName,
   cartCount: propCartCount,
   likedCount: propLikedCount,
-  unreadNotifsCount = 0,
+  unreadNotifsCount: propUnreadNotifsCount,
   onOpenCart: propOnOpenCart,
   onOpenSearch: propOnOpenSearch,
 }: NavbarProps) {
@@ -84,6 +85,7 @@ export function Navbar({
   const activeStoreName = (propStoreName || branding.name || "Ventura PC").trim();
   const { cartCount: contextCartCount, setIsCartDrawerOpen, setIsSearchOpen } = useCart();
   const { likedCount: contextLikedCount } = useLiked();
+  const { unreadCount: contextUnreadNotifsCount } = useNotifications();
   const { data: session } = useSession();
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -95,6 +97,7 @@ export function Navbar({
 
   const cartCount = propCartCount ?? contextCartCount;
   const likedCount = propLikedCount ?? contextLikedCount;
+  const unreadNotifsCount = propUnreadNotifsCount ?? contextUnreadNotifsCount;
   const onOpenCart = propOnOpenCart ?? (() => setIsCartDrawerOpen(true));
   const onOpenSearch = propOnOpenSearch ?? (() => setMobileSearchOpen((v) => !v));
 
@@ -238,12 +241,14 @@ export function Navbar({
             type="button"
             onClick={() => setNotificationsOpen(true)}
             aria-label="Bildirishnomalar"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control cursor-pointer"
           >
             <Bell size={18} />
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-bold text-primary-foreground shadow-control">
-              {unreadNotifsCount > 0 ? unreadNotifsCount : 2}
-            </span>
+            {unreadNotifsCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-bold text-primary-foreground shadow-control">
+                {unreadNotifsCount}
+              </span>
+            )}
           </button>
 
           {/* Savatcha */}
