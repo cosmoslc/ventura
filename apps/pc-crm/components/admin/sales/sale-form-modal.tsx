@@ -187,7 +187,6 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
                 value={qtyStr}
                 onChange={(e) => setQtyStr(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                placeholder="1"
               />
             </div>
 
@@ -209,7 +208,6 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
                 value={soldPriceStr}
                 onChange={(e) => setSoldPriceStr(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                placeholder="0"
               />
             </div>
           </div>
@@ -223,7 +221,6 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
               value={qtyStr}
               onChange={(e) => setQtyStr(e.target.value)}
               onFocus={(e) => e.target.select()}
-              placeholder="1"
             />
           </div>
         )}

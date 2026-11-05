@@ -275,7 +275,6 @@ export function ProductFormModal({
                   value={costPriceStr}
                   onChange={(e) => handleCostChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 1 000 000"
                 />
               </div>
 
@@ -287,7 +286,6 @@ export function ProductFormModal({
                   value={marginPercentStr}
                   onChange={(e) => handleMarginChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 20"
                 />
               </div>
 
@@ -299,7 +297,6 @@ export function ProductFormModal({
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 1 200 000"
                 />
               </div>
 
@@ -313,7 +310,6 @@ export function ProductFormModal({
                   value={discountPercentStr}
                   onChange={(e) => setDiscountPercentStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="0"
                 />
               </div>
             </div>
@@ -348,7 +344,6 @@ export function ProductFormModal({
                   value={stockStr}
                   onChange={(e) => setStockStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="0"
                 />
               </div>
 
@@ -361,7 +356,6 @@ export function ProductFormModal({
                   value={minStockStr}
                   onChange={(e) => setMinStockStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="0"
                 />
               </div>
             </div>

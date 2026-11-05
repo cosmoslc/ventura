@@ -213,7 +213,6 @@ export function PurchaseFormModal({
               value={qtyStr}
               onChange={(e) => handleQtyChange(e.target.value)}
               onFocus={(e) => e.target.select()}
-              placeholder="1"
             />
           </div>
 
@@ -227,7 +226,6 @@ export function PurchaseFormModal({
                   value={unitCostStr}
                   onChange={(e) => handleUnitCostChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 1 000 000"
                 />
               </div>
             ) : (
@@ -239,7 +237,6 @@ export function PurchaseFormModal({
                   value={totalCostStr}
                   onChange={(e) => handleTotalCostChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 10 000 000"
                 />
               </div>
             )

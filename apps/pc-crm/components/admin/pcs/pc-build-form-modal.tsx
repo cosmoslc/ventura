@@ -455,7 +455,6 @@ export function PcBuildFormModal({
                     handleMarginChange(parseInt(e.target.value || "0", 10));
                   }}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 20"
                 />
               </div>
 
@@ -467,7 +466,6 @@ export function PcBuildFormModal({
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="Masalan: 20 000 000"
                 />
               </div>
 
@@ -481,7 +479,6 @@ export function PcBuildFormModal({
                   value={discountPercentStr}
                   onChange={(e) => setDiscountPercentStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="0"
                 />
               </div>
             </div>
