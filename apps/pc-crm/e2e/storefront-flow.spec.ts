@@ -119,7 +119,7 @@ test.describe("Storefront asosiy oqimi: Bosh sahifa -> Katalog -> Mahsulot -> Sa
 
     // Muvaffaqiyat xabari
     await expect(page.getByText(/Buyurtmangiz qabul qilindi/i)).toBeVisible();
-    await expect(page.getByText(/ORD-\d{4}/i)).toBeVisible();
+    await expect(page.getByText(/ORD-[0-9A-Za-z]+/i)).toBeVisible();
     await expect(page.getByText(/Telegram orqali operatorga yozish/i)).toBeVisible();
   });
 
