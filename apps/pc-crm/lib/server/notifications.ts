@@ -23,7 +23,7 @@ const DEFAULT_SEEDS = [
   {
     type: "new_product",
     title: "Yangi avlod PC yigʻildi",
-    body: "Ventura Gaming Titan (Core i7-14700K / RTX 4070 Ti) tayyor kompyuterlar qatoriga qoʻshildi.",
+    body: "Gaming Titan tayyor kompyuterlar qatoriga qoʻshildi.",
     link: "/computers/ventura-gaming-titan-i7-4070",
   },
   {

@@ -472,7 +472,7 @@ try {
   const rawBuilds = [
     {
       slug: "ventura-gaming-titan-i7-4070",
-      name: { uz: "Ventura Gaming Titan: Core i7-14700K / RTX 4070 Ti Super" },
+      name: { uz: "Gaming Titan", ru: "Gaming Titan" },
       images: [
         "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&q=80",
         "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=900&q=80",
@@ -496,7 +496,7 @@ try {
     },
     {
       slug: "ventura-streamer-pro-ryzen7-4060ti",
-      name: { uz: "Ventura Streamer Pro: Ryzen 7 7800X3D / RTX 4060 Ti" },
+      name: { uz: "Streamer Pro", ru: "Streamer Pro" },
       images: [
         "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=900&q=80",
       ],
@@ -518,7 +518,7 @@ try {
     },
     {
       slug: "ventura-cyber-beast-i9-4090",
-      name: { uz: "Ventura Cyber Beast: Core i9-14900K / RTX 4090 24GB" },
+      name: { uz: "Cyber Beast", ru: "Cyber Beast" },
       images: [
         "https://images.unsplash.com/photo-1547082299-de196ea013d6?w=900&q=80",
       ],
@@ -541,7 +541,7 @@ try {
     },
     {
       slug: "ventura-creator-amd-rx7800xt",
-      name: { uz: "Ventura Creator: Ryzen 5 7600X / Radeon RX 7800 XT" },
+      name: { uz: "Creator Pro", ru: "Creator Pro" },
       images: [
         "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=900&q=80",
       ],

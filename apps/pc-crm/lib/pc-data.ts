@@ -90,7 +90,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
   {
     id: "pc-1",
     slug: "ventura-gaming-titan-i7-4070",
-    name: "Ventura Gaming Titan: Core i7-14700K / RTX 4070 Ti Super",
+    name: "Gaming Titan",
     images: [
       "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80",
       "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=900&auto=format&fit=crop&q=80",
@@ -240,7 +240,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
   {
     id: "pc-2",
     slug: "ventura-streamer-pro-ryzen7-4060ti",
-    name: "Ventura Streamer Pro: Ryzen 7 7800X3D / RTX 4060 Ti",
+    name: "Streamer Pro",
     images: [
       "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=900&auto=format&fit=crop&q=80",
       "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80",
@@ -299,7 +299,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
   {
     id: "pc-3",
     slug: "ventura-cyber-beast-i9-4090",
-    name: "Ventura Cyber Beast: Core i9-14900K / RTX 4090 24GB",
+    name: "Cyber Beast",
     images: [
       "https://images.unsplash.com/photo-1547082299-de196ea013d6?w=900&auto=format&fit=crop&q=80",
       "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80",
@@ -335,7 +335,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
   {
     id: "pc-4",
     slug: "ventura-creator-amd-rx7800xt",
-    name: "Ventura Creator: Ryzen 5 7600X / Radeon RX 7800 XT",
+    name: "Creator Pro",
     images: [
       "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=900&auto=format&fit=crop&q=80",
     ],
@@ -370,7 +370,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
   {
     id: "pc-5",
     slug: "ventura-entry-gaming-i5-4060",
-    name: "Ventura Starter: Core i5-14400F / RTX 4060 8GB",
+    name: "Ventura Starter",
     images: [
       "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=900&auto=format&fit=crop&q=80",
     ],
@@ -405,7 +405,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
   {
     id: "pc-6",
     slug: "ventura-pro-workstation-threadripper",
-    name: "Ventura Pro Render: Ryzen 9 7950X / RTX 4080 Super",
+    name: "Pro Render",
     images: [
       "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80",
     ],

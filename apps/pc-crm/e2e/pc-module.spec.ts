@@ -16,7 +16,7 @@ test.describe("PC Modul: Tayyor kompyuterlar -> Batafsil -> Konfigurator", () =>
     // CPU filtri: Intel Core i7
     const cpuBtn = page.getByRole("button", { name: /Intel Core i7/i }).first();
     await cpuBtn.click();
-    await expect(page.getByText(/Ventura Gaming Titan/i).first()).toBeVisible();
+    await expect(page.getByText(/Gaming Titan/i).first()).toBeVisible();
 
     // Videokarta filtri: RTX 4070
     const gpuBtn = page.getByRole("button", { name: /GeForce RTX 4070/i }).first();
@@ -28,7 +28,7 @@ test.describe("PC Modul: Tayyor kompyuterlar -> Batafsil -> Konfigurator", () =>
     await page.goto("/computers/ventura-gaming-titan-i7-4070");
 
     // Sarlavha
-    await expect(page.locator("h1")).toContainText(/Ventura Gaming Titan/i);
+    await expect(page.locator("h1")).toContainText(/Gaming Titan/i);
 
     // Afzalliklar bloklari
     await expect(page.getByText(/12 oy rasmiy kafolat/i)).toBeVisible();

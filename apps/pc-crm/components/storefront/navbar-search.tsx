@@ -76,7 +76,7 @@ const SEARCH_CATALOG: SearchProductItem[] = [
   },
   {
     id: "pc-1",
-    name: "Ventura Gaming Titan (Core i7-14700K / RTX 4070 Ti)",
+    name: "Gaming Titan (RTX 4070 Ti)",
     slug: "ventura-gaming-titan-i7-4070",
     category: "Tayyor kompyuterlar",
     price: 24_800_000n,
