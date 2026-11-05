@@ -8,6 +8,7 @@ import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Switch } from "@ventura/ui/switch";
+import { ImageUploadWithBgRemoval } from "@/components/admin/image-upload-with-bg-removal";
 import { calcFinalPrice, calcSellPriceFromMargin } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
 
@@ -241,14 +242,12 @@ export function ProductFormModal({
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Asosiy rasm havolasi (URL)</Label>
-            <Input
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
+          <ImageUploadWithBgRemoval
+            value={imageUrl}
+            onChange={setImageUrl}
+            label="Mahsulot rasmi"
+            placeholder="https://... yoki rasm yuklang"
+          />
         </div>
 
         {/* 2. Narx va Foyda Kalkulyatori */}

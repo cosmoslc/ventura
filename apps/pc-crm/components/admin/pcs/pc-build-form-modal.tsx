@@ -8,6 +8,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { ImageUploadWithBgRemoval } from "@/components/admin/image-upload-with-bg-removal";
 import {
   calcFinalPrice,
   calcMarginPercent,
@@ -263,14 +264,12 @@ export function PcBuildFormModal({
             </Select>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Asosiy rasm URL
-            </Label>
-            <Input
+          <div className="sm:col-span-2">
+            <ImageUploadWithBgRemoval
               value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://..."
+              onChange={setImageUrl}
+              label="Kompyuter rasmi"
+              placeholder="https://... yoki rasm yuklang"
             />
           </div>
 
