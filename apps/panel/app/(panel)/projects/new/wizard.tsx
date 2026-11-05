@@ -73,6 +73,7 @@ export function ProjectWizard({
   const [ownerPhone, setOwnerPhone] = React.useState("");
   const [ownerPassword, setOwnerPassword] = React.useState(() => randomPassword());
   // 5. Bo'limlar — boshida hammasi yoqilgan (rejimlardan tashqari)
+  const [storeMode, setStoreMode] = React.useState<"financial" | "inventory">("financial");
   const [features, setFeatures] = React.useState<Set<string>>(() =>
     template
       ? withRequirements(
@@ -147,6 +148,7 @@ export function ProjectWizard({
         ownerPhone,
         ownerPassword,
         features: [...features],
+        storeMode,
         mode,
         target,
         dbStrategy,
@@ -349,7 +351,51 @@ export function ProjectWizard({
           ) : null}
 
           {step === 4 && template ? (
-            <FeaturePicker features={template.features} value={features} onChange={setFeatures} />
+            <div className="space-y-6">
+              <div className="rounded-card border border-border p-4 bg-muted/20 space-y-3">
+                <div>
+                  <Label className="text-sm font-bold text-foreground">Doʻkon faoliyat rejimi</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Loyiha qanday tartibda boshqarilishini tanlang:
+                  </p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div
+                    onClick={() => setStoreMode("financial")}
+                    className={`cursor-pointer rounded-control border p-3.5 transition-all ${
+                      storeMode === "financial"
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-border bg-card hover:border-border/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-foreground text-sm">
+                      <span className="text-base">💳</span> Moliyaviy doʻkon
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      Tannarx, sotuv narxlari, sof foyda hisobi, buyurtma summalari va toʻlovlar bilan toʻliq tizim.
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setStoreMode("inventory")}
+                    className={`cursor-pointer rounded-control border p-3.5 transition-all ${
+                      storeMode === "inventory"
+                        ? "border-primary bg-primary/10 shadow-sm"
+                        : "border-border bg-card hover:border-border/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-foreground text-sm">
+                      <span className="text-base">📦</span> Moliyasiz doʻkon
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                      Pul va summalarsiz. Faqat ombor qoldiqlari, tovar oqimi va sotilgan mahsulotlar soni nazorati.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <FeaturePicker features={template.features} value={features} onChange={setFeatures} />
+            </div>
           ) : null}
 
           {step === 5 ? (
@@ -412,6 +458,7 @@ export function ProjectWizard({
                   [uz.projects.client, clientName],
                   [uz.projects.domain, domainKind === "custom" ? customDomain : `${slug}.${BASE_DOMAIN}`],
                   [uz.wizard.color, brand.primary],
+                  ["Doʻkon rejimi", storeMode === "financial" ? "💳 Moliyaviy doʻkon" : "📦 Moliyasiz doʻkon"],
                   [uz.projects.ownerName, ownerName],
                   [uz.projects.ownerPhone, ownerPhone ? `+998 ${formatUzPhone(ownerPhone)}` : ""],
                   [uz.projects.tabs.features, `${features.size} ${uz.templates.features}`],

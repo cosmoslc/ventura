@@ -83,6 +83,7 @@ export const projectInputSchema = z
     ownerPhone: z.string().regex(/^\d{9}$/, uz.projects.ownerPhoneInvalid),
     ownerPassword: z.string().min(8).max(128),
     features: z.array(z.string()),
+    storeMode: z.enum(["financial", "inventory"]).default("financial"),
     mode: z.enum(DEPLOY_MODES),
     target: z.enum(TARGET_KINDS),
     dbStrategy: z.enum(DB_STRATEGIES),

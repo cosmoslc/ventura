@@ -18,8 +18,12 @@ import { StatCard } from "@ventura/ui/stat-card";
 import { type SaleItemData, SaleFormModal } from "@/components/admin/sales/sale-form-modal";
 import { formatDate, formatMoney } from "@/lib/format";
 import { getAdminProductsAction, getAdminSalesAction, saveSaleAction, voidSaleAction } from "@/lib/server/actions";
+import { useFinancialMode } from "@/lib/store-context";
+import { useRouter } from "next/navigation";
 
 export default function AdminSalesPage() {
+  const isFinancial = useFinancialMode();
+  const router = useRouter();
   const [sales, setSales] = useState<(SaleItemData & { id: string; voidedAt?: string })[]>([]);
   const [products, setProducts] = useState<{ id: string; name: string; costPrice: bigint; sellPrice: bigint }[]>([]);
   const [error, setError] = useState("");
@@ -85,6 +89,28 @@ export default function AdminSalesPage() {
     if (!result.success) { setError(result.error ?? "Sotuvni bekor qilib bo'lmadi"); return; }
     await loadData();
   };
+
+  if (!isFinancial) {
+    return (
+      <div className="rounded-card border border-border bg-card p-12 text-center space-y-4 max-w-lg mx-auto my-12">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+          <Receipt size={28} />
+        </div>
+        <div>
+          <h2 className="text-xl font-bold text-foreground">Moliyasiz rejim faol</h2>
+          <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+            Ushbu doʻkon moliyasiz (faqat ombor va tovarlar aylanmasi) rejimida ishlamoqda.
+            Moliyaviy hisobotlar, narxlar va sof foyda jurnali oʻchirilgan.
+          </p>
+        </div>
+        <div className="pt-2">
+          <Button variant="subtle" onClick={() => router.push("/admin/products")}>
+            Mahsulotlar omboriga oʻtish
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

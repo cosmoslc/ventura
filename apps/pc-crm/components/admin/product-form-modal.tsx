@@ -38,6 +38,7 @@ interface ProductFormModalProps {
   onOpenChange: (open: boolean) => void;
   initialData?: ProductFormData | null;
   onSave: (product: ProductFormData) => void;
+  isFinancial?: boolean;
 }
 
 export function ProductFormModal({
@@ -45,6 +46,7 @@ export function ProductFormModal({
   onOpenChange,
   initialData,
   onSave,
+  isFinancial = true,
 }: ProductFormModalProps) {
   const [nameUz, setNameUz] = useState("");
   const [nameRu, setNameRu] = useState("");
@@ -250,72 +252,74 @@ export function ProductFormModal({
           />
         </div>
 
-        {/* 2. Narx va Foyda Kalkulyatori */}
-        <div className="rounded-control border border-border bg-muted/20 p-4 space-y-3">
-          <h3 className="font-bold text-foreground">Narxlar va Kutilayotgan Foyda</h3>
+        {/* 2. Narx va Foyda Kalkulyatori (faqat moliyaviy rejimda) */}
+        {isFinancial && (
+          <div className="rounded-control border border-border bg-muted/20 p-4 space-y-3">
+            <h3 className="font-bold text-foreground">Narxlar va Kutilayotgan Foyda</h3>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Tannarx (soʻmda)</Label>
-              <Input
-                type="number"
-                value={costPriceStr}
-                onChange={(e) => handleCostChange(e.target.value)}
-                placeholder="1000000"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Ustama (marja %)</Label>
-              <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Tannarx (soʻmda)</Label>
                 <Input
                   type="number"
-                  value={marginPercent}
-                  onChange={(e) => handleMarginChange(Number(e.target.value))}
-                  placeholder="20"
+                  value={costPriceStr}
+                  onChange={(e) => handleCostChange(e.target.value)}
+                  placeholder="1000000"
                 />
-                <span className="font-bold text-muted-foreground">%</span>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Ustama (marja %)</Label>
+                <div className="flex items-center gap-1.5">
+                  <Input
+                    type="number"
+                    value={marginPercent}
+                    onChange={(e) => handleMarginChange(Number(e.target.value))}
+                    placeholder="20"
+                  />
+                  <span className="font-bold text-muted-foreground">%</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Sotish narxi (soʻmda)</Label>
+                <Input
+                  type="number"
+                  value={sellPriceStr}
+                  onChange={(e) => setSellPriceStr(e.target.value)}
+                  placeholder="1200000"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Chegirma %</Label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={99}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  placeholder="0"
+                />
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Sotish narxi (soʻmda)</Label>
-              <Input
-                type="number"
-                value={sellPriceStr}
-                onChange={(e) => setSellPriceStr(e.target.value)}
-                placeholder="1200000"
-              />
-            </div>
+            {/* Jonli hisob natijasi */}
+            <div className="flex flex-wrap items-center justify-between rounded-control bg-card p-3 border border-border/80">
+              <div>
+                <p className="text-caption text-muted-foreground">Xaridor koʻradigan yakuniy narx:</p>
+                <p className="text-sm font-black text-foreground">{formatMoney(finalPrice)}</p>
+              </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Chegirma %</Label>
-              <Input
-                type="number"
-                min={0}
-                max={99}
-                value={discountPercent}
-                onChange={(e) => setDiscountPercent(Number(e.target.value))}
-                placeholder="0"
-              />
+              <div className="text-right">
+                <p className="text-caption text-muted-foreground">Kutilayotgan sof foyda (dona):</p>
+                <p className={`text-sm font-black ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
+                  {profit >= 0n ? "+" : ""}{formatMoney(profit)}
+                </p>
+              </div>
             </div>
           </div>
-
-          {/* Jonli hisob natijasi */}
-          <div className="flex flex-wrap items-center justify-between rounded-control bg-card p-3 border border-border/80">
-            <div>
-              <p className="text-caption text-muted-foreground">Xaridor koʻradigan yakuniy narx:</p>
-              <p className="text-sm font-black text-foreground">{formatMoney(finalPrice)}</p>
-            </div>
-
-            <div className="text-right">
-              <p className="text-caption text-muted-foreground">Kutilayotgan sof foyda (dona):</p>
-              <p className={`text-sm font-black ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
-                {profit >= 0n ? "+" : ""}{formatMoney(profit)}
-              </p>
-            </div>
-          </div>
-        </div>
+        )}
 
         {/* 3. Ombor va Holat */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

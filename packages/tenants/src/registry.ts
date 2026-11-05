@@ -22,6 +22,8 @@ export const tenantSchema = z.object({
   }),
   /** Yoqilgan bo'limlar kalitlari */
   features: z.array(z.string()),
+  /** Do'kon ishlash tartibi: moliyaviy (financial) yoki moliyasiz faqat ombor (inventory) */
+  storeMode: z.enum(["financial", "inventory"]).default("financial").optional(),
   /** Xotira limiti (MB da). Belgilanmagan bo'lsa standart 5120 MB (5 GB) */
   storageLimitMb: z.number().int().positive().optional(),
   /** Loyiha holati: faol yoki to'xtatilgan/muzlatilgan */

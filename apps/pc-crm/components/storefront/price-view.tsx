@@ -1,6 +1,7 @@
 "use client";
 
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 
 interface PriceViewProps {
   price: bigint | number;
@@ -21,6 +22,18 @@ export function PriceView({
   size = "md",
   className = "",
 }: PriceViewProps) {
+  const isFinancial = useFinancialMode();
+
+  if (!isFinancial) {
+    return (
+      <div className={`flex items-baseline gap-2 ${className}`}>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          Sotuvda mavjud
+        </span>
+      </div>
+    );
+  }
+
   const sizeClasses = {
     sm: "text-sm font-semibold",
     md: "text-base font-bold",

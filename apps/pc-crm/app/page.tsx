@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
+  CheckCircle2,
   Cpu,
   HardDrive,
   Laptop,
@@ -107,7 +108,11 @@ export default function StorefrontHomePage() {
 
               {/* Hero o'ng tomon vizual */}
               <div className="relative flex items-center justify-center">
+                <div className="absolute -inset-4 rounded-modal bg-gradient-to-tr from-primary/20 via-primary/5 to-transparent blur-2xl -z-10" />
                 <div className="relative aspect-[4/3] w-full max-w-lg overflow-hidden rounded-modal border border-border/80 bg-media p-6 shadow-modal">
+                  <div className="absolute top-4 right-4 z-10 rounded-full border border-primary/20 bg-card/90 px-3 py-1 text-2xs font-extrabold text-primary shadow-xs backdrop-blur-md">
+                    ⚡ 450+ FPS • Ultra 2K/4K
+                  </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=800&auto=format&fit=crop&q=80"
@@ -214,6 +219,105 @@ export default function StorefrontHomePage() {
                   isLiked={isLiked(pc.id)}
                   onToggleLike={() => toggleLike({ ...pc, type: "pc" })}
                 />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* 5. Custom PC Konfigurator Banner bloki */}
+        <section className="py-12 border-b border-border/60 bg-gradient-to-r from-card via-card/90 to-primary/5">
+          <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 sm:px-6">
+            <div className="relative overflow-hidden rounded-modal border border-border/80 bg-gradient-to-br from-card via-card to-secondary/30 p-8 sm:p-12 shadow-modal">
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 items-center">
+                <div>
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                    <Wrench size={14} />
+                    <span>Interaktiv Konstruktor</span>
+                  </div>
+                  <h2 className="text-2xl font-black text-foreground sm:text-4xl tracking-tight">
+                    Oʻzingizga mos kompyuterni <span className="text-primary">0 dan yigʻing</span>
+                  </h2>
+                  <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-md">
+                    Protsessordan tortib korpusgacha boʻlgan 8 ta asosiy komponentni tanlang. 
+                    Real vaqtda narx, elektr quvvati (TDP) va komponentlar zaxirasini nazorat qiling.
+                  </p>
+
+                  <div className="mt-6 flex flex-wrap gap-4 text-xs font-semibold text-foreground">
+                    <div className="flex items-center gap-1.5 rounded-control bg-secondary/60 px-3 py-1.5">
+                      <CheckCircle2 size={15} className="text-(--success-fg)" />
+                      <span>8 ta komponent tanlovi</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 rounded-control bg-secondary/60 px-3 py-1.5">
+                      <CheckCircle2 size={15} className="text-(--success-fg)" />
+                      <span>Jonli TDP quvvat hisobi</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 rounded-control bg-secondary/60 px-3 py-1.5">
+                      <CheckCircle2 size={15} className="text-(--success-fg)" />
+                      <span>Bepul yigʻish & test</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-8">
+                    <Link href="/computers/custom">
+                      <Button variant="primary" size="default" className="gap-2 font-bold shadow-card-hover">
+                        <Wrench size={16} />
+                        Konfiguratorni ochish <ArrowRight size={16} />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-center">
+                  <div className="relative w-full max-w-md rounded-card border border-border bg-card/90 p-6 shadow-popover backdrop-blur-md">
+                    <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+                      <span className="text-xs font-bold text-muted-foreground">Jonli Konfigurator namoyishi</span>
+                      <span className="rounded-full bg-(--success-bg) px-2 py-0.5 text-2xs font-bold text-(--success-fg)">Mavjud</span>
+                    </div>
+                    <div className="space-y-2.5 text-xs">
+                      <div className="flex items-center justify-between rounded-control bg-secondary/50 p-2">
+                        <span className="text-muted-foreground">CPU: Core i7-14700K</span>
+                        <span className="font-bold font-mono text-foreground">125W TDP</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-control bg-secondary/50 p-2">
+                        <span className="text-muted-foreground">GPU: RTX 4070 Ti Super</span>
+                        <span className="font-bold font-mono text-foreground">285W TDP</span>
+                      </div>
+                      <div className="flex items-center justify-between rounded-control bg-secondary/50 p-2">
+                        <span className="text-muted-foreground">RAM: 32GB DDR5 6000MHz</span>
+                        <span className="font-bold font-mono text-foreground">Kingston</span>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-border flex items-center justify-between">
+                      <div>
+                        <span className="text-2xs text-muted-foreground">Kutilayotgan umumiy quvvat</span>
+                        <p className="font-bold font-mono text-sm text-primary">~485W (750W PSU tavsiya)</p>
+                      </div>
+                      <span className="text-xs font-bold text-primary">100% Mos</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 6. Mashhur Brendlar */}
+        <section className="py-10 border-b border-border/60">
+          <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 sm:px-6">
+            <div className="mb-6 text-center">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Faqat jahonning yetakchi brendlari va original ehtiyot qismlari
+              </h3>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 opacity-75 hover:opacity-100 transition-opacity">
+              {["Intel", "AMD", "NVIDIA", "ASUS", "MSI", "Gigabyte", "Kingston", "Samsung", "DeepCool", "NZXT", "Corsair"].map((brand) => (
+                <Link
+                  key={brand}
+                  href={`/products?brand=${brand}`}
+                  className="rounded-control px-3.5 py-1.5 font-black text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-all border border-transparent hover:border-border"
+                >
+                  {brand}
+                </Link>
               ))}
             </div>
           </div>

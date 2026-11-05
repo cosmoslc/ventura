@@ -70,15 +70,20 @@ export function ProductCard({
     >
       {/* Rasm va brend bloki */}
       <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-control bg-media p-3">
-        {/* Teglar: Yangi / Hit */}
-        <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
+        {/* Teglar: Yangi / Hit / Chegirma */}
+        <div className="absolute left-2 top-2 z-10 flex flex-col gap-1 items-start">
+          {product.discountPercent !== undefined && product.discountPercent > 0 && (
+            <Badge tone="danger" className="text-2xs font-extrabold tracking-tight shadow-xs">
+              -{product.discountPercent}%
+            </Badge>
+          )}
           {product.isHit && (
-            <Badge tone="danger" className="text-2xs uppercase font-bold tracking-wider">
+            <Badge tone="danger" className="text-2xs uppercase font-bold tracking-wider shadow-xs">
               Hit
             </Badge>
           )}
           {product.isNew && (
-            <Badge tone="info" className="text-2xs uppercase font-bold tracking-wider">
+            <Badge tone="info" className="text-2xs uppercase font-bold tracking-wider shadow-xs">
               Yangi
             </Badge>
           )}
@@ -90,7 +95,7 @@ export function ProductCard({
           size="icon-sm"
           onClick={() => onToggleLike?.(product.id)}
           aria-label="Sevimlilarga qo'shish"
-          className="absolute top-2 right-2 z-10 rounded-avatar bg-card/80 text-foreground shadow-card backdrop-blur-sm"
+          className="absolute top-2 right-2 z-10 rounded-avatar bg-card/85 text-foreground shadow-card backdrop-blur-sm transition-transform active:scale-90 hover:scale-110"
         >
           <Heart
             size={16}

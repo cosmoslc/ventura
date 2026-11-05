@@ -101,7 +101,7 @@ export async function createProjectAction(input: unknown): Promise<Result<{ id: 
         dbStrategy: v.dbStrategy,
         status: "draft",
         brand: v.brand,
-        settings: {},
+        settings: { storeMode: v.storeMode ?? "financial" },
         ownerName: v.ownerName,
         ownerPhone: `+998${v.ownerPhone}`,
         createdBy: viewer.id,
@@ -160,6 +160,7 @@ const generalSchema = z.object({
   mode: z.enum(DEPLOY_MODES),
   target: z.enum(TARGET_KINDS),
   dbStrategy: z.enum(DB_STRATEGIES),
+  storeMode: z.enum(["financial", "inventory"]).optional(),
   storageLimitGb: z.number().positive().max(1000).optional(),
 });
 
@@ -179,12 +180,15 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
   const sharedDbChanged =
     before.dbStrategy !== parsed.data.dbStrategy && [before.dbStrategy, parsed.data.dbStrategy].includes("shared_db");
   if (sharedDbChanged && before.status !== "draft") return { ok: false, error: uz.projects.dbChangeLocked };
-  const { storageLimitGb, ...restFields } = parsed.data;
+  const { storageLimitGb, storeMode, ...restFields } = parsed.data;
   const currentSettings = (before.settings ?? {}) as Record<string, unknown>;
-  const nextSettings =
-    storageLimitGb !== undefined
-      ? { ...currentSettings, storageLimitMb: Math.round(storageLimitGb * 1024) }
-      : currentSettings;
+  let nextSettings = { ...currentSettings };
+  if (storageLimitGb !== undefined) {
+    nextSettings.storageLimitMb = Math.round(storageLimitGb * 1024);
+  }
+  if (storeMode !== undefined) {
+    nextSettings.storeMode = storeMode;
+  }
   await db
     .update(projects)
     .set({ ...restFields, settings: nextSettings })

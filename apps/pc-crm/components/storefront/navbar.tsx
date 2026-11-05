@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   Bell,
   ChevronDown,
+  Heart,
   KeyRound,
   LogOut,
   Menu,
@@ -251,12 +252,26 @@ export function Navbar({
             )}
           </button>
 
+          {/* Sevimlilar (Liked) */}
+          <Link
+            href="/profile/liked"
+            aria-label="Sevimlilar"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
+          >
+            <Heart size={18} className={likedCount > 0 ? "fill-(--danger-fg) text-(--danger-fg)" : ""} />
+            {likedCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-(--danger-fg) px-1 text-2xs font-bold text-white shadow-control">
+                {likedCount}
+              </span>
+            )}
+          </Link>
+
           {/* Savatcha */}
           <button
             type="button"
             onClick={onOpenCart}
             aria-label="Xarid savatchasi"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control cursor-pointer"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (
@@ -384,6 +399,38 @@ export function Navbar({
               className="py-1.5 hover:text-primary transition-colors"
             >
               Kompyuterlar
+            </Link>
+            <Link
+              href="/computers/custom"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-1.5 text-primary hover:underline transition-colors"
+            >
+              <span>Oʻz kompyuteringni terish</span>
+              <Sparkles size={14} />
+            </Link>
+            <Link
+              href="/profile/liked"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-1.5 text-foreground hover:text-primary transition-colors"
+            >
+              <span>Sevimlilar</span>
+              {likedCount > 0 && (
+                <span className="rounded-full bg-(--danger-fg) px-2 py-0.5 text-2xs font-bold text-white">
+                  {likedCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/cart"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center justify-between py-1.5 text-foreground hover:text-primary transition-colors"
+            >
+              <span>Xarid savatchasi</span>
+              {cartCount > 0 && (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-2xs font-bold text-primary-foreground">
+                  {cartCount}
+                </span>
+              )}
             </Link>
             <Link
               href="/faq"

@@ -19,8 +19,10 @@ import { StatCard } from "@ventura/ui/stat-card";
 import { type ProductFormData, ProductFormModal } from "@/components/admin/product-form-modal";
 import { formatMoney } from "@/lib/format";
 import { deleteProductAction, getAdminProductsAction, saveProductAction } from "@/lib/server/actions";
+import { useFinancialMode } from "@/lib/store-context";
 
 export default function AdminProductsPage() {
+  const isFinancial = useFinancialMode();
   const [productsList, setProductsList] = useState<ProductFormData[]>([]);
   const [loadError, setLoadError] = useState("");
   const loadProducts = useCallback(async () => {
@@ -85,6 +87,7 @@ export default function AdminProductsPage() {
   const totalSellValue = productsList.reduce((sum, p) => sum + p.sellPrice * BigInt(p.stock), 0n);
   const expectedProfit = totalSellValue - totalCostValue;
   const lowStockCount = productsList.filter((p) => p.stock <= p.minStock && p.stock > 0).length;
+  const outOfStockCount = productsList.filter((p) => p.stock === 0).length;
 
   const handleOpenNew = () => {
     setEditingProduct(null);
@@ -160,21 +163,43 @@ export default function AdminProductsPage() {
           tone={1}
         />
 
-        <StatCard
-          icon={<TrendingUp />}
-          label="Ombor tannarxi"
-          value={formatMoney(totalCostValue)}
-          tone={2}
-          valueClassName="whitespace-nowrap text-title"
-        />
+        {isFinancial ? (
+          <>
+            <StatCard
+              icon={<TrendingUp />}
+              label="Ombor tannarxi"
+              value={formatMoney(totalCostValue)}
+              tone={2}
+              valueClassName="whitespace-nowrap text-title"
+            />
 
-        <StatCard
-          icon={<Tag />}
-          label="Kutilayotgan sof foyda"
-          value={formatMoney(expectedProfit)}
-          tone={3}
-          valueClassName="whitespace-nowrap text-title"
-        />
+            <StatCard
+              icon={<Tag />}
+              label="Kutilayotgan sof foyda"
+              value={formatMoney(expectedProfit)}
+              tone={3}
+              valueClassName="whitespace-nowrap text-title"
+            />
+          </>
+        ) : (
+          <>
+            <StatCard
+              icon={<Boxes />}
+              label="Ombordagi jami qoldiq"
+              value={`${totalStockUnits} dona`}
+              tone={2}
+              valueClassName="whitespace-nowrap text-title"
+            />
+
+            <StatCard
+              icon={<Tag />}
+              label="Tugagan tovarlar"
+              value={`${outOfStockCount} xil`}
+              tone={3}
+              valueClassName="whitespace-nowrap text-title"
+            />
+          </>
+        )}
 
         <StatCard
           icon={<AlertCircle />}
@@ -233,10 +258,14 @@ export default function AdminProductsPage() {
             <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5">Mahsulot</th>
               <th className="p-3.5">SKU / Brend</th>
-              <th className="p-3.5 text-center">Qoldiq</th>
-              <th className="p-3.5 text-right">Tannarx</th>
-              <th className="p-3.5 text-right">Sotish narxi</th>
-              <th className="p-3.5 text-right">Foyda</th>
+              <th className="p-3.5 text-center">Ombor qoldigʻi</th>
+              {isFinancial && (
+                <>
+                  <th className="p-3.5 text-right">Tannarx</th>
+                  <th className="p-3.5 text-right">Sotish narxi</th>
+                  <th className="p-3.5 text-right">Foyda</th>
+                </>
+              )}
               <th className="p-3.5 text-center">Holat</th>
               <th className="p-3.5 text-right">Amallar</th>
             </tr>
@@ -321,27 +350,32 @@ export default function AdminProductsPage() {
                       </div>
                     </td>
 
-                    {/* Tannarx */}
-                    <td className="p-3.5 text-right font-medium text-muted-foreground">
-                      {formatMoney(p.costPrice)}
-                    </td>
+                    {/* Moliya ustunlari (faqat moliyaviy rejimda) */}
+                    {isFinancial && (
+                      <>
+                        {/* Tannarx */}
+                        <td className="p-3.5 text-right font-medium text-muted-foreground">
+                          {formatMoney(p.costPrice)}
+                        </td>
 
-                    {/* Sotish narxi */}
-                    <td className="p-3.5 text-right font-bold text-foreground">
-                      <div>
-                        {formatMoney(p.sellPrice)}
-                        {p.discountPercent > 0 && (
-                          <span className="block text-2xs text-(--danger-fg)">
-                            -{p.discountPercent}% chegirma
-                          </span>
-                        )}
-                      </div>
-                    </td>
+                        {/* Sotish narxi */}
+                        <td className="p-3.5 text-right font-bold text-foreground">
+                          <div>
+                            {formatMoney(p.sellPrice)}
+                            {p.discountPercent > 0 && (
+                              <span className="block text-2xs text-(--danger-fg)">
+                                -{p.discountPercent}% chegirma
+                              </span>
+                            )}
+                          </div>
+                        </td>
 
-                    {/* Sof foyda */}
-                    <td className="p-3.5 text-right font-bold text-(--success-fg)">
-                      +{formatMoney(profitPerItem)}
-                    </td>
+                        {/* Sof foyda */}
+                        <td className="p-3.5 text-right font-bold text-(--success-fg)">
+                          +{formatMoney(profitPerItem)}
+                        </td>
+                      </>
+                    )}
 
                     {/* Holat */}
                     <td className="p-3.5 text-center">
@@ -385,6 +419,7 @@ export default function AdminProductsPage() {
         onOpenChange={setModalOpen}
         initialData={editingProduct}
         onSave={handleSaveProduct}
+        isFinancial={isFinancial}
       />
     </div>
   );

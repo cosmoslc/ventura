@@ -8,12 +8,17 @@ import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Switch } from "@ventura/ui/switch";
 import { getAdminSettingsAction, saveSettingAction, saveShippingRatesAction } from "@/lib/server/actions";
+import { useStore } from "@/lib/store-context";
 
 export default function AdminSettingsPage() {
-  const [activeTab, setActiveTab] = useState<"finance" | "shipping" | "general" | "modules">("finance");
+  const { branding, setStoreMode: setContextStoreMode } = useStore();
+  const [activeTab, setActiveTab] = useState<"finance" | "shipping" | "general" | "modules">("general");
   const [savedToast, setSavedToast] = useState(false);
   const [error, setError] = useState("");
   const [shippingRates, setShippingRates] = useState<{ region: string; price: string; enabled: boolean; estimatedDays?: string }[]>([]);
+
+  // Doʻkon faoliyat rejimi
+  const [storeMode, setStoreMode] = useState<"financial" | "inventory">(branding.storeMode ?? "financial");
 
   // Moliya sozlamalari
   const [usdRate, setUsdRate] = useState("0");
@@ -42,6 +47,9 @@ export default function AdminSettingsPage() {
     setUsdRate(amount("usd_rate", "amount", "12850"));
     setTaxPercent(amount("tax_percent", "percent", "0"));
     setFreeShippingThreshold(amount("free_shipping_from", "amount", "1000000"));
+    if (data.store_mode === "financial" || data.store_mode === "inventory") {
+      setStoreMode(data.store_mode as "financial" | "inventory");
+    }
     const contacts = data.store_contacts && typeof data.store_contacts === "object" ? data.store_contacts as Record<string, unknown> : {};
     setStoreName(typeof contacts.storeName === "string" ? contacts.storeName : "");
     setStorePhone(typeof contacts.storePhone === "string" ? contacts.storePhone : "");
@@ -67,15 +75,17 @@ export default function AdminSettingsPage() {
       if (values.some((value) => !/^\d+(?:\.\d+)?$/.test(value)) || Number(taxPercent) > 100 || !Number.isInteger(Number(freeShippingThreshold))) {
         throw new Error("Moliya qiymatlari noto'g'ri: soliq 0–100%, chegaralar butun musbat son bo'lishi kerak");
       }
-      const [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult] = await Promise.all([
+      const [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult, modeResult] = await Promise.all([
         saveSettingAction("usd_rate", { amount: Number(usdRate) }),
         saveSettingAction("tax_percent", { percent: Number(taxPercent) }),
         saveSettingAction("free_shipping_from", { amount: freeShippingThreshold }),
         saveSettingAction("store_contacts", { storeName, storePhone, storeTelegram, storeAddress }),
         saveShippingRatesAction(shippingRates.map((rate) => ({ ...rate, price: BigInt(rate.price || "0") }))),
+        saveSettingAction("store_mode", storeMode),
       ]);
-      const failure = [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult].find((result) => !result.success);
+      const failure = [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult, modeResult].find((result) => !result.success);
       if (failure) throw new Error(failure.error ?? "Sozlamalar saqlanmadi");
+      setContextStoreMode(storeMode);
       setError("");
       setSavedToast(true);
       setTimeout(() => setSavedToast(false), 2500);
@@ -312,6 +322,52 @@ export default function AdminSettingsPage() {
                   value={storeAddress}
                   onChange={(e) => setStoreAddress(e.target.value)}
                 />
+              </div>
+
+              {/* Doʻkon faoliyat rejimi tanlagichi */}
+              <div className="rounded-control border border-border bg-muted/20 p-4 space-y-3 mt-4">
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    Doʻkon faoliyat rejimi
+                  </Label>
+                  <p className="text-2xs text-muted-foreground mt-0.5">
+                    Tizim moliyaviy hisob-kitoblar bilan yoki moliyasiz faqat ombor va tovar aylanmasi bilan ishlashini belgilang:
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div
+                    onClick={() => setStoreMode("financial")}
+                    className={`cursor-pointer rounded-control border p-3.5 transition-all ${
+                      storeMode === "financial"
+                        ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary/20"
+                        : "border-border bg-card hover:border-border/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-foreground text-xs">
+                      <span>💳</span> Moliyaviy doʻkon (Toʻliq)
+                    </div>
+                    <p className="mt-1 text-2xs text-muted-foreground leading-relaxed">
+                      Tannarx, sotuv narxlari, sof foyda hisobi, buyurtma summalari va tushumlar bilan toʻliq tizim.
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setStoreMode("inventory")}
+                    className={`cursor-pointer rounded-control border p-3.5 transition-all ${
+                      storeMode === "inventory"
+                        ? "border-primary bg-primary/10 shadow-sm ring-2 ring-primary/20"
+                        : "border-border bg-card hover:border-border/80"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-foreground text-xs">
+                      <span>📦</span> Moliyasiz doʻkon (Faqat ombor)
+                    </div>
+                    <p className="mt-1 text-2xs text-muted-foreground leading-relaxed">
+                      Pul va summalarsiz. Faqat ombor qoldiqlari, tovar oqimi va sotilgan mahsulotlar soni nazorati.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

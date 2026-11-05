@@ -21,6 +21,8 @@ export async function getStoreBranding(): Promise<StoreBranding> {
   let slug = tenant?.slug || "ventura-pc";
   let logoUrl = tenant?.brand?.logoUrl ?? null;
   let primary = tenant?.brand?.primary ?? null;
+  let storeMode: "financial" | "inventory" =
+    (tenant?.storeMode as "financial" | "inventory" | undefined) ?? "financial";
   let phone = "+998 71 200 00 00";
   let telegram = "@venturapc_operator";
   let address = "Toshkent shahri, Yunusobod tumani";
@@ -34,6 +36,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
       logoUrl?: string;
       primary?: string;
       primaryColor?: string;
+      storeMode?: "financial" | "inventory";
     } | undefined;
     const contacts = settings.store_contacts as {
       storeName?: string;
@@ -45,6 +48,12 @@ export async function getStoreBranding(): Promise<StoreBranding> {
       storeAddress?: string;
       email?: string;
     } | undefined;
+
+    if (branding?.storeMode === "financial" || branding?.storeMode === "inventory") {
+      storeMode = branding.storeMode;
+    } else if ((settings as Record<string, unknown>).store_mode === "financial" || (settings as Record<string, unknown>).store_mode === "inventory") {
+      storeMode = (settings as Record<string, unknown>).store_mode as "financial" | "inventory";
+    }
 
     if (branding?.storeName?.trim()) {
       name = branding.storeName.trim();
@@ -83,6 +92,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
     slug,
     logoUrl,
     primary,
+    storeMode,
     contacts: {
       phone,
       telegram,

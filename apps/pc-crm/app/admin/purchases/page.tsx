@@ -19,8 +19,10 @@ import {
 } from "@/components/admin/purchases/purchase-form-modal";
 import { formatDate, formatMoney } from "@/lib/format";
 import { getAdminProductsAction, getAdminPurchasesAction, savePurchaseAction, voidPurchaseAction } from "@/lib/server/actions";
+import { useFinancialMode } from "@/lib/store-context";
 
 export default function AdminPurchasesPage() {
+  const isFinancial = useFinancialMode();
   const [purchases, setPurchases] = useState<(PurchaseItemData & { id: string; voidedAt?: string })[]>([]);
   const [products, setProducts] = useState<{ id: string; name: string; costPrice: bigint }[]>([]);
   const [error, setError] = useState("");
@@ -91,27 +93,29 @@ export default function AdminPurchasesPage() {
       {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
 
       {/* Statistika kartalari */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatCard
-          icon={<DollarSign />}
-          label="Jami kirim xarajati"
-          value={formatMoney(totalSpent)}
-          tone={1}
-          valueClassName="whitespace-nowrap text-title"
-        />
+      <div className={`grid grid-cols-1 gap-4 ${isFinancial ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+        {isFinancial && (
+          <StatCard
+            icon={<DollarSign />}
+            label="Jami kirim xarajati"
+            value={formatMoney(totalSpent)}
+            tone={1}
+            valueClassName="whitespace-nowrap text-title"
+          />
+        )}
 
         <StatCard
           icon={<PackagePlus />}
           label="Xarid qilingan jami dona"
           value={`${totalUnits} dona`}
-          tone={2}
+          tone={isFinancial ? 2 : 1}
         />
 
         <StatCard
           icon={<Truck />}
           label="Kirim partiyalari soni"
           value={`${purchases.filter((p) => !p.voidedAt).length} ta partiya`}
-          tone={3}
+          tone={isFinancial ? 3 : 2}
         />
       </div>
 
@@ -137,8 +141,12 @@ export default function AdminPurchasesPage() {
               <th className="p-3.5">Mahsulot</th>
               <th className="p-3.5 text-center">Turi</th>
               <th className="p-3.5 text-center">Soni</th>
-              <th className="p-3.5 text-right">Dona tannarxi</th>
-              <th className="p-3.5 text-right">Jami summa</th>
+              {isFinancial && (
+                <>
+                  <th className="p-3.5 text-right">Dona tannarxi</th>
+                  <th className="p-3.5 text-right">Jami summa</th>
+                </>
+              )}
               <th className="p-3.5">Yetkazib beruvchi</th>
               <th className="p-3.5 text-center">Holat</th>
               <th className="p-3.5 text-right">Amal</th>
@@ -174,12 +182,16 @@ export default function AdminPurchasesPage() {
                     <td className="p-3.5 text-center font-bold text-foreground">
                       +{item.qty} dona
                     </td>
-                    <td className="p-3.5 text-right font-medium text-muted-foreground">
-                      {formatMoney(item.unitCost)}
-                    </td>
-                    <td className="p-3.5 text-right font-black text-foreground">
-                      {formatMoney(item.totalCost)}
-                    </td>
+                    {isFinancial && (
+                      <>
+                        <td className="p-3.5 text-right font-medium text-muted-foreground">
+                          {formatMoney(item.unitCost)}
+                        </td>
+                        <td className="p-3.5 text-right font-black text-foreground">
+                          {formatMoney(item.totalCost)}
+                        </td>
+                      </>
+                    )}
                     <td className="p-3.5 font-medium text-muted-foreground">
                       {item.supplier ?? "—"}
                     </td>
@@ -214,6 +226,7 @@ export default function AdminPurchasesPage() {
         onOpenChange={setModalOpen}
         products={products}
         onSave={handleSavePurchase}
+        isFinancial={isFinancial}
       />
     </div>
   );

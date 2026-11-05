@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Cpu, HardDrive, Heart, MemoryStick, Monitor, ShoppingCart } from "lucide-react";
+import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { cn } from "@ventura/ui/lib/utils";
@@ -52,13 +53,22 @@ export function PcCard({
     >
       {/* Rasm qismi */}
       <div className="relative mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-control bg-media p-3">
+        {/* Chegirma tegi */}
+        {pc.discountPercent !== undefined && pc.discountPercent > 0 && (
+          <div className="absolute left-2 top-2 z-10">
+            <Badge tone="danger" className="text-2xs font-extrabold tracking-tight shadow-xs">
+              -{pc.discountPercent}%
+            </Badge>
+          </div>
+        )}
+
         {/* Liked button */}
         <Button
           variant="icon"
           size="icon-sm"
           onClick={() => onToggleLike?.(pc.id)}
           aria-label="Sevimlilarga qo'shish"
-          className="absolute top-2 right-2 z-10 rounded-avatar bg-card/80 text-foreground shadow-card backdrop-blur-sm"
+          className="absolute top-2 right-2 z-10 rounded-avatar bg-card/85 text-foreground shadow-card backdrop-blur-sm transition-transform active:scale-90 hover:scale-110"
         >
           <Heart
             size={16}
@@ -78,10 +88,10 @@ export function PcCard({
       </div>
 
       {/* Nomi va reytingi */}
-      <div className="mb-3">
+      <div className="mb-2">
         <Link
           href={`/computers/${pc.slug}`}
-          className="line-clamp-2 text-base font-bold text-foreground transition-colors hover:text-primary"
+          className="line-clamp-2 text-sm sm:text-base font-bold text-foreground transition-colors hover:text-primary"
         >
           {pc.name}
         </Link>
@@ -93,6 +103,36 @@ export function PcCard({
           </span>
         </div>
       </div>
+
+      {/* Mini Tech Specs pimlari */}
+      {(pc.cpu || pc.gpu || pc.ram || pc.storage) && (
+        <div className="mb-3 grid grid-cols-2 gap-1.5 text-2xs">
+          {pc.cpu && (
+            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.cpu}>
+              <Cpu size={12} className="text-primary shrink-0" />
+              <span className="truncate">{pc.cpu.replace(/^Intel\s+|^AMD\s+/i, "")}</span>
+            </div>
+          )}
+          {pc.gpu && (
+            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.gpu}>
+              <Monitor size={12} className="text-primary shrink-0" />
+              <span className="truncate">{pc.gpu.replace(/^NVIDIA\s+|^GeForce\s+/i, "")}</span>
+            </div>
+          )}
+          {pc.ram && (
+            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.ram}>
+              <MemoryStick size={12} className="text-primary shrink-0" />
+              <span className="truncate">{pc.ram.split(" ")[0]}</span>
+            </div>
+          )}
+          {pc.storage && (
+            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.storage}>
+              <HardDrive size={12} className="text-primary shrink-0" />
+              <span className="truncate">{pc.storage.split(" ")[0]}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Narx va tugmalar */}
       <div className="border-t border-border pt-3">

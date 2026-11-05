@@ -76,6 +76,7 @@ interface EditorProps {
     ownerPhone: string | null;
     templateName: string;
     storageLimitMb?: number;
+    storeMode?: "financial" | "inventory";
   };
   clients: { id: string; name: string }[];
   features: Feature[];
@@ -147,6 +148,7 @@ export function ProjectEditor({
     target: project.target,
     dbStrategy: project.dbStrategy,
     storageLimitGb: Math.round(((project.storageLimitMb ?? 5120) / 1024) * 10) / 10,
+    storeMode: project.storeMode ?? "financial",
   });
   const [brand, setBrand] = React.useState(project.brand);
   const [feats, setFeats] = React.useState(() => new Set(enabled));
@@ -424,7 +426,25 @@ export function ProjectEditor({
                     onChange={(e) => setGeneral({ ...general, storageLimitGb: Number(e.target.value) || 1 })}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    O&apos;quv markazi uchun ajratilgan disk hajmi (standart 5 GB).
+                    Tizim uchun ajratilgan disk hajmi (standart 5 GB).
+                  </p>
+                </div>
+                <div>
+                  <Label>Doʻkon faoliyat rejimi</Label>
+                  <Select
+                    value={general.storeMode ?? "financial"}
+                    onValueChange={(v) => setGeneral({ ...general, storeMode: v as "financial" | "inventory" })}
+                  >
+                    <SelectTrigger aria-label="Doʻkon faoliyat rejimi" disabled={!canWrite}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="financial">💳 Moliyaviy doʻkon (Narx, tannarx va foyda)</SelectItem>
+                      <SelectItem value="inventory">📦 Moliyasiz doʻkon (Faqat ombor va tovarlar)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Moliyasiz rejimda barcha narx va summalar yashiriladi.
                   </p>
                 </div>
               </div>

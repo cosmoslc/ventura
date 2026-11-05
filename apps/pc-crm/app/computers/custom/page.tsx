@@ -438,22 +438,32 @@ export default function CustomPcConfiguratorPage() {
                   </div>
                 </div>
 
-                {/* Quvvat hisobi */}
-                <div className="rounded-control bg-primary/10 border border-primary/20 p-3 text-xs">
-                  <div className="flex items-center justify-between font-bold mb-1">
+                {/* Quvvat hisobi (TDP Dashboard Meter) */}
+                <div className="rounded-card bg-secondary/40 border border-border/80 p-3.5 text-xs space-y-2 shadow-xs">
+                  <div className="flex items-center justify-between font-bold">
                     <span className="flex items-center gap-1.5 text-primary">
                       <Zap size={14} />
-                      Tavsiya etilgan quvvat:
+                      Tizim quvvat sarfi (TDP):
                     </span>
-                    <span className="font-mono">
-                      {estimatedTdp > 0 ? `${estimatedTdp}W + (Tavsiya: ${estimatedTdp + 150}W)` : "Kamida 650W"}
+                    <span className="font-mono font-black text-foreground">
+                      {estimatedTdp > 0 ? `${estimatedTdp}W` : "0W"}
                     </span>
                   </div>
-                  <p className="text-caption text-muted-foreground">
-                    {estimatedTdp > 0
-                      ? `Tanlangan CPU va GPU uchun kamida ${estimatedTdp + 150}W quvvat bloki tavsiya etiladi.`
-                      : "Komponentlar quvvat sarfiga qarab avtomatik hisoblanadi."}
-                  </p>
+
+                  {/* Progress bar */}
+                  <div className="h-2 w-full rounded-full bg-border/60 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-primary-hover rounded-full transition-all duration-500"
+                      style={{ width: `${Math.min(100, Math.max(8, (estimatedTdp / 850) * 100))}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-2xs text-muted-foreground pt-0.5">
+                    <span>Tavsiya etilgan PSU:</span>
+                    <span className="font-bold text-foreground font-mono">
+                      {estimatedTdp > 0 ? `${Math.ceil((estimatedTdp + 150) / 50) * 50}W` : "650W+"}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Umumiy narx */}

@@ -75,13 +75,57 @@ function activeFor(pathname: string) {
 }
 
 export function AdminShell({ children }: AdminShellProps) {
-  const { branding } = useStore();
+  const { branding, isFinancial } = useStore();
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const activeId = useMemo(() => activeFor(pathname), [pathname]);
+
+  const navSections: NavSection[] = useMemo(() => [
+    {
+      title: "Boshqaruv",
+      items: [
+        { id: "/admin", label: "Boshqaruv paneli", icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
+        { id: "/admin/products", label: "Mahsulotlar", icon: Boxes, color: "var(--nav-hue-violet)" },
+        {
+          id: "/admin/purchases",
+          label: isFinancial ? "Kirimlar (Ombor)" : "Ombor kirimlari",
+          icon: PackagePlus,
+          color: "var(--nav-hue-green)",
+        },
+        ...(isFinancial
+          ? [{ id: "/admin/sales", label: "Sotuvlar & Foyda", icon: Receipt, color: "var(--nav-hue-amber)" }]
+          : []),
+        { id: "/admin/pcs", label: "PClar (Tayyor)", icon: Monitor, color: "var(--nav-hue-sky)" },
+        { id: "/admin/pc-orders", label: "PC Zakazlar", icon: Wrench, color: "var(--nav-hue-teal)" },
+        { id: "/admin/orders", label: "Buyurtmalar", icon: ShoppingCart, color: "var(--nav-hue-pink)" },
+        { id: "/admin/users", label: "Foydalanuvchilar", icon: Users, color: "var(--nav-hue-orange)" },
+      ],
+    },
+    {
+      title: "Tizim",
+      items: [{ id: "/admin/settings", label: "Sozlamalar", icon: Settings, color: "var(--nav-hue-slate)" }],
+    },
+  ], [isFinancial]);
+
+  const activeId = useMemo(() => {
+    let active = "/admin";
+    let bestLength = 0;
+    for (const section of navSections) {
+      for (const item of section.items) {
+        const matches =
+          item.id === "/admin"
+            ? pathname === item.id
+            : pathname === item.id || pathname.startsWith(`${item.id}/`);
+        if (matches && item.id.length > bestLength) {
+          active = item.id;
+          bestLength = item.id.length;
+        }
+      }
+    }
+    return active;
+  }, [pathname, navSections]);
 
   function toggleSidebar() {
     if (window.matchMedia("(max-width: 900px)").matches) setMobileOpen((open) => !open);
@@ -150,7 +194,7 @@ export function AdminShell({ children }: AdminShellProps) {
 
       <div className="flex min-h-[calc(100dvh-var(--topbar-h))]">
         <Sidebar
-          sections={NAV}
+          sections={navSections}
           activeId={activeId}
           onSelect={(href) => {
             setMobileOpen(false);

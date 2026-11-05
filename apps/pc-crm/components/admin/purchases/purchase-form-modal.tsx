@@ -31,6 +31,7 @@ interface PurchaseFormModalProps {
   onOpenChange: (open: boolean) => void;
   products: { id: string; name: string; costPrice: bigint }[];
   onSave: (purchase: PurchaseItemData) => void;
+  isFinancial?: boolean;
 }
 
 export function PurchaseFormModal({
@@ -38,6 +39,7 @@ export function PurchaseFormModal({
   onOpenChange,
   products,
   onSave,
+  isFinancial = true,
 }: PurchaseFormModalProps) {
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [purchaseType, setPurchaseType] = useState<"piece" | "bulk">("piece");
@@ -153,52 +155,54 @@ export function PurchaseFormModal({
           </Select>
         </div>
 
-        {/* Kirim turi: Dona yoki Optom */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-semibold">Kirim hisoblash turi</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                setPurchaseType("piece");
-                const u = BigInt(unitCostStr || "0");
-                setTotalCostStr((u * BigInt(qty || 1)).toString());
-              }}
-              className={`rounded-control border p-2.5 text-center font-bold transition-all ${
-                purchaseType === "piece"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-secondary"
-              }`}
-            >
-              Dona hisobi
-              <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
-                (Dona narxi × Soni = Jami)
-              </span>
-            </button>
+        {/* Kirim turi: Dona yoki Optom (faqat moliyaviy rejimda) */}
+        {isFinancial && (
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold">Kirim hisoblash turi</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setPurchaseType("piece");
+                  const u = BigInt(unitCostStr || "0");
+                  setTotalCostStr((u * BigInt(qty || 1)).toString());
+                }}
+                className={`rounded-control border p-2.5 text-center font-bold transition-all ${
+                  purchaseType === "piece"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                Dona hisobi
+                <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
+                  (Dona narxi × Soni = Jami)
+                </span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setPurchaseType("bulk");
-                const t = BigInt(totalCostStr || "0");
-                setUnitCostStr(calcUnitCost(t, qty || 1).toString());
-              }}
-              className={`rounded-control border p-2.5 text-center font-bold transition-all ${
-                purchaseType === "bulk"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:bg-secondary"
-              }`}
-            >
-              Optom (Partiya)
-              <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
-                (Jami summa / Soni = Dona tannarxi)
-              </span>
-            </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setPurchaseType("bulk");
+                  const t = BigInt(totalCostStr || "0");
+                  setUnitCostStr(calcUnitCost(t, qty || 1).toString());
+                }}
+                className={`rounded-control border p-2.5 text-center font-bold transition-all ${
+                  purchaseType === "bulk"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                Optom (Partiya)
+                <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
+                  (Jami summa / Soni = Dona tannarxi)
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Soni, Narxlar va Jonli hisob */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className={`grid grid-cols-1 gap-3 ${isFinancial ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           <div className="space-y-1">
             <Label className="text-xs font-semibold">Xarid qilingan soni (dona) *</Label>
             <Input
@@ -209,24 +213,26 @@ export function PurchaseFormModal({
             />
           </div>
 
-          {purchaseType === "piece" ? (
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">1 dona tannarxi (soʻm) *</Label>
-              <Input
-                type="number"
-                value={unitCostStr}
-                onChange={(e) => handleUnitCostChange(e.target.value)}
-              />
-            </div>
-          ) : (
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Jami partiya summasi (soʻm) *</Label>
-              <Input
-                type="number"
-                value={totalCostStr}
-                onChange={(e) => handleTotalCostChange(e.target.value)}
-              />
-            </div>
+          {isFinancial && (
+            purchaseType === "piece" ? (
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">1 dona tannarxi (soʻm) *</Label>
+                <Input
+                  type="number"
+                  value={unitCostStr}
+                  onChange={(e) => handleUnitCostChange(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Jami partiya summasi (soʻm) *</Label>
+                <Input
+                  type="number"
+                  value={totalCostStr}
+                  onChange={(e) => handleTotalCostChange(e.target.value)}
+                />
+              </div>
+            )
           )}
 
           <div className="space-y-1">
@@ -239,22 +245,24 @@ export function PurchaseFormModal({
           </div>
         </div>
 
-        {/* Hisob xulosasi bloki */}
-        <div className="flex items-center justify-between rounded-card border border-border bg-muted/20 p-3.5">
-          <div>
-            <p className="text-caption text-muted-foreground">Hisoblangan 1 dona tannarxi:</p>
-            <p className="text-base font-black text-foreground">
-              {formatMoney(BigInt(unitCostStr || "0"))}
-            </p>
-          </div>
+        {/* Hisob xulosasi bloki (faqat moliyaviy rejimda) */}
+        {isFinancial && (
+          <div className="flex items-center justify-between rounded-card border border-border bg-muted/20 p-3.5">
+            <div>
+              <p className="text-caption text-muted-foreground">Hisoblangan 1 dona tannarxi:</p>
+              <p className="text-base font-black text-foreground">
+                {formatMoney(BigInt(unitCostStr || "0"))}
+              </p>
+            </div>
 
-          <div className="text-right">
-            <p className="text-caption text-muted-foreground">Jami toʻlangan summa:</p>
-            <p className="text-base font-black text-primary">
-              {formatMoney(BigInt(totalCostStr || "0"))}
-            </p>
+            <div className="text-right">
+              <p className="text-caption text-muted-foreground">Jami toʻlangan summa:</p>
+              <p className="text-base font-black text-primary">
+                {formatMoney(BigInt(totalCostStr || "0"))}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Yetkazib beruvchi va izoh */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

@@ -115,6 +115,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             typeof (p.settings as Record<string, unknown> | null)?.storageLimitMb === "number"
               ? ((p.settings as Record<string, unknown>).storageLimitMb as number)
               : 5120,
+          storeMode:
+            ((p.settings as Record<string, unknown> | null)?.storeMode as "financial" | "inventory" | undefined) ??
+            "financial",
         }}
         clients={cls}
         features={(tpl[0]?.manifest as Feature[] | undefined) ?? []}

@@ -54,18 +54,26 @@ export function CartDrawer() {
             </button>
           </div>
 
-          {/* Bepul yetkazish indikatori */}
+          {/* Bepul yetkazish indikatori va progress bar */}
           {items.length > 0 && (
-            <div className="mt-3 rounded-control border border-primary/20 bg-primary/5 p-2.5 text-xs">
+            <div className="mt-3 rounded-card border border-primary/20 bg-primary/5 p-3 text-xs space-y-2">
               {remainingForFreeShipping > 0n ? (
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground leading-snug">
                   Yana <span className="font-bold text-primary">{formatMoney(remainingForFreeShipping)}</span> xarid qiling va <span className="font-semibold text-foreground">bepul yetkazib berish</span>ga ega boʻling!
                 </p>
               ) : (
-                <p className="font-bold text-(--success-fg)">
+                <p className="font-bold text-(--success-fg) flex items-center gap-1.5">
                   🎉 Tabriklaymiz! Siz uchun yetkazib berish mutlaqo bepul!
                 </p>
               )}
+              <div className="h-1.5 w-full rounded-full bg-border/60 overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min(100, Number((subtotal * 100n) / freeShippingTarget))}%`,
+                  }}
+                />
+              </div>
             </div>
           )}
         </div>

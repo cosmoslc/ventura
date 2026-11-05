@@ -44,6 +44,7 @@ import { calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
 import { type PcOrderItem } from "@/lib/pc-data";
 import { getAdminPcOrdersAction, updatePcOrderStatusAction } from "@/lib/server/actions";
+import { useFinancialMode } from "@/lib/store-context";
 
 const STATUS_LABELS: Record<PcOrderItem["status"], { label: string; tone: "info" | "warning" | "success" | "danger" | "neutral" }> = {
   new: { label: "Yangi zakaz", tone: "info" },
@@ -67,6 +68,7 @@ const ORDER_TIMELINE_STEPS: { status: PcOrderItem["status"]; title: string; desc
 ];
 
 export default function AdminPcOrdersPage() {
+  const isFinancial = useFinancialMode();
   const [orders, setOrders] = useState<PcOrderItem[]>([]);
 
   const loadOrders = useCallback(async () => {
@@ -212,7 +214,11 @@ export default function AdminPcOrdersPage() {
         <StatCard icon={<Layers />} label="Yangi zakazlar" value={`${stats.newCount} ta`} tone={1} />
         <StatCard icon={<Clock />} label="Jarayonda" value={`${stats.inProgressCount} ta`} tone={2} />
         <StatCard icon={<CheckCircle2 />} label="Tayyor / Yetkazilgan" value={`${stats.readyDeliveredCount} ta`} tone={3} />
-        <StatCard icon={<Wrench />} label="Kutilayotgan umumiy qiymat" value={formatMoney(stats.totalRevenue)} tone={4} valueClassName="whitespace-nowrap text-title" />
+        {isFinancial ? (
+          <StatCard icon={<Wrench />} label="Kutilayotgan umumiy qiymat" value={formatMoney(stats.totalRevenue)} tone={4} valueClassName="whitespace-nowrap text-title" />
+        ) : (
+          <StatCard icon={<Wrench />} label="Jami buyurtmalar" value={`${orders.length} ta`} tone={4} />
+        )}
       </div>
 
       {/* Filterlar qatori */}
@@ -257,8 +263,14 @@ export default function AdminPcOrdersPage() {
             <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5">Zakaz qilingan PC</th>
               <th className="p-3.5 whitespace-nowrap">Zakaschi</th>
-              <th className="p-3.5 text-right whitespace-nowrap">Tannarx</th>
-              <th className="p-3.5 text-right whitespace-nowrap">Kelishilgan narx</th>
+              {isFinancial ? (
+                <>
+                  <th className="p-3.5 text-right whitespace-nowrap">Tannarx</th>
+                  <th className="p-3.5 text-right whitespace-nowrap">Kelishilgan narx</th>
+                </>
+              ) : (
+                <th className="p-3.5 text-center whitespace-nowrap">Tarkibiy qismlar</th>
+              )}
               <th className="p-3.5 text-center whitespace-nowrap">Status</th>
               <th className="p-3.5 text-right whitespace-nowrap">Amallar</th>
             </tr>
@@ -306,21 +318,31 @@ export default function AdminPcOrdersPage() {
                       )}
                     </td>
 
-                    {/* 3. Tannarx */}
-                    <td className="p-3.5 text-right font-mono font-semibold text-muted-foreground whitespace-nowrap">
-                      {formatMoney(order.costPrice)}
-                    </td>
+                    {isFinancial ? (
+                      <>
+                        {/* 3. Tannarx */}
+                        <td className="p-3.5 text-right font-mono font-semibold text-muted-foreground whitespace-nowrap">
+                          {formatMoney(order.costPrice)}
+                        </td>
 
-                    {/* 4. Kelishilgan narx */}
-                    <td className="p-3.5 text-right font-black text-foreground whitespace-nowrap">
-                      {hasQuote ? (
-                        formatMoney(order.quotedPrice!)
-                      ) : (
-                        <span className="text-caption text-muted-foreground italic font-normal">
-                          Belgilanmagan
+                        {/* 4. Kelishilgan narx */}
+                        <td className="p-3.5 text-right font-black text-foreground whitespace-nowrap">
+                          {hasQuote ? (
+                            formatMoney(order.quotedPrice!)
+                          ) : (
+                            <span className="text-caption text-muted-foreground italic font-normal">
+                              Belgilanmagan
+                            </span>
+                          )}
+                        </td>
+                      </>
+                    ) : (
+                      <td className="p-3.5 text-center whitespace-nowrap">
+                        <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-2xs font-semibold text-muted-foreground">
+                          {order.components?.length || 0} ta butlovchi
                         </span>
-                      )}
-                    </td>
+                      </td>
+                    )}
 
                     {/* 5. Status (To'g'ridan-to'g'ri o'zgaruvchan toza Selector Box, ortiqcha Badge'siz) */}
                     <td className="p-3.5 text-center whitespace-nowrap">
@@ -386,10 +408,12 @@ export default function AdminPcOrdersPage() {
                             <Compass className="size-4 mr-2 text-amber-500" />
                             <span>Kuzatish</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onSelect={() => setSelectedForProfit(order)}>
-                            <TrendingUp className="size-4 mr-2 text-(--success-fg)" />
-                            <span>Foyda koʻrish</span>
-                          </DropdownMenuItem>
+                          {isFinancial && (
+                            <DropdownMenuItem onSelect={() => setSelectedForProfit(order)}>
+                              <TrendingUp className="size-4 mr-2 text-(--success-fg)" />
+                              <span>Foyda koʻrish</span>
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onSelect={() => window.open(`tel:${order.customerPhone}`, "_self")}>
                             <PhoneCall className="size-4 mr-2 text-primary" />
@@ -480,36 +504,39 @@ export default function AdminPcOrdersPage() {
                       </span>
                       <span className="font-semibold text-foreground">{c.productName}</span>
                     </div>
-                    <span className="font-mono text-xs text-foreground font-bold whitespace-nowrap pl-2">
-                      {formatMoney(c.price)}
-                    </span>
+                    {isFinancial && (
+                      <span className="font-mono text-xs text-foreground font-bold whitespace-nowrap pl-2">
+                        {formatMoney(c.price)}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Hisob-kitob qatori */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border">
-              <div className="rounded-control bg-muted/40 p-3 text-xs">
-                <span className="text-muted-foreground block">Komponentlar tannarxi:</span>
-                <span className="font-mono font-bold text-base text-foreground mt-0.5 block">
-                  {formatMoney(selectedForDetail.costPrice)}
-                </span>
-              </div>
+            {/* Hisob-kitob qatori (faqat moliyaviy rejimda) */}
+            {isFinancial && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border">
+                <div className="rounded-control bg-muted/40 p-3 text-xs">
+                  <span className="text-muted-foreground block">Komponentlar tannarxi:</span>
+                  <span className="font-mono font-bold text-base text-foreground mt-0.5 block">
+                    {formatMoney(selectedForDetail.costPrice)}
+                  </span>
+                </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Kelishilgan narx (UZS) *
-                </Label>
-                <Input
-                  required
-                  value={quotePriceStr}
-                  onChange={(e) => setQuotePriceStr(e.target.value)}
-                  placeholder="Masalan: 18500000"
-                  className="font-mono text-xs font-bold"
-                />
+                <div className="space-y-1">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Kelishilgan narx (UZS)
+                  </Label>
+                  <Input
+                    value={quotePriceStr}
+                    onChange={(e) => setQuotePriceStr(e.target.value)}
+                    placeholder="Masalan: 18500000"
+                    className="font-mono text-xs font-bold"
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Status va Operator izohi */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">

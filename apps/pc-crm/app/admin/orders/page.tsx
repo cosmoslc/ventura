@@ -19,6 +19,7 @@ import { Modal } from "@ventura/ui/modal";
 import { StatCard } from "@ventura/ui/stat-card";
 import { formatDate, formatMoney } from "@/lib/format";
 import { getAdminOrdersAction, updateOrderStatusAction } from "@/lib/server/actions";
+import { useFinancialMode } from "@/lib/store-context";
 
 export interface OrderItemDetail {
   name: string;
@@ -44,6 +45,7 @@ export interface AdminOrder {
 }
 
 export default function AdminOrdersPage() {
+  const isFinancial = useFinancialMode();
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [error, setError] = useState("");
 
@@ -144,13 +146,22 @@ export default function AdminOrdersPage() {
           tone={3}
         />
 
-        <StatCard
-          icon={<ShoppingCart />}
-          label="Jami buyurtmalar summasi"
-          value={formatMoney(orders.reduce((sum, o) => sum + o.total, 0n))}
-          tone={4}
-          valueClassName="whitespace-nowrap text-title"
-        />
+        {isFinancial ? (
+          <StatCard
+            icon={<ShoppingCart />}
+            label="Jami buyurtmalar summasi"
+            value={formatMoney(orders.reduce((sum, o) => sum + o.total, 0n))}
+            tone={4}
+            valueClassName="whitespace-nowrap text-title"
+          />
+        ) : (
+          <StatCard
+            icon={<ShoppingCart />}
+            label="Jami buyurtmalar soni"
+            value={`${orders.length} ta`}
+            tone={4}
+          />
+        )}
       </div>
 
       {/* Qidiruv va Filtr */}
@@ -190,7 +201,11 @@ export default function AdminOrdersPage() {
               <th className="p-3.5">ID / Sana</th>
               <th className="p-3.5">Xaridor</th>
               <th className="p-3.5">Hudud / Manzil</th>
-              <th className="p-3.5 text-right">Summa</th>
+              {isFinancial ? (
+                <th className="p-3.5 text-right">Summa</th>
+              ) : (
+                <th className="p-3.5 text-center">Tovarlar soni</th>
+              )}
               <th className="p-3.5">Toʻlov usuli</th>
               <th className="p-3.5 text-center">Status</th>
               <th className="p-3.5 text-right">Tafsilot</th>
@@ -224,9 +239,17 @@ export default function AdminOrdersPage() {
                     </p>
                   </td>
 
-                  <td className="p-3.5 text-right font-black text-foreground">
-                    {formatMoney(order.total)}
-                  </td>
+                  {isFinancial ? (
+                    <td className="p-3.5 text-right font-black text-foreground">
+                      {formatMoney(order.total)}
+                    </td>
+                  ) : (
+                    <td className="p-3.5 text-center font-bold text-foreground">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-2xs font-semibold text-muted-foreground">
+                        {order.items?.reduce((s, i) => s + i.qty, 0) || 0} dona
+                      </span>
+                    </td>
+                  )}
 
                   <td className="p-3.5 font-medium text-muted-foreground">
                     {order.paymentMethod}
@@ -342,37 +365,45 @@ export default function AdminOrdersPage() {
                       <div>
                         <p className="font-bold text-foreground">{item.name}</p>
                         <p className="text-caption text-muted-foreground">
-                          {item.qty} dona × {formatMoney(item.price)} (Tannarxi: {formatMoney(item.cost)})
+                          {isFinancial ? (
+                            `${item.qty} dona × ${formatMoney(item.price)} (Tannarxi: ${formatMoney(item.cost)})`
+                          ) : (
+                            `${item.qty} dona`
+                          )}
                         </p>
                       </div>
 
-                      <div className="text-right">
-                        <p className="font-black text-foreground">{formatMoney(item.price * BigInt(item.qty))}</p>
-                        <p className="text-2xs text-(--success-fg) font-semibold">
-                          +{formatMoney(itemProfit * BigInt(item.qty))} sof foyda
-                        </p>
-                      </div>
+                      {isFinancial && (
+                        <div className="text-right">
+                          <p className="font-black text-foreground">{formatMoney(item.price * BigInt(item.qty))}</p>
+                          <p className="text-2xs text-(--success-fg) font-semibold">
+                            +{formatMoney(itemProfit * BigInt(item.qty))} sof foyda
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            {/* Hisob-kitob jami */}
-            <div className="rounded-card border border-border p-3.5 space-y-1.5 text-muted-foreground">
-              <div className="flex justify-between">
-                <span>Oraliq summa:</span>
-                <span className="font-bold text-foreground">{formatMoney(selectedOrder.subtotal)}</span>
+            {/* Hisob-kitob jami (faqat moliyaviy rejimda) */}
+            {isFinancial && (
+              <div className="rounded-card border border-border p-3.5 space-y-1.5 text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Oraliq summa:</span>
+                  <span className="font-bold text-foreground">{formatMoney(selectedOrder.subtotal)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Yetkazib berish narxi:</span>
+                  <span className="font-bold text-foreground">{formatMoney(selectedOrder.shipping)}</span>
+                </div>
+                <div className="flex justify-between border-t border-border pt-2 text-sm font-black text-foreground">
+                  <span>Jami summa:</span>
+                  <span className="text-primary font-black">{formatMoney(selectedOrder.total)}</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span>Yetkazib berish narxi:</span>
-                <span className="font-bold text-foreground">{formatMoney(selectedOrder.shipping)}</span>
-              </div>
-              <div className="flex justify-between border-t border-border pt-2 text-sm font-black text-foreground">
-                <span>Jami summa:</span>
-                <span className="text-primary font-black">{formatMoney(selectedOrder.total)}</span>
-              </div>
-            </div>
+            )}
           </div>
         </Modal>
       )}

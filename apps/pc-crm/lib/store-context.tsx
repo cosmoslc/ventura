@@ -2,11 +2,14 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 
+export type StoreMode = "financial" | "inventory";
+
 export interface StoreBranding {
   name: string;
   slug: string;
   logoUrl?: string | null;
   primary?: string | null;
+  storeMode?: StoreMode;
   contacts?: {
     phone?: string;
     telegram?: string;
@@ -20,6 +23,7 @@ const DEFAULT_BRANDING: StoreBranding = {
   slug: "ventura-pc",
   logoUrl: null,
   primary: null,
+  storeMode: "financial",
   contacts: {
     phone: "+998 71 200 00 00",
     telegram: "@venturapc_operator",
@@ -30,12 +34,16 @@ const DEFAULT_BRANDING: StoreBranding = {
 
 interface StoreContextValue {
   branding: StoreBranding;
+  isFinancial: boolean;
   setBranding: (branding: StoreBranding) => void;
+  setStoreMode: (mode: StoreMode) => void;
 }
 
 const StoreContext = createContext<StoreContextValue>({
   branding: DEFAULT_BRANDING,
+  isFinancial: true,
   setBranding: () => {},
+  setStoreMode: () => {},
 });
 
 export function StoreProvider({
@@ -47,11 +55,25 @@ export function StoreProvider({
 }) {
   const [branding, setBranding] = useState<StoreBranding>(initialBranding ?? DEFAULT_BRANDING);
 
-  const value = useMemo(() => ({ branding, setBranding }), [branding]);
+  const setStoreMode = (mode: StoreMode) => {
+    setBranding((prev) => ({ ...prev, storeMode: mode }));
+  };
+
+  const isFinancial = branding.storeMode !== "inventory";
+
+  const value = useMemo(
+    () => ({ branding, isFinancial, setBranding, setStoreMode }),
+    [branding, isFinancial],
+  );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }
 
 export function useStore() {
   return useContext(StoreContext);
+}
+
+export function useFinancialMode(): boolean {
+  const { isFinancial } = useStore();
+  return isFinancial;
 }
