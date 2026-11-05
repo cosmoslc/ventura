@@ -55,13 +55,13 @@ export function ProductFormModal({
   const [sku, setSku] = useState("");
   const [imageUrl, setImageUrl] = useState("");
 
-  const [costPriceStr, setCostPriceStr] = useState("1000000");
-  const [marginPercentStr, setMarginPercentStr] = useState("20");
-  const [sellPriceStr, setSellPriceStr] = useState("1200000");
-  const [discountPercentStr, setDiscountPercentStr] = useState("0");
+  const [costPriceStr, setCostPriceStr] = useState("");
+  const [marginPercentStr, setMarginPercentStr] = useState("");
+  const [sellPriceStr, setSellPriceStr] = useState("");
+  const [discountPercentStr, setDiscountPercentStr] = useState("");
 
-  const [stockStr, setStockStr] = useState("0");
-  const [minStockStr, setMinStockStr] = useState("0");
+  const [stockStr, setStockStr] = useState("");
+  const [minStockStr, setMinStockStr] = useState("");
   const [isNew, setIsNew] = useState(true);
   const [isHit, setIsHit] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -95,12 +95,12 @@ export function ProductFormModal({
       setBrandName("");
       setSku("");
       setImageUrl("");
-      setCostPriceStr("1000000");
-      setMarginPercentStr("20");
-      setSellPriceStr("1200000");
-      setDiscountPercentStr("0");
-      setStockStr("0");
-      setMinStockStr("0");
+      setCostPriceStr("");
+      setMarginPercentStr("");
+      setSellPriceStr("");
+      setDiscountPercentStr("");
+      setStockStr("");
+      setMinStockStr("");
       setIsNew(true);
       setIsHit(false);
       setIsActive(true);
@@ -275,7 +275,7 @@ export function ProductFormModal({
                   value={costPriceStr}
                   onChange={(e) => handleCostChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="1 000 000"
+                  placeholder="Masalan: 1 000 000"
                 />
               </div>
 
@@ -287,10 +287,7 @@ export function ProductFormModal({
                   value={marginPercentStr}
                   onChange={(e) => handleMarginChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  onBlur={() => {
-                    if (!marginPercentStr) setMarginPercentStr("0");
-                  }}
-                  placeholder="20"
+                  placeholder="Masalan: 20"
                 />
               </div>
 
@@ -302,7 +299,7 @@ export function ProductFormModal({
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="1 200 000"
+                  placeholder="Masalan: 1 200 000"
                 />
               </div>
 
@@ -316,9 +313,6 @@ export function ProductFormModal({
                   value={discountPercentStr}
                   onChange={(e) => setDiscountPercentStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  onBlur={() => {
-                    if (!discountPercentStr) setDiscountPercentStr("0");
-                  }}
                   placeholder="0"
                 />
               </div>
@@ -354,9 +348,6 @@ export function ProductFormModal({
                   value={stockStr}
                   onChange={(e) => setStockStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  onBlur={() => {
-                    if (!stockStr) setStockStr("0");
-                  }}
                   placeholder="0"
                 />
               </div>
@@ -370,9 +361,6 @@ export function ProductFormModal({
                   value={minStockStr}
                   onChange={(e) => setMinStockStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  onBlur={() => {
-                    if (!minStockStr) setMinStockStr("0");
-                  }}
                   placeholder="0"
                 />
               </div>

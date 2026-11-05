@@ -43,9 +43,9 @@ export function PurchaseFormModal({
 }: PurchaseFormModalProps) {
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [purchaseType, setPurchaseType] = useState<"piece" | "bulk">("piece");
-  const [qtyStr, setQtyStr] = useState("10");
-  const [unitCostStr, setUnitCostStr] = useState("1000000");
-  const [totalCostStr, setTotalCostStr] = useState("10000000");
+  const [qtyStr, setQtyStr] = useState("");
+  const [unitCostStr, setUnitCostStr] = useState("");
+  const [totalCostStr, setTotalCostStr] = useState("");
   const [supplier, setSupplier] = useState("");
   const [note, setNote] = useState("");
   const [updateProductCost, setUpdateProductCost] = useState(true);
@@ -213,11 +213,7 @@ export function PurchaseFormModal({
               value={qtyStr}
               onChange={(e) => handleQtyChange(e.target.value)}
               onFocus={(e) => e.target.select()}
-              onBlur={() => {
-                if (!qtyStr || parseInt(qtyStr, 10) < 1) {
-                  handleQtyChange("1");
-                }
-              }}
+              placeholder="1"
             />
           </div>
 
@@ -231,6 +227,7 @@ export function PurchaseFormModal({
                   value={unitCostStr}
                   onChange={(e) => handleUnitCostChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
+                  placeholder="Masalan: 1 000 000"
                 />
               </div>
             ) : (
@@ -242,6 +239,7 @@ export function PurchaseFormModal({
                   value={totalCostStr}
                   onChange={(e) => handleTotalCostChange(e.target.value)}
                   onFocus={(e) => e.target.select()}
+                  placeholder="Masalan: 10 000 000"
                 />
               </div>
             )

@@ -42,7 +42,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("+998 ");
-  const [qtyStr, setQtyStr] = useState("1");
+  const [qtyStr, setQtyStr] = useState("");
   const [soldPriceStr, setSoldPriceStr] = useState("0");
   const [soldAt, setSoldAt] = useState(new Date().toISOString().slice(0, 10));
 
@@ -187,9 +187,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
                 value={qtyStr}
                 onChange={(e) => setQtyStr(e.target.value)}
                 onFocus={(e) => e.target.select()}
-                onBlur={() => {
-                  if (!qtyStr || parseInt(qtyStr, 10) < 1) setQtyStr("1");
-                }}
+                placeholder="1"
               />
             </div>
 
@@ -211,6 +209,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
                 value={soldPriceStr}
                 onChange={(e) => setSoldPriceStr(e.target.value)}
                 onFocus={(e) => e.target.select()}
+                placeholder="0"
               />
             </div>
           </div>
@@ -224,9 +223,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
               value={qtyStr}
               onChange={(e) => setQtyStr(e.target.value)}
               onFocus={(e) => e.target.select()}
-              onBlur={() => {
-                if (!qtyStr || parseInt(qtyStr, 10) < 1) setQtyStr("1");
-              }}
+              placeholder="1"
             />
           </div>
         )}

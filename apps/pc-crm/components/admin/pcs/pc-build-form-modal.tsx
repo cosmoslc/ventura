@@ -42,9 +42,9 @@ export function PcBuildFormModal({
   const [components, setComponents] = useState<(PcComponentItem & { qtyStr?: string })[]>([]);
 
   // Narxlar va Marja
-  const [sellPriceStr, setSellPriceStr] = useState("20000000");
-  const [marginPercentStr, setMarginPercentStr] = useState("20");
-  const [discountPercentStr, setDiscountPercentStr] = useState("0");
+  const [sellPriceStr, setSellPriceStr] = useState("");
+  const [marginPercentStr, setMarginPercentStr] = useState("");
+  const [discountPercentStr, setDiscountPercentStr] = useState("");
 
   // Spetsifikatsiyalar
   const [specs, setSpecs] = useState<PcSpecItem[]>([]);
@@ -65,10 +65,10 @@ export function PcBuildFormModal({
       setSlug("");
       setImageUrl("");
       setStatus("available");
-      setDiscountPercentStr("0");
-      setMarginPercentStr("20");
+      setDiscountPercentStr("");
+      setMarginPercentStr("");
       setComponents([]);
-      setSellPriceStr("0");
+      setSellPriceStr("");
       setSpecs([]);
     }
   }, [initialData, open]);
@@ -455,9 +455,7 @@ export function PcBuildFormModal({
                     handleMarginChange(parseInt(e.target.value || "0", 10));
                   }}
                   onFocus={(e) => e.target.select()}
-                  onBlur={() => {
-                    if (!marginPercentStr) setMarginPercentStr("0");
-                  }}
+                  placeholder="Masalan: 20"
                 />
               </div>
 
@@ -469,7 +467,7 @@ export function PcBuildFormModal({
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  placeholder="26 500 000"
+                  placeholder="Masalan: 20 000 000"
                 />
               </div>
 
@@ -483,9 +481,7 @@ export function PcBuildFormModal({
                   value={discountPercentStr}
                   onChange={(e) => setDiscountPercentStr(e.target.value)}
                   onFocus={(e) => e.target.select()}
-                  onBlur={() => {
-                    if (!discountPercentStr) setDiscountPercentStr("0");
-                  }}
+                  placeholder="0"
                 />
               </div>
             </div>
