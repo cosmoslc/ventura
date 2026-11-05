@@ -80,9 +80,6 @@ export default function AdminPurchasesPage() {
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Omborga kirimlar hisobi
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Dona va optom xaridlar jurnali, yetkazib beruvchilar va tannarx nazorati
-          </p>
         </div>
 
         <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} className="gap-1.5 font-bold">

@@ -141,9 +141,6 @@ export default function AdminProductsPage() {
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Mahsulotlar katalogi
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Doʻkondagi barcha tovarlar, ombor qoldigʻi va narxlar boshqaruvi
-          </p>
         </div>
 
         <Button variant="primary" size="sm" onClick={handleOpenNew} className="gap-1.5 font-bold">

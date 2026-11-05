@@ -98,9 +98,6 @@ export default function AdminUsersPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Foydalanuvchilar boshqaruvi</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Saytda roʻyxatdan oʻtgan mijozlar, ularning xarid tarixi va xavfsizlik holati
-          </p>
         </div>
       </div>
 

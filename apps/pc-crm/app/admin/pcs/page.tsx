@@ -147,9 +147,6 @@ export default function AdminPcsPage() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Tayyor kompyuterlar</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Ombordagi komponentlardan yigʻilgan kompyuterlar katalogi va tannarx boshqaruvi
-          </p>
         </div>
 
         <Button

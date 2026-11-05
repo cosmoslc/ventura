@@ -116,9 +116,6 @@ export default function AdminOrdersPage() {
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Sayt buyurtmalari
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Xaridorlarning buyurtmalari, manzil, statuslar va yetkazib berish nazorati
-          </p>
         </div>
       </div>
 

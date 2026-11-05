@@ -133,9 +133,6 @@ export default function AdminPcOrdersPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight">PC Zakazlar</h1>
-          <p className="text-xs sm:text-sm text-muted-foreground">
-            Mijozlar onlayn konfigurator orqali tanlagan individual kompyuter yigʻish buyurtmalari
-          </p>
         </div>
       </div>
 

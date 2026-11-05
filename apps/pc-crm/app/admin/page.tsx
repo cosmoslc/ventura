@@ -40,9 +40,6 @@ export default async function AdminDashboardPage() {
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Boshqaruv paneli
           </h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            Ombor holati, kirimlar, sotuvlar va doʻkon statistikasi
-          </p>
         </div>
 
         {/* Tezkor amallar tugmalari */}
