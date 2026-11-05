@@ -42,7 +42,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [buyerName, setBuyerName] = useState("");
   const [buyerPhone, setBuyerPhone] = useState("+998 ");
-  const [qty, setQty] = useState(1);
+  const [qtyStr, setQtyStr] = useState("1");
   const [soldPriceStr, setSoldPriceStr] = useState("0");
   const [soldAt, setSoldAt] = useState(new Date().toISOString().slice(0, 10));
 
@@ -65,9 +65,10 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
   const costSnapshot = selectedProduct?.costPrice ?? 0n;
   const listPrice = selectedProduct?.sellPrice ?? 0n;
   const soldPrice = BigInt(soldPriceStr || "0");
+  const qty = Math.max(1, parseInt(qtyStr || "1", 10));
 
-  const totalRevenue = soldPrice * BigInt(qty || 1);
-  const profit = calcItemProfit(soldPrice, costSnapshot, qty || 1);
+  const totalRevenue = soldPrice * BigInt(qty);
+  const profit = calcItemProfit(soldPrice, costSnapshot, qty);
   const marginPercent = calcMarginPercent(profit, totalRevenue);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -77,6 +78,8 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
       return;
     }
 
+    const finalQty = Math.max(1, parseInt(qtyStr || "1", 10));
+
     onSave({
       source: "offline",
       type: "product",
@@ -84,7 +87,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
       productName: selectedProduct.name,
       buyerName: buyerName.trim(),
       buyerPhone: buyerPhone.trim(),
-      qty,
+      qty: finalQty,
       listPrice: isFinancial ? listPrice : 0n,
       soldPrice: isFinancial ? soldPrice : 0n,
       costSnapshot: isFinancial ? costSnapshot : 0n,
@@ -181,8 +184,12 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
                 id="sale-qty"
                 type="number"
                 min={1}
-                value={qty}
-                onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+                value={qtyStr}
+                onChange={(e) => setQtyStr(e.target.value)}
+                onFocus={(e) => e.target.select()}
+                onBlur={() => {
+                  if (!qtyStr || parseInt(qtyStr, 10) < 1) setQtyStr("1");
+                }}
               />
             </div>
 
@@ -203,6 +210,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
                 type="number"
                 value={soldPriceStr}
                 onChange={(e) => setSoldPriceStr(e.target.value)}
+                onFocus={(e) => e.target.select()}
               />
             </div>
           </div>
@@ -213,8 +221,12 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
               id="sale-qty-only"
               type="number"
               min={1}
-              value={qty}
-              onChange={(e) => setQty(Math.max(1, Number(e.target.value)))}
+              value={qtyStr}
+              onChange={(e) => setQtyStr(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onBlur={() => {
+                if (!qtyStr || parseInt(qtyStr, 10) < 1) setQtyStr("1");
+              }}
             />
           </div>
         )}

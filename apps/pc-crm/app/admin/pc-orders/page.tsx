@@ -544,6 +544,7 @@ export default function AdminPcOrdersPage() {
                     id="order-quote-price"
                     value={quotePriceStr}
                     onChange={(e) => setQuotePriceStr(e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="Masalan: 18 500 000"
                   />
                 </div>

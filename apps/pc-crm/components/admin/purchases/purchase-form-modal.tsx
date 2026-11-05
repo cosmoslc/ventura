@@ -43,13 +43,15 @@ export function PurchaseFormModal({
 }: PurchaseFormModalProps) {
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
   const [purchaseType, setPurchaseType] = useState<"piece" | "bulk">("piece");
-  const [qty, setQty] = useState(10);
+  const [qtyStr, setQtyStr] = useState("10");
   const [unitCostStr, setUnitCostStr] = useState("1000000");
   const [totalCostStr, setTotalCostStr] = useState("10000000");
   const [supplier, setSupplier] = useState("");
   const [note, setNote] = useState("");
   const [updateProductCost, setUpdateProductCost] = useState(true);
   const [purchasedAt, setPurchasedAt] = useState(new Date().toISOString().slice(0, 10));
+
+  const currentQty = Math.max(1, parseInt(qtyStr || "1", 10));
 
   useEffect(() => {
     if (products[0] && !selectedProductId) {
@@ -64,7 +66,7 @@ export function PurchaseFormModal({
     const prod = products.find((p) => p.id === id);
     if (prod) {
       setUnitCostStr(prod.costPrice.toString());
-      const total = prod.costPrice * BigInt(qty);
+      const total = prod.costPrice * BigInt(currentQty);
       setTotalCostStr(total.toString());
     }
   };
@@ -73,7 +75,7 @@ export function PurchaseFormModal({
   const handleUnitCostChange = (val: string) => {
     setUnitCostStr(val);
     const u = BigInt(val || "0");
-    const t = u * BigInt(qty || 1);
+    const t = u * BigInt(currentQty);
     setTotalCostStr(t.toString());
   };
 
@@ -81,19 +83,21 @@ export function PurchaseFormModal({
   const handleTotalCostChange = (val: string) => {
     setTotalCostStr(val);
     const t = BigInt(val || "0");
-    const u = calcUnitCost(t, qty || 1);
+    const u = calcUnitCost(t, currentQty);
     setUnitCostStr(u.toString());
   };
 
   // Soni o'zgarganda
-  const handleQtyChange = (val: number) => {
-    setQty(val);
+  const handleQtyChange = (valStr: string) => {
+    setQtyStr(valStr);
+    const parsed = parseInt(valStr || "0", 10);
+    const val = parsed > 0 ? parsed : 1;
     if (purchaseType === "piece") {
       const u = BigInt(unitCostStr || "0");
-      setTotalCostStr((u * BigInt(val || 1)).toString());
+      setTotalCostStr((u * BigInt(val)).toString());
     } else {
       const t = BigInt(totalCostStr || "0");
-      setUnitCostStr(calcUnitCost(t, val || 1).toString());
+      setUnitCostStr(calcUnitCost(t, val).toString());
     }
   };
 
@@ -102,11 +106,13 @@ export function PurchaseFormModal({
     const prod = products.find((p) => p.id === selectedProductId);
     if (!prod) return;
 
+    const finalQty = Math.max(1, parseInt(qtyStr || "1", 10));
+
     onSave({
       productId: prod.id,
       productName: prod.name,
       type: purchaseType,
-      qty,
+      qty: finalQty,
       totalCost: BigInt(totalCostStr || "0"),
       unitCost: BigInt(unitCostStr || "0"),
       supplier: supplier.trim() || undefined,
@@ -164,7 +170,7 @@ export function PurchaseFormModal({
                 onClick={() => {
                   setPurchaseType("piece");
                   const u = BigInt(unitCostStr || "0");
-                  setTotalCostStr((u * BigInt(qty || 1)).toString());
+                  setTotalCostStr((u * BigInt(currentQty)).toString());
                 }}
                 className={`rounded-control border p-2.5 text-center transition-all ${
                   purchaseType === "piece"
@@ -181,7 +187,7 @@ export function PurchaseFormModal({
                 onClick={() => {
                   setPurchaseType("bulk");
                   const t = BigInt(totalCostStr || "0");
-                  setUnitCostStr(calcUnitCost(t, qty || 1).toString());
+                  setUnitCostStr(calcUnitCost(t, currentQty).toString());
                 }}
                 className={`rounded-control border p-2.5 text-center transition-all ${
                   purchaseType === "bulk"
@@ -204,8 +210,14 @@ export function PurchaseFormModal({
               id="purchase-qty"
               type="number"
               min={1}
-              value={qty}
-              onChange={(e) => handleQtyChange(Math.max(1, Number(e.target.value)))}
+              value={qtyStr}
+              onChange={(e) => handleQtyChange(e.target.value)}
+              onFocus={(e) => e.target.select()}
+              onBlur={() => {
+                if (!qtyStr || parseInt(qtyStr, 10) < 1) {
+                  handleQtyChange("1");
+                }
+              }}
             />
           </div>
 
@@ -218,6 +230,7 @@ export function PurchaseFormModal({
                   type="number"
                   value={unitCostStr}
                   onChange={(e) => handleUnitCostChange(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                 />
               </div>
             ) : (
@@ -228,6 +241,7 @@ export function PurchaseFormModal({
                   type="number"
                   value={totalCostStr}
                   onChange={(e) => handleTotalCostChange(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                 />
               </div>
             )

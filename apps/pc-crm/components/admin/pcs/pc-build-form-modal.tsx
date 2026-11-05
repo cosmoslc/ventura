@@ -39,12 +39,12 @@ export function PcBuildFormModal({
   const [status, setStatus] = useState<"available" | "sold" | "hidden">("available");
 
   // Komponentlar ro'yxati
-  const [components, setComponents] = useState<PcComponentItem[]>([]);
+  const [components, setComponents] = useState<(PcComponentItem & { qtyStr?: string })[]>([]);
 
   // Narxlar va Marja
   const [sellPriceStr, setSellPriceStr] = useState("20000000");
-  const [marginPercent, setMarginPercent] = useState(20);
-  const [discountPercent, setDiscountPercent] = useState(0);
+  const [marginPercentStr, setMarginPercentStr] = useState("20");
+  const [discountPercentStr, setDiscountPercentStr] = useState("0");
 
   // Spetsifikatsiyalar
   const [specs, setSpecs] = useState<PcSpecItem[]>([]);
@@ -56,16 +56,17 @@ export function PcBuildFormModal({
       setSlug(initialData.slug);
       setImageUrl(initialData.images[0] ?? "");
       setStatus(initialData.status);
-      setComponents(initialData.components);
+      setComponents(initialData.components.map((c) => ({ ...c, qtyStr: String(c.qty) })));
       setSellPriceStr(initialData.sellPrice.toString());
-      setDiscountPercent(initialData.discountPercent);
+      setDiscountPercentStr(initialData.discountPercent.toString());
       setSpecs(initialData.specs);
     } else {
       setName("");
       setSlug("");
       setImageUrl("");
       setStatus("available");
-      setDiscountPercent(0);
+      setDiscountPercentStr("0");
+      setMarginPercentStr("20");
       setComponents([]);
       setSellPriceStr("0");
       setSpecs([]);
@@ -99,6 +100,8 @@ export function PcBuildFormModal({
     return calcMarginPercent(expectedProfit, sellPrice);
   }, [expectedProfit, sellPrice]);
 
+  const discountPercent = Math.max(0, parseInt(discountPercentStr || "0", 10));
+
   // Nom o'zgarganda slugni avtomatik shakllantirish
   const handleNameChange = (val: string) => {
     setName(val);
@@ -113,7 +116,7 @@ export function PcBuildFormModal({
 
   // Marja orqali sotuv narxini avtomatik chiqarish
   const handleMarginChange = (percent: number) => {
-    setMarginPercent(percent);
+    setMarginPercentStr(percent.toString());
     const calculated = calcSellPriceFromMargin(totalCostPrice, percent);
     setSellPriceStr(calculated.toString());
   };
@@ -141,10 +144,31 @@ export function PcBuildFormModal({
     );
   };
 
-  const handleUpdateComponentQty = (index: number, qty: number) => {
-    if (qty < 1) return;
+  const handleUpdateComponentQty = (index: number, valStr: string) => {
     setComponents((prev) =>
-      prev.map((c, i) => (i === index ? { ...c, qty } : c))
+      prev.map((c, i) => {
+        if (i !== index) return c;
+        const parsed = parseInt(valStr, 10);
+        return {
+          ...c,
+          qty: isNaN(parsed) ? 0 : parsed,
+          qtyStr: valStr,
+        };
+      })
+    );
+  };
+
+  const handleComponentQtyBlur = (index: number) => {
+    setComponents((prev) =>
+      prev.map((c, i) => {
+        if (i !== index) return c;
+        const validQty = Math.max(1, c.qty || 1);
+        return {
+          ...c,
+          qty: validQty,
+          qtyStr: String(validQty),
+        };
+      })
     );
   };
 
@@ -178,6 +202,7 @@ export function PcBuildFormModal({
         productId: defaultPart.id,
         productName: defaultPart.name,
         qty: 1,
+        qtyStr: "1",
         costSnapshot: defaultPart.costPrice,
         sellPrice: defaultPart.price,
         inStock: defaultPart.stock >= 1,
@@ -194,6 +219,19 @@ export function PcBuildFormModal({
     const ramSpec = components.find((c) => c.role === "ram")?.productName ?? "32GB DDR5";
     const ssdSpec = components.find((c) => c.role === "ssd")?.productName ?? "1TB NVMe";
 
+    const discountPercent = Math.max(0, parseInt(discountPercentStr || "0", 10));
+    const validComponents: PcComponentItem[] = components.map((c) => ({
+      role: c.role,
+      roleNameUz: c.roleNameUz,
+      productId: c.productId,
+      productName: c.productName,
+      qty: Math.max(1, c.qty || 1),
+      costSnapshot: c.costSnapshot,
+      sellPrice: c.sellPrice,
+      imageUrl: c.imageUrl,
+      inStock: c.inStock,
+    }));
+
     const buildRecord: PcBuildItem = {
       id: initialData?.id ?? `pc-${Date.now()}`,
       slug: slug || `pc-${Date.now()}`,
@@ -209,7 +247,7 @@ export function PcBuildFormModal({
       gpu: gpuSpec,
       ram: ramSpec,
       storage: ssdSpec,
-      components,
+      components: validComponents,
       specs,
     };
 
@@ -354,8 +392,10 @@ export function PcBuildFormModal({
                   <Input
                     type="number"
                     min={1}
-                    value={comp.qty}
-                    onChange={(e) => handleUpdateComponentQty(idx, parseInt(e.target.value) || 1)}
+                    value={comp.qtyStr ?? String(comp.qty)}
+                    onChange={(e) => handleUpdateComponentQty(idx, e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    onBlur={() => handleComponentQtyBlur(idx)}
                     className="w-16 h-8 text-center mx-auto"
                   />
                 </div>
@@ -409,8 +449,15 @@ export function PcBuildFormModal({
                   type="number"
                   min={0}
                   max={100}
-                  value={marginPercent}
-                  onChange={(e) => handleMarginChange(parseInt(e.target.value) || 0)}
+                  value={marginPercentStr}
+                  onChange={(e) => {
+                    setMarginPercentStr(e.target.value);
+                    handleMarginChange(parseInt(e.target.value || "0", 10));
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    if (!marginPercentStr) setMarginPercentStr("0");
+                  }}
                 />
               </div>
 
@@ -421,6 +468,7 @@ export function PcBuildFormModal({
                   required
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder="26 500 000"
                 />
               </div>
@@ -432,8 +480,12 @@ export function PcBuildFormModal({
                   type="number"
                   min={0}
                   max={90}
-                  value={discountPercent}
-                  onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
+                  value={discountPercentStr}
+                  onChange={(e) => setDiscountPercentStr(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    if (!discountPercentStr) setDiscountPercentStr("0");
+                  }}
                 />
               </div>
             </div>

@@ -56,12 +56,12 @@ export function ProductFormModal({
   const [imageUrl, setImageUrl] = useState("");
 
   const [costPriceStr, setCostPriceStr] = useState("1000000");
-  const [marginPercent, setMarginPercent] = useState(20);
+  const [marginPercentStr, setMarginPercentStr] = useState("20");
   const [sellPriceStr, setSellPriceStr] = useState("1200000");
-  const [discountPercent, setDiscountPercent] = useState(0);
+  const [discountPercentStr, setDiscountPercentStr] = useState("0");
 
-  const [stock, setStock] = useState(5);
-  const [minStock, setMinStock] = useState(2);
+  const [stockStr, setStockStr] = useState("0");
+  const [minStockStr, setMinStockStr] = useState("0");
   const [isNew, setIsNew] = useState(true);
   const [isHit, setIsHit] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -79,10 +79,10 @@ export function ProductFormModal({
       setImageUrl(initialData.imageUrl);
       setCostPriceStr(initialData.costPrice.toString());
       setSellPriceStr(initialData.sellPrice.toString());
-      setMarginPercent(initialData.marginPercent);
-      setDiscountPercent(initialData.discountPercent);
-      setStock(initialData.stock);
-      setMinStock(initialData.minStock);
+      setMarginPercentStr(initialData.marginPercent.toString());
+      setDiscountPercentStr(initialData.discountPercent.toString());
+      setStockStr(initialData.stock.toString());
+      setMinStockStr(initialData.minStock.toString());
       setIsNew(initialData.isNew);
       setIsHit(initialData.isHit);
       setIsActive(initialData.isActive);
@@ -96,11 +96,11 @@ export function ProductFormModal({
       setSku("");
       setImageUrl("");
       setCostPriceStr("1000000");
-      setMarginPercent(20);
+      setMarginPercentStr("20");
       setSellPriceStr("1200000");
-      setDiscountPercent(0);
-      setStock(5);
-      setMinStock(2);
+      setDiscountPercentStr("0");
+      setStockStr("0");
+      setMinStockStr("0");
       setIsNew(true);
       setIsHit(false);
       setIsActive(true);
@@ -113,12 +113,14 @@ export function ProductFormModal({
   const handleCostChange = (val: string) => {
     setCostPriceStr(val);
     const num = BigInt(val || "0");
-    const newSell = calcSellPriceFromMargin(num, marginPercent);
+    const percent = parseInt(marginPercentStr || "0", 10);
+    const newSell = calcSellPriceFromMargin(num, percent);
     setSellPriceStr(newSell.toString());
   };
 
-  const handleMarginChange = (percent: number) => {
-    setMarginPercent(percent);
+  const handleMarginChange = (valStr: string) => {
+    setMarginPercentStr(valStr);
+    const percent = parseInt(valStr || "0", 10);
     const num = BigInt(costPriceStr || "0");
     const newSell = calcSellPriceFromMargin(num, percent);
     setSellPriceStr(newSell.toString());
@@ -126,8 +128,12 @@ export function ProductFormModal({
 
   const costBig = BigInt(costPriceStr || "0");
   const sellBig = BigInt(sellPriceStr || "0");
+  const marginPercent = parseInt(marginPercentStr || "0", 10);
+  const discountPercent = Math.min(99, Math.max(0, parseInt(discountPercentStr || "0", 10)));
   const finalPrice = calcFinalPrice(sellBig, discountPercent);
   const profit = finalPrice - costBig;
+  const stock = Math.max(0, parseInt(stockStr || "0", 10));
+  const minStock = Math.max(0, parseInt(minStockStr || "0", 10));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -268,6 +274,7 @@ export function ProductFormModal({
                   type="number"
                   value={costPriceStr}
                   onChange={(e) => handleCostChange(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder="1 000 000"
                 />
               </div>
@@ -277,8 +284,12 @@ export function ProductFormModal({
                 <Input
                   id="prod-margin"
                   type="number"
-                  value={marginPercent}
-                  onChange={(e) => handleMarginChange(Number(e.target.value))}
+                  value={marginPercentStr}
+                  onChange={(e) => handleMarginChange(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    if (!marginPercentStr) setMarginPercentStr("0");
+                  }}
                   placeholder="20"
                 />
               </div>
@@ -290,6 +301,7 @@ export function ProductFormModal({
                   type="number"
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder="1 200 000"
                 />
               </div>
@@ -301,8 +313,12 @@ export function ProductFormModal({
                   type="number"
                   min={0}
                   max={99}
-                  value={discountPercent}
-                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  value={discountPercentStr}
+                  onChange={(e) => setDiscountPercentStr(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    if (!discountPercentStr) setDiscountPercentStr("0");
+                  }}
                   placeholder="0"
                 />
               </div>
@@ -334,8 +350,14 @@ export function ProductFormModal({
                 <Input
                   id="prod-stock"
                   type="number"
-                  value={stock}
-                  onChange={(e) => setStock(Number(e.target.value))}
+                  min={0}
+                  value={stockStr}
+                  onChange={(e) => setStockStr(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    if (!stockStr) setStockStr("0");
+                  }}
+                  placeholder="0"
                 />
               </div>
 
@@ -344,8 +366,14 @@ export function ProductFormModal({
                 <Input
                   id="prod-min-stock"
                   type="number"
-                  value={minStock}
-                  onChange={(e) => setMinStock(Number(e.target.value))}
+                  min={0}
+                  value={minStockStr}
+                  onChange={(e) => setMinStockStr(e.target.value)}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={() => {
+                    if (!minStockStr) setMinStockStr("0");
+                  }}
+                  placeholder="0"
                 />
               </div>
             </div>

@@ -192,6 +192,7 @@ export default function AdminSettingsPage() {
                   type="number"
                   value={usdRate}
                   onChange={(e) => setUsdRate(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder="12850"
                 />
                 <p className="text-caption text-muted-foreground">Kurs DBʼda saqlanadi; storefront valyuta almashtirishi hali yoʻq</p>
@@ -206,6 +207,7 @@ export default function AdminSettingsPage() {
                   type="number"
                   value={taxPercent}
                   onChange={(e) => setTaxPercent(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder="12"
                 />
                 <p className="text-caption text-muted-foreground">0 boʻlsa hisoblanmaydi</p>
@@ -220,6 +222,7 @@ export default function AdminSettingsPage() {
                   type="number"
                   value={freeShippingThreshold}
                   onChange={(e) => setFreeShippingThreshold(e.target.value)}
+                  onFocus={(e) => e.target.select()}
                   placeholder="1000000"
                 />
                 <p className="text-caption text-muted-foreground">
@@ -253,6 +256,7 @@ export default function AdminSettingsPage() {
                       min="0"
                       value={item.price}
                       onChange={(event) => setShippingRates((previous) => previous.map((rate, index) => index === idx ? { ...rate, price: event.target.value } : rate))}
+                      onFocus={(e) => e.target.select()}
                       className="w-28 rounded border border-input bg-background px-2.5 py-1 text-right text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                     <span className="text-muted-foreground font-medium">soʻm</span>
