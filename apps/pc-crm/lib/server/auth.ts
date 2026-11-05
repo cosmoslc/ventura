@@ -24,7 +24,8 @@ export async function getServerSession() {
       .where(eq(users.id, session.user.id))
       .limit(1);
     return activeUser?.isActive ? session : null;
-  } catch {
+  } catch (err) {
+    console.error("getServerSession error:", err);
     return null;
   }
 }

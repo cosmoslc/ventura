@@ -1,5 +1,6 @@
 import "server-only";
-import { readFileSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { resolve } from "node:path";
 import { headers } from "next/headers";
 import { cache } from "react";
 import {
@@ -14,10 +15,20 @@ import {
   parseSecrets,
 } from "@ventura/tenants";
 
+function resolveFilePath(filePath: string): string | null {
+  if (existsSync(filePath)) return filePath;
+  const monorepoRoot = resolve(process.cwd(), "../..");
+  const candidate = resolve(monorepoRoot, filePath);
+  if (existsSync(candidate)) return candidate;
+  return null;
+}
+
 function fileCache<T>(envName: string, parse: (text: string) => T, empty: () => T, label: string) {
   let cached: { mtimeMs: number; value: T } | null = null;
   return (): T => {
-    const file = process.env[envName];
+    const rawFile = process.env[envName];
+    if (!rawFile) return empty();
+    const file = resolveFilePath(rawFile);
     if (!file) return empty();
     try {
       const { mtimeMs } = statSync(file);
