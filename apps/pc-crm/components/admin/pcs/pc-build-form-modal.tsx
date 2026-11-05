@@ -1,5 +1,5 @@
 "use client";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Layers, Plus, Sparkles, Trash2, Wrench } from "lucide-react";
@@ -252,14 +252,15 @@ export function PcBuildFormModal({
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Holati
             </Label>
-            <SelectField
-              value={status}
-              onChange={(e) => setStatus(e.target.value as any)}
-              className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-            >
-              <option value="available">Mavjud (Sotuvda)</option>
-              <option value="hidden">Yashirin (Qoralama)</option>
-            </SelectField>
+            <Select value={status} onValueChange={(val) => setStatus(val as any)}>
+              <SelectTrigger aria-label="Holati" className="w-full text-xs h-(--control-h)">
+                <SelectValue placeholder="Holatni tanlang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="available">Mavjud (Sotuvda)</SelectItem>
+                <SelectItem value="hidden">Yashirin (Qoralama)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">
@@ -306,27 +307,37 @@ export function PcBuildFormModal({
                 key={idx}
                 className="grid grid-cols-12 items-center gap-2 rounded-control border border-border bg-card p-2 text-xs"
               >
-                <div className="col-span-3">
-                  <SelectField
+                <div className="col-span-3 space-y-1">
+                  <Select
                     value={comp.role}
-                    onChange={(e) => handleComponentRoleChange(idx, e.target.value as ConfiguratorPart["role"])}
-                    className="mb-1 w-full rounded border border-input bg-background p-1 text-2xs font-bold"
+                    onValueChange={(val) => handleComponentRoleChange(idx, val as ConfiguratorPart["role"])}
                   >
-                    {[...new Set(parts.map((item) => item.role))].map((role) => (
-                      <option key={role} value={role}>{parts.find((item) => item.role === role)?.roleLabel ?? role}</option>
-                    ))}
-                  </SelectField>
-                  <SelectField
+                    <SelectTrigger className="w-full text-2xs font-bold h-7">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[...new Set(parts.map((item) => item.role))].map((role) => (
+                        <SelectItem key={role} value={role}>
+                          {parts.find((item) => item.role === role)?.roleLabel ?? role}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
                     value={comp.productId}
-                    onChange={(e) => handleSelectProductForComponent(idx, e.target.value)}
-                    className="w-full rounded border border-input bg-background p-1 text-caption font-medium"
+                    onValueChange={(val) => handleSelectProductForComponent(idx, val)}
                   >
-                    {parts.filter((item) => item.role === comp.role).map((item) => (
-                      <option key={item.id} value={item.id}>
-                        {item.name} · {formatMoney(item.costPrice)} · mavjud: {item.stock}
-                      </option>
-                    ))}
-                  </SelectField>
+                    <SelectTrigger className="w-full text-caption font-medium h-7">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {parts.filter((item) => item.role === comp.role).map((item) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name} · {formatMoney(item.costPrice)} · mavjud: {item.stock}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="col-span-2 text-center">

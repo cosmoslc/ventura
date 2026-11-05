@@ -1,6 +1,6 @@
 "use client";
 import { Input } from "@ventura/ui/input";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -292,16 +292,17 @@ export default function ComputersListingPage() {
                     Filtrlar
                   </button>
 
-                  <SelectField
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
-                    className="rounded-control border border-input bg-card px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-                  >
-                    <option value="featured">Tavsiya etilganlar</option>
-                    <option value="price_asc">Narx: arzondan qimmatga</option>
-                    <option value="price_desc">Narx: qimmatdan arzonga</option>
-                    <option value="rating">Reyting boʻyicha</option>
-                  </SelectField>
+                  <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                    <SelectTrigger aria-label="Kompyuterlarni saralash" className="w-auto min-w-44 text-xs h-(--control-h)">
+                      <SelectValue placeholder="Tavsiya etilganlar" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="featured">Tavsiya etilganlar</SelectItem>
+                      <SelectItem value="price_asc">Narx: arzondan qimmatga</SelectItem>
+                      <SelectItem value="price_desc">Narx: qimmatdan arzonga</SelectItem>
+                      <SelectItem value="rating">Reyting boʻyicha</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

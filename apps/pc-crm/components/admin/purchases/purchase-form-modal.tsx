@@ -1,5 +1,5 @@
 "use client";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import { PackagePlus } from "lucide-react";
@@ -139,17 +139,18 @@ export function PurchaseFormModal({
         {/* Mahsulot tanlash */}
         <div className="space-y-1">
           <Label className="text-xs font-semibold">Kirim qilinayotgan tovar *</Label>
-          <SelectField
-            value={selectedProductId}
-            onChange={(e) => handleProductSelect(e.target.value)}
-            className="h-(--control-h) w-full rounded-control border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            {products.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </SelectField>
+          <Select value={selectedProductId} onValueChange={handleProductSelect}>
+            <SelectTrigger aria-label="Kirim qilinayotgan tovar" className="w-full text-xs h-(--control-h)">
+              <SelectValue placeholder="Tovarni tanlang" />
+            </SelectTrigger>
+            <SelectContent>
+              {products.map((p) => (
+                <SelectItem key={p.id} value={p.id}>
+                  {p.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Kirim turi: Dona yoki Optom */}

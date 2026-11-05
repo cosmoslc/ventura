@@ -1,5 +1,5 @@
 "use client";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -239,19 +239,20 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 <div className="space-y-1">
                   <Label className="text-xs font-semibold">Viloyat / Hudud *</Label>
-                  <SelectField
-                    value={region}
-                    onChange={(e) => setRegion(e.target.value)}
-                    className="h-(--control-h) w-full rounded-control border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                  >
-                    <option value="Toshkent shahri">Toshkent shahri</option>
-                    <option value="Toshkent viloyati">Toshkent viloyati</option>
-                    <option value="Samarqand viloyati">Samarqand viloyati</option>
-                    <option value="Fargʻona vodiysi">Fargʻona vodiysi (Andijon, Namangan, Fargʻona)</option>
-                    <option value="Buxoro viloyati">Buxoro viloyati</option>
-                    <option value="Qashqadaryo viloyati">Qashqadaryo viloyati</option>
-                    <option value="Boshqa viloyatlar">Boshqa viloyatlar</option>
-                  </SelectField>
+                  <Select value={region} onValueChange={setRegion}>
+                    <SelectTrigger aria-label="Viloyat / Hudud" className="w-full text-xs h-(--control-h)">
+                      <SelectValue placeholder="Viloyatni tanlang" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Toshkent shahri">Toshkent shahri</SelectItem>
+                      <SelectItem value="Toshkent viloyati">Toshkent viloyati</SelectItem>
+                      <SelectItem value="Samarqand viloyati">Samarqand viloyati</SelectItem>
+                      <SelectItem value="Fargʻona vodiysi">Fargʻona vodiysi (Andijon, Namangan, Fargʻona)</SelectItem>
+                      <SelectItem value="Buxoro viloyati">Buxoro viloyati</SelectItem>
+                      <SelectItem value="Qashqadaryo viloyati">Qashqadaryo viloyati</SelectItem>
+                      <SelectItem value="Boshqa viloyatlar">Boshqa viloyatlar</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Yandex xarita interfeysi namunasi */}

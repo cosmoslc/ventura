@@ -1,5 +1,5 @@
 "use client";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import {
@@ -226,18 +226,19 @@ export default function ProfileSettingsPage() {
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Viloyat / Shahar
                 </Label>
-                <SelectField
-                  value={region}
-                  onChange={(e) => setRegion(e.target.value)}
-                  className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-                >
-                  <option value="Toshkent shahri">Toshkent shahri</option>
-                  <option value="Toshkent viloyati">Toshkent viloyati</option>
-                  <option value="Samarqand viloyati">Samarqand viloyati</option>
-                  <option value="Fargʻona viloyati">Fargʻona viloyati</option>
-                  <option value="Andijon viloyati">Andijon viloyati</option>
-                  <option value="Buxoro viloyati">Buxoro viloyati</option>
-                </SelectField>
+                <Select value={region} onValueChange={setRegion}>
+                  <SelectTrigger aria-label="Viloyat / Shahar" className="w-full text-xs h-(--control-h)">
+                    <SelectValue placeholder="Viloyatni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Toshkent shahri">Toshkent shahri</SelectItem>
+                    <SelectItem value="Toshkent viloyati">Toshkent viloyati</SelectItem>
+                    <SelectItem value="Samarqand viloyati">Samarqand viloyati</SelectItem>
+                    <SelectItem value="Fargʻona viloyati">Fargʻona viloyati</SelectItem>
+                    <SelectItem value="Andijon viloyati">Andijon viloyati</SelectItem>
+                    <SelectItem value="Buxoro viloyati">Buxoro viloyati</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">

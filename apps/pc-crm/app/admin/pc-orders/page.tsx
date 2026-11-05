@@ -26,7 +26,7 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
-import { SelectField, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
@@ -430,20 +430,21 @@ export default function AdminPcOrdersPage() {
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Statusni yangilash
                 </Label>
-                <SelectField
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value as any)}
-                  className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-                >
-                  <option value="new">Yangi zakaz</option>
-                  <option value="reviewing">Koʻrib chiqilmoqda</option>
-                  <option value="quoted">Narx taklif etildi</option>
-                  <option value="confirmed">Tasdiqlangan</option>
-                  <option value="assembling">Yigʻilmoqda</option>
-                  <option value="ready">Tayyor (Testda)</option>
-                  <option value="delivered">Yetkazildi</option>
-                  <option value="cancelled">Bekor qilindi</option>
-                </SelectField>
+                <Select value={newStatus} onValueChange={(v) => setNewStatus(v as any)}>
+                  <SelectTrigger aria-label="Statusni yangilash" className="w-full text-xs h-(--control-h)">
+                    <SelectValue placeholder="Statusni tanlang" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">Yangi zakaz</SelectItem>
+                    <SelectItem value="reviewing">Koʻrib chiqilmoqda</SelectItem>
+                    <SelectItem value="quoted">Narx taklif etildi</SelectItem>
+                    <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
+                    <SelectItem value="assembling">Yigʻilmoqda</SelectItem>
+                    <SelectItem value="ready">Tayyor (Testda)</SelectItem>
+                    <SelectItem value="delivered">Yetkazildi</SelectItem>
+                    <SelectItem value="cancelled">Bekor qilindi</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-1">

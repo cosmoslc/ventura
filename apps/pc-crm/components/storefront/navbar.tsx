@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bell,
+  ChevronDown,
   KeyRound,
   LogOut,
   Menu,
@@ -15,6 +17,14 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { useCart } from "@/lib/cart-context";
 import { useLiked } from "@/lib/liked-context";
@@ -75,24 +85,13 @@ export function Navbar({
   const { cartCount: contextCartCount, setIsCartDrawerOpen, setIsSearchOpen } = useCart();
   const { likedCount: contextLikedCount } = useLiked();
   const { data: session } = useSession();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [currency, setCurrency] = useState<"UZS" | "USD">("UZS");
   const [locale, setLocale] = useState<"uz" | "ru" | "en">("uz");
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target as Node)) {
-        setProfileDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const cartCount = propCartCount ?? contextCartCount;
   const likedCount = propLikedCount ?? contextLikedCount;
@@ -112,31 +111,66 @@ export function Navbar({
 
           <div className="flex items-center gap-3">
             {/* Valyuta */}
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setCurrency(currency === "UZS" ? "USD" : "UZS")}
-                className="font-semibold text-foreground hover:text-primary transition-colors"
-              >
-                {currency}
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 font-semibold text-foreground hover:text-primary transition-colors cursor-pointer"
+                >
+                  <span>{currency}</span>
+                  <ChevronDown className="size-3 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-28 min-w-28">
+                <DropdownMenuItem
+                  onSelect={() => setCurrency("UZS")}
+                  className={currency === "UZS" ? "text-primary font-bold" : ""}
+                >
+                  UZS (soʻm)
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => setCurrency("USD")}
+                  className={currency === "USD" ? "text-primary font-bold" : ""}
+                >
+                  USD ($)
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             <span className="text-border">|</span>
 
             {/* Til */}
-            <div className="flex items-center gap-1.5 uppercase font-semibold">
-              {(["uz", "ru", "en"] as const).map((l) => (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <button
-                  key={l}
                   type="button"
-                  onClick={() => setLocale(l)}
-                  className={`transition-colors ${locale === l ? "text-primary underline font-bold" : "text-muted-foreground hover:text-foreground"}`}
+                  className="flex items-center gap-1 font-semibold uppercase text-foreground hover:text-primary transition-colors cursor-pointer"
                 >
-                  {l}
+                  <span>{locale}</span>
+                  <ChevronDown className="size-3 text-muted-foreground" />
                 </button>
-              ))}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-32 min-w-32">
+                <DropdownMenuItem
+                  onSelect={() => setLocale("uz")}
+                  className={locale === "uz" ? "text-primary font-bold" : ""}
+                >
+                  Oʻzbekcha
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => setLocale("ru")}
+                  className={locale === "ru" ? "text-primary font-bold" : ""}
+                >
+                  Русский
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => setLocale("en")}
+                  className={locale === "en" ? "text-primary font-bold" : ""}
+                >
+                  English
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </div>
@@ -228,113 +262,84 @@ export function Navbar({
           </button>
 
           {/* Profil yoki Kirish */}
-          <div ref={profileDropdownRef} className="relative">
+          <div>
             {session?.user ? (
-              <button
-                type="button"
-                onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-                aria-label="Profil"
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control overflow-hidden"
-              >
-                {session.user.image ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={session.user.image}
-                    alt={session.user.name || "User"}
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <span className="font-bold text-xs text-primary">
-                    {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
-                  </span>
-                )}
-                <span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full bg-(--success-fg) ring-1 ring-card" />
-              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="Profil"
+                    className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control overflow-hidden cursor-pointer"
+                  >
+                    {session.user.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={session.user.image}
+                        alt={session.user.name || "User"}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <span className="font-bold text-xs text-primary">
+                        {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
+                      </span>
+                    )}
+                    <span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full bg-(--success-fg) ring-1 ring-card" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-60">
+                  <DropdownMenuLabel>
+                    <p className="font-bold text-xs text-foreground truncate">
+                      {session.user.name}
+                    </p>
+                    <p className="text-caption text-muted-foreground truncate">
+                      {session.user.email}
+                    </p>
+                    <span className="mt-1.5 inline-block rounded-control bg-primary/10 px-1.5 py-0.5 text-2xs font-bold text-primary capitalize">
+                      {(session.user as any).role || "Mijoz"}
+                    </span>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onSelect={() => router.push("/profile")}>
+                    <User className="size-3.5 text-muted-foreground mr-2" />
+                    <span>Mening profilim</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => router.push("/profile/orders")}>
+                    <ShoppingBag className="size-3.5 text-muted-foreground mr-2" />
+                    <span>Buyurtmalarim</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => router.push("/profile/settings")}>
+                    <KeyRound className="size-3.5 text-muted-foreground mr-2" />
+                    <span>Sozlamalar</span>
+                  </DropdownMenuItem>
+                  {(session.user as any).role === "admin" && (
+                    <DropdownMenuItem onSelect={() => router.push("/admin")}>
+                      <Sparkles className="size-3.5 text-primary mr-2" />
+                      <span className="text-primary font-semibold">Admin paneli</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    danger
+                    onSelect={async () => {
+                      await signOut();
+                      window.location.reload();
+                    }}
+                  >
+                    <LogOut className="size-3.5 mr-2" />
+                    <span>Tizimdan chiqish</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <button
                 type="button"
                 onClick={() => setAuthModalOpen(true)}
                 aria-label="Profil"
                 title="Tizimga kirish"
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control cursor-pointer"
               >
                 <User size={18} />
               </button>
-            )}
-
-            {/* Profil ochiluvchi menyusi */}
-            {profileDropdownOpen && session?.user && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-modal border border-border bg-card p-2 shadow-modal z-50 animate-in fade-in-0 zoom-in-95 duration-150">
-                {/* Foydalanuvchi ma'lumotlari */}
-                <div className="border-b border-border/80 px-3 py-2.5">
-                  <p className="font-bold text-xs text-foreground truncate">
-                    {session.user.name}
-                  </p>
-                  <p className="text-caption text-muted-foreground truncate">
-                    {session.user.email}
-                  </p>
-                  <span className="mt-1.5 inline-block rounded-control bg-primary/10 px-1.5 py-0.5 text-2xs font-bold text-primary capitalize">
-                    {(session.user as any).role || "Mijoz"}
-                  </span>
-                </div>
-
-                {/* Menyu bandlari */}
-                <div className="py-1 text-xs font-semibold text-foreground space-y-0.5">
-                  <Link
-                    href="/profile"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-control px-3 py-2 hover:bg-secondary transition-colors"
-                  >
-                    <User size={14} className="text-muted-foreground" />
-                    <span>Mening profilim</span>
-                  </Link>
-
-                  <Link
-                    href="/profile/orders"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-control px-3 py-2 hover:bg-secondary transition-colors"
-                  >
-                    <ShoppingBag size={14} className="text-muted-foreground" />
-                    <span>Buyurtmalarim</span>
-                  </Link>
-
-                  <Link
-                    href="/profile/settings"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-control px-3 py-2 hover:bg-secondary transition-colors"
-                  >
-                    <KeyRound size={14} className="text-muted-foreground" />
-                    <span>Sozlamalar</span>
-                  </Link>
-
-                  {(session.user as any).role === "admin" && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2 rounded-control px-3 py-2 text-primary hover:bg-primary/10 transition-colors"
-                    >
-                      <Sparkles size={14} />
-                      <span>Admin paneli</span>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Chiqish (Logout) */}
-                <div className="border-t border-border/80 pt-1 mt-1">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await signOut();
-                      setProfileDropdownOpen(false);
-                      window.location.reload();
-                    }}
-                    className="flex w-full items-center gap-2 rounded-control px-3 py-2 text-xs font-semibold text-(--danger-fg) hover:bg-(--danger-bg) transition-colors"
-                  >
-                    <LogOut size={14} />
-                    <span>Tizimdan chiqish</span>
-                  </button>
-                </div>
-              </div>
             )}
           </div>
 

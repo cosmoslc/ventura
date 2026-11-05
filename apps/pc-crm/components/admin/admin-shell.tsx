@@ -6,19 +6,31 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Boxes,
   ExternalLink,
+  KeyRound,
   LayoutDashboard,
+  LogOut,
   Monitor,
   PackagePlus,
   Receipt,
   Settings,
   ShoppingCart,
+  UserRound,
   Users,
   Wrench,
 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { Sidebar, type NavSection } from "@ventura/ui/sidebar";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
-import { Topbar } from "@ventura/ui/topbar";
+import { ProfileButton, Topbar } from "@ventura/ui/topbar";
+import { useSession, signOut } from "@/lib/auth-client";
 import { useStore } from "@/lib/store-context";
 
 interface AdminShellProps {
@@ -64,6 +76,7 @@ function activeFor(pathname: string) {
 
 export function AdminShell({ children }: AdminShellProps) {
   const { branding } = useStore();
+  const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -74,6 +87,9 @@ export function AdminShell({ children }: AdminShellProps) {
     if (window.matchMedia("(max-width: 900px)").matches) setMobileOpen((open) => !open);
     else setCollapsed((value) => !value);
   }
+
+  const userName = session?.user?.name || "Administrator";
+  const userRole = (session?.user as any)?.role || "Admin";
 
   return (
     <div className="min-h-dvh bg-background text-foreground">
@@ -99,6 +115,37 @@ export function AdminShell({ children }: AdminShellProps) {
             Doʻkon
           </Button>
         </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <ProfileButton name={userName} role={userRole} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel>
+              <div className="text-body font-bold text-foreground">{userName}</div>
+              <div className="text-caption text-muted-foreground">{session?.user?.email || userRole}</div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => router.push("/profile")}>
+              <UserRound className="size-4 text-muted-foreground mr-2" />
+              <span>Profil sozlamalari</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => router.push("/profile/settings")}>
+              <KeyRound className="size-4 text-muted-foreground mr-2" />
+              <span>Xavfsizlik</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              danger
+              onSelect={async () => {
+                await signOut();
+                window.location.replace("/login");
+              }}
+            >
+              <LogOut className="size-4 mr-2" />
+              <span>Tizimdan chiqish</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </Topbar>
 
       <div className="flex min-h-[calc(100dvh-var(--topbar-h))]">

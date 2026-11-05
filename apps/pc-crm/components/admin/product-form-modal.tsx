@@ -1,5 +1,5 @@
 "use client";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
@@ -204,21 +204,22 @@ export function ProductFormModal({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Toifa (Kategoriya)</Label>
-              <SelectField
-                value={categorySlug}
-                onChange={(e) => setCategorySlug(e.target.value)}
-                className="h-(--control-h) w-full rounded-control border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-              >
-                <option value="protsessorlar">Protsessorlar (CPU)</option>
-                <option value="videokartalar">Videokartalar (GPU)</option>
-                <option value="operativ-xotira">Operativ xotira (RAM)</option>
-                <option value="ssd-disklar">SSD toʻplovchilar</option>
-                <option value="ona-platalar">Ona platalar (Motherboard)</option>
-                <option value="korpuslar">Korpuslar (Case)</option>
-                <option value="blok-pitaniya">Blok pitaniya (PSU)</option>
-                <option value="sovutish">Kuler va sovutish tizimi</option>
-                <option value="monitorlar">Monitorlar</option>
-              </SelectField>
+              <Select value={categorySlug} onValueChange={setCategorySlug}>
+                <SelectTrigger aria-label="Toifa (Kategoriya)" className="w-full text-xs h-(--control-h)">
+                  <SelectValue placeholder="Toifani tanlang" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="protsessorlar">Protsessorlar (CPU)</SelectItem>
+                  <SelectItem value="videokartalar">Videokartalar (GPU)</SelectItem>
+                  <SelectItem value="operativ-xotira">Operativ xotira (RAM)</SelectItem>
+                  <SelectItem value="ssd-disklar">SSD toʻplovchilar</SelectItem>
+                  <SelectItem value="ona-platalar">Ona platalar (Motherboard)</SelectItem>
+                  <SelectItem value="korpuslar">Korpuslar (Case)</SelectItem>
+                  <SelectItem value="blok-pitaniya">Blok pitaniya (PSU)</SelectItem>
+                  <SelectItem value="sovutish">Kuler va sovutish tizimi</SelectItem>
+                  <SelectItem value="monitorlar">Monitorlar</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1">

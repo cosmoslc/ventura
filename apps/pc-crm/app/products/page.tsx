@@ -1,6 +1,6 @@
 "use client";
 import { Input } from "@ventura/ui/input";
-import { SelectField } from "@ventura/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -251,39 +251,52 @@ function ProductsCatalogContent() {
 
             {/* Brend filtri (Headerda) */}
             <div className="flex items-center gap-1.5">
-              <label htmlFor="brand-filter" className="text-xs font-bold text-muted-foreground hidden sm:inline">
+              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">
                 Brend:
-              </label>
-              <SelectField
-                id="brand-filter"
+              </span>
+              <select
+                aria-label="Brend boʻyicha filter"
+                tabIndex={-1}
                 value={selectedBrand}
                 onChange={(e) => handleSelectBrand(e.target.value)}
-                className="h-(--control-h) rounded-control border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-control cursor-pointer"
+                className="sr-only"
               >
                 {BRANDS.map((b) => (
                   <option key={b} value={b}>
                     {b === "all" ? "Barcha brendlar" : b}
                   </option>
                 ))}
-              </SelectField>
+              </select>
+              <Select value={selectedBrand} onValueChange={handleSelectBrand}>
+                <SelectTrigger aria-label="Brend boʻyicha saralash" className="w-auto min-w-36 text-xs h-(--control-h)">
+                  <SelectValue placeholder="Barcha brendlar" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BRANDS.map((b) => (
+                    <SelectItem key={b} value={b}>
+                      {b === "all" ? "Barcha brendlar" : b}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Saralash */}
             <div className="flex items-center gap-1.5">
-              <label htmlFor="sort-filter" className="text-xs font-bold text-muted-foreground hidden sm:inline">
+              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">
                 Saralash:
-              </label>
-              <SelectField
-                id="sort-filter"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="h-(--control-h) rounded-control border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary shadow-control cursor-pointer"
-              >
-                <option value="popular">Ommabopligi boʻyicha</option>
-                <option value="price_asc">Narx: Arzondan qimmatga</option>
-                <option value="price_desc">Narx: Qimmatdan arzonga</option>
-                <option value="rating">Reyting boʻyicha</option>
-              </SelectField>
+              </span>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger aria-label="Saralash tartibi" className="w-auto min-w-44 text-xs h-(--control-h)">
+                  <SelectValue placeholder="Ommabopligi boʻyicha" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="popular">Ommabopligi boʻyicha</SelectItem>
+                  <SelectItem value="price_asc">Narx: Arzondan qimmatga</SelectItem>
+                  <SelectItem value="price_desc">Narx: Qimmatdan arzonga</SelectItem>
+                  <SelectItem value="rating">Reyting boʻyicha</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>
@@ -433,23 +446,21 @@ function ProductsCatalogContent() {
 
               {/* Mobil Brendlar */}
               <div className="mb-6">
-                <label htmlFor="mobile-brand-select" className="font-bold text-xs uppercase tracking-wider text-muted-foreground block mb-2">
+                <span className="font-bold text-xs uppercase tracking-wider text-muted-foreground block mb-2">
                   Brend
-                </label>
-                <SelectField
-                  id="mobile-brand-select"
-                  value={selectedBrand}
-                  onChange={(e) => {
-                    handleSelectBrand(e.target.value);
-                  }}
-                  className="w-full h-(--control-h) rounded-control border border-input bg-card px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                >
-                  {BRANDS.map((b) => (
-                    <option key={b} value={b}>
-                      {b === "all" ? "Barcha brendlar" : b}
-                    </option>
-                  ))}
-                </SelectField>
+                </span>
+                <Select value={selectedBrand} onValueChange={handleSelectBrand}>
+                  <SelectTrigger aria-label="Mobil brend tanlash" className="w-full text-xs h-(--control-h)">
+                    <SelectValue placeholder="Barcha brendlar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {BRANDS.map((b) => (
+                      <SelectItem key={b} value={b}>
+                        {b === "all" ? "Barcha brendlar" : b}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Mobil Chegirma */}
