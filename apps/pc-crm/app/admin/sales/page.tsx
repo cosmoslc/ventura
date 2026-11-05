@@ -94,9 +94,6 @@ export default function AdminSalesPage() {
           <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
             Sotuvlar va Sof Foyda hisobi
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Sayt va oflayn doʻkon sotuvlari, har bir bitim boʻyicha tannarx snapshot va sof daromad
-          </p>
         </div>
 
         <Button variant="primary" size="sm" onClick={() => setModalOpen(true)} className="gap-1.5 font-bold">
