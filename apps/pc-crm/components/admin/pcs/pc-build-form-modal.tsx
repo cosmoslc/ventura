@@ -1,13 +1,13 @@
 "use client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Layers, Plus, Sparkles, Trash2, Wrench } from "lucide-react";
+import { Check, Plus, Trash2, Wrench } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { ImageUploadWithBgRemoval } from "@/components/admin/image-upload-with-bg-removal";
 import { calcFinalPrice, calcMarginPercent, calcPcCostPrice, calcSellPriceFromMargin } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
@@ -221,40 +221,52 @@ export function PcBuildFormModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title={initialData ? "Kompyuterni tahrirlash" : "Yangi kompyuter yigʻish (PC Assemble)"}
+      title={initialData ? "Kompyuterni tahrirlash" : "Yangi kompyuter yigʻish"}
+      description="Ombordagi komponentlardan kompyuter jamlash va sotuvga chiqarish"
+      wide
+      footer={
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            Bekor qilish
+          </Button>
+          <Button
+            type="submit"
+            form="pc-build-form"
+            disabled={!name.trim() || components.length === 0 || (isFinancial && totalCostPrice <= 0n)}
+          >
+            <Check /> {initialData ? "Saqlash" : "Kompyuterni saqlash"}
+          </Button>
+        </>
+      }
     >
-      <form onSubmit={handleSubmit} className="space-y-6 text-xs sm:text-sm">
+      <form id="pc-build-form" onSubmit={handleSubmit} className="space-y-5">
         {/* 1. Asosiy ma'lumotlar */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Kompyuter nomi *
-            </Label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <Label htmlFor="build-name">Kompyuter nomi *</Label>
             <Input
+              id="build-name"
               required
               value={name}
               onChange={(e) => handleNameChange(e.target.value)}
-              placeholder="Masalan: Ventura Gaming Titan: Core i7-14700K / RTX 4070 Ti"
+              placeholder="Masalan: Gaming Titan (Core i7 / RTX 4070)"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Slug (URL manzili)
-            </Label>
+          <div>
+            <Label htmlFor="build-slug">Slug (URL manzili)</Label>
             <Input
+              id="build-slug"
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder="ventura-gaming-titan-i7-4070"
+              placeholder="gaming-titan-i7-4070"
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Holati
-            </Label>
+          <div>
+            <Label htmlFor="build-status">Holati</Label>
             <Select value={status} onValueChange={(val) => setStatus(val as any)}>
-              <SelectTrigger aria-label="Holati" className="w-full text-xs h-(--control-h)">
+              <SelectTrigger id="build-status" aria-label="Holati" className="w-full">
                 <SelectValue placeholder="Holatni tanlang" />
               </SelectTrigger>
               <SelectContent>
@@ -272,20 +284,17 @@ export function PcBuildFormModal({
               placeholder="https://... yoki rasm yuklang"
             />
           </div>
-
         </div>
 
-        {/* 2. Komponentlar ro'yxati (Tannarx kalkulyatori bilan) */}
-        <div className="space-y-3 pt-2 border-t border-border">
+        {/* 2. Komponentlar ro'yxati */}
+        <div className="space-y-3 border-t border-border pt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-sm flex items-center gap-2">
+              <div className="text-body font-semibold text-foreground flex items-center gap-2">
                 <Wrench size={16} className="text-primary" />
                 Komponentlar (Ombordan yigʻish)
-              </h3>
-              <p className="text-caption text-muted-foreground">
-                Tannarx komponentlar summasidan jonli hisoblanadi
-              </p>
+              </div>
+              <FieldHint className="mt-0">Tannarx komponentlar summasidan jonli hisoblanadi</FieldHint>
             </div>
             <Button
               type="button"
@@ -293,10 +302,9 @@ export function PcBuildFormModal({
               size="sm"
               onClick={handleAddComponentRow}
               disabled={parts.length === 0}
-              className="gap-1 text-xs"
+              className="gap-1"
             >
-              <Plus size={13} />
-              Qator qoʻshish
+              <Plus size={14} /> Qator qoʻshish
             </Button>
           </div>
 
@@ -304,14 +312,14 @@ export function PcBuildFormModal({
             {components.map((comp, idx) => (
               <div
                 key={idx}
-                className="grid grid-cols-12 items-center gap-2 rounded-control border border-border bg-card p-2 text-xs"
+                className="grid grid-cols-12 items-center gap-2 rounded-control border border-border bg-card p-2.5"
               >
-                <div className="col-span-3 space-y-1">
+                <div className="col-span-3">
                   <Select
                     value={comp.role}
                     onValueChange={(val) => handleComponentRoleChange(idx, val as ConfiguratorPart["role"])}
                   >
-                    <SelectTrigger className="w-full text-2xs font-bold h-7">
+                    <SelectTrigger className="w-full h-8 font-semibold">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -322,11 +330,14 @@ export function PcBuildFormModal({
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className={isFinancial ? "col-span-4" : "col-span-7"}>
                   <Select
                     value={comp.productId}
                     onValueChange={(val) => handleSelectProductForComponent(idx, val)}
                   >
-                    <SelectTrigger className="w-full text-caption font-medium h-7">
+                    <SelectTrigger className="w-full h-8 font-medium">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -339,44 +350,36 @@ export function PcBuildFormModal({
                   </Select>
                 </div>
 
-                <div className={`${isFinancial ? "col-span-2" : "col-span-3"} text-center`}>
-                  <span className="text-2xs text-muted-foreground block">Soni</span>
+                <div className="col-span-2 text-center">
                   <Input
                     type="number"
                     min={1}
                     value={comp.qty}
                     onChange={(e) => handleUpdateComponentQty(idx, parseInt(e.target.value) || 1)}
-                    className="w-14 text-center rounded border border-input bg-background p-1 font-mono text-xs"
+                    className="w-16 h-8 text-center mx-auto"
                   />
                 </div>
 
                 {isFinancial && (
-                  <>
-                    <div className="col-span-3 text-right">
-                      <span className="text-2xs text-muted-foreground block">Dona tannarx</span>
-                      <span className="font-mono text-xs font-semibold">
-                        {formatMoney(comp.costSnapshot)}
-                      </span>
+                  <div className="col-span-2 text-right">
+                    <FieldHint className="mt-0">Jami tannarx</FieldHint>
+                    <div className="text-body font-bold text-foreground">
+                      {formatMoney(comp.costSnapshot * BigInt(comp.qty))}
                     </div>
-
-                    <div className="col-span-3 text-right">
-                      <span className="text-2xs text-muted-foreground block">Jami tannarx</span>
-                      <span className="font-mono text-xs font-bold text-foreground">
-                        {formatMoney(comp.costSnapshot * BigInt(comp.qty))}
-                      </span>
-                    </div>
-                  </>
+                  </div>
                 )}
 
                 <div className="col-span-1 flex justify-end">
-                  <button
+                  <Button
                     type="button"
+                    variant="icon"
+                    size="icon"
                     onClick={() => handleRemoveComponent(idx)}
-                    className="text-muted-foreground hover:text-(--danger-fg) p-1"
-                    aria-label="Oʻchirish"
+                    className="text-muted-foreground hover:text-destructive"
+                    title="Oʻchirish"
                   >
-                    <Trash2 size={13} />
-                  </button>
+                    <Trash2 size={15} />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -385,10 +388,8 @@ export function PcBuildFormModal({
           {/* Jonli tannarx indikatori */}
           {isFinancial && (
             <div className="flex items-center justify-between rounded-control bg-primary/10 border border-primary/20 p-3">
-              <span className="font-bold text-xs uppercase tracking-wider text-primary">
-                PC Jami Tannarxi:
-              </span>
-              <span className="font-mono text-base font-black text-foreground">
+              <span className="font-semibold text-primary">PC Jami Tannarxi:</span>
+              <span className="text-base font-bold text-foreground">
                 {formatMoney(totalCostPrice)}
               </span>
             </div>
@@ -397,97 +398,64 @@ export function PcBuildFormModal({
 
         {/* 3. Narx va Marja kalkulyatori (faqat moliyaviy rejimda) */}
         {isFinancial && (
-          <div className="space-y-3 pt-2 border-t border-border">
-            <h3 className="font-bold text-sm flex items-center gap-2">
-              <Sparkles size={16} className="text-primary" />
-              Sotuv narxi va Marja hisobi
-            </h3>
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="text-body font-semibold text-foreground">Sotuv narxi va Marja hisobi</div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Kutilayotgan Marja %
-                </Label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={marginPercent}
-                    onChange={(e) => handleMarginChange(parseInt(e.target.value) || 0)}
-                    className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
-                  />
-                  <span className="text-xs font-bold">%</span>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Sotuv narxi (UZS) *
-                </Label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label htmlFor="build-margin">Kutilayotgan Marja %</Label>
                 <Input
-                  required
-                  value={sellPriceStr}
-                  onChange={(e) => setSellPriceStr(e.target.value)}
-                  placeholder="26500000"
-                  className="font-mono text-xs font-bold"
+                  id="build-margin"
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={marginPercent}
+                  onChange={(e) => handleMarginChange(parseInt(e.target.value) || 0)}
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Chegirma foizi %
-                </Label>
+              <div>
+                <Label htmlFor="build-sell-price">Sotuv narxi (UZS) *</Label>
                 <Input
+                  id="build-sell-price"
+                  required
+                  value={sellPriceStr}
+                  onChange={(e) => setSellPriceStr(e.target.value)}
+                  placeholder="26 500 000"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="build-discount">Chegirma %</Label>
+                <Input
+                  id="build-discount"
                   type="number"
                   min={0}
                   max={90}
                   value={discountPercent}
                   onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
-                  className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
                 />
               </div>
             </div>
 
-            {/* Jonli natija bloki */}
-            <div className="rounded-control bg-muted/60 p-3 space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Sof kutilayotgan foyda:</span>
-                <span className="font-mono font-bold text-(--success-fg)">
+            <div className="flex flex-wrap items-center justify-between rounded-control border border-border bg-muted/20 p-3">
+              <div>
+                <FieldHint className="mt-0">Sof kutilayotgan foyda:</FieldHint>
+                <div className="text-body font-bold text-(--success-fg)">
                   +{formatMoney(expectedProfit)} ({calculatedMargin}%)
-                </span>
+                </div>
               </div>
               {discountPercent > 0 && (
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Chegirmadan keyingi narx:</span>
-                  <span className="font-mono font-bold text-foreground">
+                <div className="text-right">
+                  <FieldHint className="mt-0">Chegirmadan keyingi narx:</FieldHint>
+                  <div className="text-body font-bold text-foreground">
                     {formatMoney(calcFinalPrice(sellPrice, discountPercent))}
-                  </span>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         )}
-
-        {/* Tugmalar */}
-        <div className="flex justify-end gap-2 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenChange(false)}
-          >
-            Bekor qilish
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            size="sm"
-            disabled={!name.trim() || components.length === 0 || (isFinancial && totalCostPrice <= 0n)}
-          >
-            {initialData ? "Oʻzgarishlarni saqlash" : "Kompyuterni saqlash"}
-          </Button>
-        </div>
       </form>
     </Modal>
   );

@@ -35,7 +35,7 @@ import {
   DropdownMenuTrigger,
 } from "@ventura/ui/dropdown-menu";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
@@ -438,20 +438,30 @@ export default function AdminPcOrdersPage() {
         onOpenChange={(open) => !open && setSelectedForDetail(null)}
         title={selectedForDetail ? `Zakaz tafsilotlari: ${selectedForDetail.orderNumber}` : "Zakaz tafsilotlari"}
         wide
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setSelectedForDetail(null)}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" form="order-detail-form">
+              <Check /> Saqlash
+            </Button>
+          </>
+        }
       >
         {selectedForDetail && (
-          <form onSubmit={handleSaveDetailChanges} className="space-y-4 text-xs sm:text-sm">
+          <form id="order-detail-form" onSubmit={handleSaveDetailChanges} className="space-y-4">
             {/* Mijoz haqida ma'lumot */}
             <div className="rounded-control bg-muted/60 p-4 space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h4 className="font-bold text-foreground text-sm">{selectedForDetail.customerName}</h4>
+                  <div className="font-bold text-foreground text-base">{selectedForDetail.customerName}</div>
                   <div className="flex items-center gap-3 mt-1">
                     <a
                       href={`tel:${selectedForDetail.customerPhone}`}
-                      className="font-mono text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
+                      className="font-mono text-body text-primary hover:underline flex items-center gap-1 font-semibold"
                     >
-                      <Phone size={12} />
+                      <Phone size={14} />
                       {selectedForDetail.customerPhone}
                     </a>
                     <Link
@@ -461,9 +471,9 @@ export default function AdminPcOrdersPage() {
                         `Assalomu alaykum ${selectedForDetail.customerName}! Ventura PC dan sizning zakazingiz (${selectedForDetail.orderNumber}) boʻyicha bogʻlanyapmiz.`
                       )}`}
                       target="_blank"
-                      className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                      className="text-body text-muted-foreground hover:text-primary flex items-center gap-1"
                     >
-                      <MessageCircle size={12} />
+                      <MessageCircle size={14} />
                       Telegram
                     </Link>
                   </div>
@@ -474,14 +484,14 @@ export default function AdminPcOrdersPage() {
               </div>
 
               {selectedForDetail.deliveryAddress && (
-                <p className="text-xs text-muted-foreground pt-1">
+                <FieldHint className="mt-1">
                   <strong>Manzil:</strong> {selectedForDetail.deliveryAddress}
-                </p>
+                </FieldHint>
               )}
 
               {selectedForDetail.customerNote && (
-                <div className="rounded border border-primary/20 bg-primary/5 p-2.5 text-xs mt-2">
-                  <span className="font-bold text-primary block">Mijoz istagi / Izohi:</span>
+                <div className="rounded-control border border-primary/20 bg-primary/5 p-3 text-body mt-2">
+                  <div className="font-semibold text-primary">Mijoz istagi / Izohi:</div>
                   <p className="text-foreground mt-0.5">{selectedForDetail.customerNote}</p>
                 </div>
               )}
@@ -490,26 +500,26 @@ export default function AdminPcOrdersPage() {
             {/* Tanlangan komponentlar ro'yxati */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <div className="text-body font-semibold text-foreground">
                   Tanlangan qismlar ({selectedForDetail.components.length} ta):
-                </span>
+                </div>
                 {isFinancial && (
-                  <span className="font-mono text-xs font-bold text-foreground">
+                  <div className="text-body font-bold text-foreground">
                     Umumiy tannarx: {formatMoney(selectedForDetail.costPrice)}
-                  </span>
+                  </div>
                 )}
               </div>
               <div className="rounded-control border border-border divide-y divide-border max-h-56 overflow-y-auto">
                 {selectedForDetail.components.map((c, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2.5 text-xs hover:bg-muted/20">
+                  <div key={idx} className="flex items-center justify-between p-3 text-body hover:bg-muted/20">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold uppercase text-2xs text-muted-foreground min-w-20">
+                      <span className="font-semibold text-caption text-muted-foreground min-w-20">
                         {c.roleNameUz}
                       </span>
-                      <span className="font-semibold text-foreground">{c.productName}</span>
+                      <span className="font-medium text-foreground">{c.productName}</span>
                     </div>
                     {isFinancial && (
-                      <span className="font-mono text-xs text-foreground font-bold whitespace-nowrap pl-2">
+                      <span className="font-bold text-foreground whitespace-nowrap pl-2">
                         {formatMoney(c.price)}
                       </span>
                     )}
@@ -521,22 +531,20 @@ export default function AdminPcOrdersPage() {
             {/* Hisob-kitob qatori (faqat moliyaviy rejimda) */}
             {isFinancial && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border">
-                <div className="rounded-control bg-muted/40 p-3 text-xs">
-                  <span className="text-muted-foreground block">Komponentlar tannarxi:</span>
-                  <span className="font-mono font-bold text-base text-foreground mt-0.5 block">
+                <div className="rounded-control bg-muted/40 p-3">
+                  <FieldHint className="mt-0">Komponentlar tannarxi:</FieldHint>
+                  <div className="font-bold text-base text-foreground mt-0.5">
                     {formatMoney(selectedForDetail.costPrice)}
-                  </span>
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    Kelishilgan narx (UZS)
-                  </Label>
+                <div>
+                  <Label htmlFor="order-quote-price">Kelishilgan narx (UZS)</Label>
                   <Input
+                    id="order-quote-price"
                     value={quotePriceStr}
                     onChange={(e) => setQuotePriceStr(e.target.value)}
-                    placeholder="Masalan: 18500000"
-                    className="font-mono text-xs font-bold"
+                    placeholder="Masalan: 18 500 000"
                   />
                 </div>
               </div>
@@ -544,12 +552,10 @@ export default function AdminPcOrdersPage() {
 
             {/* Status va Operator izohi */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Statusni yangilash
-                </Label>
+              <div>
+                <Label htmlFor="order-status-select">Statusni yangilash</Label>
                 <Select value={modalStatus} onValueChange={(v) => setModalStatus(v as PcOrderItem["status"])}>
-                  <SelectTrigger aria-label="Statusni yangilash" className="w-full text-xs h-(--control-h)">
+                  <SelectTrigger id="order-status-select" aria-label="Statusni yangilash" className="w-full">
                     <SelectValue placeholder="Statusni tanlang" />
                   </SelectTrigger>
                   <SelectContent>
@@ -565,31 +571,15 @@ export default function AdminPcOrdersPage() {
                 </Select>
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Operator izohi
-                </Label>
+              <div>
+                <Label htmlFor="order-operator-note">Operator izohi</Label>
                 <Input
+                  id="order-operator-note"
                   value={operatorNote}
                   onChange={(e) => setOperatorNote(e.target.value)}
                   placeholder="Mijoz bilan kelishuv tafsilotlari..."
                 />
               </div>
-            </div>
-
-            {/* Tugmalar */}
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedForDetail(null)}
-              >
-                Bekor qilish
-              </Button>
-              <Button type="submit" variant="primary" size="sm" className="font-bold">
-                Saqlash
-              </Button>
             </div>
           </form>
         )}
@@ -599,15 +589,20 @@ export default function AdminPcOrdersPage() {
       <Modal
         open={Boolean(selectedForTrack)}
         onOpenChange={(open) => !open && setSelectedForTrack(null)}
-        title={selectedForTrack ? `Buyurtma jarayoni va kuzatuv: ${selectedForTrack.orderNumber}` : "Kuzatish"}
+        title={selectedForTrack ? `Buyurtma jarayoni: ${selectedForTrack.orderNumber}` : "Kuzatish"}
+        footer={
+          <Button variant="ghost" onClick={() => setSelectedForTrack(null)}>
+            Yopish
+          </Button>
+        }
       >
         {selectedForTrack && (
-          <div className="space-y-5 text-xs sm:text-sm">
+          <div className="space-y-4">
             {/* Header ma'lumoti */}
             <div className="rounded-control bg-muted/40 p-3.5 flex items-center justify-between">
               <div>
-                <span className="font-bold text-foreground block text-sm">{selectedForTrack.pcName || "Custom PC Build"}</span>
-                <span className="text-2xs text-muted-foreground">Mijoz: {selectedForTrack.customerName} ({selectedForTrack.customerPhone})</span>
+                <div className="font-bold text-foreground text-base">{selectedForTrack.pcName || "Custom PC Build"}</div>
+                <FieldHint className="mt-0.5">Mijoz: {selectedForTrack.customerName} ({selectedForTrack.customerPhone})</FieldHint>
               </div>
               <Badge tone={STATUS_LABELS[selectedForTrack.status].tone}>
                 {STATUS_LABELS[selectedForTrack.status].label}
@@ -624,7 +619,7 @@ export default function AdminPcOrdersPage() {
                 return (
                   <div key={step.status} className="relative flex items-start gap-3">
                     <div
-                      className={`absolute -left-6 mt-0.5 size-5 rounded-full grid place-items-center text-2xs transition-colors ${
+                      className={`absolute -left-6 mt-0.5 size-5 rounded-full grid place-items-center text-caption transition-colors ${
                         isCurrent
                           ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
                           : isPassed
@@ -635,12 +630,12 @@ export default function AdminPcOrdersPage() {
                       {isPassed ? <Check size={12} /> : idx + 1}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`font-semibold ${isCurrent ? "text-primary font-bold" : isPassed ? "text-foreground" : "text-muted-foreground"}`}>
+                      <p className={`text-body font-semibold ${isCurrent ? "text-primary font-bold" : isPassed ? "text-foreground" : "text-muted-foreground"}`}>
                         {step.title}
                       </p>
-                      <p className="text-2xs text-muted-foreground mt-0.5">
+                      <FieldHint className="mt-0.5">
                         {step.desc}
-                      </p>
+                      </FieldHint>
                     </div>
                   </div>
                 );
@@ -649,37 +644,25 @@ export default function AdminPcOrdersPage() {
 
             {/* Havolani nusxalash bloki */}
             <div className="rounded-control border border-border bg-card p-3 space-y-2">
-              <span className="text-2xs font-bold text-muted-foreground uppercase tracking-wider block">
+              <FieldHint className="mt-0 font-semibold text-foreground">
                 Mijozga yuboriladigan kuzatuv havolasi:
-              </span>
+              </FieldHint>
               <div className="flex items-center gap-2">
                 <Input
                   readOnly
                   value={`/computers/custom?track=${selectedForTrack.orderNumber}`}
-                  className="font-mono text-2xs h-8 bg-muted text-muted-foreground"
+                  className="font-mono bg-muted text-muted-foreground"
                 />
                 <Button
                   type="button"
                   variant="subtle"
-                  size="sm"
                   onClick={() => copyTrackerUrl(selectedForTrack.orderNumber)}
-                  className="h-8 gap-1 text-2xs font-bold whitespace-nowrap"
+                  className="gap-1.5 font-bold whitespace-nowrap"
                 >
-                  {copiedTrack ? <Check size={12} className="text-(--success-fg)" /> : <Copy size={12} />}
+                  {copiedTrack ? <Check size={14} className="text-(--success-fg)" /> : <Copy size={14} />}
                   <span>{copiedTrack ? "Nusxalandi" : "Nusxa olish"}</span>
                 </Button>
               </div>
-            </div>
-
-            <div className="flex justify-end pt-2 border-t border-border">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedForTrack(null)}
-              >
-                Yopish
-              </Button>
             </div>
           </div>
         )}
@@ -691,6 +674,11 @@ export default function AdminPcOrdersPage() {
         onOpenChange={(open) => !open && setSelectedForProfit(null)}
         title={selectedForProfit ? `Sof foyda tahlili: ${selectedForProfit.orderNumber}` : "Foyda hisob-kitobi"}
         wide
+        footer={
+          <Button variant="ghost" onClick={() => setSelectedForProfit(null)}>
+            Yopish
+          </Button>
+        }
       >
         {selectedForProfit && (() => {
           const quoted = selectedForProfit.quotedPrice ?? 0n;
@@ -699,66 +687,66 @@ export default function AdminPcOrdersPage() {
           const margin = quoted > 0n ? calcMarginPercent(profit, quoted) : 0;
 
           return (
-            <div className="space-y-4 text-xs sm:text-sm">
+            <div className="space-y-4">
               {/* Asosiy 4 ta karta */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <span className="text-2xs text-muted-foreground block font-semibold">Tannarx (Kirim)</span>
-                  <span className="font-mono font-bold text-sm text-foreground mt-0.5 block">
+                  <FieldHint className="mt-0">Tannarx (Kirim)</FieldHint>
+                  <div className="font-bold text-body text-foreground mt-0.5">
                     {formatMoney(cost)}
-                  </span>
+                  </div>
                 </div>
 
                 <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <span className="text-2xs text-muted-foreground block font-semibold">Kelishilgan narx</span>
-                  <span className="font-mono font-bold text-sm text-foreground mt-0.5 block">
+                  <FieldHint className="mt-0">Kelishilgan narx</FieldHint>
+                  <div className="font-bold text-body text-foreground mt-0.5">
                     {quoted > 0n ? formatMoney(quoted) : "Belgilanmagan"}
-                  </span>
+                  </div>
                 </div>
 
                 <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <span className="text-2xs text-muted-foreground block font-semibold">Kutilayotgan sof foyda</span>
-                  <span className={`font-mono font-black text-sm mt-0.5 block ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
+                  <FieldHint className="mt-0">Kutilayotgan sof foyda</FieldHint>
+                  <div className={`font-bold text-body mt-0.5 ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
                     {profit >= 0n ? "+" : ""}{formatMoney(profit)}
-                  </span>
+                  </div>
                 </div>
 
                 <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <span className="text-2xs text-muted-foreground block font-semibold">Rentabellik (Marja)</span>
-                  <span className="font-mono font-black text-sm text-primary mt-0.5 block">
+                  <FieldHint className="mt-0">Rentabellik (Marja)</FieldHint>
+                  <div className="font-bold text-body text-primary mt-0.5">
                     {margin}%
-                  </span>
+                  </div>
                 </div>
               </div>
 
               {/* Komponentlar bo'yicha tannarx va sotuv tahlili */}
               <div>
-                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                <div className="text-body font-semibold text-foreground mb-2">
                   Komponentlar kesimida tannarx va hisob:
-                </span>
+                </div>
                 <div className="rounded-control border border-border overflow-hidden">
-                  <table className="w-full text-left text-xs">
-                    <thead className="bg-muted/60 text-caption font-bold text-muted-foreground border-b border-border">
+                  <table className="w-full text-left text-body">
+                    <thead className="bg-muted/60 text-caption font-semibold text-muted-foreground border-b border-border">
                       <tr>
-                        <th className="p-2.5">Qism</th>
-                        <th className="p-2.5">Mahsulot nomi</th>
-                        <th className="p-2.5 text-right">Tannarx</th>
-                        <th className="p-2.5 text-right">Katalog narxi</th>
+                        <th className="p-3">Qism</th>
+                        <th className="p-3">Mahsulot nomi</th>
+                        <th className="p-3 text-right">Tannarx</th>
+                        <th className="p-3 text-right">Katalog narxi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {selectedForProfit.components.map((c, idx) => (
                         <tr key={idx} className="hover:bg-muted/20">
-                          <td className="p-2.5 font-bold uppercase text-2xs text-muted-foreground">
+                          <td className="p-3 font-semibold text-caption text-muted-foreground">
                             {c.roleNameUz}
                           </td>
-                          <td className="p-2.5 font-semibold text-foreground">
+                          <td className="p-3 font-medium text-foreground">
                             {c.productName}
                           </td>
-                          <td className="p-2.5 text-right font-mono text-muted-foreground">
+                          <td className="p-3 text-right text-muted-foreground">
                             {formatMoney(c.costPrice ?? 0n)}
                           </td>
-                          <td className="p-2.5 text-right font-mono font-bold text-foreground">
+                          <td className="p-3 text-right font-bold text-foreground">
                             {formatMoney(c.price)}
                           </td>
                         </tr>
@@ -766,17 +754,6 @@ export default function AdminPcOrdersPage() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-
-              <div className="flex justify-end pt-2 border-t border-border">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedForProfit(null)}
-                >
-                  Yopish
-                </Button>
               </div>
             </div>
           );

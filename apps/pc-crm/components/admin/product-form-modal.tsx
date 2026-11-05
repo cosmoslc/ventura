@@ -1,12 +1,12 @@
 "use client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Switch } from "@ventura/ui/switch";
 import { ImageUploadWithBgRemoval } from "@/components/admin/image-upload-with-bg-removal";
 import { calcFinalPrice, calcSellPriceFromMargin } from "@/lib/calc/formulas";
@@ -169,81 +169,84 @@ export function ProductFormModal({
       description="Katalog, narxlar, qoldiq va texnik xususiyatlarni kiriting"
       wide
       footer={
-        <div className="flex w-full items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Bekor qilish
           </Button>
-
-          <Button variant="primary" size="sm" onClick={handleSubmit} className="font-bold">
-            {initialData ? "Oʻzgarishlarni saqlash" : "Mahsulotni yaratish"}
+          <Button type="submit" form="product-form">
+            <Check /> {initialData ? "Saqlash" : "Mahsulotni yaratish"}
           </Button>
-        </div>
+        </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-6 text-xs">
+      <form id="product-form" onSubmit={handleSubmit} className="space-y-5">
         {/* 1. Asosiy ma'lumotlar */}
-        <div className="space-y-3.5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Mahsulot nomi (Oʻzbekcha) *</Label>
-              <Input
-                value={nameUz}
-                onChange={(e) => setNameUz(e.target.value)}
-                placeholder="Masalan: Intel Core i7-14700K"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Mahsulot nomi (Ruscha)</Label>
-              <Input
-                value={nameRu}
-                onChange={(e) => setNameRu(e.target.value)}
-                placeholder="Процессор Intel Core i7-14700K"
-              />
-            </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="prod-name-uz">Mahsulot nomi (Oʻzbekcha) *</Label>
+            <Input
+              id="prod-name-uz"
+              value={nameUz}
+              onChange={(e) => setNameUz(e.target.value)}
+              placeholder="Masalan: Intel Core i7-14700K"
+              required
+            />
           </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Toifa (Kategoriya)</Label>
-              <Select value={categorySlug} onValueChange={setCategorySlug}>
-                <SelectTrigger aria-label="Toifa (Kategoriya)" className="w-full text-xs h-(--control-h)">
-                  <SelectValue placeholder="Toifani tanlang" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="protsessorlar">Protsessorlar (CPU)</SelectItem>
-                  <SelectItem value="videokartalar">Videokartalar (GPU)</SelectItem>
-                  <SelectItem value="operativ-xotira">Operativ xotira (RAM)</SelectItem>
-                  <SelectItem value="ssd-disklar">SSD toʻplovchilar</SelectItem>
-                  <SelectItem value="ona-platalar">Ona platalar (Motherboard)</SelectItem>
-                  <SelectItem value="korpuslar">Korpuslar (Case)</SelectItem>
-                  <SelectItem value="blok-pitaniya">Blok pitaniya (PSU)</SelectItem>
-                  <SelectItem value="sovutish">Kuler va sovutish tizimi</SelectItem>
-                  <SelectItem value="monitorlar">Monitorlar</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="prod-name-ru">Mahsulot nomi (Ruscha)</Label>
+            <Input
+              id="prod-name-ru"
+              value={nameRu}
+              onChange={(e) => setNameRu(e.target.value)}
+              placeholder="Процессор Intel Core i7-14700K"
+            />
+          </div>
+        </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Brend</Label>
-              <Input
-                value={brandName}
-                onChange={(e) => setBrandName(e.target.value)}
-                placeholder="Intel, ASUS, Kingston..."
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">SKU / Mahsulot kodi</Label>
-              <Input
-                value={sku}
-                onChange={(e) => setSku(e.target.value)}
-                placeholder="Avtomatik yaratiladi"
-              />
-            </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <Label htmlFor="prod-category">Toifa (Kategoriya)</Label>
+            <Select value={categorySlug} onValueChange={setCategorySlug}>
+              <SelectTrigger id="prod-category" aria-label="Toifa (Kategoriya)" className="w-full">
+                <SelectValue placeholder="Toifani tanlang" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="protsessorlar">Protsessorlar (CPU)</SelectItem>
+                <SelectItem value="videokartalar">Videokartalar (GPU)</SelectItem>
+                <SelectItem value="operativ-xotira">Operativ xotira (RAM)</SelectItem>
+                <SelectItem value="ssd-disklar">SSD toʻplovchilar</SelectItem>
+                <SelectItem value="ona-platalar">Ona platalar (Motherboard)</SelectItem>
+                <SelectItem value="korpuslar">Korpuslar (Case)</SelectItem>
+                <SelectItem value="blok-pitaniya">Blok pitaniya (PSU)</SelectItem>
+                <SelectItem value="sovutish">Kuler va sovutish tizimi</SelectItem>
+                <SelectItem value="monitorlar">Monitorlar</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
+          <div>
+            <Label htmlFor="prod-brand">Brend</Label>
+            <Input
+              id="prod-brand"
+              value={brandName}
+              onChange={(e) => setBrandName(e.target.value)}
+              placeholder="Intel, ASUS, Kingston..."
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="prod-sku">SKU / Mahsulot kodi</Label>
+            <Input
+              id="prod-sku"
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              placeholder="Avtomatik yaratiladi"
+            />
+          </div>
+        </div>
+
+        <div>
           <ImageUploadWithBgRemoval
             value={imageUrl}
             onChange={setImageUrl}
@@ -254,46 +257,47 @@ export function ProductFormModal({
 
         {/* 2. Narx va Foyda Kalkulyatori (faqat moliyaviy rejimda) */}
         {isFinancial && (
-          <div className="rounded-control border border-border bg-muted/20 p-4 space-y-3">
-            <h3 className="font-bold text-foreground">Narxlar va Kutilayotgan Foyda</h3>
+          <div className="space-y-3 rounded-control border border-border bg-muted/20 p-4">
+            <div className="text-body font-semibold text-foreground">Narxlar va Kutilayotgan Foyda</div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Tannarx (soʻmda)</Label>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <div>
+                <Label htmlFor="prod-cost">Tannarx (soʻmda)</Label>
                 <Input
+                  id="prod-cost"
                   type="number"
                   value={costPriceStr}
                   onChange={(e) => handleCostChange(e.target.value)}
-                  placeholder="1000000"
+                  placeholder="1 000 000"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Ustama (marja %)</Label>
-                <div className="flex items-center gap-1.5">
-                  <Input
-                    type="number"
-                    value={marginPercent}
-                    onChange={(e) => handleMarginChange(Number(e.target.value))}
-                    placeholder="20"
-                  />
-                  <span className="font-bold text-muted-foreground">%</span>
-                </div>
+              <div>
+                <Label htmlFor="prod-margin">Ustama (marja %)</Label>
+                <Input
+                  id="prod-margin"
+                  type="number"
+                  value={marginPercent}
+                  onChange={(e) => handleMarginChange(Number(e.target.value))}
+                  placeholder="20"
+                />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Sotish narxi (soʻmda)</Label>
+              <div>
+                <Label htmlFor="prod-sell">Sotish narxi (soʻmda)</Label>
                 <Input
+                  id="prod-sell"
                   type="number"
                   value={sellPriceStr}
                   onChange={(e) => setSellPriceStr(e.target.value)}
-                  placeholder="1200000"
+                  placeholder="1 200 000"
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Chegirma %</Label>
+              <div>
+                <Label htmlFor="prod-discount">Chegirma %</Label>
                 <Input
+                  id="prod-discount"
                   type="number"
                   min={0}
                   max={99}
@@ -304,40 +308,41 @@ export function ProductFormModal({
               </div>
             </div>
 
-            {/* Jonli hisob natijasi */}
-            <div className="flex flex-wrap items-center justify-between rounded-control bg-card p-3 border border-border/80">
+            <div className="flex flex-wrap items-center justify-between rounded-control border border-border bg-card p-3">
               <div>
-                <p className="text-caption text-muted-foreground">Xaridor koʻradigan yakuniy narx:</p>
-                <p className="text-sm font-black text-foreground">{formatMoney(finalPrice)}</p>
+                <FieldHint className="mt-0">Xaridor koʻradigan yakuniy narx:</FieldHint>
+                <div className="text-body font-bold text-foreground">{formatMoney(finalPrice)}</div>
               </div>
 
               <div className="text-right">
-                <p className="text-caption text-muted-foreground">Kutilayotgan sof foyda (dona):</p>
-                <p className={`text-sm font-black ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
+                <FieldHint className="mt-0">Kutilayotgan sof foyda (dona):</FieldHint>
+                <div className={`text-body font-bold ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
                   {profit >= 0n ? "+" : ""}{formatMoney(profit)}
-                </p>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* 3. Ombor va Holat */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-3">
-            <h3 className="font-bold text-foreground">Ombor qoldigʻi</h3>
+            <div className="text-body font-semibold text-foreground">Ombor qoldigʻi</div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Qoldiq dona (Stock)</Label>
+              <div>
+                <Label htmlFor="prod-stock">Qoldiq dona (Stock)</Label>
                 <Input
+                  id="prod-stock"
                   type="number"
                   value={stock}
                   onChange={(e) => setStock(Number(e.target.value))}
                 />
               </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Ogohlantirish chegarasi</Label>
+              <div>
+                <Label htmlFor="prod-min-stock">Ogohlantirish chegarasi</Label>
                 <Input
+                  id="prod-min-stock"
                   type="number"
                   value={minStock}
                   onChange={(e) => setMinStock(Number(e.target.value))}
@@ -347,78 +352,97 @@ export function ProductFormModal({
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-bold text-foreground">Statuslar va Belgilar</h3>
-            <div className="flex flex-col gap-2.5">
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="font-medium text-foreground">Faol (Saytda koʻrinadi)</span>
-                <Switch checked={isActive} onCheckedChange={setIsActive} />
+            <div className="text-body font-semibold text-foreground">Statuslar va Belgilar</div>
+            <div className="space-y-2">
+              <label
+                htmlFor="prod-is-active"
+                className="flex cursor-pointer items-center justify-between rounded-control border border-border-soft px-3 py-2 transition-colors hover:bg-muted"
+              >
+                <span className="text-body font-medium text-foreground">Faol (Saytda koʻrinadi)</span>
+                <Switch id="prod-is-active" checked={isActive} onCheckedChange={setIsActive} />
               </label>
 
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="font-medium text-foreground">Hit tovar (Ommabop)</span>
-                <Switch checked={isHit} onCheckedChange={setIsHit} />
+              <label
+                htmlFor="prod-is-hit"
+                className="flex cursor-pointer items-center justify-between rounded-control border border-border-soft px-3 py-2 transition-colors hover:bg-muted"
+              >
+                <span className="text-body font-medium text-foreground">Hit tovar (Ommabop)</span>
+                <Switch id="prod-is-hit" checked={isHit} onCheckedChange={setIsHit} />
               </label>
 
-              <label className="flex items-center justify-between cursor-pointer">
-                <span className="font-medium text-foreground">Yangi mahsulot</span>
-                <Switch checked={isNew} onCheckedChange={setIsNew} />
+              <label
+                htmlFor="prod-is-new"
+                className="flex cursor-pointer items-center justify-between rounded-control border border-border-soft px-3 py-2 transition-colors hover:bg-muted"
+              >
+                <span className="text-body font-medium text-foreground">Yangi mahsulot</span>
+                <Switch id="prod-is-new" checked={isNew} onCheckedChange={setIsNew} />
               </label>
             </div>
           </div>
         </div>
 
-        <p className="border-t border-border pt-4 text-xs text-muted-foreground">
+        <FieldHint>
           Rang variantlari alohida qoldiq va buyurtma oqimiga ulanmaguncha bu formada tahrirlanmaydi.
-        </p>
+        </FieldHint>
 
-        {/* 5. Texnik xususiyatlar ("?" tushuntirish bilan) */}
-        <div className="space-y-2.5 border-t border-border pt-4">
+        {/* 4. Texnik xususiyatlar */}
+        <div className="space-y-3 border-t border-border pt-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-bold text-foreground">Texnik xususiyatlar (Specs)</h3>
-              <p className="text-caption text-muted-foreground">
-                Xaridor koʻradigan parametrlar va "?" tushuntirish modali matni
-              </p>
+              <div className="text-body font-semibold text-foreground">Texnik xususiyatlar (Specs)</div>
+              <FieldHint className="mt-0">Xaridor koʻradigan parametrlar va "?" tushuntirish modali matni</FieldHint>
             </div>
-            <Button variant="ghost" size="sm" type="button" onClick={addSpec} className="gap-1 text-xs">
-              <Plus size={13} /> Xususiyat qoʻshish
+            <Button variant="ghost" size="sm" type="button" onClick={addSpec} className="gap-1">
+              <Plus size={14} /> Xususiyat qoʻshish
             </Button>
           </div>
 
           {specs.map((s, i) => (
-            <div key={i} className="space-y-2 rounded-control border border-border p-3 bg-muted/10">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <Input
-                  value={s.title}
-                  onChange={(e) => {
-                    setSpecs(specs.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item));
-                  }}
-                  placeholder="Xususiyat nomi (masalan: Chastota)"
-                />
-                <Input
-                  value={s.value}
-                  onChange={(e) => {
-                    setSpecs(specs.map((item, idx) => idx === i ? { ...item, value: e.target.value } : item));
-                  }}
-                  placeholder="Qiymati (masalan: 5.4 GHz)"
-                />
+            <div key={i} className="space-y-2 rounded-control border border-border bg-muted/10 p-3">
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div>
+                  <Label htmlFor={`spec-title-${i}`}>Xususiyat nomi</Label>
+                  <Input
+                    id={`spec-title-${i}`}
+                    value={s.title}
+                    onChange={(e) => {
+                      setSpecs(specs.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item));
+                    }}
+                    placeholder="Masalan: Chastota"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor={`spec-value-${i}`}>Qiymati</Label>
+                  <Input
+                    id={`spec-value-${i}`}
+                    value={s.value}
+                    onChange={(e) => {
+                      setSpecs(specs.map((item, idx) => idx === i ? { ...item, value: e.target.value } : item));
+                    }}
+                    placeholder="Masalan: 5.4 GHz"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                <Input
-                  value={s.helpText ?? ""}
-                  onChange={(e) => {
-                    setSpecs(specs.map((item, idx) => idx === i ? { ...item, helpText: e.target.value } : item));
-                  }}
-                  placeholder="? tushuntirish matni (masalan: Protsessor takt chastotasi nima?)"
-                  className="flex-1 text-caption"
-                />
-                <button
+                <div className="flex-1">
+                  <Input
+                    value={s.helpText ?? ""}
+                    onChange={(e) => {
+                      setSpecs(specs.map((item, idx) => idx === i ? { ...item, helpText: e.target.value } : item));
+                    }}
+                    placeholder="? tushuntirish matni (masalan: Protsessor takt chastotasi nima?)"
+                  />
+                </div>
+                <Button
                   type="button"
+                  variant="icon"
+                  size="icon"
                   onClick={() => setSpecs(specs.filter((_, idx) => idx !== i))}
-                  className="text-muted-foreground hover:text-(--danger-fg) p-1"
+                  className="text-muted-foreground hover:text-destructive"
+                  title="Oʻchirish"
                 >
                   <Trash2 size={16} />
-                </button>
+                </Button>
               </div>
             </div>
           ))}

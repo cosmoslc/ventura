@@ -288,85 +288,79 @@ export default function AdminOrdersPage() {
           description={`Xaridor: ${selectedOrder.customerName} (${selectedOrder.customerPhone})`}
           wide
           footer={
-            <div className="flex w-full items-center justify-between">
-              <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(null)}>
+            <>
+              <Button variant="ghost" onClick={() => setSelectedOrder(null)}>
                 Yopish
               </Button>
 
-              <div className="flex items-center gap-2">
-                {selectedOrder.status === "new" && (
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={() => handleUpdateStatus(selectedOrder.id, "confirmed")}
-                  >
-                    Tasdiqlash
-                  </Button>
-                )}
+              {selectedOrder.status === "new" && (
+                <Button
+                  variant="success"
+                  onClick={() => handleUpdateStatus(selectedOrder.id, "confirmed")}
+                >
+                  Tasdiqlash
+                </Button>
+              )}
 
-                {selectedOrder.status === "confirmed" && (
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => handleUpdateStatus(selectedOrder.id, "shipping")}
-                  >
-                    Kuryerga berish
-                  </Button>
-                )}
+              {selectedOrder.status === "confirmed" && (
+                <Button
+                  variant="primary"
+                  onClick={() => handleUpdateStatus(selectedOrder.id, "shipping")}
+                >
+                  Kuryerga berish
+                </Button>
+              )}
 
-                {selectedOrder.status === "shipping" && (
-                  <Button
-                    variant="success"
-                    size="sm"
-                    onClick={() => handleUpdateStatus(selectedOrder.id, "delivered")}
-                  >
-                    Yetkazildi (Foydani qayd etish)
-                  </Button>
-                )}
+              {selectedOrder.status === "shipping" && (
+                <Button
+                  variant="success"
+                  onClick={() => handleUpdateStatus(selectedOrder.id, "delivered")}
+                >
+                  Yetkazildi
+                </Button>
+              )}
 
-                {selectedOrder.status !== "delivered" && selectedOrder.status !== "cancelled" && (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={() => handleUpdateStatus(selectedOrder.id, "cancelled")}
-                  >
-                    Bekor qilish
-                  </Button>
-                )}
-              </div>
-            </div>
+              {selectedOrder.status !== "delivered" && selectedOrder.status !== "cancelled" && (
+                <Button
+                  variant="danger"
+                  onClick={() => handleUpdateStatus(selectedOrder.id, "cancelled")}
+                >
+                  Bekor qilish
+                </Button>
+              )}
+            </>
           }
         >
-          <div className="space-y-4 text-xs">
+          <div className="space-y-4">
             {/* Xaridor va Manzil */}
-            <div className="rounded-card border border-border bg-muted/20 p-3.5 space-y-2">
+            <div className="rounded-control border border-border bg-muted/20 p-3.5 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-semibold text-foreground flex items-center gap-1.5">
-                  <MapPin size={14} className="text-primary" /> Yetkazish manzili:
-                </span>
-                <span className="font-bold text-foreground">{selectedOrder.region}</span>
+                <div className="font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin size={15} className="text-primary" /> Yetkazish manzili:
+                </div>
+                <div className="font-bold text-foreground">{selectedOrder.region}</div>
               </div>
-              <p className="text-muted-foreground">{selectedOrder.address}</p>
-              <div className="flex items-center gap-4 pt-1 text-caption">
+              <p className="text-body text-muted-foreground">{selectedOrder.address}</p>
+              <div className="pt-1">
                 <a
                   href={`tel:${selectedOrder.customerPhone}`}
-                  className="text-primary font-bold hover:underline flex items-center gap-1"
+                  className="text-primary font-bold hover:underline flex items-center gap-1 text-body"
                 >
-                  <Phone size={12} /> {selectedOrder.customerPhone}
+                  <Phone size={14} /> {selectedOrder.customerPhone}
                 </a>
               </div>
             </div>
 
             {/* Buyurtmadagi tovarlar */}
             <div>
-              <h4 className="font-bold text-foreground mb-2">Buyurtma tarkibi:</h4>
-              <div className="divide-y divide-border/60 rounded-card border border-border bg-card">
+              <div className="text-body font-semibold text-foreground mb-2">Buyurtma tarkibi:</div>
+              <div className="divide-y divide-border/60 rounded-control border border-border bg-card">
                 {selectedOrder.items.map((item, idx) => {
                   const itemProfit = item.price - item.cost;
                   return (
                     <div key={idx} className="p-3 flex items-center justify-between">
                       <div>
-                        <p className="font-bold text-foreground">{item.name}</p>
+                        <p className="font-bold text-foreground text-body">{item.name}</p>
                         <p className="text-caption text-muted-foreground">
                           {isFinancial ? (
                             `${item.qty} dona × ${formatMoney(item.price)} (Tannarxi: ${formatMoney(item.cost)})`
@@ -378,8 +372,8 @@ export default function AdminOrdersPage() {
 
                       {isFinancial && (
                         <div className="text-right">
-                          <p className="font-black text-foreground">{formatMoney(item.price * BigInt(item.qty))}</p>
-                          <p className="text-2xs text-(--success-fg) font-semibold">
+                          <p className="font-bold text-foreground text-body">{formatMoney(item.price * BigInt(item.qty))}</p>
+                          <p className="text-caption text-(--success-fg) font-semibold">
                             +{formatMoney(itemProfit * BigInt(item.qty))} sof foyda
                           </p>
                         </div>
@@ -392,18 +386,18 @@ export default function AdminOrdersPage() {
 
             {/* Hisob-kitob jami (faqat moliyaviy rejimda) */}
             {isFinancial && (
-              <div className="rounded-card border border-border p-3.5 space-y-1.5 text-muted-foreground">
-                <div className="flex justify-between">
+              <div className="rounded-control border border-border p-3.5 space-y-1.5 text-muted-foreground">
+                <div className="flex justify-between text-body">
                   <span>Oraliq summa:</span>
                   <span className="font-bold text-foreground">{formatMoney(selectedOrder.subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between text-body">
                   <span>Yetkazib berish narxi:</span>
                   <span className="font-bold text-foreground">{formatMoney(selectedOrder.shipping)}</span>
                 </div>
-                <div className="flex justify-between border-t border-border pt-2 text-sm font-black text-foreground">
+                <div className="flex justify-between border-t border-border pt-2 text-body font-bold text-foreground">
                   <span>Jami summa:</span>
-                  <span className="text-primary font-black">{formatMoney(selectedOrder.total)}</span>
+                  <span className="text-primary font-bold">{formatMoney(selectedOrder.total)}</span>
                 </div>
               </div>
             )}

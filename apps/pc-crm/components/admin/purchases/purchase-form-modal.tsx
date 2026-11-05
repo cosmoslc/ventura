@@ -1,12 +1,12 @@
 "use client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
-import { PackagePlus } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Switch } from "@ventura/ui/switch";
 import { calcUnitCost } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
@@ -126,23 +126,22 @@ export function PurchaseFormModal({
       description="Yangi tovarlar xaridini kiriting (ombor qoldigʻi avtomatik oshadi)"
       wide
       footer={
-        <div className="flex w-full items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Bekor qilish
           </Button>
-
-          <Button variant="primary" size="sm" onClick={handleSubmit} className="font-bold">
-            Kirimni saqlash
+          <Button type="submit" form="purchase-form">
+            <Check /> Kirimni saqlash
           </Button>
-        </div>
+        </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+      <form id="purchase-form" onSubmit={handleSubmit} className="space-y-4">
         {/* Mahsulot tanlash */}
-        <div className="space-y-1">
-          <Label className="text-xs font-semibold">Kirim qilinayotgan tovar *</Label>
+        <div>
+          <Label htmlFor="purchase-product">Kirim qilinayotgan tovar *</Label>
           <Select value={selectedProductId} onValueChange={handleProductSelect}>
-            <SelectTrigger aria-label="Kirim qilinayotgan tovar" className="w-full text-xs h-(--control-h)">
+            <SelectTrigger id="purchase-product" aria-label="Kirim qilinayotgan tovar" className="w-full">
               <SelectValue placeholder="Tovarni tanlang" />
             </SelectTrigger>
             <SelectContent>
@@ -157,8 +156,8 @@ export function PurchaseFormModal({
 
         {/* Kirim turi: Dona yoki Optom (faqat moliyaviy rejimda) */}
         {isFinancial && (
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold">Kirim hisoblash turi</Label>
+          <div>
+            <Label>Kirim hisoblash turi</Label>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -167,16 +166,14 @@ export function PurchaseFormModal({
                   const u = BigInt(unitCostStr || "0");
                   setTotalCostStr((u * BigInt(qty || 1)).toString());
                 }}
-                className={`rounded-control border p-2.5 text-center font-bold transition-all ${
+                className={`rounded-control border p-2.5 text-center transition-all ${
                   purchaseType === "piece"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:bg-secondary"
+                    ? "border-primary bg-primary/10 text-primary font-bold"
+                    : "border-border-soft text-muted-foreground hover:bg-muted"
                 }`}
               >
                 Dona hisobi
-                <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
-                  (Dona narxi × Soni = Jami)
-                </span>
+                <FieldHint className="mt-0.5">(Dona narxi × Soni = Jami)</FieldHint>
               </button>
 
               <button
@@ -186,26 +183,25 @@ export function PurchaseFormModal({
                   const t = BigInt(totalCostStr || "0");
                   setUnitCostStr(calcUnitCost(t, qty || 1).toString());
                 }}
-                className={`rounded-control border p-2.5 text-center font-bold transition-all ${
+                className={`rounded-control border p-2.5 text-center transition-all ${
                   purchaseType === "bulk"
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-muted-foreground hover:bg-secondary"
+                    ? "border-primary bg-primary/10 text-primary font-bold"
+                    : "border-border-soft text-muted-foreground hover:bg-muted"
                 }`}
               >
                 Optom (Partiya)
-                <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
-                  (Jami summa / Soni = Dona tannarxi)
-                </span>
+                <FieldHint className="mt-0.5">(Jami summa / Soni = Dona tannarxi)</FieldHint>
               </button>
             </div>
           </div>
         )}
 
-        {/* Soni, Narxlar va Jonli hisob */}
-        <div className={`grid grid-cols-1 gap-3 ${isFinancial ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Xarid qilingan soni (dona) *</Label>
+        {/* Soni, Narxlar va Xarid sanasi */}
+        <div className={`grid gap-3 ${isFinancial ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+          <div>
+            <Label htmlFor="purchase-qty">Xarid qilingan soni (dona) *</Label>
             <Input
+              id="purchase-qty"
               type="number"
               min={1}
               value={qty}
@@ -215,18 +211,20 @@ export function PurchaseFormModal({
 
           {isFinancial && (
             purchaseType === "piece" ? (
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">1 dona tannarxi (soʻm) *</Label>
+              <div>
+                <Label htmlFor="purchase-unit-cost">1 dona tannarxi (soʻm) *</Label>
                 <Input
+                  id="purchase-unit-cost"
                   type="number"
                   value={unitCostStr}
                   onChange={(e) => handleUnitCostChange(e.target.value)}
                 />
               </div>
             ) : (
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Jami partiya summasi (soʻm) *</Label>
+              <div>
+                <Label htmlFor="purchase-total-cost">Jami partiya summasi (soʻm) *</Label>
                 <Input
+                  id="purchase-total-cost"
                   type="number"
                   value={totalCostStr}
                   onChange={(e) => handleTotalCostChange(e.target.value)}
@@ -235,9 +233,10 @@ export function PurchaseFormModal({
             )
           )}
 
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Xarid sanasi</Label>
+          <div>
+            <Label htmlFor="purchase-date">Xarid sanasi</Label>
             <Input
+              id="purchase-date"
               type="date"
               value={purchasedAt}
               onChange={(e) => setPurchasedAt(e.target.value)}
@@ -247,37 +246,39 @@ export function PurchaseFormModal({
 
         {/* Hisob xulosasi bloki (faqat moliyaviy rejimda) */}
         {isFinancial && (
-          <div className="flex items-center justify-between rounded-card border border-border bg-muted/20 p-3.5">
+          <div className="flex items-center justify-between rounded-control border border-border bg-muted/20 p-3.5">
             <div>
-              <p className="text-caption text-muted-foreground">Hisoblangan 1 dona tannarxi:</p>
-              <p className="text-base font-black text-foreground">
+              <FieldHint className="mt-0">Hisoblangan 1 dona tannarxi:</FieldHint>
+              <div className="text-body font-bold text-foreground">
                 {formatMoney(BigInt(unitCostStr || "0"))}
-              </p>
+              </div>
             </div>
 
             <div className="text-right">
-              <p className="text-caption text-muted-foreground">Jami toʻlangan summa:</p>
-              <p className="text-base font-black text-primary">
+              <FieldHint className="mt-0">Jami toʻlangan summa:</FieldHint>
+              <div className="text-body font-bold text-primary">
                 {formatMoney(BigInt(totalCostStr || "0"))}
-              </p>
+              </div>
             </div>
           </div>
         )}
 
         {/* Yetkazib beruvchi va izoh */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Yetkazib beruvchi (optovik / doʻkon)</Label>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <Label htmlFor="purchase-supplier">Yetkazib beruvchi (optovik / doʻkon)</Label>
             <Input
+              id="purchase-supplier"
               value={supplier}
               onChange={(e) => setSupplier(e.target.value)}
               placeholder="Masalan: Malika B-12 doʻkon"
             />
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Izoh (ixtiyoriy)</Label>
+          <div>
+            <Label htmlFor="purchase-note">Izoh (ixtiyoriy)</Label>
             <Input
+              id="purchase-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Masalan: 1 oy kafolat bilan olindi"
@@ -286,15 +287,20 @@ export function PurchaseFormModal({
         </div>
 
         {/* Checkbox: Mahsulot tannarxi ham yangilansinmi */}
-        <div className="rounded-control border border-border p-3 flex items-center justify-between">
-          <div>
-            <p className="font-bold text-foreground">Katalogdagi tannarx yangilansin</p>
-            <p className="text-caption text-muted-foreground">
-              Mahsulotning bazadagi tannarxi oxirgi kirim narxiga ({formatMoney(BigInt(unitCostStr || "0"))}) moslashtiriladi
-            </p>
-          </div>
-          <Switch checked={updateProductCost} onCheckedChange={setUpdateProductCost} />
-        </div>
+        {isFinancial && (
+          <label
+            htmlFor="purchase-update-cost"
+            className="flex cursor-pointer items-center justify-between rounded-control border border-border-soft p-3 transition-colors hover:bg-muted"
+          >
+            <div>
+              <div className="text-body font-medium text-foreground">Katalogdagi tannarx yangilansin</div>
+              <FieldHint className="mt-0.5">
+                Mahsulotning bazadagi tannarxi oxirgi kirim narxiga ({formatMoney(BigInt(unitCostStr || "0"))}) moslashtiriladi
+              </FieldHint>
+            </div>
+            <Switch id="purchase-update-cost" checked={updateProductCost} onCheckedChange={setUpdateProductCost} />
+          </label>
+        )}
       </form>
     </Modal>
   );

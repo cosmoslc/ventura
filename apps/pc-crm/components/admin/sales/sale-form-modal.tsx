@@ -1,11 +1,12 @@
 "use client";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { calcItemProfit, calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
 import { useFinancialMode } from "@/lib/store-context";
@@ -107,23 +108,23 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
       }
       wide
       footer={
-        <div className="flex w-full items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+        <>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Bekor qilish
           </Button>
-
-          <Button variant="primary" size="sm" onClick={handleSubmit} className="font-bold">
-            {isFinancial ? "Sotuvni saqlash" : "Chiqimni tasdiqlash"}
+          <Button type="submit" form="sale-form">
+            <Check /> {isFinancial ? "Sotuvni saqlash" : "Chiqimni tasdiqlash"}
           </Button>
-        </div>
+        </>
       }
     >
-      <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-        {/* Xaridor ma'lumotlari (majburiy) */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="space-y-1 sm:col-span-1">
-            <Label className="text-xs font-semibold">Xaridor ismi *</Label>
+      <form id="sale-form" onSubmit={handleSubmit} className="space-y-4">
+        {/* Xaridor ma'lumotlari */}
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div>
+            <Label htmlFor="sale-buyer-name">Xaridor ismi *</Label>
             <Input
+              id="sale-buyer-name"
               required
               value={buyerName}
               onChange={(e) => setBuyerName(e.target.value)}
@@ -131,9 +132,10 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
             />
           </div>
 
-          <div className="space-y-1 sm:col-span-1">
-            <Label className="text-xs font-semibold">Telefon raqam *</Label>
+          <div>
+            <Label htmlFor="sale-buyer-phone">Telefon raqam *</Label>
             <Input
+              id="sale-buyer-phone"
               required
               value={buyerPhone}
               onChange={(e) => setBuyerPhone(e.target.value)}
@@ -141,9 +143,10 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
             />
           </div>
 
-          <div className="space-y-1 sm:col-span-1">
-            <Label className="text-xs font-semibold">Sotilgan sana *</Label>
+          <div>
+            <Label htmlFor="sale-date">Sotilgan sana *</Label>
             <Input
+              id="sale-date"
               type="date"
               required
               value={soldAt}
@@ -153,10 +156,10 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
         </div>
 
         {/* Mahsulot tanlash */}
-        <div className="space-y-1 border-t border-border pt-3">
-          <Label className="text-xs font-semibold">Sotilgan tovar *</Label>
+        <div>
+          <Label htmlFor="sale-product">Sotilgan tovar *</Label>
           <Select value={selectedProductId} onValueChange={handleProductSelect}>
-            <SelectTrigger aria-label="Sotilgan tovar" className="w-full text-xs h-(--control-h)">
+            <SelectTrigger id="sale-product" aria-label="Sotilgan tovar" className="w-full">
               <SelectValue placeholder="Tovarni tanlang" />
             </SelectTrigger>
             <SelectContent>
@@ -171,10 +174,11 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
 
         {/* Narx va soni */}
         {isFinancial ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Soni (dona) *</Label>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div>
+              <Label htmlFor="sale-qty">Soni (dona) *</Label>
               <Input
+                id="sale-qty"
                 type="number"
                 min={1}
                 value={qty}
@@ -182,18 +186,20 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
               />
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Roʻyxat narxi (Katalogdagi)</Label>
+            <div>
+              <Label htmlFor="sale-list-price">Roʻyxat narxi (Katalogdagi)</Label>
               <Input
+                id="sale-list-price"
                 disabled
                 value={formatMoney(listPrice)}
                 className="bg-muted text-muted-foreground"
               />
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-semibold">Haqiqiy sotilgan narx (soʻm) *</Label>
+            <div>
+              <Label htmlFor="sale-sold-price">Haqiqiy sotilgan narx (soʻm) *</Label>
               <Input
+                id="sale-sold-price"
                 type="number"
                 value={soldPriceStr}
                 onChange={(e) => setSoldPriceStr(e.target.value)}
@@ -201,9 +207,10 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
             </div>
           </div>
         ) : (
-          <div className="space-y-1">
-            <Label className="text-xs font-semibold">Soni (dona) *</Label>
+          <div>
+            <Label htmlFor="sale-qty-only">Soni (dona) *</Label>
             <Input
+              id="sale-qty-only"
               type="number"
               min={1}
               value={qty}
@@ -214,22 +221,22 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
 
         {/* Sof foyda va Marja hisob-kitob kartasi */}
         {isFinancial && (
-          <div className="rounded-card border border-border bg-muted/20 p-4 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Tannarx snapshot (1 dona):</span>
-              <span className="font-semibold text-foreground">{formatMoney(costSnapshot)}</span>
+          <div className="space-y-2 rounded-control border border-border bg-muted/20 p-4">
+            <div className="flex items-center justify-between">
+              <FieldHint className="mt-0">Tannarx snapshot (1 dona):</FieldHint>
+              <div className="text-body font-semibold text-foreground">{formatMoney(costSnapshot)}</div>
             </div>
 
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Jami tushum ({qty} dona):</span>
-              <span className="font-bold text-foreground">{formatMoney(totalRevenue)}</span>
+            <div className="flex items-center justify-between">
+              <FieldHint className="mt-0">Jami tushum ({qty} dona):</FieldHint>
+              <div className="text-body font-bold text-foreground">{formatMoney(totalRevenue)}</div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-border/80 pt-2 text-sm font-bold">
-              <span>Ushbu sotuvdan sof daromad:</span>
-              <span className={profit >= 0n ? "text-(--success-fg) font-black" : "text-(--danger-fg) font-black"}>
+            <div className="flex items-center justify-between border-t border-border pt-2">
+              <div className="text-body font-semibold">Ushbu sotuvdan sof daromad:</div>
+              <div className={`text-body font-bold ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
                 {profit >= 0n ? "+" : ""}{formatMoney(profit)} ({marginPercent}% marja)
-              </span>
+              </div>
             </div>
           </div>
         )}

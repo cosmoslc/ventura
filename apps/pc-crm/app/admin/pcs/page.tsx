@@ -23,7 +23,7 @@ import {
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
-import { Label } from "@ventura/ui/label";
+import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { StatCard } from "@ventura/ui/stat-card";
 import { PcBuildFormModal } from "@/components/admin/pcs/pc-build-form-modal";
@@ -399,37 +399,47 @@ export default function AdminPcsPage() {
         open={Boolean(sellingBuild)}
         onOpenChange={(open) => !open && setSellingBuild(null)}
         title={isFinancial ? "Kompyuterni oflayn sotish" : "Kompyuterni mijozga topshirish"}
+        description={isFinancial ? "Doʻkondan toʻgʻridan-toʻgʻri sotilgan kompyuter hisobi" : "Kompyuterni mijozga topshirish va ombor qoldigʻidan chiqarish"}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setSellingBuild(null)}>
+              Bekor qilish
+            </Button>
+            <Button type="submit" form="sell-build-form">
+              <Check /> {isFinancial ? "Sotuvni tasdiqlash" : "Topshirishni tasdiqlash"}
+            </Button>
+          </>
+        }
       >
         {sellingBuild && (
-          <form onSubmit={handleConfirmSale} className="space-y-4 text-xs sm:text-sm">
-            <div className="rounded-control bg-muted/60 p-3 space-y-1">
-              <span className="text-xs text-muted-foreground block font-bold uppercase tracking-wider">
+          <form id="sell-build-form" onSubmit={handleConfirmSale} className="space-y-4">
+            <div className="rounded-control bg-muted/60 p-3.5 space-y-2">
+              <FieldHint className="mt-0 font-medium">
                 {isFinancial ? "Sotilayotgan kompyuter:" : "Topshirilayotgan kompyuter:"}
-              </span>
-              <p className="font-bold text-foreground text-sm">{sellingBuild.name}</p>
+              </FieldHint>
+              <div className="font-bold text-foreground text-base">{sellingBuild.name}</div>
               {isFinancial && (
-                <>
-                  <div className="flex justify-between pt-1 text-xs font-mono">
-                    <span className="text-muted-foreground">Tannarx snapshot:</span>
-                    <span>{formatMoney(sellingBuild.costPrice)}</span>
+                <div className="space-y-1.5 border-t border-border pt-2">
+                  <div className="flex justify-between text-body">
+                    <FieldHint className="mt-0">Tannarx snapshot:</FieldHint>
+                    <span className="font-semibold">{formatMoney(sellingBuild.costPrice)}</span>
                   </div>
-                  <div className="flex justify-between text-xs font-mono">
-                    <span className="text-muted-foreground">Sotuv narxi:</span>
+                  <div className="flex justify-between text-body">
+                    <FieldHint className="mt-0">Sotuv narxi:</FieldHint>
                     <span className="font-bold text-foreground">{formatMoney(sellingBuild.sellPrice)}</span>
                   </div>
-                  <div className="flex justify-between text-xs font-mono font-bold text-(--success-fg)">
+                  <div className="flex justify-between text-body font-bold text-(--success-fg)">
                     <span>Kutilayotgan sof daromad:</span>
                     <span>+{formatMoney(calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice)}</span>
                   </div>
-                </>
+                </div>
               )}
             </div>
 
             <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Xaridor ismi *
-              </Label>
+              <Label htmlFor="sell-buyer-name">Xaridor ismi *</Label>
               <Input
+                id="sell-buyer-name"
                 required
                 value={buyerName}
                 onChange={(e) => setBuyerName(e.target.value)}
@@ -438,10 +448,9 @@ export default function AdminPcsPage() {
             </div>
 
             <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Telefon raqami
-              </Label>
+              <Label htmlFor="sell-buyer-phone">Telefon raqami</Label>
               <Input
+                id="sell-buyer-phone"
                 value={buyerPhone}
                 required
                 onChange={(e) => setBuyerPhone(e.target.value)}
@@ -450,30 +459,14 @@ export default function AdminPcsPage() {
             </div>
 
             <div>
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Sotuv sanasi *
-              </Label>
+              <Label htmlFor="sell-date">Sotuv sanasi *</Label>
               <Input
+                id="sell-date"
                 type="date"
                 required
                 value={saleDate}
                 onChange={(e) => setSaleDate(e.target.value)}
               />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setSellingBuild(null)}
-              >
-                Bekor qilish
-              </Button>
-              <Button type="submit" variant="primary" size="sm" className="gap-1.5">
-                <Receipt size={14} />
-                {isFinancial ? "Sotuvni tasdiqlash" : "Topshirishni tasdiqlash"}
-              </Button>
             </div>
           </form>
         )}
