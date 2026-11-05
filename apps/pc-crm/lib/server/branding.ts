@@ -49,10 +49,10 @@ export async function getStoreBranding(): Promise<StoreBranding> {
       email?: string;
     } | undefined;
 
-    if (branding?.storeMode === "financial" || branding?.storeMode === "inventory") {
-      storeMode = branding.storeMode;
-    } else if ((settings as Record<string, unknown>).store_mode === "financial" || (settings as Record<string, unknown>).store_mode === "inventory") {
+    if ((settings as Record<string, unknown>).store_mode === "financial" || (settings as Record<string, unknown>).store_mode === "inventory") {
       storeMode = (settings as Record<string, unknown>).store_mode as "financial" | "inventory";
+    } else if (branding?.storeMode === "financial" || branding?.storeMode === "inventory") {
+      storeMode = branding.storeMode;
     }
 
     if (branding?.storeName?.trim()) {

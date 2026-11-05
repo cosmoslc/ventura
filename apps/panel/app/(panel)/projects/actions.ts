@@ -211,6 +211,11 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
             VALUES ('store_mode', ${JSON.stringify(storeMode)}::jsonb)
             ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(storeMode)}::jsonb
           `);
+          await tx.execute(sql`
+            UPDATE settings
+            SET value = jsonb_set(COALESCE(value, '{}'::jsonb), '{storeMode}', ${JSON.stringify(storeMode)}::jsonb)
+            WHERE key = 'store_branding'
+          `);
         });
       }
     } catch (e) {
