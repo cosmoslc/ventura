@@ -202,11 +202,13 @@ export default function AdminOrdersPage() {
               <th className="p-3.5">Xaridor</th>
               <th className="p-3.5">Hudud / Manzil</th>
               {isFinancial ? (
-                <th className="p-3.5 text-right">Summa</th>
+                <>
+                  <th className="p-3.5 text-right">Summa</th>
+                  <th className="p-3.5">Toʻlov usuli</th>
+                </>
               ) : (
                 <th className="p-3.5 text-center">Tovarlar soni</th>
               )}
-              <th className="p-3.5">Toʻlov usuli</th>
               <th className="p-3.5 text-center">Status</th>
               <th className="p-3.5 text-right">Tafsilot</th>
             </tr>
@@ -240,9 +242,14 @@ export default function AdminOrdersPage() {
                   </td>
 
                   {isFinancial ? (
-                    <td className="p-3.5 text-right font-black text-foreground">
-                      {formatMoney(order.total)}
-                    </td>
+                    <>
+                      <td className="p-3.5 text-right font-black text-foreground">
+                        {formatMoney(order.total)}
+                      </td>
+                      <td className="p-3.5 font-medium text-muted-foreground">
+                        {order.paymentMethod}
+                      </td>
+                    </>
                   ) : (
                     <td className="p-3.5 text-center font-bold text-foreground">
                       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2.5 py-0.5 text-2xs font-semibold text-muted-foreground">
@@ -250,10 +257,6 @@ export default function AdminOrdersPage() {
                       </span>
                     </td>
                   )}
-
-                  <td className="p-3.5 font-medium text-muted-foreground">
-                    {order.paymentMethod}
-                  </td>
 
                   <td className="p-3.5 text-center">
                     {getStatusBadge(order.status)}

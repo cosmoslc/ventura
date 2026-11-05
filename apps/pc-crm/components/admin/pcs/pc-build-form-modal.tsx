@@ -9,13 +9,9 @@ import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { ImageUploadWithBgRemoval } from "@/components/admin/image-upload-with-bg-removal";
-import {
-  calcFinalPrice,
-  calcMarginPercent,
-  calcPcCostPrice,
-  calcSellPriceFromMargin,
-} from "@/lib/calc/formulas";
+import { calcFinalPrice, calcMarginPercent, calcPcCostPrice, calcSellPriceFromMargin } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 import { type PcBuildItem, type PcComponentItem, type PcSpecItem, type ConfiguratorPart } from "@/lib/pc-data";
 
 interface PcBuildFormModalProps {
@@ -24,6 +20,7 @@ interface PcBuildFormModalProps {
   initialData?: PcBuildItem | null;
   parts: ConfiguratorPart[];
   onSave: (build: PcBuildItem) => Promise<boolean> | boolean;
+  isFinancial?: boolean;
 }
 
 export function PcBuildFormModal({
@@ -32,7 +29,10 @@ export function PcBuildFormModal({
   initialData,
   parts,
   onSave,
+  isFinancial: isFinancialProp,
 }: PcBuildFormModalProps) {
+  const financialMode = useFinancialMode();
+  const isFinancial = isFinancialProp ?? financialMode;
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -332,14 +332,14 @@ export function PcBuildFormModal({
                     <SelectContent>
                       {parts.filter((item) => item.role === comp.role).map((item) => (
                         <SelectItem key={item.id} value={item.id}>
-                          {item.name} · {formatMoney(item.costPrice)} · mavjud: {item.stock}
+                          {item.name} {isFinancial ? `· ${formatMoney(item.costPrice)}` : ""} · mavjud: {item.stock}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="col-span-2 text-center">
+                <div className={`${isFinancial ? "col-span-2" : "col-span-3"} text-center`}>
                   <span className="text-2xs text-muted-foreground block">Soni</span>
                   <Input
                     type="number"
@@ -350,19 +350,23 @@ export function PcBuildFormModal({
                   />
                 </div>
 
-                <div className="col-span-3 text-right">
-                  <span className="text-2xs text-muted-foreground block">Dona tannarx</span>
-                  <span className="font-mono text-xs font-semibold">
-                    {formatMoney(comp.costSnapshot)}
-                  </span>
-                </div>
+                {isFinancial && (
+                  <>
+                    <div className="col-span-3 text-right">
+                      <span className="text-2xs text-muted-foreground block">Dona tannarx</span>
+                      <span className="font-mono text-xs font-semibold">
+                        {formatMoney(comp.costSnapshot)}
+                      </span>
+                    </div>
 
-                <div className="col-span-3 text-right">
-                  <span className="text-2xs text-muted-foreground block">Jami tannarx</span>
-                  <span className="font-mono text-xs font-bold text-foreground">
-                    {formatMoney(comp.costSnapshot * BigInt(comp.qty))}
-                  </span>
-                </div>
+                    <div className="col-span-3 text-right">
+                      <span className="text-2xs text-muted-foreground block">Jami tannarx</span>
+                      <span className="font-mono text-xs font-bold text-foreground">
+                        {formatMoney(comp.costSnapshot * BigInt(comp.qty))}
+                      </span>
+                    </div>
+                  </>
+                )}
 
                 <div className="col-span-1 flex justify-end">
                   <button
@@ -379,87 +383,91 @@ export function PcBuildFormModal({
           </div>
 
           {/* Jonli tannarx indikatori */}
-          <div className="flex items-center justify-between rounded-control bg-primary/10 border border-primary/20 p-3">
-            <span className="font-bold text-xs uppercase tracking-wider text-primary">
-              PC Jami Tannarxi:
-            </span>
-            <span className="font-mono text-base font-black text-foreground">
-              {formatMoney(totalCostPrice)}
-            </span>
-          </div>
+          {isFinancial && (
+            <div className="flex items-center justify-between rounded-control bg-primary/10 border border-primary/20 p-3">
+              <span className="font-bold text-xs uppercase tracking-wider text-primary">
+                PC Jami Tannarxi:
+              </span>
+              <span className="font-mono text-base font-black text-foreground">
+                {formatMoney(totalCostPrice)}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* 3. Narx va Marja kalkulyatori */}
-        <div className="space-y-3 pt-2 border-t border-border">
-          <h3 className="font-bold text-sm flex items-center gap-2">
-            <Sparkles size={16} className="text-primary" />
-            Sotuv narxi va Marja hisobi
-          </h3>
+        {/* 3. Narx va Marja kalkulyatori (faqat moliyaviy rejimda) */}
+        {isFinancial && (
+          <div className="space-y-3 pt-2 border-t border-border">
+            <h3 className="font-bold text-sm flex items-center gap-2">
+              <Sparkles size={16} className="text-primary" />
+              Sotuv narxi va Marja hisobi
+            </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Kutilayotgan Marja %
-              </Label>
-              <div className="flex items-center gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Kutilayotgan Marja %
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={marginPercent}
+                    onChange={(e) => handleMarginChange(parseInt(e.target.value) || 0)}
+                    className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
+                  />
+                  <span className="text-xs font-bold">%</span>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Sotuv narxi (UZS) *
+                </Label>
+                <Input
+                  required
+                  value={sellPriceStr}
+                  onChange={(e) => setSellPriceStr(e.target.value)}
+                  placeholder="26500000"
+                  className="font-mono text-xs font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Chegirma foizi %
+                </Label>
                 <Input
                   type="number"
                   min={0}
-                  max={100}
-                  value={marginPercent}
-                  onChange={(e) => handleMarginChange(parseInt(e.target.value) || 0)}
+                  max={90}
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
                   className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
                 />
-                <span className="text-xs font-bold">%</span>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Sotuv narxi (UZS) *
-              </Label>
-              <Input
-                required
-                value={sellPriceStr}
-                onChange={(e) => setSellPriceStr(e.target.value)}
-                placeholder="26500000"
-                className="font-mono text-xs font-bold"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Chegirma foizi %
-              </Label>
-              <Input
-                type="number"
-                min={0}
-                max={90}
-                value={discountPercent}
-                onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
-                className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Jonli natija bloki */}
-          <div className="rounded-control bg-muted/60 p-3 space-y-1 text-xs">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Sof kutilayotgan foyda:</span>
-              <span className="font-mono font-bold text-(--success-fg)">
-                +{formatMoney(expectedProfit)} ({calculatedMargin}%)
-              </span>
-            </div>
-            {discountPercent > 0 && (
-              <div className="flex justify-between text-muted-foreground">
-                <span>Chegirmadan keyingi narx:</span>
-                <span className="font-mono font-bold text-foreground">
-                  {formatMoney(calcFinalPrice(sellPrice, discountPercent))}
+            {/* Jonli natija bloki */}
+            <div className="rounded-control bg-muted/60 p-3 space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Sof kutilayotgan foyda:</span>
+                <span className="font-mono font-bold text-(--success-fg)">
+                  +{formatMoney(expectedProfit)} ({calculatedMargin}%)
                 </span>
               </div>
-            )}
+              {discountPercent > 0 && (
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Chegirmadan keyingi narx:</span>
+                  <span className="font-mono font-bold text-foreground">
+                    {formatMoney(calcFinalPrice(sellPrice, discountPercent))}
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Tugmalar */}
         <div className="flex justify-end gap-2 pt-4 border-t border-border">
@@ -475,7 +483,7 @@ export function PcBuildFormModal({
             type="submit"
             variant="primary"
             size="sm"
-            disabled={totalCostPrice <= 0n || !name.trim()}
+            disabled={!name.trim() || components.length === 0 || (isFinancial && totalCostPrice <= 0n)}
           >
             {initialData ? "Oʻzgarishlarni saqlash" : "Kompyuterni saqlash"}
           </Button>

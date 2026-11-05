@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, isNotNull, isNull, ne } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, ne, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { normalizeUzPhone, notifySuperAdmins } from "@ventura/auth";
@@ -21,7 +21,7 @@ import { audit, putSecret } from "@ventura/security";
 import { type Feature, withRequirements } from "@ventura/tenants";
 import { BASE_DOMAIN, deployProblem, projectInputSchema, slugProblem } from "@/lib/project-rules";
 import { deps, queue } from "@/lib/server/deps";
-import { resetProjectDirectorPassword, unlockProjectDirector } from "@/lib/server/project-tenant";
+import { getProjectTenantDb, resetProjectDirectorPassword, unlockProjectDirector } from "@/lib/server/project-tenant";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
@@ -193,6 +193,30 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
     .update(projects)
     .set({ ...restFields, settings: nextSettings })
     .where(eq(projects.id, id));
+
+  if (storeMode !== undefined && before.templateKey === "pc-crm") {
+    try {
+      const tenantDb = await getProjectTenantDb(db, {
+        id: before.id,
+        templateKey: before.templateKey,
+        slug: before.slug,
+        dbStrategy: before.dbStrategy,
+        serverId: before.serverId,
+        settings: nextSettings,
+      });
+      if (tenantDb) {
+        await tenantDb.run(async (tx) => {
+          await tx.execute(sql`
+            INSERT INTO settings (key, value)
+            VALUES ('store_mode', ${JSON.stringify(storeMode)}::jsonb)
+            ON CONFLICT (key) DO UPDATE SET value = ${JSON.stringify(storeMode)}::jsonb
+          `);
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to sync store_mode to tenant db:", e);
+    }
+  }
   const changed = Object.fromEntries(
     Object.entries(parsed.data).filter(([k, val]) => before[k as keyof typeof before] !== val),
   );

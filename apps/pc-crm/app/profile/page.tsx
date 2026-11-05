@@ -14,6 +14,7 @@ import {
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 import { useSession } from "@/lib/auth-client";
 import { useLiked } from "@/lib/liked-context";
 import { getMyOrdersAction } from "@/lib/server/actions";
@@ -34,6 +35,7 @@ interface LatestOrderItem {
 }
 
 export default function ProfileOverviewPage() {
+  const isFinancial = useFinancialMode();
   const { data: session, isPending } = useSession();
   const { likedCount } = useLiked();
 
@@ -114,8 +116,8 @@ export default function ProfileOverviewPage() {
         )}
       </div>
 
-      {/* 4 ta Statistik karta */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Statistik kartalar */}
+      <div className={`grid grid-cols-1 sm:grid-cols-2 ${isFinancial ? "lg:grid-cols-4" : "lg:grid-cols-3"} gap-4`}>
         {/* Buyurtmalar */}
         <Link
           href="/profile/orders"
@@ -175,25 +177,27 @@ export default function ProfileOverviewPage() {
           </span>
         </Link>
 
-        {/* Xaridlar summasi */}
-        <div className="rounded-card border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Xaridlar summasi
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            {isPageLoading ? (
-              <div className="h-7 w-28 bg-muted rounded animate-pulse" />
-            ) : (
-              <span className="text-lg font-black font-mono text-foreground truncate">
-                {formatMoney(displaySpentTotal)}
-              </span>
-            )}
-            <ShieldCheck size={20} className="text-(--success-fg) shrink-0 ml-1" />
+        {/* Xaridlar summasi (faqat moliyaviy rejimda) */}
+        {isFinancial && (
+          <div className="rounded-card border border-border bg-card p-4">
+            <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
+              Xaridlar summasi
+            </span>
+            <div className="mt-2 flex items-baseline justify-between">
+              {isPageLoading ? (
+                <div className="h-7 w-28 bg-muted rounded animate-pulse" />
+              ) : (
+                <span className="text-lg font-black font-mono text-foreground truncate">
+                  {formatMoney(displaySpentTotal)}
+                </span>
+              )}
+              <ShieldCheck size={20} className="text-(--success-fg) shrink-0 ml-1" />
+            </div>
+            <span className="text-caption text-muted-foreground mt-1 block">
+              {displaySpentTotal > 0n ? "Muvaffaqiyatli xaridlar" : "Hozircha xaridlar yoʻq"}
+            </span>
           </div>
-          <span className="text-caption text-muted-foreground mt-1 block">
-            {displaySpentTotal > 0n ? "Muvaffaqiyatli xaridlar" : "Hozircha xaridlar yoʻq"}
-          </span>
-        </div>
+        )}
       </div>
 
       {/* So'nggi faol buyurtma bloki */}
@@ -247,12 +251,14 @@ export default function ProfileOverviewPage() {
                 </span>
               </div>
 
-              <div className="text-left sm:text-right">
-                <span className="text-caption text-muted-foreground block">Umumiy summa:</span>
-                <span className="font-mono font-black text-base text-foreground">
-                  {formatMoney(BigInt(latestOrder.total))}
-                </span>
-              </div>
+              {isFinancial && (
+                <div className="text-left sm:text-right">
+                  <span className="text-caption text-muted-foreground block">Umumiy summa:</span>
+                  <span className="font-mono font-black text-base text-foreground">
+                    {formatMoney(BigInt(latestOrder.total))}
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="pt-3 text-xs space-y-1">

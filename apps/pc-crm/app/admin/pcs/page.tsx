@@ -29,10 +29,12 @@ import { StatCard } from "@ventura/ui/stat-card";
 import { PcBuildFormModal } from "@/components/admin/pcs/pc-build-form-modal";
 import { calcFinalPrice, calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 import { type PcBuildItem, type ConfiguratorPart } from "@/lib/pc-data";
 import { getAdminPcBuildsAction, getAdminConfiguratorPartsAction, savePcBuildAction, sellPcBuildAction } from "@/lib/server/actions";
 
 export default function AdminPcsPage() {
+  const isFinancial = useFinancialMode();
   const [builds, setBuilds] = useState<PcBuildItem[]>([]);
   const [parts, setParts] = useState<ConfiguratorPart[]>([]);
   const [error, setError] = useState("");
@@ -123,7 +125,11 @@ export default function AdminPcsPage() {
     const result = await sellPcBuildAction({ id: sellingBuild.id, buyerName, buyerPhone, soldAt: saleDate });
     if (!result.success) { setError(result.error ?? "PC sotuvini saqlab bo'lmadi"); return; }
     const profit = calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice;
-    setSaleSuccessMessage(`"${sellingBuild.name}" sotildi. Sof daromad: ${formatMoney(profit)}.`);
+    setSaleSuccessMessage(
+      isFinancial
+        ? `"${sellingBuild.name}" sotildi. Sof daromad: ${formatMoney(profit)}.`
+        : `"${sellingBuild.name}" muvaffaqiyatli topshirildi.`
+    );
     setSellingBuild(null);
     setBuyerName("");
     setBuyerPhone("+998 ");
@@ -182,12 +188,16 @@ export default function AdminPcsPage() {
         </div>
       )}
 
-      {/* 4 ta Statistik karta */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Statistik kartalar */}
+      <div className={`grid grid-cols-1 gap-4 ${isFinancial ? "sm:grid-cols-2 lg:grid-cols-4" : "sm:grid-cols-2"}`}>
         <StatCard icon={<Monitor />} label="Mavjud PClar" value={`${stats.availableCount} ta`} tone={1} />
         <StatCard icon={<PackageCheck />} label="Sotilgan PClar" value={`${stats.soldCount} ta`} tone={2} />
-        <StatCard icon={<TrendingUp />} label="Kutilayotgan sof foyda" value={`+${formatMoney(stats.totalExpectedProfit)}`} tone={3} valueClassName="whitespace-nowrap text-title" />
-        <StatCard icon={<DollarSign />} label="Oʻrtacha marja" value={`${stats.avgMargin}%`} tone={4} />
+        {isFinancial && (
+          <>
+            <StatCard icon={<TrendingUp />} label="Kutilayotgan sof foyda" value={`+${formatMoney(stats.totalExpectedProfit)}`} tone={3} valueClassName="whitespace-nowrap text-title" />
+            <StatCard icon={<DollarSign />} label="Oʻrtacha marja" value={`${stats.avgMargin}%`} tone={4} />
+          </>
+        )}
       </div>
 
       {/* Filterlar qatori */}
@@ -238,9 +248,13 @@ export default function AdminPcsPage() {
               <tr>
                 <th className="py-3 px-4">Kompyuter</th>
                 <th className="py-3 px-4">Asosiy xususiyatlar</th>
-                <th className="py-3 px-4 text-right">Tannarx (UZS)</th>
-                <th className="py-3 px-4 text-right">Sotuv narxi (UZS)</th>
-                <th className="py-3 px-4 text-right">Sof foyda / Marja</th>
+                {isFinancial && (
+                  <>
+                    <th className="py-3 px-4 text-right">Tannarx (UZS)</th>
+                    <th className="py-3 px-4 text-right">Sotuv narxi (UZS)</th>
+                    <th className="py-3 px-4 text-right">Sof foyda / Marja</th>
+                  </>
+                )}
                 <th className="py-3 px-4 text-center">Holat</th>
                 <th className="py-3 px-4 text-right">Amallar</th>
               </tr>
@@ -248,7 +262,7 @@ export default function AdminPcsPage() {
             <tbody className="divide-y divide-border">
               {filteredBuilds.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-xs text-muted-foreground">
+                  <td colSpan={isFinancial ? 7 : 4} className="py-8 text-center text-xs text-muted-foreground">
                     Kompyuter topilmadi.
                   </td>
                 </tr>
@@ -301,30 +315,32 @@ export default function AdminPcsPage() {
                         </div>
                       </td>
 
-                      {/* Tannarx */}
-                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-muted-foreground">
-                        {formatMoney(build.costPrice)}
-                      </td>
+                      {/* Tannarx, Sotuv narxi, Foyda */}
+                      {isFinancial && (
+                        <>
+                          <td className="py-3.5 px-4 text-right font-mono font-semibold text-muted-foreground">
+                            {formatMoney(build.costPrice)}
+                          </td>
 
-                      {/* Sotuv narxi */}
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
-                        {formatMoney(build.sellPrice)}
-                        {build.discountPercent > 0 && (
-                          <span className="block text-2xs text-(--warning-fg) font-semibold">
-                            -{build.discountPercent}%
-                          </span>
-                        )}
-                      </td>
+                          <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
+                            {formatMoney(build.sellPrice)}
+                            {build.discountPercent > 0 && (
+                              <span className="block text-2xs text-(--warning-fg) font-semibold">
+                                -{build.discountPercent}%
+                              </span>
+                            )}
+                          </td>
 
-                      {/* Foyda va Marja */}
-                      <td className="py-3.5 px-4 text-right font-mono">
-                        <span className="font-bold text-(--success-fg) block">
-                          +{formatMoney(profit)}
-                        </span>
-                        <span className="text-caption text-muted-foreground">
-                          {margin}% marja
-                        </span>
-                      </td>
+                          <td className="py-3.5 px-4 text-right font-mono">
+                            <span className="font-bold text-(--success-fg) block">
+                              +{formatMoney(profit)}
+                            </span>
+                            <span className="text-caption text-muted-foreground">
+                              {margin}% marja
+                            </span>
+                          </td>
+                        </>
+                      )}
 
                       {/* Holat */}
                       <td className="py-3.5 px-4 text-center">
@@ -375,33 +391,38 @@ export default function AdminPcsPage() {
         initialData={editingBuild}
         parts={parts}
         onSave={handleSaveBuild}
+        isFinancial={isFinancial}
       />
 
-      {/* Oflayn PC Sotish Modali */}
+      {/* Oflayn PC Sotish / Topshirish Modali */}
       <Modal
         open={Boolean(sellingBuild)}
         onOpenChange={(open) => !open && setSellingBuild(null)}
-        title="Kompyuterni oflayn sotish"
+        title={isFinancial ? "Kompyuterni oflayn sotish" : "Kompyuterni mijozga topshirish"}
       >
         {sellingBuild && (
           <form onSubmit={handleConfirmSale} className="space-y-4 text-xs sm:text-sm">
             <div className="rounded-control bg-muted/60 p-3 space-y-1">
               <span className="text-xs text-muted-foreground block font-bold uppercase tracking-wider">
-                Sotilayotgan kompyuter:
+                {isFinancial ? "Sotilayotgan kompyuter:" : "Topshirilayotgan kompyuter:"}
               </span>
               <p className="font-bold text-foreground text-sm">{sellingBuild.name}</p>
-              <div className="flex justify-between pt-1 text-xs font-mono">
-                <span className="text-muted-foreground">Tannarx snapshot:</span>
-                <span>{formatMoney(sellingBuild.costPrice)}</span>
-              </div>
-              <div className="flex justify-between text-xs font-mono">
-                <span className="text-muted-foreground">Sotuv narxi:</span>
-                <span className="font-bold text-foreground">{formatMoney(sellingBuild.sellPrice)}</span>
-              </div>
-              <div className="flex justify-between text-xs font-mono font-bold text-(--success-fg)">
-                <span>Kutilayotgan sof daromad:</span>
-                <span>+{formatMoney(calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice)}</span>
-              </div>
+              {isFinancial && (
+                <>
+                  <div className="flex justify-between pt-1 text-xs font-mono">
+                    <span className="text-muted-foreground">Tannarx snapshot:</span>
+                    <span>{formatMoney(sellingBuild.costPrice)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-mono">
+                    <span className="text-muted-foreground">Sotuv narxi:</span>
+                    <span className="font-bold text-foreground">{formatMoney(sellingBuild.sellPrice)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs font-mono font-bold text-(--success-fg)">
+                    <span>Kutilayotgan sof daromad:</span>
+                    <span>+{formatMoney(calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice)}</span>
+                  </div>
+                </>
+              )}
             </div>
 
             <div>
@@ -451,7 +472,7 @@ export default function AdminPcsPage() {
               </Button>
               <Button type="submit" variant="primary" size="sm" className="gap-1.5">
                 <Receipt size={14} />
-                Sotuvni tasdiqlash
+                {isFinancial ? "Sotuvni tasdiqlash" : "Topshirishni tasdiqlash"}
               </Button>
             </div>
           </form>

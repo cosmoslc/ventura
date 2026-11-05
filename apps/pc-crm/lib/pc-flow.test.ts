@@ -29,7 +29,7 @@ describe("PC-CRM Core Business Flow & Calculations", () => {
         (b) => b.status === "available" && b.cpu.toLowerCase().includes("i7")
       );
       expect(i7Builds.length).toBeGreaterThan(0);
-      expect(i7Builds[0]!.name).toContain("Core i7");
+      expect(i7Builds[0]!.cpu).toContain("Core i7");
 
       const rtx4070Builds = SAMPLE_PC_BUILDS.filter(
         (b) => b.status === "available" && b.gpu.toLowerCase().includes("4070")

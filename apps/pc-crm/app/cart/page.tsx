@@ -7,8 +7,10 @@ import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 import { useCart } from "@/lib/cart-context";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 
 export default function CartPage() {
+  const isFinancial = useFinancialMode();
   const { items, updateQty, removeItem, clearCart, subtotal, shipping, total } = useCart();
 
   return (
@@ -97,11 +99,13 @@ export default function CartPage() {
                       </button>
                     </div>
 
-                    <div className="text-right min-w-25">
-                      <p className="font-black text-foreground text-sm">
-                        {formatMoney(item.price * BigInt(item.qty))}
-                      </p>
-                    </div>
+                    {isFinancial && (
+                      <div className="text-right min-w-25">
+                        <p className="font-black text-foreground text-sm">
+                          {formatMoney(item.price * BigInt(item.qty))}
+                        </p>
+                      </div>
+                    )}
 
                     <button
                       type="button"
@@ -123,30 +127,39 @@ export default function CartPage() {
 
                 <div className="space-y-2.5 text-xs text-muted-foreground">
                   <div className="flex justify-between">
-                    <span>Mahsulotlar summasi:</span>
-                    <span className="font-bold text-foreground">{formatMoney(subtotal)}</span>
+                    <span>Tanlangan tovarlar:</span>
+                    <span className="font-bold text-foreground">{items.reduce((s, it) => s + it.qty, 0)} dona</span>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span>Yetkazib berish:</span>
-                    <span className="font-bold text-foreground">
-                      {shipping === 0n ? (
-                        <span className="text-(--success-fg)">Bepul</span>
-                      ) : (
-                        formatMoney(shipping)
-                      )}
-                    </span>
-                  </div>
+                  {isFinancial && (
+                    <>
+                      <div className="flex justify-between">
+                        <span>Mahsulotlar summasi:</span>
+                        <span className="font-bold text-foreground">{formatMoney(subtotal)}</span>
+                      </div>
 
-                  <div className="flex justify-between border-t border-border pt-3 text-base font-black text-foreground">
-                    <span>Jami toʻlov:</span>
-                    <span className="text-primary font-black">{formatMoney(total)}</span>
-                  </div>
+                      <div className="flex justify-between">
+                        <span>Yetkazib berish:</span>
+                        <span className="font-bold text-foreground">
+                          {shipping === 0n ? (
+                            <span className="text-(--success-fg)">Bepul</span>
+                          ) : (
+                            formatMoney(shipping)
+                          )}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between border-t border-border pt-3 text-base font-black text-foreground">
+                        <span>Jami toʻlov:</span>
+                        <span className="text-primary font-black">{formatMoney(total)}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <Link href="/checkout" className="block pt-2">
                   <Button variant="primary" size="default" className="w-full gap-2 font-bold shadow-card-hover">
-                    Toʻlovga oʻtish <ArrowRight size={16} />
+                    {isFinancial ? "Toʻlovga oʻtish" : "Buyurtmaga oʻtish"} <ArrowRight size={16} />
                   </Button>
                 </Link>
 

@@ -4,6 +4,7 @@ import { createStaffAuth, setStaffPassword } from "@ventura/auth/staff";
 import { type PanelDb, type TenantDb, createTenantDb } from "@ventura/db";
 import { projects } from "@ventura/db/schema/panel";
 import { accounts, users } from "@ventura/db/schema/tenant";
+import { accounts as pcAccounts, users as pcUsers } from "@ventura/db/schema/pc-crm";
 import { buildSupabaseDatabaseUrl, dbNameFor, dbPasswordOwner } from "@ventura/deploy";
 import { type AuditActor, audit, putSecret, readSecret } from "@ventura/security";
 
@@ -65,6 +66,34 @@ export async function getProjectDirectorInfo(
   const tenantDb = await getProjectTenantDb(panelDb, project);
   if (!tenantDb) return null;
   try {
+    if (project.templateKey === "pc-crm") {
+      const [admin] = await tenantDb.run(async (tx) =>
+        tx
+          .select({
+            id: pcUsers.id,
+            name: pcUsers.name,
+            phone: pcUsers.phone,
+            lockedAt: pcUsers.lockedAt,
+            failedAttempts: pcUsers.failedAttempts,
+          })
+          .from(pcUsers)
+          .where(eq(pcUsers.role, "admin"))
+          .limit(1),
+      );
+
+      if (!admin) return null;
+
+      return {
+        id: admin.id,
+        name: admin.name,
+        phone: admin.phone ?? "",
+        locked: Boolean(admin.lockedAt || admin.failedAttempts >= 5),
+        lockedAt: admin.lockedAt ? admin.lockedAt.toISOString() : null,
+        failedAttempts: admin.failedAttempts,
+        mustChangePassword: false,
+      };
+    }
+
     const [director] = await tenantDb.run(async (tx) =>
       tx
         .select({
@@ -115,6 +144,42 @@ export async function unlockProjectDirector(
   if (!tenantDb) return { ok: false, error: "Mijoz bazasiga ulanib bo'lmadi" };
 
   try {
+    if (project.templateKey === "pc-crm") {
+      const [admin] = await tenantDb.run(async (tx) =>
+        tx
+          .select({ id: pcUsers.id, name: pcUsers.name, phone: pcUsers.phone })
+          .from(pcUsers)
+          .where(eq(pcUsers.role, "admin"))
+          .limit(1),
+      );
+
+      if (!admin) return { ok: false, error: "Admin foydalanuvchi topilmadi" };
+
+      await tenantDb.run(async (tx) =>
+        tx
+          .update(pcUsers)
+          .set({
+            failedAttempts: 0,
+            lockedAt: null,
+          })
+          .where(eq(pcUsers.id, admin.id)),
+      );
+
+      await audit.record(panelDb, {
+        actor,
+        action: "project.director_unlocked",
+        target: { type: "project", id: projectId },
+        ...meta,
+        metadata: {
+          directorId: admin.id,
+          directorName: admin.name,
+          directorPhone: admin.phone,
+        },
+      });
+
+      return { ok: true };
+    }
+
     const [director] = await tenantDb.run(async (tx) =>
       tx
         .select({ id: users.id, name: users.name, phone: users.phoneNumber })
@@ -177,6 +242,60 @@ export async function resetProjectDirectorPassword(
   if (!tenantDb) return { ok: false, error: "Mijoz bazasiga ulanib bo'lmadi" };
 
   try {
+    if (project.templateKey === "pc-crm") {
+      const [admin] = await tenantDb.run(async (tx) =>
+        tx
+          .select({ id: pcUsers.id, name: pcUsers.name, phone: pcUsers.phone })
+          .from(pcUsers)
+          .where(eq(pcUsers.role, "admin"))
+          .limit(1),
+      );
+
+      if (!admin) return { ok: false, error: "Admin foydalanuvchi topilmadi" };
+
+      const authSecret = await readSecret(panelDb, { type: "project", id: projectId }, "auth_secret");
+      if (!authSecret) return { ok: false, error: "Loyiha auth_secret kaliti topilmadi" };
+
+      const auth = createStaffAuth({
+        db: tenantDb,
+        telegram: null,
+        appName: project.name,
+        secret: authSecret,
+        baseURL: "http://localhost",
+      });
+
+      const ctx = await auth.$context;
+      const hash = await ctx.password.hash(newPassword);
+
+      await tenantDb.run(async (tx) => {
+        await tx.update(pcAccounts).set({ password: hash }).where(eq(pcAccounts.userId, admin.id));
+        await tx
+          .update(pcUsers)
+          .set({
+            failedAttempts: 0,
+            lockedAt: null,
+          })
+          .where(eq(pcUsers.id, admin.id));
+      });
+
+      // Panel sirlar jadvalida ham owner_password ni yangilaymiz (sinxronlik uchun)
+      await putSecret(panelDb, { type: "project", id: projectId }, "owner_password", newPassword);
+
+      await audit.record(panelDb, {
+        actor,
+        action: "project.director_password_reset",
+        target: { type: "project", id: projectId },
+        ...meta,
+        metadata: {
+          directorId: admin.id,
+          directorName: admin.name,
+          directorPhone: admin.phone,
+        },
+      });
+
+      return { ok: true };
+    }
+
     const [director] = await tenantDb.run(async (tx) =>
       tx
         .select({ id: users.id, name: users.name, phone: users.phoneNumber })

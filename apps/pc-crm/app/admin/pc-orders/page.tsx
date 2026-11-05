@@ -46,29 +46,31 @@ import { type PcOrderItem } from "@/lib/pc-data";
 import { getAdminPcOrdersAction, updatePcOrderStatusAction } from "@/lib/server/actions";
 import { useFinancialMode } from "@/lib/store-context";
 
-const STATUS_LABELS: Record<PcOrderItem["status"], { label: string; tone: "info" | "warning" | "success" | "danger" | "neutral" }> = {
+const getStatusLabels = (isFinancial: boolean): Record<PcOrderItem["status"], { label: string; tone: "info" | "warning" | "success" | "neutral" | "danger" }> => ({
   new: { label: "Yangi zakaz", tone: "info" },
   reviewing: { label: "Koʻrib chiqilmoqda", tone: "warning" },
-  quoted: { label: "Narx taklif etildi", tone: "info" },
+  quoted: { label: isFinancial ? "Narx taklif etildi" : "Kelishildi", tone: "info" },
   confirmed: { label: "Tasdiqlangan", tone: "success" },
   assembling: { label: "Yigʻilmoqda", tone: "warning" },
   ready: { label: "Tayyor (Testda)", tone: "success" },
   delivered: { label: "Yetkazildi", tone: "neutral" },
   cancelled: { label: "Bekor qilindi", tone: "danger" },
-};
+});
 
-const ORDER_TIMELINE_STEPS: { status: PcOrderItem["status"]; title: string; desc: string }[] = [
+const getOrderTimelineSteps = (isFinancial: boolean): { status: PcOrderItem["status"]; title: string; desc: string }[] => [
   { status: "new", title: "1. Yangi zakaz", desc: "Mijoz konfigurator orqali zakaz qoldirdi" },
-  { status: "reviewing", title: "2. Koʻrib chiqilmoqda", desc: "Operator qismlar mosligi va narxni tekshirmoqda" },
-  { status: "quoted", title: "3. Narx taklif etildi", desc: "Mijozga yakuniy narx va yetkazish vaqti aytildi" },
+  { status: "reviewing", title: "2. Koʻrib chiqilmoqda", desc: isFinancial ? "Operator qismlar mosligi va narxni tekshirmoqda" : "Operator qismlar mosligi va ombor qoldigʻini tekshirmoqda" },
+  { status: "quoted", title: isFinancial ? "3. Narx taklif etildi" : "3. Buyurtma kelishildi", desc: isFinancial ? "Mijozga yakuniy narx va yetkazish vaqti aytildi" : "Mijozga buyurtma tafsilotlari va yetkazish vaqti aytildi" },
   { status: "confirmed", title: "4. Tasdiqlangan", desc: "Mijoz rozi boʻldi, qismlar omborda zaxiraga olindi" },
   { status: "assembling", title: "5. Yigʻilmoqda", desc: "Texnik usta PCni montaj qilib simlarni tartibga solmoqda" },
   { status: "ready", title: "6. Tayyor (Testda)", desc: "Stress-testdan oʻtkazildi, topshirishga tayyor" },
-  { status: "delivered", title: "7. Yetkazildi", desc: "Mijozga topshirildi va toʻlov toʻliq qabul qilindi" },
+  { status: "delivered", title: "7. Yetkazildi", desc: isFinancial ? "Mijozga topshirildi va toʻlov toʻliq qabul qilindi" : "Mijozga kompyuter muvaffaqiyatli topshirildi" },
 ];
 
 export default function AdminPcOrdersPage() {
   const isFinancial = useFinancialMode();
+  const STATUS_LABELS = useMemo(() => getStatusLabels(isFinancial), [isFinancial]);
+  const ORDER_TIMELINE_STEPS = useMemo(() => getOrderTimelineSteps(isFinancial), [isFinancial]);
   const [orders, setOrders] = useState<PcOrderItem[]>([]);
 
   const loadOrders = useCallback(async () => {
@@ -376,7 +378,7 @@ export default function AdminPcOrdersPage() {
                         <SelectContent>
                           <SelectItem value="new">Yangi zakaz</SelectItem>
                           <SelectItem value="reviewing">Koʻrib chiqilmoqda</SelectItem>
-                          <SelectItem value="quoted">Narx taklif etildi</SelectItem>
+                          <SelectItem value="quoted">{isFinancial ? "Narx taklif etildi" : "Kelishildi"}</SelectItem>
                           <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
                           <SelectItem value="assembling">Yigʻilmoqda</SelectItem>
                           <SelectItem value="ready">Tayyor (Testda)</SelectItem>
@@ -491,9 +493,11 @@ export default function AdminPcOrdersPage() {
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Tanlangan qismlar ({selectedForDetail.components.length} ta):
                 </span>
-                <span className="font-mono text-xs font-bold text-foreground">
-                  Umumiy tannarx: {formatMoney(selectedForDetail.costPrice)}
-                </span>
+                {isFinancial && (
+                  <span className="font-mono text-xs font-bold text-foreground">
+                    Umumiy tannarx: {formatMoney(selectedForDetail.costPrice)}
+                  </span>
+                )}
               </div>
               <div className="rounded-control border border-border divide-y divide-border max-h-56 overflow-y-auto">
                 {selectedForDetail.components.map((c, idx) => (
@@ -551,7 +555,7 @@ export default function AdminPcOrdersPage() {
                   <SelectContent>
                     <SelectItem value="new">Yangi zakaz</SelectItem>
                     <SelectItem value="reviewing">Koʻrib chiqilmoqda</SelectItem>
-                    <SelectItem value="quoted">Narx taklif etildi</SelectItem>
+                    <SelectItem value="quoted">{isFinancial ? "Narx taklif etildi" : "Kelishildi"}</SelectItem>
                     <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
                     <SelectItem value="assembling">Yigʻilmoqda</SelectItem>
                     <SelectItem value="ready">Tayyor (Testda)</SelectItem>

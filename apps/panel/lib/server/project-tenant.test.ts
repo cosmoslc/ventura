@@ -78,4 +78,29 @@ describe.skipIf(!live)("project-tenant director management", () => {
       expect(me?.username).toBe("ventura_uz_bot");
     }
   }, 25000);
+
+  it("fetches admin info for PC-CRM tenant", async () => {
+    const db = createPanelDb(process.env.PANEL_DATABASE_URL || "postgres://ventura_app:svjVhAShSnkUHhtfmUBA8WBn@localhost:5432/ventura_panel");
+    const [p] = await db.select().from(projects).where(eq(projects.slug, "quadra-mi"));
+    if (!p) return;
+
+    const info = await getProjectDirectorInfo(db, p);
+    expect(info).not.toBeNull();
+    expect(info?.name).toBe("Egas");
+    expect(info?.phone).toBe("+998902021479");
+    expect(info?.locked).toBe(false);
+
+    // Test password reset for PC-CRM
+    const res = await resetProjectDirectorPassword(
+      db,
+      p.id,
+      "12345678",
+      { type: "user", id: "00000000-0000-0000-0000-000000000000", name: "Super Admin" },
+      { ip: "127.0.0.1" },
+    );
+    expect(res.ok).toBe(true);
+
+    const updatedOwnerPw = await readSecret(db, { type: "project", id: p.id }, "owner_password");
+    expect(updatedOwnerPw).toBe("12345678");
+  });
 });

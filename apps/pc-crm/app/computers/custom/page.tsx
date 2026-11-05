@@ -36,6 +36,7 @@ import { Footer } from "@/components/storefront/footer";
 import { AuthModal } from "@/components/storefront/auth-modal";
 import { Navbar } from "@/components/storefront/navbar";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 import { getStorefrontConfiguratorPartsAction, savePcOrderAction } from "@/lib/server/actions";
 import {
   type ConfiguratorPart,
@@ -63,6 +64,7 @@ const CATEGORIES: CategoryMeta[] = [
 ];
 
 export default function CustomPcConfiguratorPage() {
+  const isFinancial = useFinancialMode();
   const [activeRole, setActiveRole] = useState<ComponentRole>("cpu");
   const [searchQuery, setSearchQuery] = useState("");
   const [parts, setParts] = useState<StorefrontConfiguratorPart[]>([]);
@@ -337,9 +339,11 @@ export default function CustomPcConfiguratorPage() {
 
                           {/* Narx va Tanlash tugmasi */}
                           <div className="flex items-center justify-between sm:justify-end gap-4 shrink-0 pt-2 sm:pt-0 border-t sm:border-0 border-border">
-                            <span className="font-mono text-base font-bold text-foreground">
-                              {formatMoney(part.price)}
-                            </span>
+                            {isFinancial && (
+                              <span className="font-mono text-base font-bold text-foreground">
+                                {formatMoney(part.price)}
+                              </span>
+                            )}
 
                             <button
                               type="button"
@@ -419,9 +423,11 @@ export default function CustomPcConfiguratorPage() {
                             <span className="block font-semibold text-foreground truncate">
                               {part.name}
                             </span>
-                            <span className="font-mono text-caption text-primary">
-                              {formatMoney(part.price)}
-                            </span>
+                            {isFinancial && (
+                              <span className="font-mono text-caption text-primary">
+                                {formatMoney(part.price)}
+                              </span>
+                            )}
                           </div>
 
                           <button
@@ -468,14 +474,16 @@ export default function CustomPcConfiguratorPage() {
 
                 {/* Umumiy narx */}
                 <div className="pt-3 border-t border-border">
-                  <div className="flex items-baseline justify-between mb-4">
-                    <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
-                      Jami qiymat:
-                    </span>
-                    <span className="font-mono text-2xl font-black text-foreground">
-                      {formatMoney(totalPrice)}
-                    </span>
-                  </div>
+                  {isFinancial && (
+                    <div className="flex items-baseline justify-between mb-4">
+                      <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
+                        Jami qiymat:
+                      </span>
+                      <span className="font-mono text-2xl font-black text-foreground">
+                        {formatMoney(totalPrice)}
+                      </span>
+                    </div>
+                  )}
 
                   <Button
                     variant="primary"
@@ -532,10 +540,12 @@ export default function CustomPcConfiguratorPage() {
                 <span className="text-muted-foreground">Telefon:</span>
                 <span className="font-bold text-foreground">{customerPhone}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Taxminiy summa:</span>
-                <span className="font-bold text-primary">{formatMoney(totalPrice)}</span>
-              </div>
+              {isFinancial && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Taxminiy summa:</span>
+                  <span className="font-bold text-primary">{formatMoney(totalPrice)}</span>
+                </div>
+              )}
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
@@ -562,10 +572,12 @@ export default function CustomPcConfiguratorPage() {
                 <span>Tanlangan qismlar:</span>
                 <span>{selectedCount} ta komponent</span>
               </div>
-              <div className="flex justify-between font-bold text-primary">
-                <span>Jami summa:</span>
-                <span className="font-mono text-sm">{formatMoney(totalPrice)}</span>
-              </div>
+              {isFinancial && (
+                <div className="flex justify-between font-bold text-primary">
+                  <span>Jami summa:</span>
+                  <span className="font-mono text-sm">{formatMoney(totalPrice)}</span>
+                </div>
+              )}
             </div>
 
             <div>

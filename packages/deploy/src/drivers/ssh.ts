@@ -511,7 +511,14 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       log,
       `cd ${sh(appDir)} && node_modules/.bin/tsx ${PROVISION_SCRIPT}`,
       5 * MINUTE,
-      JSON.stringify({ slug: p.slug, name: p.tenant.name, databaseUrl, authSecret, owner }),
+      JSON.stringify({
+        slug: p.slug,
+        name: p.tenant.name,
+        databaseUrl,
+        authSecret,
+        owner,
+        storeMode: p.tenant.storeMode ?? "financial",
+      }),
     );
 
     // Ilova uchun maxfiy fayl: boshqa mijozlar yozuvlari saqlanadi; mazmuni logga chiqmaydi

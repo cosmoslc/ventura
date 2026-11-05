@@ -23,6 +23,7 @@ import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 import { useCart } from "@/lib/cart-context";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 import { createOrderAction } from "@/lib/server/actions";
 import { AuthModal } from "@/components/storefront/auth-modal";
 import { useSession } from "@/lib/auth-client";
@@ -40,6 +41,7 @@ const checkoutSchema = z.object({
 type CheckoutErrors = Partial<Record<keyof z.infer<typeof checkoutSchema>, string>>;
 
 export default function CheckoutPage() {
+  const isFinancial = useFinancialMode();
   const { items, subtotal, shipping, total, clearCart } = useCart();
   const { data: session } = useSession();
 
@@ -298,28 +300,30 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            {/* To'lov usuli */}
-            <div className="rounded-modal border border-border bg-card p-6 shadow-control space-y-4">
-              <div className="flex items-center gap-2 border-b border-border pb-3">
-                <CreditCard size={18} className="text-primary" />
-                <h2 className="text-sm font-bold text-foreground">3. Toʻlov usuli</h2>
-              </div>
+            {/* To'lov usuli (faqat moliyaviy rejimda) */}
+            {isFinancial && (
+              <div className="rounded-modal border border-border bg-card p-6 shadow-control space-y-4">
+                <div className="flex items-center gap-2 border-b border-border pb-3">
+                  <CreditCard size={18} className="text-primary" />
+                  <h2 className="text-sm font-bold text-foreground">3. Toʻlov usuli</h2>
+                </div>
 
-              <div className="space-y-2.5">
-                <div className="flex items-center justify-between rounded-card border border-primary/50 bg-primary/5 p-4">
-                  <div className="flex items-center gap-3">
-                    <RadioGroup value="operator" aria-label="Toʻlov turi">
-                      <Radio value="operator" />
-                    </RadioGroup>
-                    <div>
-                      <p className="font-bold text-xs text-foreground">Operator orqali toʻlash (Telegram / Naqd)</p>
-                      <p className="text-caption text-muted-foreground">Buyurtma qabul qilingach operator bogʻlanadi</p>
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between rounded-card border border-primary/50 bg-primary/5 p-4">
+                    <div className="flex items-center gap-3">
+                      <RadioGroup value="operator" aria-label="Toʻlov turi">
+                        <Radio value="operator" />
+                      </RadioGroup>
+                      <div>
+                        <p className="font-bold text-xs text-foreground">Operator orqali toʻlash (Telegram / Naqd)</p>
+                        <p className="text-caption text-muted-foreground">Buyurtma qabul qilingach operator bogʻlanadi</p>
+                      </div>
                     </div>
+                    <span className="text-xs font-bold text-primary">Tavsiya etiladi</span>
                   </div>
-                  <span className="text-xs font-bold text-primary">Tavsiya etiladi</span>
                 </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* O'ng 1 ustun: Buyurtma qisqacha tarkibi va Tasdiqlash */}
@@ -333,11 +337,15 @@ export default function CheckoutPage() {
                   <div key={item.id} className="py-2.5 flex items-center justify-between text-xs">
                     <div className="pr-2">
                       <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
-                      <p className="text-caption text-muted-foreground">{item.qty} dona × {formatMoney(item.price)}</p>
+                      <p className="text-caption text-muted-foreground">
+                        {item.qty} dona {isFinancial ? `× ${formatMoney(item.price)}` : ""}
+                      </p>
                     </div>
-                    <span className="font-black text-foreground shrink-0">
-                      {formatMoney(item.price * BigInt(item.qty))}
-                    </span>
+                    {isFinancial && (
+                      <span className="font-black text-foreground shrink-0">
+                        {formatMoney(item.price * BigInt(item.qty))}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>
@@ -345,25 +353,34 @@ export default function CheckoutPage() {
               {/* Hisob-kitob */}
               <div className="border-t border-border pt-3 space-y-2 text-xs text-muted-foreground">
                 <div className="flex justify-between">
-                  <span>Oraliq summa:</span>
-                  <span className="font-bold text-foreground">{formatMoney(subtotal)}</span>
+                  <span>Jami mahsulotlar:</span>
+                  <span className="font-bold text-foreground">{items.reduce((s, it) => s + it.qty, 0)} dona</span>
                 </div>
 
-                <div className="flex justify-between">
-                  <span>Yetkazib berish ({region}):</span>
-                  <span className="font-bold text-foreground">
-                    {shipping === 0n ? (
-                      <span className="text-(--success-fg)">Bepul</span>
-                    ) : (
-                      formatMoney(shipping)
-                    )}
-                  </span>
-                </div>
+                {isFinancial && (
+                  <>
+                    <div className="flex justify-between">
+                      <span>Oraliq summa:</span>
+                      <span className="font-bold text-foreground">{formatMoney(subtotal)}</span>
+                    </div>
 
-                <div className="flex justify-between border-t border-border pt-3 text-base font-black text-foreground">
-                  <span>Jami toʻlov:</span>
-                  <span className="text-primary font-black">{formatMoney(total)}</span>
-                </div>
+                    <div className="flex justify-between">
+                      <span>Yetkazib berish ({region}):</span>
+                      <span className="font-bold text-foreground">
+                        {shipping === 0n ? (
+                          <span className="text-(--success-fg)">Bepul</span>
+                        ) : (
+                          formatMoney(shipping)
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between border-t border-border pt-3 text-base font-black text-foreground">
+                      <span>Jami toʻlov:</span>
+                      <span className="text-primary font-black">{formatMoney(total)}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Tasdiqlash tugmasi */}
@@ -375,7 +392,7 @@ export default function CheckoutPage() {
                 disabled={isSubmitting}
                 className="w-full font-bold shadow-card-hover"
               >
-                {isSubmitting ? "Buyurtma yuborilmoqda..." : "Buyurtmani tasdiqlash"}
+                {isSubmitting ? "Buyurtma yuborilmoqda..." : (isFinancial ? "Buyurtmani tasdiqlash" : "Buyurtma berish")}
               </Button>
 
               <div className="flex items-center justify-center gap-2 text-caption text-muted-foreground pt-1">

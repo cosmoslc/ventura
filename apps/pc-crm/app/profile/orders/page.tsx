@@ -20,6 +20,7 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Modal } from "@ventura/ui/modal";
 import { formatMoney } from "@/lib/format";
+import { useFinancialMode } from "@/lib/store-context";
 import { useSession } from "@/lib/auth-client";
 import { getMyOrdersAction } from "@/lib/server/actions";
 
@@ -53,6 +54,7 @@ interface CustomPcOrderItem {
 }
 
 export default function ProfileOrdersPage() {
+  const isFinancial = useFinancialMode();
   const { data: session, isPending } = useSession();
   const [activeTab, setActiveTab] = useState<"in_progress" | "delivered" | "custom_pc">("in_progress");
   const [userOrders, setUserOrders] = useState<OrderItem[]>([]);
@@ -260,12 +262,14 @@ export default function ProfileOrdersPage() {
                     </span>
                   </div>
 
-                  <div className="text-left sm:text-right">
-                    <span className="text-xs text-muted-foreground block">Umumiy summa:</span>
-                    <span className="font-mono font-bold text-base text-foreground">
-                      {formatMoney(ord.total)}
-                    </span>
-                  </div>
+                  {isFinancial && (
+                    <div className="text-left sm:text-right">
+                      <span className="text-xs text-muted-foreground block">Umumiy summa:</span>
+                      <span className="font-mono font-bold text-base text-foreground">
+                        {formatMoney(ord.total)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mahsulotlar */}
@@ -279,7 +283,7 @@ export default function ProfileOrdersPage() {
                       <div className="flex-1 min-w-0">
                         <h4 className="font-bold text-xs sm:text-sm text-foreground truncate">{p.name}</h4>
                         <span className="text-xs text-muted-foreground font-mono">
-                          {p.qty} dona × {formatMoney(p.price)}
+                          {p.qty} dona {isFinancial ? `× ${formatMoney(p.price)}` : ""}
                         </span>
                       </div>
                     </div>
@@ -335,12 +339,14 @@ export default function ProfileOrdersPage() {
                     </span>
                   </div>
 
-                  <div className="text-left sm:text-right">
-                    <span className="text-xs text-muted-foreground block">Umumiy toʻlov:</span>
-                    <span className="font-mono font-bold text-base text-foreground">
-                      {formatMoney(ord.total)}
-                    </span>
-                  </div>
+                  {isFinancial && (
+                    <div className="text-left sm:text-right">
+                      <span className="text-xs text-muted-foreground block">Umumiy toʻlov:</span>
+                      <span className="font-mono font-bold text-base text-foreground">
+                        {formatMoney(ord.total)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mahsulotlar */}
@@ -355,7 +361,7 @@ export default function ProfileOrdersPage() {
                         <div className="min-w-0 flex-1">
                           <h4 className="font-bold text-xs sm:text-sm text-foreground truncate">{p.name}</h4>
                           <span className="text-xs text-muted-foreground font-mono">
-                            {p.qty} dona × {formatMoney(p.price)}
+                            {p.qty} dona {isFinancial ? `× ${formatMoney(p.price)}` : ""}
                           </span>
                         </div>
                       </div>
@@ -413,12 +419,14 @@ export default function ProfileOrdersPage() {
                     </span>
                   </div>
 
-                  <div className="text-left sm:text-right">
-                    <span className="text-xs text-muted-foreground block">Kelishilgan narx:</span>
-                    <span className="font-mono font-bold text-base text-foreground">
-                      {formatMoney(pco.total)}
-                    </span>
-                  </div>
+                  {isFinancial && (
+                    <div className="text-left sm:text-right">
+                      <span className="text-xs text-muted-foreground block">Kelishilgan narx:</span>
+                      <span className="font-mono font-bold text-base text-foreground">
+                        {formatMoney(pco.total)}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-control bg-muted/40 p-3 text-xs space-y-2">

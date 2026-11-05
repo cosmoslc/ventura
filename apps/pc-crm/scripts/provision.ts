@@ -23,6 +23,7 @@ const inputSchema = z.object({
   name: z.string().min(1),
   databaseUrl: z.string().regex(/^postgres(ql)?:\/\//),
   authSecret: z.string().min(32),
+  storeMode: z.enum(["financial", "inventory"]).optional().default("financial"),
   owner: z
     .object({
       phone: z.string().transform((v, ctx) => {
@@ -59,7 +60,8 @@ try {
   await db
     .insert(settings)
     .values([
-      { key: "store_branding", value: { storeName: input.name, slug: input.slug } },
+      { key: "store_branding", value: { storeName: input.name, slug: input.slug, storeMode: input.storeMode } },
+      { key: "store_mode", value: input.storeMode },
       { key: "usd_rate", value: { rate: 12850 } },
       { key: "tax_percent", value: { percent: 0 } },
       { key: "free_shipping_from", value: { amount: "1000000" } },
