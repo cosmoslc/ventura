@@ -4,6 +4,7 @@ import { phoneNumber } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { accounts, sessions, users, verifications } from "@ventura/db/schema/pc-crm";
 import { getDb } from "./db";
+import { allTenants, defaultTenantSecret } from "./server/tenant";
 
 const baseURL =
   process.env.BETTER_AUTH_URL ??
@@ -13,6 +14,7 @@ const baseURL =
 const secret =
   process.env.BETTER_AUTH_SECRET ??
   process.env.AUTH_SECRET ??
+  defaultTenantSecret()?.authSecret ??
   "pc-crm-auth-secret-change-before-deploy-1234567890";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
@@ -27,6 +29,9 @@ if (googleClientId && googleClientSecret) {
   };
 }
 
+const tenantHosts = allTenants().flatMap((t) => t.hosts);
+const tenantOrigins = tenantHosts.flatMap((h) => [`http://${h}`, `https://${h}`]);
+
 export const auth = betterAuth({
   appName: "Ventura PC Store",
   secret,
@@ -35,6 +40,7 @@ export const auth = betterAuth({
     "http://localhost:3004",
     "http://127.0.0.1:3004",
     baseURL,
+    ...tenantOrigins,
     ...(process.env.BETTER_AUTH_TRUSTED_ORIGINS
       ? process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(",").map((s) => s.trim())
       : []),

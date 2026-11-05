@@ -54,6 +54,12 @@ export function tenantSecret(tenant: Pick<Tenant, "slug">): TenantSecret | null 
   return loadSecrets().tenants[tenant.slug] ?? null;
 }
 
+export function defaultTenantSecret(): TenantSecret | null {
+  const secrets = loadSecrets();
+  const values = Object.values(secrets.tenants);
+  return values[0] ?? null;
+}
+
 let commitCache: string | null | undefined;
 
 export function commit(): string | null {
