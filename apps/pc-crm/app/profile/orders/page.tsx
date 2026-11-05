@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
+import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { formatMoney } from "@/lib/format";
 import { useFinancialMode } from "@/lib/store-context";
@@ -470,6 +471,30 @@ export default function ProfileOrdersPage() {
         open={Boolean(reviewingProduct)}
         onOpenChange={(open) => !open && setReviewingProduct(null)}
         title="Mahsulotga sharh qoldirish"
+        footer={
+          reviewSuccess ? (
+            <Button
+              variant="ghost"
+              onClick={() => setReviewingProduct(null)}
+            >
+              Yopish
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setReviewingProduct(null)}
+              >
+                Bekor qilish
+              </Button>
+              <Button type="submit" form="product-review-form" variant="primary" className="gap-2">
+                <Send size={14} />
+                Sharhni yuborish
+              </Button>
+            </>
+          )
+        }
       >
         {reviewSuccess ? (
           <div className="py-6 text-center space-y-2">
@@ -478,19 +503,19 @@ export default function ProfileOrdersPage() {
             <p className="text-xs text-muted-foreground">Katta rahmat! Fikringiz xaridorni toʻgʻri tanlov qilishiga yordam beradi.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmitReview} className="space-y-4 text-xs sm:text-sm">
+          <form id="product-review-form" onSubmit={handleSubmitReview} className="space-y-4 text-xs sm:text-sm">
             <div className="rounded-control bg-muted/60 p-3">
-              <span className="text-xs text-muted-foreground block font-bold uppercase tracking-wider">
+              <span className="text-xs text-muted-foreground block font-medium">
                 Mahsulot:
               </span>
               <p className="font-bold text-foreground mt-0.5">{reviewingProduct}</p>
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <Label>
                 Baholang (1 dan 5 gacha)
-              </label>
-              <div className="flex items-center gap-1">
+              </Label>
+              <div className="flex items-center gap-1 mt-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <button
                     key={s}
@@ -508,32 +533,18 @@ export default function ProfileOrdersPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <Label htmlFor="review-comment">
                 Fikringiz va taassurotlaringiz *
-              </label>
+              </Label>
               <Textarea
+                id="review-comment"
                 rows={3}
                 required
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Mahsulotning sifati, ishlashi va yetkazib berish xizmati qanday boʻldi?"
-                className="w-full rounded-control border border-input bg-background p-2.5 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none resize-none"
+                className="resize-none"
               />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setReviewingProduct(null)}
-              >
-                Bekor qilish
-              </Button>
-              <Button type="submit" variant="primary" size="sm" className="gap-2">
-                <Send size={14} />
-                Sharhni yuborish
-              </Button>
             </div>
           </form>
         )}

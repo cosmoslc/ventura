@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
+import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Footer } from "@/components/storefront/footer";
 import { AuthModal } from "@/components/storefront/auth-modal";
@@ -514,6 +515,33 @@ export default function CustomPcConfiguratorPage() {
           if (!open) setOrderCreatedId(null);
         }}
         title={orderCreatedId ? "Buyurtmangiz qabul qilindi!" : "Shaxsiy PC uchun buyurtma rasmiylashtirish"}
+        footer={
+          orderCreatedId ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setIsOrderModalOpen(false);
+                setOrderCreatedId(null);
+              }}
+            >
+              Yopish
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsOrderModalOpen(false)}
+              >
+                Bekor qilish
+              </Button>
+              <Button type="submit" form="custom-pc-order-form" variant="primary" className="gap-2">
+                <Send size={14} />
+                Tasdiqlash va yuborish
+              </Button>
+            </>
+          )
+        }
       >
         {orderCreatedId ? (
           <div className="space-y-4 py-2 text-center">
@@ -548,25 +576,12 @@ export default function CustomPcConfiguratorPage() {
               )}
             </div>
 
-            <div className="flex flex-col gap-2 pt-2">
-              <p className="rounded-control bg-muted/50 p-3 text-xs text-muted-foreground">
-                Operator buyurtmangizni tekshirib, siz bilan ko‘rsatilgan telefon raqami orqali bog‘lanadi.
-              </p>
-
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setIsOrderModalOpen(false);
-                  setOrderCreatedId(null);
-                }}
-              >
-                Yopish
-              </Button>
-            </div>
+            <p className="rounded-control bg-muted/50 p-3 text-xs text-muted-foreground">
+              Operator buyurtmangizni tekshirib, siz bilan ko‘rsatilgan telefon raqami orqali bog‘lanadi.
+            </p>
           </div>
         ) : (
-          <form onSubmit={handleOrderSubmit} className="space-y-4 text-xs sm:text-sm">
+          <form id="custom-pc-order-form" onSubmit={handleOrderSubmit} className="space-y-4 text-xs sm:text-sm">
             <div className="rounded-control bg-muted/50 p-3 text-xs space-y-1">
               <div className="flex justify-between font-bold">
                 <span>Tanlangan qismlar:</span>
@@ -581,73 +596,59 @@ export default function CustomPcConfiguratorPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <Label htmlFor="custom-customer-name">
                 Ism va familiyangiz *
-              </label>
+              </Label>
               <Input
+                id="custom-customer-name"
                 type="text"
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Masalan: Sardorbek Rahimov"
-                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <Label htmlFor="custom-customer-phone">
                 Telefon raqamingiz *
-              </label>
+              </Label>
               <Input
+                id="custom-customer-phone"
                 type="tel"
                 required
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="+998 90 123 45 67"
-                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground font-mono focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <Label htmlFor="custom-customer-address">
                 Yetkazib berish manzili *
-              </label>
+              </Label>
               <Input
+                id="custom-customer-address"
                 type="text"
                 required
                 value={customerAddress}
                 onChange={(e) => setCustomerAddress(e.target.value)}
                 placeholder="Toshkent sh., Chilonzor tumani..."
-                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+              <Label htmlFor="custom-customer-note">
                 Qoʻshimcha istaklar yoki izoh
-              </label>
+              </Label>
               <Textarea
+                id="custom-customer-note"
                 rows={2}
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
                 placeholder="Masalan: Oq rangli kabel management, Windows 11 oʻrnatish..."
-                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none resize-none"
+                className="resize-none"
               />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsOrderModalOpen(false)}
-              >
-                Bekor qilish
-              </Button>
-              <Button type="submit" variant="primary" size="sm" className="gap-2">
-                <Send size={14} />
-                Tasdiqlash va yuborish
-              </Button>
             </div>
           </form>
         )}

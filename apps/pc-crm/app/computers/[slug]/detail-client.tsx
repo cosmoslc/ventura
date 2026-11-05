@@ -549,6 +549,11 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
         open={Boolean(activeHelpSpec)}
         onOpenChange={(open) => !open && setActiveHelpSpec(null)}
         title={activeHelpSpec?.helpTitle ?? activeHelpSpec?.title ?? "Texnik maʼlumot"}
+        footer={
+          <Button variant="primary" size="sm" onClick={() => setActiveHelpSpec(null)}>
+            Tushunarli
+          </Button>
+        }
       >
         <div className="space-y-4 text-sm text-muted-foreground">
           <div className="rounded-control bg-primary/10 border border-primary/20 p-3">
@@ -558,11 +563,6 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
           <p className="leading-relaxed text-foreground">
             {activeHelpSpec?.helpText ?? "Ushbu xususiyat kompyuterning yuqori unumdorligi va barqaror ishlashini taʼminlaydi."}
           </p>
-          <div className="flex justify-end pt-2">
-            <Button variant="primary" size="sm" onClick={() => setActiveHelpSpec(null)}>
-              Tushunarli
-            </Button>
-          </div>
         </div>
       </Modal>
 

@@ -314,6 +314,29 @@ export default function ProfileSettingsPage() {
         open={isPasswordModalOpen}
         onOpenChange={setIsPasswordModalOpen}
         title="Parolni oʻzgartirish"
+        footer={
+          passwordSuccess ? (
+            <Button
+              variant="ghost"
+              onClick={() => setIsPasswordModalOpen(false)}
+            >
+              Yopish
+            </Button>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsPasswordModalOpen(false)}
+              >
+                Bekor qilish
+              </Button>
+              <Button type="submit" form="change-password-form" variant="primary">
+                Yangilash
+              </Button>
+            </>
+          )
+        }
       >
         {passwordSuccess ? (
           <div className="py-6 text-center space-y-2">
@@ -321,12 +344,13 @@ export default function ProfileSettingsPage() {
             <h3 className="font-bold text-base">Parol muvaffaqiyatli yangilandi!</h3>
           </div>
         ) : (
-          <form onSubmit={handleChangePassword} className="space-y-4 text-xs sm:text-sm">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <form id="change-password-form" onSubmit={handleChangePassword} className="space-y-4 text-xs sm:text-sm">
+            <div>
+              <Label htmlFor="old-password">
                 Joriy parol *
               </Label>
               <Input
+                id="old-password"
                 type="password"
                 required
                 value={oldPassword}
@@ -334,11 +358,12 @@ export default function ProfileSettingsPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <div>
+              <Label htmlFor="new-password">
                 Yangi parol *
               </Label>
               <Input
+                id="new-password"
                 type="password"
                 required
                 value={newPassword}
@@ -346,30 +371,17 @@ export default function ProfileSettingsPage() {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <div>
+              <Label htmlFor="confirm-password">
                 Yangi parolni tasdiqlang *
               </Label>
               <Input
+                id="confirm-password"
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsPasswordModalOpen(false)}
-              >
-                Bekor qilish
-              </Button>
-              <Button type="submit" variant="primary" size="sm">
-                Yangilash
-              </Button>
             </div>
           </form>
         )}

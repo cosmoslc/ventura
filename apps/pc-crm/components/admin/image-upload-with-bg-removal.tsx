@@ -365,7 +365,7 @@ export function ImageUploadWithBgRemoval({
       <Modal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        title="🪄 Orqa fonni tozalash (Gibrid AI & Smart)"
+        title="Orqa fonni tozalash"
         wide
         footer={
           <div className="flex w-full items-center justify-between gap-3">
@@ -393,10 +393,10 @@ export function ImageUploadWithBgRemoval({
                 size="sm"
                 onClick={handleSaveProcessed}
                 disabled={loadingImage || processing}
-                className="gap-1.5 font-bold"
+                className="gap-1.5"
               >
                 {processing ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-                <span>✓ Qabul qilish va saqlash</span>
+                Qabul qilish va saqlash
               </Button>
             </div>
           </div>
