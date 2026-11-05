@@ -153,30 +153,20 @@ export default function ComputersListingPage() {
       <Navbar />
 
       <main className="flex-1">
-        {/* Sarlavha & Konfigurator Banneri */}
-        <section className="border-b border-border bg-card/60 py-8 lg:py-10">
+        {/* Sarlavha & PC yig'ish */}
+        <section className="border-b border-border bg-card/60 py-4 sm:py-5">
           <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 sm:px-6">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-              <div>
-                
-                <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Tayyor oʻyin va ishchi kompyuterlar</h1>
-              </div>
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+                Tayyor oʻyin va ishchi kompyuterlar
+              </h1>
 
-              {/* Konfiguratorga chaqiriq (CTA) */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-card border border-primary/30 bg-primary/5 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground shadow-card">
-                  <Wrench size={20} />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold">Oʻz kompyuteringizni yigʻmoqchimisiz?</h2>
-                  <p className="text-xs text-muted-foreground">Komponentlarni bosqichma-bosqich oʻzingiz tanlang</p>
-                </div>
-                <Link href="/computers/custom" className="sm:ml-2 w-full sm:w-auto">
-                  <Button variant="primary" size="sm" className="w-full gap-1.5 text-xs font-semibold">
-                    Konfiguratorga oʻtish
-                  </Button>
-                </Link>
-              </div>
+              <Link href="/computers/custom" className="shrink-0">
+                <Button variant="primary" size="sm" className="gap-2 text-xs font-bold shadow-control h-9 px-4">
+                  <Wrench size={15} />
+                  <span>PC yigʻish</span>
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
