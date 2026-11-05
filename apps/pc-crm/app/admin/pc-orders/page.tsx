@@ -306,9 +306,6 @@ export default function AdminPcOrdersPage() {
                       <p className="font-bold text-foreground truncate" title={order.pcName || "Custom PC Build"}>
                         {order.pcName || "Custom PC Build"}
                       </p>
-                      <p className="text-caption text-muted-foreground">
-                        {order.components.length} ta komponent
-                      </p>
                     </td>
 
                     {/* 4. Tannarx */}
