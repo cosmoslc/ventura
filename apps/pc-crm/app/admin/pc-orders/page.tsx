@@ -255,9 +255,8 @@ export default function AdminPcOrdersPage() {
         <table className="w-full border-collapse text-left text-xs">
           <thead>
             <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
-              <th className="p-3.5 whitespace-nowrap">Buyurtma ID</th>
+              <th className="p-3.5">Zakaz qilingan PC</th>
               <th className="p-3.5 whitespace-nowrap">Zakaschi</th>
-              <th className="p-3.5">Zakaz qilingan PC nomi</th>
               <th className="p-3.5 text-right whitespace-nowrap">Tannarx</th>
               <th className="p-3.5 text-right whitespace-nowrap">Kelishilgan narx</th>
               <th className="p-3.5 text-center whitespace-nowrap">Status</th>
@@ -267,7 +266,7 @@ export default function AdminPcOrdersPage() {
           <tbody className="divide-y divide-border/60">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                <td colSpan={6} className="p-8 text-center text-muted-foreground">
                   Zakaz topilmadi.
                 </td>
               </tr>
@@ -277,10 +276,16 @@ export default function AdminPcOrdersPage() {
 
                 return (
                   <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                    {/* 1. Buyurtma ID va sana */}
-                    <td className="p-3.5 whitespace-nowrap">
-                      <p className="font-mono font-black text-foreground">{order.orderNumber}</p>
-                      <p className="text-caption text-muted-foreground">{order.createdAt}</p>
+                    {/* 1. Zakaz qilingan PC nomi va tagida kichik Buyurtma ID */}
+                    <td className="p-3.5 max-w-xs">
+                      <p className="font-bold text-foreground truncate" title={order.pcName || "Custom PC Build"}>
+                        {order.pcName || "Custom PC Build"}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-caption font-mono text-muted-foreground mt-0.5">
+                        <span>{order.orderNumber}</span>
+                        <span className="text-muted-foreground/50">•</span>
+                        <span>{order.createdAt}</span>
+                      </div>
                     </td>
 
                     {/* 2. Zakaschi: Ism-familiya tagida telefon raqami */}
@@ -301,19 +306,12 @@ export default function AdminPcOrdersPage() {
                       )}
                     </td>
 
-                    {/* 3. Zakaz qilingan PC nomi */}
-                    <td className="p-3.5 max-w-xs">
-                      <p className="font-bold text-foreground truncate" title={order.pcName || "Custom PC Build"}>
-                        {order.pcName || "Custom PC Build"}
-                      </p>
-                    </td>
-
-                    {/* 4. Tannarx */}
+                    {/* 3. Tannarx */}
                     <td className="p-3.5 text-right font-mono font-semibold text-muted-foreground whitespace-nowrap">
                       {formatMoney(order.costPrice)}
                     </td>
 
-                    {/* 5. Kelishilgan narx */}
+                    {/* 4. Kelishilgan narx */}
                     <td className="p-3.5 text-right font-black text-foreground whitespace-nowrap">
                       {hasQuote ? (
                         formatMoney(order.quotedPrice!)
@@ -324,7 +322,7 @@ export default function AdminPcOrdersPage() {
                       )}
                     </td>
 
-                    {/* 6. Status (To'g'ridan-to'g'ri o'zgaruvchan toza Selector Box, ortiqcha Badge'siz) */}
+                    {/* 5. Status (To'g'ridan-to'g'ri o'zgaruvchan toza Selector Box, ortiqcha Badge'siz) */}
                     <td className="p-3.5 text-center whitespace-nowrap">
                       <Select
                         value={order.status}
@@ -366,7 +364,7 @@ export default function AdminPcOrdersPage() {
                       </Select>
                     </td>
 
-                    {/* 7. Amallar: edu crm kabi 3 ta nuqta menyusi */}
+                    {/* 6. Amallar: edu crm kabi 3 ta nuqta menyusi */}
                     <td className="p-3.5 text-right whitespace-nowrap">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
