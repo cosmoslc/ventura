@@ -85,10 +85,20 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-5">
           {/* Kompaniya info */}
           <div className="lg:col-span-2">
-            <Link href="/" className="mb-4 inline-flex items-center gap-2 text-foreground font-black text-xl">
-              <div className="flex h-8 w-8 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
-                <Monitor size={18} />
-              </div>
+            <Link href="/" className="mb-4 inline-flex items-center gap-2.5 text-foreground font-black text-xl">
+              {branding.logoUrl ? (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-btn border border-border/80 bg-card p-1 shadow-control overflow-hidden">
+                  <img
+                    src={branding.logoUrl}
+                    alt={storeName}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
+                  <Monitor size={18} />
+                </div>
+              )}
               {renderFooterLogo(storeName)}
             </Link>
             <p className="mb-4 max-w-sm text-xs leading-relaxed text-muted-foreground">

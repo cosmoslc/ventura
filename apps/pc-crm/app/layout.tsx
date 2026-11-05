@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import type { CSSProperties } from "react";
 import { themeInitScript } from "@ventura/ui/lib/theme";
 import { Toaster } from "@ventura/ui/toast";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
@@ -20,14 +21,16 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: `${branding.name} — Kompyuter va Texnika Do'koni`,
     description: `${branding.name} — Onlayn kompyuter va elektronika do'koni, PC konfigurator va boshqaruv tizimi`,
+    icons: branding.logoUrl ? [{ rel: "icon", url: branding.logoUrl }] : undefined,
   };
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const branding = await getStoreBranding();
+  const style = branding.primary ? ({ "--primary": branding.primary } as CSSProperties) : undefined;
 
   return (
-    <html lang="uz" data-brand="ventura" className={fontVariables} suppressHydrationWarning>
+    <html lang="uz" data-brand="ventura" className={fontVariables} style={style} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

@@ -14,6 +14,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
   let name = tenant?.name || "Ventura PC";
   let slug = tenant?.slug || "ventura-pc";
   let logoUrl = tenant?.brand?.logoUrl ?? null;
+  let primary = tenant?.brand?.primary ?? null;
   let phone = "+998 71 200 00 00";
   let telegram = "@venturapc_operator";
   let address = "Toshkent shahri, Yunusobod tumani";
@@ -64,6 +65,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
     name,
     slug,
     logoUrl,
+    primary,
     contacts: {
       phone,
       telegram,

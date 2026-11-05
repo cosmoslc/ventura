@@ -144,10 +144,20 @@ export function Navbar({
       {/* Asosiy navigatsiya qatori */}
       <div className="mx-auto flex max-w-[var(--storefront-max-w,1320px)] items-center justify-between gap-4 px-4 py-3 sm:px-6">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 text-foreground font-black text-xl tracking-tight">
-          <div className="flex h-9 w-9 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
-            <Monitor size={20} />
-          </div>
+        <Link href="/" className="flex items-center gap-2.5 text-foreground font-black text-xl tracking-tight">
+          {branding.logoUrl ? (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn border border-border/80 bg-card p-1 shadow-control overflow-hidden">
+              <img
+                src={branding.logoUrl}
+                alt={activeStoreName}
+                className="h-full w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
+              <Monitor size={20} />
+            </div>
+          )}
           {renderBrandLogo(activeStoreName)}
         </Link>
 

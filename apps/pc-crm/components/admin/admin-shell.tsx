@@ -81,7 +81,15 @@ export function AdminShell({ children }: AdminShellProps) {
         collapsed={collapsed}
         onToggleSidebar={toggleSidebar}
         brandName={branding.name || "VENTURA PC"}
-        brandMark={<Monitor className="size-5" />}
+        brandMark={
+          branding.logoUrl ? (
+            <div className="size-6 shrink-0 rounded-sm overflow-hidden flex items-center justify-center">
+              <img src={branding.logoUrl} alt={branding.name} className="h-full w-full object-contain" />
+            </div>
+          ) : (
+            <Monitor className="size-5" />
+          )
+        }
         brandSubtitle="Boshqaruv paneli"
       >
         <ThemeToggle />

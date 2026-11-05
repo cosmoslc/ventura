@@ -6,6 +6,7 @@ export interface StoreBranding {
   name: string;
   slug: string;
   logoUrl?: string | null;
+  primary?: string | null;
   contacts?: {
     phone?: string;
     telegram?: string;
@@ -18,6 +19,7 @@ const DEFAULT_BRANDING: StoreBranding = {
   name: "Ventura PC",
   slug: "ventura-pc",
   logoUrl: null,
+  primary: null,
   contacts: {
     phone: "+998 71 200 00 00",
     telegram: "@venturapc_operator",
