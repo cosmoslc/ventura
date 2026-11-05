@@ -73,11 +73,13 @@ export interface PcOrderItem {
   quotedPrice?: bigint;
   costPrice: bigint;
   createdAt: string;
+  pcName?: string;
   components: {
     role: string;
     roleNameUz: string;
     productName: string;
     price: bigint;
+    costPrice?: bigint;
     inStock: boolean;
   }[];
   operatorNote?: string;

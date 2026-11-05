@@ -4,19 +4,22 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
-  ArrowRight,
   Check,
   CheckCircle2,
   Clock,
+  Compass,
+  Copy,
+  Cpu,
+  DollarSign,
   ExternalLink,
-  Headphones,
+  Eye,
+  FileText,
   Layers,
   MessageCircle,
-  Monitor,
   Phone,
-  Plus,
+  PhoneCall,
   Search,
-  Send,
+  TrendingUp,
   Truck,
   Wrench,
   X,
@@ -44,9 +47,20 @@ const STATUS_LABELS: Record<PcOrderItem["status"], { label: string; tone: "info"
   cancelled: { label: "Bekor qilindi", tone: "danger" },
 };
 
+const ORDER_TIMELINE_STEPS: { status: PcOrderItem["status"]; title: string; desc: string }[] = [
+  { status: "new", title: "1. Yangi zakaz", desc: "Mijoz konfigurator orqali zakaz qoldirdi" },
+  { status: "reviewing", title: "2. Koʻrib chiqilmoqda", desc: "Operator qismlar mosligi va narxni tekshirmoqda" },
+  { status: "quoted", title: "3. Narx taklif etildi", desc: "Mijozga yakuniy narx va yetkazish vaqti aytildi" },
+  { status: "confirmed", title: "4. Tasdiqlangan", desc: "Mijoz rozi boʻldi, qismlar omborda zaxiraga olindi" },
+  { status: "assembling", title: "5. Yigʻilmoqda", desc: "Texnik usta PCni montaj qilib simlarni tartibga solmoqda" },
+  { status: "ready", title: "6. Tayyor (Testda)", desc: "Stress-testdan oʻtkazildi, topshirishga tayyor" },
+  { status: "delivered", title: "7. Yetkazildi", desc: "Mijozga topshirildi va toʻlov toʻliq qabul qilindi" },
+];
+
 export default function AdminPcOrdersPage() {
   const [orders, setOrders] = useState<PcOrderItem[]>([]);
   const [error, setError] = useState("");
+  const [successNotification, setSuccessNotification] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     const result = await getAdminPcOrdersAction();
@@ -54,16 +68,22 @@ export default function AdminPcOrdersPage() {
     setError("");
     setOrders(result.orders);
   }, []);
+
   useEffect(() => { void loadOrders(); }, [loadOrders]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
-  // Tafsilot & Narx taklif qilish modali
-  const [selectedOrder, setSelectedOrder] = useState<PcOrderItem | null>(null);
+  // Modallar uchun holatlar
+  const [selectedForDetail, setSelectedForDetail] = useState<PcOrderItem | null>(null);
+  const [selectedForTrack, setSelectedForTrack] = useState<PcOrderItem | null>(null);
+  const [selectedForProfit, setSelectedForProfit] = useState<PcOrderItem | null>(null);
+
+  // Detail modal ichidagi tahrir
   const [quotePriceStr, setQuotePriceStr] = useState("");
   const [operatorNote, setOperatorNote] = useState("");
-  const [newStatus, setNewStatus] = useState<PcOrderItem["status"]>("reviewing");
-  const [successNotification, setSuccessNotification] = useState<string | null>(null);
+  const [modalStatus, setModalStatus] = useState<PcOrderItem["status"]>("reviewing");
+  const [copiedTrack, setCopiedTrack] = useState(false);
 
   // Filterlangan zakazlar
   const filteredOrders = useMemo(() => {
@@ -74,7 +94,8 @@ export default function AdminPcOrdersPage() {
         return (
           o.orderNumber.toLowerCase().includes(q) ||
           o.customerName.toLowerCase().includes(q) ||
-          o.customerPhone.includes(q)
+          o.customerPhone.includes(q) ||
+          (o.pcName && o.pcName.toLowerCase().includes(q))
         );
       }
       return true;
@@ -98,16 +119,35 @@ export default function AdminPcOrdersPage() {
     };
   }, [orders]);
 
-  const handleOpenDetailModal = (order: PcOrderItem) => {
-    setSelectedOrder(order);
-    setQuotePriceStr(order.quotedPrice ? order.quotedPrice.toString() : "");
-    setOperatorNote(order.operatorNote ?? "");
-    setNewStatus(order.status);
+  // To'g'ridan-to'g'ri statusni o'zgartirish (Jadval qatoridan)
+  const handleDirectStatusChange = async (order: PcOrderItem, nextStatus: PcOrderItem["status"]) => {
+    if (order.status === nextStatus) return;
+
+    // Optimistik yangilash
+    setOrders((prev) => prev.map((o) => (o.id === order.id ? { ...o, status: nextStatus } : o)));
+
+    const result = await updatePcOrderStatusAction(order.id, nextStatus, order.quotedPrice, order.operatorNote);
+    if (!result.success) {
+      setError(result.error ?? "Statusni oʻzgartirib boʻlmadi");
+      await loadOrders(); // rollback
+    } else {
+      setError("");
+      setSuccessNotification(`"${order.orderNumber}" buyurtmasi "${STATUS_LABELS[nextStatus].label}" bosqichiga oʻtkazildi.`);
+    }
   };
 
-  const handleSaveOrderChanges = async (e: React.FormEvent) => {
+  // Batafsil modalini ochish
+  const handleOpenDetailModal = (order: PcOrderItem) => {
+    setSelectedForDetail(order);
+    setQuotePriceStr(order.quotedPrice ? order.quotedPrice.toString() : "");
+    setOperatorNote(order.operatorNote ?? "");
+    setModalStatus(order.status);
+  };
+
+  // Batafsil modalidan saqlash
+  const handleSaveDetailChanges = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedOrder) return;
+    if (!selectedForDetail) return;
 
     let parsedQuote: bigint | undefined = undefined;
     if (quotePriceStr.trim()) {
@@ -118,16 +158,27 @@ export default function AdminPcOrdersPage() {
       }
     }
 
-    const result = await updatePcOrderStatusAction(selectedOrder.id, newStatus, parsedQuote, operatorNote);
-    if (!result.success) { setError(result.error ?? "PC buyurtmasini yangilab bo'lmadi"); return; }
-    setSuccessNotification(`"${selectedOrder.orderNumber}" buyurtmasi yangilandi.`);
-    setSelectedOrder(null);
+    const result = await updatePcOrderStatusAction(selectedForDetail.id, modalStatus, parsedQuote, operatorNote);
+    if (!result.success) { setError(result.error ?? "PC buyurtmasini yangilab boʻlmadi"); return; }
+    setSuccessNotification(`"${selectedForDetail.orderNumber}" buyurtmasi muvaffaqiyatli yangilandi.`);
+    setSelectedForDetail(null);
     await loadOrders();
+  };
+
+  const copyTrackerUrl = (orderNumber: string) => {
+    const url = `${typeof window !== "undefined" ? window.location.origin : ""}/computers/custom?track=${orderNumber}`;
+    void navigator.clipboard.writeText(url);
+    setCopiedTrack(true);
+    setTimeout(() => setCopiedTrack(false), 2000);
   };
 
   return (
     <div className="space-y-6">
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">
+          {error}
+        </div>
+      )}
 
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -170,7 +221,7 @@ export default function AdminPcOrdersPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buyurtma ID, mijoz ismi yoki telefon..."
+            placeholder="Buyurtma ID, mijoz ismi, telefon yoki PC..."
             className="w-full rounded-control border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
         </div>
@@ -200,95 +251,84 @@ export default function AdminPcOrdersPage() {
           <table className="w-full text-left text-xs sm:text-sm">
             <thead className="border-b border-border bg-muted/40 text-caption font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="py-3 px-4">Buyurtma</th>
-                <th className="py-3 px-4">Mijoz maʼlumotlari</th>
-                <th className="py-3 px-4">Tanlangan qismlar</th>
-                <th className="py-3 px-4 text-right">Tannarx (UZS)</th>
-                <th className="py-3 px-4 text-right">Kelishilgan narx (UZS)</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-right">Amallar</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Buyurtma ID</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Zakaschi</th>
+                <th className="py-3.5 px-4 whitespace-nowrap">Telefon raqami</th>
+                <th className="py-3.5 px-4">Zakaz qilingan PC nomi</th>
+                <th className="py-3.5 px-4 text-right whitespace-nowrap">Tannarx</th>
+                <th className="py-3.5 px-4 text-right whitespace-nowrap">Kelishilgan narx</th>
+                <th className="py-3.5 px-4 text-center whitespace-nowrap">Status</th>
+                <th className="py-3.5 px-4 text-right whitespace-nowrap">Amallar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {filteredOrders.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-8 text-center text-xs text-muted-foreground">
+                  <td colSpan={8} className="py-8 text-center text-xs text-muted-foreground">
                     Zakaz topilmadi.
                   </td>
                 </tr>
               ) : (
                 filteredOrders.map((order) => {
-                  const statusMeta = STATUS_LABELS[order.status];
                   const hasQuote = order.quotedPrice && order.quotedPrice > 0n;
-                  const estimatedMargin = hasQuote
-                    ? calcMarginPercent(order.quotedPrice! - order.costPrice, order.quotedPrice!)
-                    : 0;
 
                   return (
                     <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                      {/* ID va sana */}
-                      <td className="py-3.5 px-4">
+                      {/* 1. Buyurtma ID va sana */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
                         <span className="font-mono font-bold text-foreground block">
                           {order.orderNumber}
                         </span>
-                        <span className="font-mono text-caption text-muted-foreground">
-                          {order.createdAt.split("T")[0]}
+                        <span className="font-mono text-2xs text-muted-foreground">
+                          {order.createdAt}
                         </span>
                       </td>
 
-                      {/* Xaridor */}
-                      <td className="py-3.5 px-4">
+                      {/* 2. Zakaschi */}
+                      <td className="py-3.5 px-4 min-w-[130px]">
                         <span className="font-bold text-foreground block">
                           {order.customerName}
                         </span>
-                        <span className="font-mono text-caption text-muted-foreground block">
-                          {order.customerPhone}
-                        </span>
                         {order.deliveryAddress && (
-                          <span className="text-caption text-muted-foreground truncate block max-w-xs">
+                          <span className="text-2xs text-muted-foreground truncate block max-w-[180px]" title={order.deliveryAddress}>
                             {order.deliveryAddress}
                           </span>
                         )}
                       </td>
 
-                      {/* Qismlar */}
-                      <td className="py-3.5 px-4">
-                        <span className="font-medium text-foreground block">
-                          {order.components.length} ta komponent tanlangan
-                        </span>
-                        <div className="flex flex-wrap gap-1 mt-1 max-w-xs">
-                          {order.components.slice(0, 3).map((c) => (
-                            <span
-                              key={c.role}
-                              className="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground font-mono"
-                            >
-                              {c.roleNameUz}: {c.productName.split(" ")[0]}
-                            </span>
-                          ))}
-                          {order.components.length > 3 && (
-                            <span className="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
-                              +{order.components.length - 3} ta
-                            </span>
-                          )}
-                        </div>
+                      {/* 3. Telefon raqami */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <a
+                          href={`tel:${order.customerPhone}`}
+                          className="font-mono font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5"
+                          title="Qoʻngʻiroq qilish"
+                        >
+                          <Phone size={12} className="text-muted-foreground" />
+                          <span>{order.customerPhone}</span>
+                        </a>
                       </td>
 
-                      {/* Tannarx */}
-                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-muted-foreground">
+                      {/* 4. Zakaz qilingan PC nomi */}
+                      <td className="py-3.5 px-4 min-w-[200px]">
+                        <span className="font-bold text-foreground block line-clamp-1">
+                          {order.pcName || "Custom PC Build"}
+                        </span>
+                        <span className="text-2xs text-muted-foreground block mt-0.5">
+                          {order.components.length} ta komponent yigʻilgan
+                        </span>
+                      </td>
+
+                      {/* 5. Tannarx */}
+                      <td className="py-3.5 px-4 text-right font-mono font-semibold text-muted-foreground whitespace-nowrap">
                         {formatMoney(order.costPrice)}
                       </td>
 
-                      {/* Kelishilgan narx */}
-                      <td className="py-3.5 px-4 text-right font-mono">
+                      {/* 6. Kelishilgan narx (Yashil sof foyda ko'rsatgichisiz) */}
+                      <td className="py-3.5 px-4 text-right font-mono whitespace-nowrap">
                         {hasQuote ? (
-                          <>
-                            <span className="font-bold text-foreground block">
-                              {formatMoney(order.quotedPrice!)}
-                            </span>
-                            <span className="text-caption text-(--success-fg) font-semibold">
-                              +{formatMoney(order.quotedPrice! - order.costPrice)} ({estimatedMargin}%)
-                            </span>
-                          </>
+                          <span className="font-bold text-foreground block">
+                            {formatMoney(order.quotedPrice!)}
+                          </span>
                         ) : (
                           <span className="text-muted-foreground italic text-xs">
                             Belgilanmagan
@@ -296,35 +336,81 @@ export default function AdminPcOrdersPage() {
                         )}
                       </td>
 
-                      {/* Status */}
-                      <td className="py-3.5 px-4 text-center">
-                        <Badge tone={statusMeta.tone}>{statusMeta.label}</Badge>
+                      {/* 7. Status (To'g'ridan-to'g'ri o'zgaruvchan Select) */}
+                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                        <Select
+                          value={order.status}
+                          onValueChange={(val) => handleDirectStatusChange(order, val as PcOrderItem["status"])}
+                        >
+                          <SelectTrigger
+                            aria-label="Holatni oʻzgartirish"
+                            className="h-8 w-auto min-w-[145px] text-xs font-semibold px-2.5 mx-auto bg-card"
+                          >
+                            <Badge tone={STATUS_LABELS[order.status].tone} className="py-0 px-1.5 text-2xs font-semibold">
+                              {STATUS_LABELS[order.status].label}
+                            </Badge>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new">Yangi zakaz</SelectItem>
+                            <SelectItem value="reviewing">Koʻrib chiqilmoqda</SelectItem>
+                            <SelectItem value="quoted">Narx taklif etildi</SelectItem>
+                            <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
+                            <SelectItem value="assembling">Yigʻilmoqda</SelectItem>
+                            <SelectItem value="ready">Tayyor (Testda)</SelectItem>
+                            <SelectItem value="delivered">Yetkazildi</SelectItem>
+                            <SelectItem value="cancelled">Bekor qilindi</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </td>
 
-                      {/* Amallar */}
-                      <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <Link
-                            href={`https://t.me/share/url?url=${encodeURIComponent(
-                              `Mijoz: ${order.customerName}, Tel: ${order.customerPhone}`
-                            )}&text=${encodeURIComponent(
-                              `Assalomu alaykum ${order.customerName}! Ventura PC dan sizning zakazingiz (${order.orderNumber}) boʻyicha bogʻlanyapmiz.`
-                            )}`}
-                            target="_blank"
-                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-muted rounded transition-colors"
-                            title="Telegram orqali bogʻlanish"
-                          >
-                            <MessageCircle size={15} />
-                          </Link>
-
+                      {/* 8. Amallar: Batafsil, Kuzatish, Foyda, Telefon */}
+                      <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
+                          {/* Batafsil */}
                           <Button
-                            variant="ghost"
+                            variant="subtle"
                             size="sm"
                             onClick={() => handleOpenDetailModal(order)}
-                            className="text-xs"
+                            className="h-7 px-2 text-2xs gap-1 font-semibold text-foreground"
+                            title="Batafsil maʼlumot"
                           >
-                            Koʻrib chiqish
+                            <FileText size={12} className="text-primary" />
+                            <span>Batafsil</span>
                           </Button>
+
+                          {/* Kuzatish */}
+                          <Button
+                            variant="subtle"
+                            size="sm"
+                            onClick={() => setSelectedForTrack(order)}
+                            className="h-7 px-2 text-2xs gap-1 font-semibold text-foreground"
+                            title="Buyurtma jarayoni va kuzatuv"
+                          >
+                            <Compass size={12} className="text-amber-500" />
+                            <span>Kuzatish</span>
+                          </Button>
+
+                          {/* Foyda ko'rish */}
+                          <Button
+                            variant="subtle"
+                            size="sm"
+                            onClick={() => setSelectedForProfit(order)}
+                            className="h-7 px-2 text-2xs gap-1 font-semibold text-foreground"
+                            title="Sof foyda hisob-kitobi"
+                          >
+                            <TrendingUp size={12} className="text-(--success-fg)" />
+                            <span>Foyda</span>
+                          </Button>
+
+                          {/* Telefon qilish */}
+                          <a
+                            href={`tel:${order.customerPhone}`}
+                            className="inline-flex items-center justify-center gap-1 h-7 px-2.5 rounded-btn text-2xs font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                            title="Mijozga qoʻngʻiroq qilish"
+                          >
+                            <PhoneCall size={12} />
+                            <span>Qoʻngʻiroq</span>
+                          </a>
                         </div>
                       </td>
                     </tr>
@@ -336,61 +422,81 @@ export default function AdminPcOrdersPage() {
         </div>
       </div>
 
-      {/* Zakazni ko'rib chiqish & Narx taklif qilish modali */}
+      {/* ---------------- 1. BATAFSIL MODALI ---------------- */}
       <Modal
-        open={Boolean(selectedOrder)}
-        onOpenChange={(open) => !open && setSelectedOrder(null)}
-        title={selectedOrder ? `Zakaz: ${selectedOrder.orderNumber}` : "Zakaz tafsilotlari"}
+        open={Boolean(selectedForDetail)}
+        onOpenChange={(open) => !open && setSelectedForDetail(null)}
+        title={selectedForDetail ? `Zakaz tafsilotlari: ${selectedForDetail.orderNumber}` : "Zakaz tafsilotlari"}
+        wide
       >
-        {selectedOrder && (
-          <form onSubmit={handleSaveOrderChanges} className="space-y-4 text-xs sm:text-sm">
+        {selectedForDetail && (
+          <form onSubmit={handleSaveDetailChanges} className="space-y-4 text-xs sm:text-sm">
             {/* Mijoz haqida ma'lumot */}
-            <div className="rounded-control bg-muted/60 p-3.5 space-y-2">
-              <div className="flex items-center justify-between">
+            <div className="rounded-control bg-muted/60 p-4 space-y-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                  <h4 className="font-bold text-foreground text-sm">{selectedOrder.customerName}</h4>
-                  <a
-                    href={`tel:${selectedOrder.customerPhone}`}
-                    className="font-mono text-xs text-primary hover:underline flex items-center gap-1 mt-0.5"
-                  >
-                    <Phone size={12} />
-                    {selectedOrder.customerPhone}
-                  </a>
+                  <h4 className="font-bold text-foreground text-sm">{selectedForDetail.customerName}</h4>
+                  <div className="flex items-center gap-3 mt-1">
+                    <a
+                      href={`tel:${selectedForDetail.customerPhone}`}
+                      className="font-mono text-xs text-primary hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <Phone size={12} />
+                      {selectedForDetail.customerPhone}
+                    </a>
+                    <Link
+                      href={`https://t.me/share/url?url=${encodeURIComponent(
+                        `Mijoz: ${selectedForDetail.customerName}, Tel: ${selectedForDetail.customerPhone}`
+                      )}&text=${encodeURIComponent(
+                        `Assalomu alaykum ${selectedForDetail.customerName}! Ventura PC dan sizning zakazingiz (${selectedForDetail.orderNumber}) boʻyicha bogʻlanyapmiz.`
+                      )}`}
+                      target="_blank"
+                      className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1"
+                    >
+                      <MessageCircle size={12} />
+                      Telegram
+                    </Link>
+                  </div>
                 </div>
-                <Badge tone={STATUS_LABELS[selectedOrder.status].tone}>
-                  {STATUS_LABELS[selectedOrder.status].label}
+                <Badge tone={STATUS_LABELS[selectedForDetail.status].tone}>
+                  {STATUS_LABELS[selectedForDetail.status].label}
                 </Badge>
               </div>
 
-              {selectedOrder.deliveryAddress && (
-                <p className="text-xs text-muted-foreground">
-                  <strong>Manzil:</strong> {selectedOrder.deliveryAddress}
+              {selectedForDetail.deliveryAddress && (
+                <p className="text-xs text-muted-foreground pt-1">
+                  <strong>Manzil:</strong> {selectedForDetail.deliveryAddress}
                 </p>
               )}
 
-              {selectedOrder.customerNote && (
-                <div className="rounded border border-primary/20 bg-primary/5 p-2 text-xs">
+              {selectedForDetail.customerNote && (
+                <div className="rounded border border-primary/20 bg-primary/5 p-2.5 text-xs mt-2">
                   <span className="font-bold text-primary block">Mijoz istagi / Izohi:</span>
-                  <p className="text-foreground mt-0.5">{selectedOrder.customerNote}</p>
+                  <p className="text-foreground mt-0.5">{selectedForDetail.customerNote}</p>
                 </div>
               )}
             </div>
 
             {/* Tanlangan komponentlar ro'yxati */}
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
-                Tanlangan qismlar ({selectedOrder.components.length} ta):
-              </span>
-              <div className="rounded-control border border-border divide-y divide-border max-h-48 overflow-y-auto pr-1">
-                {selectedOrder.components.map((c, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2.5 text-xs">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Tanlangan qismlar ({selectedForDetail.components.length} ta):
+                </span>
+                <span className="font-mono text-xs font-bold text-foreground">
+                  Umumiy tannarx: {formatMoney(selectedForDetail.costPrice)}
+                </span>
+              </div>
+              <div className="rounded-control border border-border divide-y divide-border max-h-56 overflow-y-auto">
+                {selectedForDetail.components.map((c, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 text-xs hover:bg-muted/20">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold uppercase text-2xs text-muted-foreground min-w-18">
+                      <span className="font-bold uppercase text-2xs text-muted-foreground min-w-20">
                         {c.roleNameUz}
                       </span>
                       <span className="font-semibold text-foreground">{c.productName}</span>
                     </div>
-                    <span className="font-mono text-xs text-foreground font-bold">
+                    <span className="font-mono text-xs text-foreground font-bold whitespace-nowrap pl-2">
                       {formatMoney(c.price)}
                     </span>
                   </div>
@@ -399,17 +505,17 @@ export default function AdminPcOrdersPage() {
             </div>
 
             {/* Hisob-kitob qatori */}
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-              <div className="rounded-control bg-muted/40 p-2.5 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-border">
+              <div className="rounded-control bg-muted/40 p-3 text-xs">
                 <span className="text-muted-foreground block">Komponentlar tannarxi:</span>
-                <span className="font-mono font-bold text-sm text-foreground">
-                  {formatMoney(selectedOrder.costPrice)}
+                <span className="font-mono font-bold text-base text-foreground mt-0.5 block">
+                  {formatMoney(selectedForDetail.costPrice)}
                 </span>
               </div>
 
               <div className="space-y-1">
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Taklif qilinadigan narx (UZS) *
+                  Kelishilgan narx (UZS) *
                 </Label>
                 <Input
                   required
@@ -427,7 +533,7 @@ export default function AdminPcOrdersPage() {
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Statusni yangilash
                 </Label>
-                <Select value={newStatus} onValueChange={(v) => setNewStatus(v as any)}>
+                <Select value={modalStatus} onValueChange={(v) => setModalStatus(v as PcOrderItem["status"])}>
                   <SelectTrigger aria-label="Statusni yangilash" className="w-full text-xs h-(--control-h)">
                     <SelectValue placeholder="Statusni tanlang" />
                   </SelectTrigger>
@@ -451,29 +557,215 @@ export default function AdminPcOrdersPage() {
                 <Input
                   value={operatorNote}
                   onChange={(e) => setOperatorNote(e.target.value)}
-                  placeholder="Mijoz bilan kelishuv holati..."
+                  placeholder="Mijoz bilan kelishuv tafsilotlari..."
                 />
               </div>
             </div>
 
-            {/* Amallar */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border">
-              <div className="flex justify-end gap-2">
+            {/* Tugmalar */}
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedForDetail(null)}
+              >
+                Bekor qilish
+              </Button>
+              <Button type="submit" variant="primary" size="sm" className="font-bold">
+                Saqlash
+              </Button>
+            </div>
+          </form>
+        )}
+      </Modal>
+
+      {/* ---------------- 2. KUZATISH MODALI ---------------- */}
+      <Modal
+        open={Boolean(selectedForTrack)}
+        onOpenChange={(open) => !open && setSelectedForTrack(null)}
+        title={selectedForTrack ? `Buyurtma jarayoni va kuzatuv: ${selectedForTrack.orderNumber}` : "Kuzatish"}
+      >
+        {selectedForTrack && (
+          <div className="space-y-5 text-xs sm:text-sm">
+            {/* Header ma'lumoti */}
+            <div className="rounded-control bg-muted/40 p-3.5 flex items-center justify-between">
+              <div>
+                <span className="font-bold text-foreground block text-sm">{selectedForTrack.pcName || "Custom PC Build"}</span>
+                <span className="text-2xs text-muted-foreground">Mijoz: {selectedForTrack.customerName} ({selectedForTrack.customerPhone})</span>
+              </div>
+              <Badge tone={STATUS_LABELS[selectedForTrack.status].tone}>
+                {STATUS_LABELS[selectedForTrack.status].label}
+              </Badge>
+            </div>
+
+            {/* Timeline bosqichlari */}
+            <div className="space-y-3 relative pl-6 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">
+              {ORDER_TIMELINE_STEPS.map((step, idx) => {
+                const currentIdx = ORDER_TIMELINE_STEPS.findIndex((s) => s.status === selectedForTrack.status);
+                const isPassed = currentIdx >= idx;
+                const isCurrent = currentIdx === idx;
+
+                return (
+                  <div key={step.status} className="relative flex items-start gap-3">
+                    <div
+                      className={`absolute -left-6 mt-0.5 size-5 rounded-full grid place-items-center text-2xs transition-colors ${
+                        isCurrent
+                          ? "bg-primary text-primary-foreground ring-4 ring-primary/20"
+                          : isPassed
+                            ? "bg-(--success-bg) text-(--success-fg) font-bold"
+                            : "bg-muted text-muted-foreground border border-border"
+                      }`}
+                    >
+                      {isPassed ? <Check size={12} /> : idx + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className={`font-semibold ${isCurrent ? "text-primary font-bold" : isPassed ? "text-foreground" : "text-muted-foreground"}`}>
+                        {step.title}
+                      </p>
+                      <p className="text-2xs text-muted-foreground mt-0.5">
+                        {step.desc}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Havolani nusxalash bloki */}
+            <div className="rounded-control border border-border bg-card p-3 space-y-2">
+              <span className="text-2xs font-bold text-muted-foreground uppercase tracking-wider block">
+                Mijozga yuboriladigan kuzatuv havolasi:
+              </span>
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={`/computers/custom?track=${selectedForTrack.orderNumber}`}
+                  className="font-mono text-2xs h-8 bg-muted text-muted-foreground"
+                />
+                <Button
+                  type="button"
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => copyTrackerUrl(selectedForTrack.orderNumber)}
+                  className="h-8 gap-1 text-2xs font-bold whitespace-nowrap"
+                >
+                  {copiedTrack ? <Check size={12} className="text-(--success-fg)" /> : <Copy size={12} />}
+                  <span>{copiedTrack ? "Nusxalandi" : "Nusxa olish"}</span>
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-border">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedForTrack(null)}
+              >
+                Yopish
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ---------------- 3. FOYDA KO'RISH MODALI ---------------- */}
+      <Modal
+        open={Boolean(selectedForProfit)}
+        onOpenChange={(open) => !open && setSelectedForProfit(null)}
+        title={selectedForProfit ? `Sof foyda tahlili: ${selectedForProfit.orderNumber}` : "Foyda hisob-kitobi"}
+        wide
+      >
+        {selectedForProfit && (() => {
+          const quoted = selectedForProfit.quotedPrice ?? 0n;
+          const cost = selectedForProfit.costPrice;
+          const profit = quoted > 0n ? quoted - cost : 0n;
+          const margin = quoted > 0n ? calcMarginPercent(profit, quoted) : 0;
+
+          return (
+            <div className="space-y-4 text-xs sm:text-sm">
+              {/* Asosiy 4 ta karta */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="rounded-control bg-muted/40 p-3 border border-border">
+                  <span className="text-2xs text-muted-foreground block font-semibold">Tannarx (Kirim)</span>
+                  <span className="font-mono font-bold text-sm text-foreground mt-0.5 block">
+                    {formatMoney(cost)}
+                  </span>
+                </div>
+
+                <div className="rounded-control bg-muted/40 p-3 border border-border">
+                  <span className="text-2xs text-muted-foreground block font-semibold">Kelishilgan narx</span>
+                  <span className="font-mono font-bold text-sm text-foreground mt-0.5 block">
+                    {quoted > 0n ? formatMoney(quoted) : "Belgilanmagan"}
+                  </span>
+                </div>
+
+                <div className="rounded-control bg-muted/40 p-3 border border-border">
+                  <span className="text-2xs text-muted-foreground block font-semibold">Kutilayotgan sof foyda</span>
+                  <span className={`font-mono font-black text-sm mt-0.5 block ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
+                    {profit >= 0n ? "+" : ""}{formatMoney(profit)}
+                  </span>
+                </div>
+
+                <div className="rounded-control bg-muted/40 p-3 border border-border">
+                  <span className="text-2xs text-muted-foreground block font-semibold">Rentabellik (Marja)</span>
+                  <span className="font-mono font-black text-sm text-primary mt-0.5 block">
+                    {margin}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Komponentlar bo'yicha tannarx va sotuv tahlili */}
+              <div>
+                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-2">
+                  Komponentlar kesimida tannarx va hisob:
+                </span>
+                <div className="rounded-control border border-border overflow-hidden">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-muted/60 text-caption font-bold text-muted-foreground border-b border-border">
+                      <tr>
+                        <th className="p-2.5">Qism</th>
+                        <th className="p-2.5">Mahsulot nomi</th>
+                        <th className="p-2.5 text-right">Tannarx</th>
+                        <th className="p-2.5 text-right">Katalog narxi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {selectedForProfit.components.map((c, idx) => (
+                        <tr key={idx} className="hover:bg-muted/20">
+                          <td className="p-2.5 font-bold uppercase text-2xs text-muted-foreground">
+                            {c.roleNameUz}
+                          </td>
+                          <td className="p-2.5 font-semibold text-foreground">
+                            {c.productName}
+                          </td>
+                          <td className="p-2.5 text-right font-mono text-muted-foreground">
+                            {formatMoney(c.costPrice ?? 0n)}
+                          </td>
+                          <td className="p-2.5 text-right font-mono font-bold text-foreground">
+                            {formatMoney(c.price)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2 border-t border-border">
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setSelectedOrder(null)}
+                  onClick={() => setSelectedForProfit(null)}
                 >
-                  Bekor qilish
-                </Button>
-                <Button type="submit" variant="primary" size="sm">
-                  Saqlash
+                  Yopish
                 </Button>
               </div>
             </div>
-          </form>
-        )}
+          );
+        })()}
       </Modal>
     </div>
   );

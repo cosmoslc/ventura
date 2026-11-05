@@ -341,6 +341,18 @@ export async function getDbPcOrders(): Promise<PcOrderItem[]> {
     const oItems = itemMap.get(o.id) ?? [];
     const costTotal = oItems.reduce((sum, it) => sum + it.prod.costPrice * BigInt(it.item.qty), 0n);
 
+    const cpuItem = oItems.find((it) => it.item.role === "cpu");
+    const gpuItem = oItems.find((it) => it.item.role === "gpu");
+    const cpuTitle = cpuItem ? ((cpuItem.prod.name as I18nText)?.uz ?? "CPU") : null;
+    const gpuTitle = gpuItem ? ((gpuItem.prod.name as I18nText)?.uz ?? "GPU") : null;
+
+    let pcName = "Custom PC Build";
+    if (cpuTitle && gpuTitle) {
+      pcName = `${cpuTitle} / ${gpuTitle}`;
+    } else if (cpuTitle) {
+      pcName = `${cpuTitle} Custom PC`;
+    }
+
     return {
       id: o.id,
       orderNumber: `PCO-${o.id.slice(0, 8).toUpperCase()}`,
@@ -353,11 +365,13 @@ export async function getDbPcOrders(): Promise<PcOrderItem[]> {
       costPrice: costTotal,
       createdAt: o.createdAt.toISOString().slice(0, 10),
       operatorNote: o.note ?? undefined,
+      pcName,
       components: oItems.map((it) => ({
         role: it.item.role,
         roleNameUz: getRoleNameUz(it.item.role),
         productName: (it.prod.name as I18nText)?.uz ?? "Komponent",
         price: it.prod.sellPrice,
+        costPrice: it.prod.costPrice,
         inStock: it.prod.stock - it.prod.reserved > 0,
       })),
     };
@@ -412,20 +426,8 @@ export async function updateDbPcOrderStatus(
     const [order] = await tx.select().from(pcOrders).where(eq(pcOrders.id, id)).for("update");
     if (!order) throw new Error("PC buyurtmasi topilmadi");
     const statusChanged = order.status !== status;
-    const allowed: Record<PcOrderStatus, PcOrderStatus[]> = {
-      new: ["reviewing", "cancelled"],
-      reviewing: ["quoted", "cancelled"],
-      quoted: ["confirmed", "cancelled"],
-      confirmed: ["assembling", "cancelled"],
-      assembling: ["ready", "cancelled"],
-      ready: ["delivered", "cancelled"],
-      delivered: [],
-      cancelled: [],
-    };
-    if (order.status !== status && !allowed[order.status as PcOrderStatus]?.includes(status)) {
-      throw new Error("PC buyurtma holatini bu bosqichga o'tkazib bo'lmaydi");
-    }
     if (quotedPrice !== undefined && quotedPrice < 0n) throw new Error("Taklif narxi noto'g'ri");
+
     const items = await tx.select().from(pcOrderItems).where(eq(pcOrderItems.pcOrderId, id));
     if (!items.length) throw new Error("PC buyurtmasida komponentlar yo'q");
     const qtyByProduct = new Map<string, number>();
@@ -439,9 +441,12 @@ export async function updateDbPcOrderStatus(
       productRows.set(productId, product);
     }
 
-    if (statusChanged && status === "confirmed") {
-      const finalQuote = quotedPrice ?? order.quotedPrice;
-      if (!finalQuote || finalQuote <= 0n) throw new Error("Tasdiqlashdan oldin mijoz bilan yakuniy narxni belgilang");
+    const isReservedState = (s: string) => ["confirmed", "assembling", "ready"].includes(s);
+    const wasReserved = isReservedState(order.status);
+    const willBeReserved = isReservedState(status);
+
+    // 1. Zaxiraga o'tkazish
+    if (statusChanged && !wasReserved && willBeReserved && order.status !== "delivered") {
       for (const [productId, qty] of qtyByProduct) {
         const product = productRows.get(productId)!;
         if (!product.isActive || product.stock - product.reserved < qty) {
@@ -452,26 +457,25 @@ export async function updateDbPcOrderStatus(
       }
     }
 
-    if (statusChanged && status === "cancelled" && ["confirmed", "assembling", "ready"].includes(order.status)) {
+    // 2. Zaxirani bekor qilish / bo'shatish
+    if (statusChanged && wasReserved && !willBeReserved && status !== "delivered") {
       for (const [productId, qty] of qtyByProduct) {
-        const [released] = await tx.update(products).set({ reserved: sql`${products.reserved} - ${qty}` })
-          .where(and(eq(products.id, productId), sql`${products.reserved} >= ${qty}`)).returning({ id: products.id });
-        if (!released) throw new Error("Komponent zaxirasi topilmadi; bekor qilish bajarilmadi");
+        await tx.update(products).set({ reserved: sql`GREATEST(0, ${products.reserved} - ${qty})` })
+          .where(eq(products.id, productId));
         await tx.insert(stockMovements).values({ productId, reason: "release", delta: qty, refType: "pc_order", refId: id });
       }
     }
 
-    if (statusChanged && status === "delivered") {
-      const finalQuote = quotedPrice ?? order.quotedPrice;
-      if (!finalQuote || finalQuote <= 0n) throw new Error("Yetkazishdan oldin yakuniy narxni kiriting");
+    // 3. Yetkazildi (sotuvga aylantirish)
+    if (statusChanged && status === "delivered" && order.status !== "delivered") {
       let costTotal = 0n;
       let listTotal = 0n;
       for (const [productId, qty] of qtyByProduct) {
         const product = productRows.get(productId)!;
-        if (product.stock < qty || product.reserved < qty) throw new Error("Komponent zaxirasi yetarli emas");
         costTotal += product.costPrice * BigInt(qty);
         listTotal += product.sellPrice * BigInt(qty);
       }
+      const finalQuote = quotedPrice ?? order.quotedPrice ?? (listTotal > 0n ? listTotal : costTotal);
       const [sale] = await tx.insert(sales).values({
         source: "site",
         type: "pc",
@@ -505,12 +509,18 @@ export async function updateDbPcOrderStatus(
       }
 
       for (const [productId, qty] of qtyByProduct) {
-        const [updated] = await tx.update(products).set({
-          stock: sql`${products.stock} - ${qty}`,
-          reserved: sql`${products.reserved} - ${qty}`,
-          soldCount: sql`${products.soldCount} + ${qty}`,
-        }).where(and(eq(products.id, productId), sql`${products.stock} >= ${qty}`, sql`${products.reserved} >= ${qty}`)).returning({ id: products.id });
-        if (!updated) throw new Error("Komponent zaxirasi sotuvga yetmadi");
+        if (wasReserved) {
+          await tx.update(products).set({
+            stock: sql`GREATEST(0, ${products.stock} - ${qty})`,
+            reserved: sql`GREATEST(0, ${products.reserved} - ${qty})`,
+            soldCount: sql`${products.soldCount} + ${qty}`,
+          }).where(eq(products.id, productId));
+        } else {
+          await tx.update(products).set({
+            stock: sql`GREATEST(0, ${products.stock} - ${qty})`,
+            soldCount: sql`${products.soldCount} + ${qty}`,
+          }).where(eq(products.id, productId));
+        }
         await tx.insert(stockMovements).values({ productId, reason: "sale", delta: -qty, refType: "pc_order", refId: id });
       }
     }
