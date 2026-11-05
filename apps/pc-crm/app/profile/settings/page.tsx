@@ -1,4 +1,5 @@
 "use client";
+import { SelectField } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import {
@@ -79,7 +80,7 @@ export default function ProfileSettingsPage() {
   return (
     <div className="space-y-6">
       {/* Sarlavha */}
-      <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
+      <div className="rounded-card border border-border bg-card p-5">
         <h1 className="text-2xl font-black tracking-tight">Profil sozlamalari</h1>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
           Shaxsiy maʼlumotlar, yetkazib berish manzili va xavfsizlik sozlamalari
@@ -88,7 +89,7 @@ export default function ProfileSettingsPage() {
 
       {/* Muvaffaqiyat bildirishnomasi */}
       {savedSuccess && (
-        <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4 text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center gap-2 rounded-control bg-(--success-bg) border border-(--success-border) p-4 text-xs sm:text-sm text-(--success-fg)">
           <CheckCircle2 size={18} />
           <span>Profil maʼlumotlari muvaffaqiyatli yangilandi!</span>
         </div>
@@ -97,7 +98,7 @@ export default function ProfileSettingsPage() {
       {/* Forma yoki Skeleton */}
       {isPending ? (
         <div className="space-y-6 animate-pulse">
-          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4">
+          <div className="rounded-card border border-border bg-card p-5 space-y-4">
             <div className="h-6 w-32 bg-muted rounded" />
             <div className="flex items-center gap-4">
               <div className="h-20 w-20 rounded-full bg-muted shrink-0" />
@@ -117,7 +118,7 @@ export default function ProfileSettingsPage() {
       ) : (
         <form onSubmit={handleSaveProfile} className="space-y-6">
           {/* 1. Shaxsiy ma'lumotlar va Rasm */}
-          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-5">
+          <div className="rounded-card border border-border bg-card p-5 space-y-5">
             <h2 className="font-bold text-base flex items-center gap-2">
               <User size={18} className="text-primary" />
               Asosiy maʼlumotlar
@@ -131,9 +132,9 @@ export default function ProfileSettingsPage() {
                 ) : (
                   userInitials
                 )}
-                <label className="absolute bottom-0 right-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm hover:scale-110 transition-transform">
+                <label className="absolute bottom-0 right-0 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-primary text-primary-foreground shadow-card hover:scale-110 transition-transform">
                   <Camera size={14} />
-                  <input
+                  <Input
                     type="file"
                     accept="image/*"
                     className="hidden"
@@ -152,7 +153,7 @@ export default function ProfileSettingsPage() {
                   <button
                     type="button"
                     onClick={() => setAvatarUrl(null)}
-                    className="text-xs text-rose-500 hover:underline font-semibold"
+                    className="text-xs text-(--danger-fg) hover:underline font-semibold"
                   >
                     Rasmni oʻchirish
                   </button>
@@ -214,7 +215,7 @@ export default function ProfileSettingsPage() {
           </div>
 
           {/* 2. Yetkazib berish manzili va Yandex Xarita */}
-          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4">
+          <div className="rounded-card border border-border bg-card p-5 space-y-4">
             <h2 className="font-bold text-base flex items-center gap-2">
               <MapPin size={18} className="text-primary" />
               Standart yetkazib berish manzili
@@ -225,10 +226,10 @@ export default function ProfileSettingsPage() {
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Viloyat / Shahar
                 </Label>
-                <select
+                <SelectField
                   value={region}
                   onChange={(e) => setRegion(e.target.value)}
-                  className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
                 >
                   <option value="Toshkent shahri">Toshkent shahri</option>
                   <option value="Toshkent viloyati">Toshkent viloyati</option>
@@ -236,7 +237,7 @@ export default function ProfileSettingsPage() {
                   <option value="Fargʻona viloyati">Fargʻona viloyati</option>
                   <option value="Andijon viloyati">Andijon viloyati</option>
                   <option value="Buxoro viloyati">Buxoro viloyati</option>
-                </select>
+                </SelectField>
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
@@ -256,7 +257,7 @@ export default function ProfileSettingsPage() {
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Xaritadagi joylashuv (Geolokatsiya)
               </Label>
-              <div className="h-56 w-full overflow-hidden rounded-[var(--r-card,12px)] border border-border">
+              <div className="h-56 w-full overflow-hidden rounded-card border border-border">
                 <iframe
                   title="Yandex Maps Joylashuv"
                   src="https://yandex.uz/map-widget/v1/?ll=69.2401%2C41.2995&z=13"
@@ -267,14 +268,14 @@ export default function ProfileSettingsPage() {
                   className="h-full w-full grayscale-[20%]"
                 />
               </div>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Xaritadan uyingiz yoki ofisingizni belgilashingiz mumkin, kuryer shu nuqta boʻyicha yetkazadi.
               </p>
             </div>
           </div>
 
           {/* 3. Xavfsizlik bo'limi */}
-          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="rounded-card border border-border bg-card p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="font-bold text-sm flex items-center gap-2">
                 <KeyRound size={16} className="text-primary" />
@@ -299,7 +300,7 @@ export default function ProfileSettingsPage() {
 
           {/* Saqlash tugmasi */}
           <div className="flex justify-end pt-2">
-            <Button type="submit" variant="primary" size="default" className="gap-2 font-bold shadow-xs">
+            <Button type="submit" variant="primary" size="default" className="gap-2 font-bold shadow-control">
               <Save size={16} />
               Oʻzgarishlarni saqlash
             </Button>
@@ -315,7 +316,7 @@ export default function ProfileSettingsPage() {
       >
         {passwordSuccess ? (
           <div className="py-6 text-center space-y-2">
-            <CheckCircle2 size={36} className="text-emerald-500 mx-auto" />
+            <CheckCircle2 size={36} className="text-(--success-fg) mx-auto" />
             <h3 className="font-bold text-base">Parol muvaffaqiyatli yangilandi!</h3>
           </div>
         ) : (

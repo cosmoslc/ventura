@@ -109,11 +109,11 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
   const getIcon = (type: NotificationItem["type"]) => {
     switch (type) {
       case "discount":
-        return <Tag size={16} className="text-amber-500" />;
+        return <Tag size={16} className="text-(--warning-fg)" />;
       case "new_product":
         return <Sparkles size={16} className="text-primary" />;
       case "order":
-        return <PackageCheck size={16} className="text-emerald-500" />;
+        return <PackageCheck size={16} className="text-(--success-fg)" />;
       case "system":
         return <Bell size={16} className="text-muted-foreground" />;
     }
@@ -129,11 +129,11 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
       />
 
       {/* O'ngdan chiqadigan to'liq balandlikdagi panel */}
-      <div className="relative z-10 flex h-full w-full max-w-md flex-col bg-card shadow-2xl border-l border-border animate-in slide-in-from-right duration-200">
+      <div className="relative z-10 flex h-full w-full max-w-md flex-col bg-card shadow-modal border-l border-border animate-in slide-in-from-right duration-200">
         {/* Sarlavha qatori */}
         <div className="flex items-center justify-between border-b border-border p-4 sm:p-5">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-control bg-primary/10 text-primary">
               <Bell size={18} />
             </div>
             <h2 className="text-base font-bold text-foreground">Bildirishnomalar</h2>
@@ -161,7 +161,7 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
               type="button"
               onClick={onClose}
               aria-label="Yopish"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-control text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
             >
               <X size={18} />
             </button>
@@ -193,7 +193,7 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
                       <h3 className="font-bold text-xs sm:text-sm text-foreground truncate">
                         {n.title}
                       </h3>
-                      <span className="font-mono text-[10px] text-muted-foreground shrink-0">
+                      <span className="font-mono text-2xs text-muted-foreground shrink-0">
                         {n.createdAt}
                       </span>
                     </div>

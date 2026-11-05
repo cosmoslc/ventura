@@ -22,7 +22,7 @@ export function RatingStars({
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
-      <div className="flex items-center gap-0.5 text-amber-500">
+      <div className="flex items-center gap-0.5 text-(--warning-fg)">
         {[1, 2, 3, 4, 5].map((index) => {
           const filled = rating >= index;
           const half = !filled && rating >= index - 0.5;
@@ -33,9 +33,9 @@ export function RatingStars({
               size={starSize}
               className={
                 filled
-                  ? "fill-amber-400 text-amber-400"
+                  ? "fill-rating-star text-rating-star"
                   : half
-                    ? "fill-amber-400/50 text-amber-400"
+                    ? "fill-rating-star/50 text-rating-star"
                     : "text-muted-foreground/30"
               }
             />

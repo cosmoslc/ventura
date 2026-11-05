@@ -1,10 +1,7 @@
 import "server-only";
 import { createPcCrmDb, type PcCrmDb } from "@ventura/db";
 
-const DB_URL =
-  process.env.DATABASE_URL ??
-  process.env.PC_CRM_DATABASE_URL ??
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/pc_crm_dev";
+const DB_URL = process.env.DATABASE_URL ?? process.env.PC_CRM_DATABASE_URL;
 
 declare global {
   // eslint-disable-next-line no-var
@@ -12,11 +9,9 @@ declare global {
 }
 
 export function getDb(): PcCrmDb {
-  if (process.env.NODE_ENV === "production") {
-    return createPcCrmDb(DB_URL);
-  }
   if (!global.__pcCrmDb) {
-    global.__pcCrmDb = createPcCrmDb(DB_URL);
+    if (!DB_URL) throw new Error("DATABASE_URL yoki PC_CRM_DATABASE_URL majburiy");
+    global.__pcCrmDb = createPcCrmDb(DB_URL, { max: 10, idleTimeoutSec: 30, maxLifetimeSec: 300 });
   }
   return global.__pcCrmDb;
 }

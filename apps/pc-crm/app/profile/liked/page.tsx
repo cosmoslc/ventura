@@ -13,7 +13,7 @@ export default function ProfileLikedPage() {
   return (
     <div className="space-y-6">
       {/* Sarlavha */}
-      <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
+      <div className="rounded-card border border-border bg-card p-5">
         <h1 className="text-2xl font-black tracking-tight">Saralanganlar (Liked)</h1>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
           Siz yoqtirgan va profilingizda saqlangan mahsulotlar ({likedCount} ta)
@@ -21,7 +21,7 @@ export default function ProfileLikedPage() {
       </div>
 
       {likedCount === 0 ? (
-        <div className="rounded-[var(--r-card,12px)] border border-dashed border-border bg-card p-12 text-center">
+        <div className="rounded-card border border-dashed border-border bg-card p-12 text-center">
           <Heart size={44} className="text-muted-foreground/30 mx-auto mb-2" />
           <h3 className="font-bold text-base">Hozircha hech narsa yoqtirilmagan</h3>
           <p className="text-xs text-muted-foreground mt-1">

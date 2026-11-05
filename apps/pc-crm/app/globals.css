@@ -7,4 +7,29 @@
 /* E-commerce Storefront va Admin uchun qo'shimcha token moslamalari */
 :root {
   --storefront-max-w: 1320px;
+  --ventura-bg-color: #F7F9FF;
+  --ventura-bg-gradient:
+    radial-gradient(620px 520px at 0% 0%, rgba(74, 123, 255, 0.14) 0%, rgba(74, 123, 255, 0) 100%),
+    radial-gradient(700px 600px at 100% 100%, rgba(111, 83, 255, 0.12) 0%, rgba(111, 83, 255, 0) 100%),
+    linear-gradient(135deg, #FFFFFF 0%, #F5F7FF 50%, #EEF3FF 100%);
+  --ventura-bg-svg: url("/ventura-background.svg");
+}
+
+/* Storefront body background image based on ventura_background.json */
+body {
+  background-color: var(--ventura-bg-color);
+  background-image: 
+    var(--ventura-bg-svg),
+    var(--ventura-bg-gradient);
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+/* Allow fixed background image to shine through storefront page wrappers */
+html:not(.dark) body > div,
+html:not(.dark) .min-h-screen.bg-background {
+  background-color: transparent !important;
 }

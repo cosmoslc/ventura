@@ -10,9 +10,11 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   trend?: { value: string; up: boolean };
   /** Yorliq ostidagi qo'shimcha izoh (masalan, taqsimot: "3 ta erkak • 2 ta ayol") */
   hint?: React.ReactNode;
+  /** Sahifaga xos ixcham qiymat ko'rinishi; masalan, bir qatorda turishi kerak bo'lgan pul summasi. */
+  valueClassName?: string;
 }
 
-export function StatCard({ icon, label, value, tone, trend, hint, className, ...props }: StatCardProps) {
+export function StatCard({ icon, label, value, tone, trend, hint, valueClassName, className, ...props }: StatCardProps) {
   return (
     <div
       className={cn(
@@ -34,7 +36,7 @@ export function StatCard({ icon, label, value, tone, trend, hint, className, ...
         {icon}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="type-stat leading-tight text-foreground">{value}</div>
+        <div className={cn("type-stat leading-tight text-foreground", valueClassName)}>{value}</div>
         <div className="mt-0.5 truncate text-body font-medium text-muted-foreground">{label}</div>
         {hint ? <div className="mt-1 space-y-0.5 text-caption text-muted-foreground">{hint}</div> : null}
       </div>

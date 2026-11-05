@@ -1,6 +1,8 @@
 "use client";
+import { Input } from "@ventura/ui/input";
+import { Textarea } from "@ventura/ui/textarea";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -11,7 +13,6 @@ import {
   ChevronRight,
   Cpu,
   HardDrive,
-  Headphones,
   Info,
   Layers,
   MemoryStick,
@@ -32,14 +33,16 @@ import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Modal } from "@ventura/ui/modal";
 import { Footer } from "@/components/storefront/footer";
+import { AuthModal } from "@/components/storefront/auth-modal";
 import { Navbar } from "@/components/storefront/navbar";
 import { formatMoney } from "@/lib/format";
+import { getStorefrontConfiguratorPartsAction, savePcOrderAction } from "@/lib/server/actions";
 import {
-  CONFIGURATOR_CATALOG,
   type ConfiguratorPart,
 } from "@/lib/pc-data";
 
 type ComponentRole = "cpu" | "motherboard" | "gpu" | "ram" | "ssd" | "psu" | "cooler" | "case";
+type StorefrontConfiguratorPart = Omit<ConfiguratorPart, "costPrice">;
 
 interface CategoryMeta {
   role: ComponentRole;
@@ -62,18 +65,32 @@ const CATEGORIES: CategoryMeta[] = [
 export default function CustomPcConfiguratorPage() {
   const [activeRole, setActiveRole] = useState<ComponentRole>("cpu");
   const [searchQuery, setSearchQuery] = useState("");
+  const [parts, setParts] = useState<StorefrontConfiguratorPart[]>([]);
+  const [error, setError] = useState("");
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [selectedParts, setSelectedParts] = useState<Partial<Record<ComponentRole, StorefrontConfiguratorPart>>>({});
 
-  // Tanlangan qismlar xaritasi: { role: ConfiguratorPart }
-  const [selectedParts, setSelectedParts] = useState<Partial<Record<ComponentRole, ConfiguratorPart>>>({
-    cpu: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-cpu-2"), // i7-14700k
-    motherboard: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-mb-2"), // Z790
-    gpu: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-gpu-2"), // 4070 Super
-    ram: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-ram-2"), // 32GB DDR5
-    ssd: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-ssd-2"), // 990 Pro 1TB
-    psu: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-psu-2"), // 850W Gold
-    cooler: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-clr-3"), // LT720 AIO
-    case: CONFIGURATOR_CATALOG.find((p) => p.id === "cfg-cs-2"), // H7 Flow
-  });
+  useEffect(() => {
+    let active = true;
+    void getStorefrontConfiguratorPartsAction().then((result) => {
+      if (!active) return;
+      if (result.success) {
+        setParts(result.parts);
+        setSelectedParts((prev) => {
+          if (Object.keys(prev).length > 0) return prev;
+          const initial: Partial<Record<ComponentRole, StorefrontConfiguratorPart>> = {};
+          for (const cat of CATEGORIES) {
+            const part = result.parts.find((p) => p.role === cat.role);
+            if (part) initial[cat.role] = part;
+          }
+          return initial;
+        });
+      }
+      else setError(result.error ?? "Konfigurator qismlarini yuklab bo'lmadi");
+    }).catch(() => { if (active) setError("Konfigurator qismlarini yuklab bo'lmadi"); });
+    return () => { active = false; };
+  }, []);
+
 
   // Buyurtma formasi holati
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
@@ -85,7 +102,7 @@ export default function CustomPcConfiguratorPage() {
 
   // Faol kategoriyaga mos mahsulotlar
   const availablePartsForActiveRole = useMemo(() => {
-    return CONFIGURATOR_CATALOG.filter((p) => {
+    return parts.filter((p) => {
       if (p.role !== activeRole) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -97,7 +114,7 @@ export default function CustomPcConfiguratorPage() {
       }
       return true;
     });
-  }, [activeRole, searchQuery]);
+  }, [parts, activeRole, searchQuery]);
 
   // Jami hisob-kitoblar
   const selectedCount = Object.keys(selectedParts).length;
@@ -116,7 +133,7 @@ export default function CustomPcConfiguratorPage() {
     return cpuTdp + gpuTdp + (cpuTdp || gpuTdp ? baseTdp : 0);
   }, [selectedParts]);
 
-  const handleSelectPart = (part: ConfiguratorPart) => {
+  const handleSelectPart = (part: StorefrontConfiguratorPart) => {
     setSelectedParts((prev) => ({
       ...prev,
       [part.role]: part,
@@ -135,12 +152,30 @@ export default function CustomPcConfiguratorPage() {
     setSelectedParts({});
   };
 
-  const handleOrderSubmit = (e: React.FormEvent) => {
+  const handleOrderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerName.trim() || !customerPhone.trim()) return;
-
-    const newOrderId = `PCO-2026-${Math.floor(100 + Math.random() * 900)}`;
-    setOrderCreatedId(newOrderId);
+    if (!customerName.trim() || !customerPhone.trim() || !customerAddress.trim() || selectedCount === 0) return;
+    const result = await savePcOrderAction({
+      customerName,
+      customerPhone,
+      deliveryAddress: customerAddress,
+      customerNote,
+      componentIds: Object.values(selectedParts).filter((part): part is StorefrontConfiguratorPart => Boolean(part)).map(({ role, id }) => ({ role, productId: id })),
+    });
+    if (!result.success) {
+      if (result.error?.toLowerCase().includes("tizimga") || result.error?.toLowerCase().includes("kirish")) {
+        setIsOrderModalOpen(false);
+        setAuthModalOpen(true);
+      }
+      setError(result.error ?? "PC buyurtmasi saqlanmadi. Qayta urinib ko'ring.");
+      return;
+    }
+    setError("");
+    if (!result.orderNumber) {
+      setError("Server buyurtma raqamini qaytarmadi. Qayta urinib ko'ring.");
+      return;
+    }
+    setOrderCreatedId(result.orderNumber);
   };
 
   const activeCategoryMeta = CATEGORIES.find((c) => c.role === activeRole) ?? CATEGORIES[0]!;
@@ -190,6 +225,7 @@ export default function CustomPcConfiguratorPage() {
 
         {/* Asosiy Konfigurator ish maydoni */}
         <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 py-8 sm:px-6">
+          {error && <div role="alert" className="mb-4 rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             {/* Chap tomon: Bosqichlar va Komponentlar katalogi (8 ustun) */}
             <div className="lg:col-span-8 space-y-6">
@@ -208,18 +244,18 @@ export default function CustomPcConfiguratorPage() {
                         setActiveRole(cat.role);
                         setSearchQuery("");
                       }}
-                      className={`flex shrink-0 items-center gap-2 rounded-[var(--r-btn,8px)] border px-3.5 py-2 text-xs font-semibold transition-all ${
+                      className={`flex shrink-0 items-center gap-2 rounded-btn border px-3.5 py-2 text-xs font-semibold transition-all ${
                         isActive
-                          ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                          ? "border-primary bg-primary text-primary-foreground shadow-card"
                           : isSelected
-                          ? "border-emerald-500/40 bg-emerald-500/10 text-foreground"
+                          ? "border-(--success-border) bg-(--success-bg) text-foreground"
                           : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
                       }`}
                     >
                       <Icon size={14} />
                       <span>{cat.title.split(" ")[0]}</span>
                       {isSelected && (
-                        <Check size={12} className={isActive ? "text-primary-foreground" : "text-emerald-500"} />
+                        <Check size={12} className={isActive ? "text-primary-foreground" : "text-(--success-fg)"} />
                       )}
                     </button>
                   );
@@ -227,7 +263,7 @@ export default function CustomPcConfiguratorPage() {
               </div>
 
               {/* Faol kategoriya tavsifi va qidiruv */}
-              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
+              <div className="rounded-card border border-border bg-card p-5">
                 <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-border">
                   <div>
                     <h2 className="text-base font-bold flex items-center gap-2">
@@ -240,12 +276,12 @@ export default function CustomPcConfiguratorPage() {
                   {/* Qidiruv */}
                   <div className="relative w-full sm:w-64">
                     <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
+                    <Input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Qidirish..."
-                      className="w-full rounded-[var(--r-input,8px)] border border-input bg-background py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+                      className="w-full rounded-control border border-input bg-background py-1.5 pl-8 pr-3 text-xs text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
                     />
                   </div>
                 </div>
@@ -264,15 +300,15 @@ export default function CustomPcConfiguratorPage() {
                         <div
                           key={part.id}
                           onClick={() => handleSelectPart(part)}
-                          className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-[var(--r-card,12px)] border p-4 cursor-pointer transition-all ${
+                          className={`group flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-card border p-4 cursor-pointer transition-all ${
                             isChosen
-                              ? "border-primary bg-primary/5 ring-1 ring-primary shadow-xs"
+                              ? "border-primary bg-primary/5 ring-1 ring-primary shadow-control"
                               : "border-border bg-card hover:border-primary/50 hover:bg-muted/30"
                           }`}
                         >
                           <div className="flex items-center gap-3.5">
                             {/* Rasm */}
-                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border bg-white p-1.5">
+                            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-control border border-border bg-media p-1.5">
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
                                 src={part.imageUrl}
@@ -286,7 +322,7 @@ export default function CustomPcConfiguratorPage() {
                                 <span className="font-bold text-xs uppercase tracking-wider text-primary">
                                   {part.brand}
                                 </span>
-                                <Badge tone="neutral" className="text-[10px] font-mono py-0 px-1.5">
+                                <Badge tone="neutral" className="text-2xs font-mono py-0 px-1.5">
                                   Omborda: {part.stock} dona
                                 </Badge>
                               </div>
@@ -307,7 +343,7 @@ export default function CustomPcConfiguratorPage() {
 
                             <button
                               type="button"
-                              className={`flex h-8 items-center gap-1.5 rounded-[var(--r-btn,8px)] px-3 text-xs font-bold transition-all ${
+                              className={`flex h-8 items-center gap-1.5 rounded-btn px-3 text-xs font-bold transition-all ${
                                 isChosen
                                   ? "bg-primary text-primary-foreground"
                                   : "bg-secondary text-secondary-foreground hover:bg-primary hover:text-primary-foreground"
@@ -336,7 +372,7 @@ export default function CustomPcConfiguratorPage() {
 
             {/* O'ng tomon: Tanlangan konfiguratsiya va Xulosa (4 ustun, Sticky) */}
             <div className="lg:col-span-4 space-y-5">
-              <div className="sticky top-20 rounded-[var(--r-card,12px)] border border-border bg-card p-5 shadow-sm space-y-5">
+              <div className="sticky top-20 rounded-card border border-border bg-card p-5 shadow-card space-y-5">
                 <div>
                   <div className="flex items-center justify-between pb-3 border-b border-border">
                     <h3 className="font-bold text-base flex items-center gap-2">
@@ -349,7 +385,7 @@ export default function CustomPcConfiguratorPage() {
                   </div>
 
                   {/* Tanlangan qismlar ro'yxati */}
-                  <div className="mt-3 space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+                  <div className="mt-3 space-y-2.5 max-h-95 overflow-y-auto pr-1">
                     {CATEGORIES.map((cat) => {
                       const part = selectedParts[cat.role];
 
@@ -358,13 +394,13 @@ export default function CustomPcConfiguratorPage() {
                           <div
                             key={cat.role}
                             onClick={() => setActiveRole(cat.role)}
-                            className="flex items-center justify-between rounded-lg border border-dashed border-border p-2.5 text-xs text-muted-foreground hover:border-primary/50 cursor-pointer"
+                            className="flex items-center justify-between rounded-control border border-dashed border-border p-2.5 text-xs text-muted-foreground hover:border-primary/50 cursor-pointer"
                           >
                             <span className="font-medium flex items-center gap-1.5">
                               <cat.icon size={13} />
                               {cat.title.split(" ")[0]}
                             </span>
-                            <span className="text-[11px] text-primary hover:underline font-semibold">
+                            <span className="text-caption text-primary hover:underline font-semibold">
                               + Tanlash
                             </span>
                           </div>
@@ -374,16 +410,16 @@ export default function CustomPcConfiguratorPage() {
                       return (
                         <div
                           key={cat.role}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/30 p-2.5 text-xs"
+                          className="flex items-center justify-between gap-2 rounded-control border border-border bg-muted/30 p-2.5 text-xs"
                         >
                           <div className="min-w-0 flex-1">
-                            <span className="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                            <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">
                               {cat.title.split(" ")[0]}
                             </span>
                             <span className="block font-semibold text-foreground truncate">
                               {part.name}
                             </span>
-                            <span className="font-mono text-[11px] text-primary">
+                            <span className="font-mono text-caption text-primary">
                               {formatMoney(part.price)}
                             </span>
                           </div>
@@ -391,7 +427,7 @@ export default function CustomPcConfiguratorPage() {
                           <button
                             type="button"
                             onClick={() => handleRemovePart(cat.role)}
-                            className="p-1 text-muted-foreground hover:text-rose-500 transition-colors"
+                            className="p-1 text-muted-foreground hover:text-(--danger-fg) transition-colors"
                             aria-label="Oʻchirish"
                           >
                             <Trash2 size={14} />
@@ -403,20 +439,22 @@ export default function CustomPcConfiguratorPage() {
                 </div>
 
                 {/* Quvvat hisobi */}
-                {estimatedTdp > 0 && (
-                  <div className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-xs">
-                    <div className="flex items-center justify-between font-bold mb-1">
-                      <span className="flex items-center gap-1.5 text-primary">
-                        <Zap size={14} />
-                        Tavsiya etilgan quvvat:
-                      </span>
-                      <span className="font-mono">{estimatedTdp}W + (Tavsiya: {estimatedTdp + 150}W)</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground">
-                      Tanlangan CPU va GPU uchun kamida {estimatedTdp + 150}W quvvat bloki tavsiya etiladi.
-                    </p>
+                <div className="rounded-control bg-primary/10 border border-primary/20 p-3 text-xs">
+                  <div className="flex items-center justify-between font-bold mb-1">
+                    <span className="flex items-center gap-1.5 text-primary">
+                      <Zap size={14} />
+                      Tavsiya etilgan quvvat:
+                    </span>
+                    <span className="font-mono">
+                      {estimatedTdp > 0 ? `${estimatedTdp}W + (Tavsiya: ${estimatedTdp + 150}W)` : "Kamida 650W"}
+                    </span>
                   </div>
-                )}
+                  <p className="text-caption text-muted-foreground">
+                    {estimatedTdp > 0
+                      ? `Tanlangan CPU va GPU uchun kamida ${estimatedTdp + 150}W quvvat bloki tavsiya etiladi.`
+                      : "Komponentlar quvvat sarfiga qarab avtomatik hisoblanadi."}
+                  </p>
+                </div>
 
                 {/* Umumiy narx */}
                 <div className="pt-3 border-t border-border">
@@ -434,14 +472,14 @@ export default function CustomPcConfiguratorPage() {
                     size="default"
                     disabled={selectedCount === 0}
                     onClick={() => setIsOrderModalOpen(true)}
-                    className="w-full gap-2 font-bold shadow-md"
+                    className="w-full gap-2 font-bold shadow-card-hover"
                   >
                     <Send size={16} />
                     Buyurtma berish ({selectedCount} ta qism)
                   </Button>
 
-                  <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                    Buyurtma berilgach, operator 15 daqiqa ichida siz bilan bogʻlanadi.
+                  <p className="mt-2 text-center text-caption text-muted-foreground">
+                    Yakuniy narx va mavjudlikni operator buyurtmadan soʻng tasdiqlaydi.
                   </p>
                 </div>
               </div>
@@ -461,7 +499,7 @@ export default function CustomPcConfiguratorPage() {
       >
         {orderCreatedId ? (
           <div className="space-y-4 py-2 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-(--success-bg) text-(--success-fg)">
               <CheckCircle2 size={36} />
             </div>
 
@@ -475,7 +513,7 @@ export default function CustomPcConfiguratorPage() {
               </p>
             </div>
 
-            <div className="rounded-lg bg-muted/60 p-3.5 text-left text-xs space-y-1.5 font-mono">
+            <div className="rounded-control bg-muted/60 p-3.5 text-left text-xs space-y-1.5 font-mono">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Mijoz:</span>
                 <span className="font-bold text-foreground">{customerName}</span>
@@ -491,18 +529,9 @@ export default function CustomPcConfiguratorPage() {
             </div>
 
             <div className="flex flex-col gap-2 pt-2">
-              <Link
-                href={`https://t.me/venturapc_operator?text=${encodeURIComponent(
-                  `Assalomu alaykum! Men onlayn konfiguratordan buyurtma berdim (Buyurtma ID: ${orderCreatedId}, Summa: ${formatMoney(totalPrice)}).`
-                )}`}
-                target="_blank"
-                className="w-full"
-              >
-                <Button variant="primary" size="default" className="w-full gap-2 font-bold">
-                  <Headphones size={18} />
-                  Telegram operator bilan bogʻlanish
-                </Button>
-              </Link>
+              <p className="rounded-control bg-muted/50 p-3 text-xs text-muted-foreground">
+                Operator buyurtmangizni tekshirib, siz bilan ko‘rsatilgan telefon raqami orqali bog‘lanadi.
+              </p>
 
               <Button
                 variant="ghost"
@@ -518,7 +547,7 @@ export default function CustomPcConfiguratorPage() {
           </div>
         ) : (
           <form onSubmit={handleOrderSubmit} className="space-y-4 text-xs sm:text-sm">
-            <div className="rounded-lg bg-muted/50 p-3 text-xs space-y-1">
+            <div className="rounded-control bg-muted/50 p-3 text-xs space-y-1">
               <div className="flex justify-between font-bold">
                 <span>Tanlangan qismlar:</span>
                 <span>{selectedCount} ta komponent</span>
@@ -533,13 +562,13 @@ export default function CustomPcConfiguratorPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 Ism va familiyangiz *
               </label>
-              <input
+              <Input
                 type="text"
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
                 placeholder="Masalan: Sardorbek Rahimov"
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -547,26 +576,27 @@ export default function CustomPcConfiguratorPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 Telefon raqamingiz *
               </label>
-              <input
+              <Input
                 type="tel"
                 required
                 value={customerPhone}
                 onChange={(e) => setCustomerPhone(e.target.value)}
                 placeholder="+998 90 123 45 67"
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground font-mono focus:border-primary focus:outline-none"
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground font-mono focus:border-primary focus:outline-none"
               />
             </div>
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
-                Yetkazib berish manzili
+                Yetkazib berish manzili *
               </label>
-              <input
+              <Input
                 type="text"
+                required
                 value={customerAddress}
                 onChange={(e) => setCustomerAddress(e.target.value)}
                 placeholder="Toshkent sh., Chilonzor tumani..."
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none"
               />
             </div>
 
@@ -574,12 +604,12 @@ export default function CustomPcConfiguratorPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 Qoʻshimcha istaklar yoki izoh
               </label>
-              <textarea
+              <Textarea
                 rows={2}
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
                 placeholder="Masalan: Oq rangli kabel management, Windows 11 oʻrnatish..."
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none resize-none"
+                className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none resize-none"
               />
             </div>
 
@@ -602,6 +632,7 @@ export default function CustomPcConfiguratorPage() {
       </Modal>
 
       <Footer />
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </div>
   );
 }

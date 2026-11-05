@@ -1,17 +1,10 @@
 "use client";
+import { Input } from "@ventura/ui/input";
+import { SelectField } from "@ventura/ui/select";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  Cpu,
-  Filter,
-  Monitor,
-  RotateCcw,
-  Search,
-  Sparkles,
-  Wrench,
-  X,
-} from "lucide-react";
+import { Cpu, Filter, Monitor, RotateCcw, Search, Sparkles, Wrench, X } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
@@ -22,10 +15,37 @@ import { SearchModal } from "@/components/storefront/search-modal";
 import { useCart } from "@/lib/cart-context";
 import { useLiked } from "@/lib/liked-context";
 import { formatMoney } from "@/lib/format";
-import { SAMPLE_PC_BUILDS } from "@/lib/pc-data";
+import { getStorefrontPcBuildsAction } from "@/lib/server/actions";
+
+interface PcBuildListItem {
+  id: string;
+  slug: string;
+  name: string;
+  images: string[];
+  sellPrice: bigint;
+  discountPercent: number;
+  status: "available" | "sold" | "hidden";
+  ratingAvg: number;
+  ratingCount: number;
+  cpu: string;
+  gpu: string;
+  ram: string;
+  storage: string;
+}
 
 export default function ComputersListingPage() {
   const { addItem } = useCart();
+  const [builds, setBuilds] = useState<PcBuildListItem[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    getStorefrontPcBuildsAction().then((result) => {
+      if (active && result.success) setBuilds(result.builds);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Filter holatlari
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,40 +76,42 @@ export default function ComputersListingPage() {
 
   // Faqat `available` kompyuterlarni filter qilish
   const filteredBuilds = useMemo(() => {
-    return SAMPLE_PC_BUILDS.filter((b) => {
-      // 1. Faqat sotuvda mavjud bo'lganlar
-      if (b.status !== "available") return false;
+    return builds
+      .filter((b) => {
+        // 1. Faqat sotuvda mavjud bo'lganlar
+        if (b.status !== "available") return false;
 
-      // 2. Qidiruv
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const matchName = b.name.toLowerCase().includes(q);
-        const matchCpu = b.cpu.toLowerCase().includes(q);
-        const matchGpu = b.gpu.toLowerCase().includes(q);
-        if (!matchName && !matchCpu && !matchGpu) return false;
-      }
+        // 2. Qidiruv
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase();
+          const matchName = b.name.toLowerCase().includes(q);
+          const matchCpu = b.cpu.toLowerCase().includes(q);
+          const matchGpu = b.gpu.toLowerCase().includes(q);
+          if (!matchName && !matchCpu && !matchGpu) return false;
+        }
 
-      // 3. CPU filter
-      if (selectedCpu !== "all") {
-        if (!b.cpu.toLowerCase().includes(selectedCpu.toLowerCase())) return false;
-      }
+        // 3. CPU filter
+        if (selectedCpu !== "all") {
+          if (!b.cpu.toLowerCase().includes(selectedCpu.toLowerCase())) return false;
+        }
 
-      // 4. GPU filter
-      if (selectedGpu !== "all") {
-        if (!b.gpu.toLowerCase().includes(selectedGpu.toLowerCase())) return false;
-      }
+        // 4. GPU filter
+        if (selectedGpu !== "all") {
+          if (!b.gpu.toLowerCase().includes(selectedGpu.toLowerCase())) return false;
+        }
 
-      return true;
-    }).sort((a, b) => {
-      if (sortBy === "price_asc") return a.sellPrice > b.sellPrice ? 1 : -1;
-      if (sortBy === "price_desc") return a.sellPrice < b.sellPrice ? 1 : -1;
-      if (sortBy === "rating") return b.ratingAvg - a.ratingAvg;
-      return 0; // featured
-    });
-  }, [searchQuery, selectedCpu, selectedGpu, sortBy]);
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price_asc") return a.sellPrice > b.sellPrice ? 1 : -1;
+        if (sortBy === "price_desc") return a.sellPrice < b.sellPrice ? 1 : -1;
+        if (sortBy === "rating") return b.ratingAvg - a.ratingAvg;
+        return 0; // featured
+      });
+  }, [builds, searchQuery, selectedCpu, selectedGpu, sortBy]);
 
   const handleAddToCart = (pcId: string) => {
-    const pc = SAMPLE_PC_BUILDS.find((p) => p.id === pcId);
+    const pc = builds.find((p) => p.id === pcId);
     if (!pc) return;
 
     addItem({
@@ -103,7 +125,7 @@ export default function ComputersListingPage() {
   };
 
   const handleToggleLike = (pcId: string) => {
-    const build = SAMPLE_PC_BUILDS.find((b) => b.id === pcId);
+    const build = builds.find((b) => b.id === pcId);
     if (!build) return;
     toggleLike({
       id: build.id,
@@ -136,21 +158,13 @@ export default function ComputersListingPage() {
           <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 sm:px-6">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-0.5 text-xs font-bold text-primary">
-                  <Sparkles size={13} />
-                  <span>Ventura Custom PC Assembling</span>
-                </div>
-                <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-                  Tayyor oʻyin va ishchi kompyuterlar
-                </h1>
-                <p className="mt-2 text-sm text-muted-foreground sm:text-base max-w-2xl">
-                  Barcha kompyuterlar professional muhandislar tomonidan yigʻilgan, 24 soatlik stress-testdan oʻtkazilgan va toʻliq kafolatga ega.
-                </p>
+                
+                <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Tayyor oʻyin va ishchi kompyuterlar</h1>
               </div>
 
               {/* Konfiguratorga chaqiriq (CTA) */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-[var(--r-card,12px)] border border-primary/30 bg-primary/5 p-4">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 rounded-card border border-primary/30 bg-primary/5 p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-primary text-primary-foreground shadow-card">
                   <Wrench size={20} />
                 </div>
                 <div>
@@ -172,7 +186,7 @@ export default function ComputersListingPage() {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
             {/* Chap tomon: Desktop Filter paneli */}
             <aside className="hidden lg:block lg:col-span-1 space-y-6">
-              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 shadow-sm">
+              <div className="rounded-card border border-border bg-card p-5 shadow-card">
                 <div className="mb-4 flex items-center justify-between pb-3 border-b border-border">
                   <h3 className="font-bold text-base flex items-center gap-2">
                     <Filter size={18} className="text-primary" />
@@ -199,7 +213,7 @@ export default function ComputersListingPage() {
                         key={opt.value}
                         type="button"
                         onClick={() => setSelectedCpu(opt.value)}
-                        className={`w-full rounded-md px-3 py-2 text-left text-xs font-medium transition-colors ${
+                        className={`w-full rounded-control px-3 py-2 text-left text-xs font-medium transition-colors ${
                           selectedCpu === opt.value
                             ? "bg-primary text-primary-foreground font-semibold"
                             : "text-foreground hover:bg-secondary"
@@ -222,7 +236,7 @@ export default function ComputersListingPage() {
                         key={opt.value}
                         type="button"
                         onClick={() => setSelectedGpu(opt.value)}
-                        className={`w-full rounded-md px-3 py-2 text-left text-xs font-medium transition-colors ${
+                        className={`w-full rounded-control px-3 py-2 text-left text-xs font-medium transition-colors ${
                           selectedGpu === opt.value
                             ? "bg-primary text-primary-foreground font-semibold"
                             : "text-foreground hover:bg-secondary"
@@ -235,7 +249,7 @@ export default function ComputersListingPage() {
                 </div>
 
                 {/* Kafolat ma'lumoti */}
-                <div className="rounded-lg bg-muted/60 p-3 text-xs text-muted-foreground">
+                <div className="rounded-control bg-muted/60 p-3 text-xs text-muted-foreground">
                   <p className="font-semibold text-foreground mb-1">100% Rasmiy Kafolat</p>
                   Har bir kompyuter uchun 12 oydan 24 oygacha bepul servis kafolati beriladi.
                 </div>
@@ -249,12 +263,12 @@ export default function ComputersListingPage() {
                 {/* Qidiruv input */}
                 <div className="relative flex-1">
                   <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                  <input
+                  <Input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Kompyuter modeli yoki komponenti boʻyicha qidirish..."
-                    className="w-full rounded-[var(--r-input,8px)] border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    className="w-full rounded-control border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                   />
                   {searchQuery && (
                     <button
@@ -272,34 +286,32 @@ export default function ComputersListingPage() {
                   <button
                     type="button"
                     onClick={() => setMobileFilterOpen(true)}
-                    className="lg:hidden flex items-center gap-1.5 rounded-[var(--r-btn,8px)] border border-border bg-card px-3 py-2 text-xs font-medium text-foreground"
+                    className="lg:hidden flex items-center gap-1.5 rounded-btn border border-border bg-card px-3 py-2 text-xs font-medium text-foreground"
                   >
                     <Filter size={14} />
                     Filtrlar
                   </button>
 
-                  <select
+                  <SelectField
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="rounded-[var(--r-input,8px)] border border-input bg-card px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+                    className="rounded-control border border-input bg-card px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
                   >
                     <option value="featured">Tavsiya etilganlar</option>
                     <option value="price_asc">Narx: arzondan qimmatga</option>
                     <option value="price_desc">Narx: qimmatdan arzonga</option>
                     <option value="rating">Reyting boʻyicha</option>
-                  </select>
+                  </SelectField>
                 </div>
               </div>
 
               {/* Natijalar soni */}
               <div className="mb-4 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Topildi: <strong className="text-foreground">{filteredBuilds.length}</strong> ta kompyuter</span>
+                <span>
+                  Topildi: <strong className="text-foreground">{filteredBuilds.length}</strong> ta kompyuter
+                </span>
                 {(selectedCpu !== "all" || selectedGpu !== "all" || searchQuery) && (
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                    className="text-primary hover:underline font-semibold"
-                  >
+                  <button type="button" onClick={resetFilters} className="text-primary hover:underline font-semibold">
                     Filtrlarni bekor qilish
                   </button>
                 )}
@@ -307,11 +319,12 @@ export default function ComputersListingPage() {
 
               {/* Grid 4 ustun */}
               {filteredBuilds.length === 0 ? (
-                <div className="flex flex-col items-center justify-center rounded-[var(--r-card,12px)] border border-dashed border-border p-12 text-center bg-card">
+                <div className="flex flex-col items-center justify-center rounded-card border border-dashed border-border p-12 text-center bg-card">
                   <Monitor size={48} className="text-muted-foreground/40 mb-3" />
                   <h3 className="text-lg font-bold">Mos kompyuter topilmadi</h3>
                   <p className="mt-1 text-xs sm:text-sm text-muted-foreground max-w-md">
-                    Qidiruv soʻrovini yoki filtrlarni oʻzgartirib koʻring, yoki konfigurator orqali oʻzingiz istagan PC ni yigʻing.
+                    Qidiruv soʻrovini yoki filtrlarni oʻzgartirib koʻring, yoki konfigurator orqali oʻzingiz istagan PC
+                    ni yigʻing.
                   </p>
                   <div className="mt-5 flex gap-3">
                     <Button variant="ghost" size="sm" onClick={resetFilters}>
@@ -367,7 +380,7 @@ export default function ComputersListingPage() {
       {/* Mobil Filtr Drawer */}
       {mobileFilterOpen && (
         <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-xs lg:hidden">
-          <div className="relative ml-auto flex h-full w-full max-w-xs flex-col bg-card p-6 shadow-xl">
+          <div className="relative ml-auto flex h-full w-full max-w-xs flex-col bg-card p-6 shadow-modal">
             <div className="mb-4 flex items-center justify-between border-b border-border pb-3">
               <h3 className="font-bold">Filtrlar</h3>
               <button
@@ -390,7 +403,7 @@ export default function ComputersListingPage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setSelectedCpu(opt.value)}
-                      className={`w-full rounded-md px-3 py-2 text-left text-xs font-medium ${
+                      className={`w-full rounded-control px-3 py-2 text-left text-xs font-medium ${
                         selectedCpu === opt.value
                           ? "bg-primary text-primary-foreground font-semibold"
                           : "text-foreground hover:bg-secondary"
@@ -412,7 +425,7 @@ export default function ComputersListingPage() {
                       key={opt.value}
                       type="button"
                       onClick={() => setSelectedGpu(opt.value)}
-                      className={`w-full rounded-md px-3 py-2 text-left text-xs font-medium ${
+                      className={`w-full rounded-control px-3 py-2 text-left text-xs font-medium ${
                         selectedGpu === opt.value
                           ? "bg-primary text-primary-foreground font-semibold"
                           : "text-foreground hover:bg-secondary"
@@ -437,12 +450,7 @@ export default function ComputersListingPage() {
               >
                 Tozalash
               </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                className="w-1/2"
-                onClick={() => setMobileFilterOpen(false)}
-              >
+              <Button variant="primary" size="sm" className="w-1/2" onClick={() => setMobileFilterOpen(false)}>
                 Qoʻllash
               </Button>
             </div>

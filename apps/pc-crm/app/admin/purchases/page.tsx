@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  Boxes,
-  Calendar,
   DollarSign,
-  PackageCheck,
   PackagePlus,
   Plus,
   Search,
@@ -21,53 +18,21 @@ import {
   PurchaseFormModal,
 } from "@/components/admin/purchases/purchase-form-modal";
 import { formatDate, formatMoney } from "@/lib/format";
-
-const SAMPLE_PRODUCTS = [
-  { id: "p-1", name: "Intel Core i7-14700K 3.4GHz Protsessor", costPrice: 4_500_000n },
-  { id: "p-2", name: "ASUS ROG Strix GeForce RTX 4070 Ti SUPER 16GB", costPrice: 11_800_000n },
-  { id: "p-3", name: "Kingston FURY Beast RGB 32GB DDR5", costPrice: 1_450_000n },
-  { id: "p-4", name: "Samsung 990 PRO 2TB NVMe M.2 SSD", costPrice: 2_150_000n },
-];
-
-const INITIAL_PURCHASES: (PurchaseItemData & { id: string; voidedAt?: string })[] = [
-  {
-    id: "pur-101",
-    productId: "p-1",
-    productName: "Intel Core i7-14700K 3.4GHz Protsessor",
-    type: "bulk",
-    qty: 10,
-    totalCost: 45_000_000n,
-    unitCost: 4_500_000n,
-    supplier: "Intel Distro Tashkent",
-    purchasedAt: "2026-10-28",
-    note: "Yangi partiya xaridi",
-  },
-  {
-    id: "pur-102",
-    productId: "p-3",
-    productName: "Kingston FURY Beast RGB 32GB DDR5",
-    type: "piece",
-    qty: 20,
-    totalCost: 29_000_000n,
-    unitCost: 1_450_000n,
-    supplier: "Malika B-14",
-    purchasedAt: "2026-10-27",
-  },
-  {
-    id: "pur-103",
-    productId: "p-4",
-    productName: "Samsung 990 PRO 2TB NVMe M.2 SSD",
-    type: "bulk",
-    qty: 15,
-    totalCost: 32_250_000n,
-    unitCost: 2_150_000n,
-    supplier: "Samsung Korea Import",
-    purchasedAt: "2026-10-25",
-  },
-];
+import { getAdminProductsAction, getAdminPurchasesAction, savePurchaseAction, voidPurchaseAction } from "@/lib/server/actions";
 
 export default function AdminPurchasesPage() {
-  const [purchases, setPurchases] = useState(INITIAL_PURCHASES);
+  const [purchases, setPurchases] = useState<(PurchaseItemData & { id: string; voidedAt?: string })[]>([]);
+  const [products, setProducts] = useState<{ id: string; name: string; costPrice: bigint }[]>([]);
+  const [error, setError] = useState("");
+
+  const loadData = useCallback(async () => {
+    const [purchaseResult, productResult] = await Promise.all([getAdminPurchasesAction(), getAdminProductsAction()]);
+    if (!purchaseResult.success) setError(purchaseResult.error ?? "Kirimlarni yuklab bo'lmadi");
+    else setPurchases(purchaseResult.purchases);
+    if (!productResult.success) setError(productResult.error ?? "Mahsulotlarni yuklab bo'lmadi");
+    else setProducts(productResult.products.filter((p) => p.isActive).map((p) => ({ id: p.id, name: p.name, costPrice: p.costPrice })));
+  }, []);
+  useEffect(() => { void loadData(); }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -84,22 +49,27 @@ export default function AdminPurchasesPage() {
     .filter((p) => !p.voidedAt)
     .reduce((sum, p) => sum + p.qty, 0);
 
-  const handleSavePurchase = (newPur: PurchaseItemData) => {
-    const item = {
-      ...newPur,
-      id: `pur-${Date.now().toString().slice(-4)}`,
-    };
-    setPurchases([item, ...purchases]);
+  const handleSavePurchase = async (newPur: PurchaseItemData) => {
+    const result = await savePurchaseAction({
+      productId: newPur.productId,
+      type: newPur.type,
+      qty: newPur.qty,
+      totalCost: newPur.totalCost,
+      unitCost: newPur.unitCost,
+      supplier: newPur.supplier,
+      purchasedAt: newPur.purchasedAt,
+      note: newPur.note,
+    });
+    if (!result.success) { setError(result.error ?? "Kirimni saqlab bo'lmadi"); return; }
+    setModalOpen(false);
+    await loadData();
   };
 
-  const handleVoidPurchase = (id: string) => {
-    if (confirm("Ushbu kirimni bekor qilmoqchimisiz? (Ombordan mos dona kamayadi)")) {
-      setPurchases(
-        purchases.map((p) =>
-          p.id === id ? { ...p, voidedAt: new Date().toISOString() } : p
-        )
-      );
-    }
+  const handleVoidPurchase = async (id: string) => {
+    if (!confirm("Ushbu kirimni bekor qilmoqchimisiz? (Ombordan mos dona kamayadi)")) return;
+    const result = await voidPurchaseAction(id);
+    if (!result.success) { setError(result.error ?? "Kirimni bekor qilib bo'lmadi"); return; }
+    await loadData();
   };
 
   return (
@@ -121,6 +91,8 @@ export default function AdminPurchasesPage() {
         </Button>
       </div>
 
+      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+
       {/* Statistika kartalari */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
@@ -128,6 +100,7 @@ export default function AdminPurchasesPage() {
           label="Jami kirim xarajati"
           value={formatMoney(totalSpent)}
           tone={1}
+          valueClassName="whitespace-nowrap text-title"
           hint="Barcha faol kirimlar summasi"
         />
 
@@ -149,7 +122,7 @@ export default function AdminPurchasesPage() {
       </div>
 
       {/* Qidiruv */}
-      <div className="flex items-center justify-between rounded-lg border border-border bg-card p-3 shadow-sm">
+      <div className="flex items-center justify-between rounded-control border border-border bg-card p-3 shadow-card">
         <div className="relative flex-1 max-w-md">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -162,10 +135,10 @@ export default function AdminPurchasesPage() {
       </div>
 
       {/* Jadval */}
-      <div className="overflow-x-auto rounded-[var(--r-card,12px)] border border-border bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-card shadow-card">
         <table className="w-full border-collapse text-left text-xs">
           <thead>
-            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-[11px] tracking-wider">
+            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5">Sana</th>
               <th className="p-3.5">Mahsulot</th>
               <th className="p-3.5 text-center">Turi</th>
@@ -197,10 +170,10 @@ export default function AdminPurchasesPage() {
                     <td className="p-3.5 font-medium whitespace-nowrap">{formatDate(item.purchasedAt)}</td>
                     <td className="p-3.5">
                       <p className="font-bold text-foreground">{item.productName}</p>
-                      {item.note && <p className="text-[11px] text-muted-foreground">{item.note}</p>}
+                      {item.note && <p className="text-caption text-muted-foreground">{item.note}</p>}
                     </td>
                     <td className="p-3.5 text-center">
-                      <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-bold uppercase">
+                      <span className="rounded bg-secondary px-2 py-0.5 text-2xs font-bold uppercase">
                         {item.type === "bulk" ? "Optom" : "Dona"}
                       </span>
                     </td>
@@ -217,7 +190,7 @@ export default function AdminPurchasesPage() {
                       {item.supplier ?? "—"}
                     </td>
                     <td className="p-3.5 text-center">
-                      <Badge tone={isVoided ? "danger" : "success"} className="text-[10px]">
+                      <Badge tone={isVoided ? "danger" : "success"} className="text-2xs">
                         {isVoided ? "Bekor qilingan" : "Kirim boʻlgan"}
                       </Badge>
                     </td>
@@ -226,7 +199,7 @@ export default function AdminPurchasesPage() {
                         <button
                           type="button"
                           onClick={() => handleVoidPurchase(item.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600 transition-colors"
+                          className="rounded p-1.5 text-muted-foreground hover:bg-(--danger-bg) hover:text-(--danger-fg) transition-colors"
                           title="Kirimni bekor qilish"
                         >
                           <Undo2 size={15} />
@@ -245,7 +218,7 @@ export default function AdminPurchasesPage() {
       <PurchaseFormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        products={SAMPLE_PRODUCTS}
+        products={products}
         onSave={handleSavePurchase}
       />
     </div>

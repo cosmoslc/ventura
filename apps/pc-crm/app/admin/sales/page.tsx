@@ -1,10 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Boxes,
-  Calendar,
-  CheckCircle2,
   DollarSign,
   Plus,
   Receipt,
@@ -15,82 +13,25 @@ import {
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { type SaleItemData, SaleFormModal } from "@/components/admin/sales/sale-form-modal";
 import { formatDate, formatMoney } from "@/lib/format";
-
-const SAMPLE_PRODUCTS = [
-  { id: "p-1", name: "Intel Core i7-14700K 3.4GHz Protsessor", costPrice: 4_500_000n, sellPrice: 5_200_000n },
-  { id: "p-2", name: "ASUS ROG Strix GeForce RTX 4070 Ti SUPER 16GB", costPrice: 11_800_000n, sellPrice: 13_500_000n },
-  { id: "p-3", name: "Kingston FURY Beast RGB 32GB DDR5", costPrice: 1_450_000n, sellPrice: 1_750_000n },
-  { id: "p-4", name: "Samsung 990 PRO 2TB NVMe M.2 SSD", costPrice: 2_150_000n, sellPrice: 2_600_000n },
-];
-
-const INITIAL_SALES: (SaleItemData & { id: string; voidedAt?: string })[] = [
-  {
-    id: "sale-101",
-    source: "offline",
-    type: "product",
-    productName: "ASUS ROG Strix GeForce RTX 4070 Ti SUPER 16GB",
-    buyerName: "Anvar Qodirov",
-    buyerPhone: "+998 90 123 45 67",
-    qty: 1,
-    listPrice: 13_500_000n,
-    soldPrice: 13_500_000n,
-    costSnapshot: 11_800_000n,
-    profit: 1_700_000n,
-    marginPercent: 12.59,
-    soldAt: "2026-10-29",
-  },
-  {
-    id: "sale-102",
-    source: "site",
-    type: "product",
-    productName: "Kingston FURY Beast RGB 32GB DDR5",
-    buyerName: "Malika Yusupova",
-    buyerPhone: "+998 97 765 43 21",
-    qty: 2,
-    listPrice: 1_750_000n,
-    soldPrice: 1_750_000n,
-    costSnapshot: 1_450_000n,
-    profit: 600_000n,
-    marginPercent: 17.14,
-    soldAt: "2026-10-29",
-  },
-  {
-    id: "sale-103",
-    source: "site",
-    type: "pc",
-    productName: "Ventura Gaming Titan: i7-14700K / RTX 4070 Ti",
-    buyerName: "Javohir Toshmatov",
-    buyerPhone: "+998 93 555 12 34",
-    qty: 1,
-    listPrice: 24_800_000n,
-    soldPrice: 24_800_000n,
-    costSnapshot: 20_200_000n,
-    profit: 4_600_000n,
-    marginPercent: 18.55,
-    soldAt: "2026-10-28",
-  },
-  {
-    id: "sale-104",
-    source: "offline",
-    type: "product",
-    productName: "Intel Core i7-14700K 3.4GHz Protsessor",
-    buyerName: "Ulugʻbek Saidov",
-    buyerPhone: "+998 99 888 77 66",
-    qty: 1,
-    listPrice: 5_200_000n,
-    soldPrice: 5_000_000n, // chegirma bilan sotilgan
-    costSnapshot: 4_500_000n,
-    profit: 500_000n,
-    marginPercent: 10.0,
-    soldAt: "2026-10-27",
-  },
-];
+import { getAdminProductsAction, getAdminSalesAction, saveSaleAction, voidSaleAction } from "@/lib/server/actions";
 
 export default function AdminSalesPage() {
-  const [sales, setSales] = useState(INITIAL_SALES);
+  const [sales, setSales] = useState<(SaleItemData & { id: string; voidedAt?: string })[]>([]);
+  const [products, setProducts] = useState<{ id: string; name: string; costPrice: bigint; sellPrice: bigint }[]>([]);
+  const [error, setError] = useState("");
+
+  const loadData = useCallback(async () => {
+    const [saleResult, productResult] = await Promise.all([getAdminSalesAction(), getAdminProductsAction()]);
+    if (!saleResult.success) setError(saleResult.error ?? "Sotuvlarni yuklab bo'lmadi");
+    else setSales(saleResult.sales);
+    if (!productResult.success) setError(productResult.error ?? "Mahsulotlarni yuklab bo'lmadi");
+    else setProducts(productResult.products.filter((p) => p.isActive).map((p) => ({ id: p.id, name: p.name, costPrice: p.costPrice, sellPrice: p.sellPrice })));
+  }, []);
+  useEffect(() => { void loadData(); }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
@@ -109,8 +50,8 @@ export default function AdminSalesPage() {
 
   // Statistika
   const activeSales = sales.filter((s) => !s.voidedAt);
-  const totalRevenue = activeSales.reduce((sum, s) => sum + s.soldPrice * BigInt(s.qty), 0n);
-  const totalCost = activeSales.reduce((sum, s) => sum + s.costSnapshot * BigInt(s.qty), 0n);
+  const totalRevenue = activeSales.reduce((sum, s) => sum + s.soldPrice, 0n);
+  const totalCost = activeSales.reduce((sum, s) => sum + s.costSnapshot, 0n);
   const totalProfit = activeSales.reduce((sum, s) => sum + s.profit, 0n);
   const totalUnits = activeSales.reduce((sum, s) => sum + s.qty, 0);
   const avgMargin =
@@ -118,22 +59,31 @@ export default function AdminSalesPage() {
       ? Number(((Number(totalProfit) / Number(totalRevenue)) * 100).toFixed(2))
       : 0;
 
-  const handleSaveSale = (newSale: SaleItemData) => {
-    const item = {
-      ...newSale,
-      id: `sale-${Date.now().toString().slice(-4)}`,
-    };
-    setSales([item, ...sales]);
+  const handleSaveSale = async (newSale: SaleItemData) => {
+    const result = await saveSaleAction({
+      source: newSale.source,
+      type: newSale.type,
+      productId: newSale.productId,
+      productName: newSale.productName,
+      buyerName: newSale.buyerName,
+      buyerPhone: newSale.buyerPhone,
+      qty: newSale.qty,
+      listPrice: newSale.listPrice,
+      soldPrice: newSale.soldPrice,
+      costSnapshot: newSale.costSnapshot,
+      profit: newSale.profit,
+      soldAt: newSale.soldAt,
+    });
+    if (!result.success) { setError(result.error ?? "Sotuvni saqlab bo'lmadi"); return; }
+    setModalOpen(false);
+    await loadData();
   };
 
-  const handleVoidSale = (id: string) => {
-    if (confirm("Ushbu sotuvni qaytarmoqchimisiz (qaytarish/return)? Ombor qoldigʻi tiklanadi va foyda chiqariladi.")) {
-      setSales(
-        sales.map((s) =>
-          s.id === id ? { ...s, voidedAt: new Date().toISOString() } : s
-        )
-      );
-    }
+  const handleVoidSale = async (id: string) => {
+    if (!confirm("Ushbu sotuvni qaytarmoqchimisiz? Ombor qoldigʻi qaytariladi.")) return;
+    const result = await voidSaleAction(id);
+    if (!result.success) { setError(result.error ?? "Sotuvni bekor qilib bo'lmadi"); return; }
+    await loadData();
   };
 
   return (
@@ -155,6 +105,8 @@ export default function AdminSalesPage() {
         </Button>
       </div>
 
+      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+
       {/* Statistika kartalari */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -162,6 +114,7 @@ export default function AdminSalesPage() {
           label="Jami tushum"
           value={formatMoney(totalRevenue)}
           tone={1}
+          valueClassName="whitespace-nowrap text-title"
           hint={`Sotilgan: ${totalUnits} dona`}
         />
 
@@ -170,8 +123,8 @@ export default function AdminSalesPage() {
           label="Sof daromad (Foyda)"
           value={formatMoney(totalProfit)}
           tone={2}
-          trend={{ value: `${avgMargin}% marja`, up: true }}
-          hint="Sof qoʻshilgan qiymat"
+          valueClassName="whitespace-nowrap text-title"
+          hint={`Sof qoʻshilgan qiymat · ${avgMargin}% marja`}
         />
 
         <StatCard
@@ -179,6 +132,7 @@ export default function AdminSalesPage() {
           label="Sotilgan tovarlar tannarxi"
           value={formatMoney(totalCost)}
           tone={3}
+          valueClassName="whitespace-nowrap text-title"
           hint="Xarid narxlari yigʻindisi"
         />
 
@@ -192,8 +146,8 @@ export default function AdminSalesPage() {
       </div>
 
       {/* Qidiruv va Manba filtri */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-sm">
-        <div className="relative flex-1 min-w-[240px]">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-card p-3 shadow-card">
+        <div className="relative flex-1 min-w-60">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
@@ -204,23 +158,24 @@ export default function AdminSalesPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={sourceFilter}
-            onChange={(e) => setSourceFilter(e.target.value)}
-            className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="all">Barcha manbalar</option>
-            <option value="offline">Faqat Oflayn (Doʻkonda)</option>
-            <option value="site">Faqat Saytdan (Online)</option>
-          </select>
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger aria-label="Sotuv manbasi" className="w-auto min-w-48 text-xs">
+              <SelectValue placeholder="Barcha manbalar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Barcha manbalar</SelectItem>
+              <SelectItem value="offline">Faqat Oflayn (Doʻkonda)</SelectItem>
+              <SelectItem value="site">Faqat Saytdan (Online)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* Sotuvlar Jadvali */}
-      <div className="overflow-x-auto rounded-[var(--r-card,12px)] border border-border bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-card shadow-card">
         <table className="w-full border-collapse text-left text-xs">
           <thead>
-            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-[11px] tracking-wider">
+            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5">Sana</th>
               <th className="p-3.5">Xaridor</th>
               <th className="p-3.5">Sotilgan tovar / PC</th>
@@ -252,20 +207,20 @@ export default function AdminSalesPage() {
                     <td className="p-3.5 font-medium whitespace-nowrap">{formatDate(item.soldAt)}</td>
                     <td className="p-3.5">
                       <p className="font-bold text-foreground">{item.buyerName}</p>
-                      <p className="text-[11px] font-mono text-muted-foreground">{item.buyerPhone}</p>
+                      <p className="text-caption font-mono text-muted-foreground">{item.buyerPhone}</p>
                     </td>
                     <td className="p-3.5">
                       <p className="font-bold text-foreground line-clamp-1">{item.productName}</p>
-                      <span className="text-[10px] text-muted-foreground uppercase">
+                      <span className="text-2xs text-muted-foreground uppercase">
                         {item.type === "pc" ? "Kompyuter (Build)" : "Butlovchi qism"}
                       </span>
                     </td>
                     <td className="p-3.5 text-center">
                       <span
-                        className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase ${
+                        className={`rounded px-2 py-0.5 text-2xs font-bold uppercase ${
                           item.source === "site"
                             ? "bg-primary/10 text-primary"
-                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-(--success-bg) text-(--success-fg)"
                         }`}
                       >
                         {item.source === "site" ? "Sayt" : "Oflayn"}
@@ -275,23 +230,23 @@ export default function AdminSalesPage() {
                       {item.qty} dona
                     </td>
                     <td className="p-3.5 text-right font-black text-foreground">
-                      {formatMoney(item.soldPrice * BigInt(item.qty))}
+                      {formatMoney(item.soldPrice)}
                     </td>
                     <td className="p-3.5 text-right font-medium text-muted-foreground">
-                      {formatMoney(item.costSnapshot * BigInt(item.qty))}
+                      {formatMoney(item.costSnapshot)}
                     </td>
-                    <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400">
+                    <td className="p-3.5 text-right font-black text-(--success-fg)">
                       +{formatMoney(item.profit)}
-                      <span className="block text-[10px] text-muted-foreground font-normal">
+                      <span className="block text-2xs text-muted-foreground font-normal">
                         ({item.marginPercent}% marja)
                       </span>
                     </td>
                     <td className="p-3.5 text-right">
-                      {!isVoided && (
+                      {!isVoided && item.source === "offline" && item.type === "product" && (
                         <button
                           type="button"
                           onClick={() => handleVoidSale(item.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600 transition-colors"
+                          className="rounded p-1.5 text-muted-foreground hover:bg-(--danger-bg) hover:text-(--danger-fg) transition-colors"
                           title="Sotuvni bekor qilish (qaytarish)"
                         >
                           <Undo2 size={15} />
@@ -310,7 +265,7 @@ export default function AdminSalesPage() {
       <SaleFormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
-        products={SAMPLE_PRODUCTS}
+        products={products}
         onSave={handleSaveSale}
       />
     </div>

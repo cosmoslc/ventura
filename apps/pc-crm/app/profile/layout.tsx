@@ -54,7 +54,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             {/* Chap tomon: Profil Menyusi */}
             <aside className="lg:col-span-3 space-y-4">
-              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
+              <div className="rounded-card border border-border bg-card p-5">
                 {/* Foydalanuvchi mini kartasi */}
                 {isPending ? (
                   <div className="flex items-center gap-3 pb-4 border-b border-border animate-pulse">
@@ -78,7 +78,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                         initials
                       )}
                       {user && (
-                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-emerald-500 ring-2 ring-card" />
+                        <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-(--success-fg) ring-2 ring-card" />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -102,9 +102,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       <Link
                         key={item.href}
                         href={item.href}
-                        className={`flex items-center gap-3 rounded-[var(--r-btn,8px)] px-3 py-2.5 text-xs sm:text-sm font-semibold transition-all ${
+                        className={`flex items-center gap-3 rounded-btn px-3 py-2.5 text-xs sm:text-sm font-semibold transition-all ${
                           isActive
-                            ? "bg-primary text-primary-foreground shadow-xs"
+                            ? "bg-primary text-primary-foreground shadow-control"
                             : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                         }`}
                       >
@@ -117,7 +117,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-3 rounded-[var(--r-btn,8px)] px-3 py-2.5 text-xs sm:text-sm font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors mt-2 text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 rounded-btn px-3 py-2.5 text-xs sm:text-sm font-semibold text-(--danger-fg) hover:bg-(--danger-bg) transition-colors mt-2 text-left cursor-pointer"
                   >
                     <LogOut size={16} />
                     <span>Chiqish</span>

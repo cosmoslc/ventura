@@ -1,39 +1,87 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Check, DollarSign, Globe, MapPin, Save, Shield, Sliders, Truck } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Switch } from "@ventura/ui/switch";
+import { getAdminSettingsAction, saveSettingAction, saveShippingRatesAction } from "@/lib/server/actions";
 
 export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<"finance" | "shipping" | "general" | "modules">("finance");
   const [savedToast, setSavedToast] = useState(false);
+  const [error, setError] = useState("");
+  const [shippingRates, setShippingRates] = useState<{ region: string; price: string; enabled: boolean; estimatedDays?: string }[]>([]);
 
   // Moliya sozlamalari
-  const [usdRate, setUsdRate] = useState("12850");
-  const [taxPercent, setTaxPercent] = useState("12");
+  const [usdRate, setUsdRate] = useState("0");
+  const [taxPercent, setTaxPercent] = useState("0");
   const [freeShippingThreshold, setFreeShippingThreshold] = useState("1000000");
 
   // Umumiy do'kon
-  const [storeName, setStoreName] = useState("VenturaPC Electronics");
-  const [storePhone, setStorePhone] = useState("+998 71 200 00 00");
-  const [storeTelegram, setStoreTelegram] = useState("@venturapc_admin");
-  const [storeAddress, setStoreAddress] = useState("Toshkent sh., Yunusobod tumani, 4-mavze");
+  const [storeName, setStoreName] = useState("");
+  const [storePhone, setStorePhone] = useState("");
+  const [storeTelegram, setStoreTelegram] = useState("");
+  const [storeAddress, setStoreAddress] = useState("");
 
   // Modullar
-  const [modules, setModules] = useState({
-    pcBuilder: true,
-    reviews: true,
-    onlinePayments: false,
-    advancedFinance: false,
-  });
+  const modules = { pcBuilder: false, reviews: false, onlinePayments: false, advancedFinance: false };
 
-  const handleSave = () => {
-    setSavedToast(true);
-    setTimeout(() => setSavedToast(false), 2500);
+  const loadSettings = useCallback(async () => {
+    const result = await getAdminSettingsAction();
+    if (!result.success) { setError(result.error ?? "Sozlamalarni yuklab bo'lmadi"); return; }
+    setError("");
+    const data = result.settings as Record<string, unknown>;
+    const amount = (key: string, field: string, fallback: string) => {
+      const record = data[key] && typeof data[key] === "object" ? data[key] as Record<string, unknown> : {};
+      const value = record[field];
+      return typeof value === "string" || typeof value === "number" ? String(value) : fallback;
+    };
+    setUsdRate(amount("usd_rate", "amount", "12850"));
+    setTaxPercent(amount("tax_percent", "percent", "0"));
+    setFreeShippingThreshold(amount("free_shipping_from", "amount", "1000000"));
+    const contacts = data.store_contacts && typeof data.store_contacts === "object" ? data.store_contacts as Record<string, unknown> : {};
+    setStoreName(typeof contacts.storeName === "string" ? contacts.storeName : "");
+    setStorePhone(typeof contacts.storePhone === "string" ? contacts.storePhone : "");
+    setStoreTelegram(typeof contacts.storeTelegram === "string" ? contacts.storeTelegram : "");
+    setStoreAddress(typeof contacts.storeAddress === "string" ? contacts.storeAddress : "");
+    const canonicalRegions = [
+      "Toshkent shahri", "Toshkent viloyati", "Samarqand viloyati", "Fargʻona vodiysi",
+      "Buxoro viloyati", "Qashqadaryo viloyati", "Boshqa viloyatlar",
+    ];
+    const storedRates = new Map(result.shippingRates.map((rate) => [rate.region, rate]));
+    setShippingRates(canonicalRegions.map((region) => {
+      const rate = storedRates.get(region);
+      return rate
+        ? { region, price: rate.price.toString(), enabled: rate.enabled, estimatedDays: rate.estimatedDays ?? "" }
+        : { region, price: "0", enabled: false, estimatedDays: "" };
+    }));
+  }, []);
+  useEffect(() => { void loadSettings(); }, [loadSettings]);
+
+  const handleSave = async () => {
+    try {
+      const values = [usdRate, taxPercent, freeShippingThreshold];
+      if (values.some((value) => !/^\d+(?:\.\d+)?$/.test(value)) || Number(taxPercent) > 100 || !Number.isInteger(Number(freeShippingThreshold))) {
+        throw new Error("Moliya qiymatlari noto'g'ri: soliq 0–100%, chegaralar butun musbat son bo'lishi kerak");
+      }
+      const [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult] = await Promise.all([
+        saveSettingAction("usd_rate", { amount: Number(usdRate) }),
+        saveSettingAction("tax_percent", { percent: Number(taxPercent) }),
+        saveSettingAction("free_shipping_from", { amount: freeShippingThreshold }),
+        saveSettingAction("store_contacts", { storeName, storePhone, storeTelegram, storeAddress }),
+        saveShippingRatesAction(shippingRates.map((rate) => ({ ...rate, price: BigInt(rate.price || "0") }))),
+      ]);
+      const failure = [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult].find((result) => !result.success);
+      if (failure) throw new Error(failure.error ?? "Sozlamalar saqlanmadi");
+      setError("");
+      setSavedToast(true);
+      setTimeout(() => setSavedToast(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sozlamalar saqlanmadi");
+    }
   };
 
   return (
@@ -54,6 +102,8 @@ export default function AdminSettingsPage() {
           {savedToast ? "Saqlandi!" : "Saqlash"}
         </Button>
       </div>
+
+      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
 
       {/* Tablar navigatsiyasi */}
       <div className="flex border-b border-border text-xs font-semibold">
@@ -111,7 +161,7 @@ export default function AdminSettingsPage() {
       </div>
 
       {/* Tab kontentlari */}
-      <div className="max-w-3xl rounded-[var(--r-card,12px)] border border-border bg-card p-6 shadow-sm">
+      <div className="max-w-3xl rounded-card border border-border bg-card p-6 shadow-card">
         {/* 1. Moliya */}
         {activeTab === "finance" && (
           <div className="space-y-6">
@@ -134,7 +184,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setUsdRate(e.target.value)}
                   placeholder="12850"
                 />
-                <p className="text-[11px] text-muted-foreground">Admin panelda narx koʻrinishida qoʻllaniladi</p>
+                <p className="text-caption text-muted-foreground">Kurs DBʼda saqlanadi; storefront valyuta almashtirishi hali yoʻq</p>
               </div>
 
               <div className="space-y-1.5">
@@ -148,7 +198,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setTaxPercent(e.target.value)}
                   placeholder="12"
                 />
-                <p className="text-[11px] text-muted-foreground">0 boʻlsa hisoblanmaydi</p>
+                <p className="text-caption text-muted-foreground">0 boʻlsa hisoblanmaydi</p>
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
@@ -162,7 +212,7 @@ export default function AdminSettingsPage() {
                   onChange={(e) => setFreeShippingThreshold(e.target.value)}
                   placeholder="1000000"
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-caption text-muted-foreground">
                   Shu summadan oshgan buyurtmalarda yetkazib berish avtomatik bepul (0 soʻm) boʻladi
                 </p>
               </div>
@@ -181,27 +231,25 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="space-y-2.5">
-              {[
-                { region: "Toshkent shahri", defaultPrice: "35 000" },
-                { region: "Toshkent viloyati", defaultPrice: "45 000" },
-                { region: "Samarqand viloyati", defaultPrice: "60 000" },
-                { region: "Fargʻona vodiysi (Andijon, Namangan, Fargʻona)", defaultPrice: "65 000" },
-                { region: "Buxoro & Navoiy", defaultPrice: "65 000" },
-                { region: "Qashqadaryo & Surxondaryo", defaultPrice: "70 000" },
-                { region: "Xorazm & Qoraqalpogʻiston", defaultPrice: "75 000" },
-              ].map((item, idx) => (
+              {shippingRates.map((item, idx) => (
                 <div
-                  key={idx}
-                  className="flex items-center justify-between rounded-lg border border-border/70 p-3 text-xs"
+                  key={item.region}
+                  className="flex items-center justify-between rounded-control border border-border/70 p-3 text-xs"
                 >
                   <span className="font-semibold text-foreground">{item.region}</span>
                   <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      defaultValue={item.defaultPrice}
+                    <Input
+                      type="number"
+                      min="0"
+                      value={item.price}
+                      onChange={(event) => setShippingRates((previous) => previous.map((rate, index) => index === idx ? { ...rate, price: event.target.value } : rate))}
                       className="w-28 rounded border border-input bg-background px-2.5 py-1 text-right text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                     <span className="text-muted-foreground font-medium">soʻm</span>
+                    <Switch
+                      checked={item.enabled}
+                      onCheckedChange={(enabled) => setShippingRates((previous) => previous.map((rate, index) => index === idx ? { ...rate, enabled } : rate))}
+                    />
                   </div>
                 </div>
               ))}
@@ -215,7 +263,7 @@ export default function AdminSettingsPage() {
             <div>
               <h2 className="text-sm font-bold text-foreground">Doʻkon rekvizitlari va kontaktlar</h2>
               <p className="text-xs text-muted-foreground">
-                Sayt sarlavhasi, footer va buyurtma cheklarida koʻrinuvchi maʼlumotlar.
+                Kontaktlar DBʼda saqlanadi; sayt footer va chek bilan integratsiya hali yoʻq.
               </p>
             </div>
 
@@ -275,71 +323,59 @@ export default function AdminSettingsPage() {
             <div>
               <h2 className="text-sm font-bold text-foreground">Tizim modullarini boshqarish</h2>
               <p className="text-xs text-muted-foreground">
-                Mijoz sotib olgan xizmat paketiga qarab modullarni yoqish yoki oʻchirish.
+                Modul flaglari ilovada hali toʻliq ishlatilmaydi. Hozircha ularni yoqish oʻchirilgan.
               </p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between rounded-lg border border-border p-3.5">
+              <div className="flex items-center justify-between rounded-control border border-border p-3.5">
                 <div>
                   <h4 className="text-xs font-bold text-foreground">Kompyuterlar & PC Konfigurator</h4>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     Tayyor kompyuterlarni yigʻish va saytda foydalanuvchilar uchun bosqichma-bosqich konfigurator
                   </p>
                 </div>
-                <Switch
-                  checked={modules.pcBuilder}
-                  onCheckedChange={(val) => setModules({ ...modules, pcBuilder: val })}
-                />
+                <Switch checked={modules.pcBuilder} disabled />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-border p-3.5">
+              <div className="flex items-center justify-between rounded-control border border-border p-3.5">
                 <div>
                   <h4 className="text-xs font-bold text-foreground">Sharhlar va Baholar (Reviews)</h4>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     Faqat mahsulotni sotib olgan xaridorlarga sharh qoldirish imkoniyati
                   </p>
                 </div>
-                <Switch
-                  checked={modules.reviews}
-                  onCheckedChange={(val) => setModules({ ...modules, reviews: val })}
-                />
+                <Switch checked={modules.reviews} disabled />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-border p-3.5">
+              <div className="flex items-center justify-between rounded-control border border-border p-3.5">
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs font-bold text-foreground">Onlayn toʻlovlar (Click / Payme)</h4>
-                    <Badge tone="info" className="text-[9px]">
+                    <Badge tone="info" className="text-2xs">
                       Tez kunda
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     Click va Payme adapterlari orqali toʻgʻridan-toʻgʻri kartadan toʻlov qabul qilish
                   </p>
                 </div>
-                <Switch
-                  checked={modules.onlinePayments}
-                  onCheckedChange={(val) => setModules({ ...modules, onlinePayments: val })}
-                />
+                <Switch checked={modules.onlinePayments} disabled />
               </div>
 
-              <div className="flex items-center justify-between rounded-lg border border-border p-3.5">
+              <div className="flex items-center justify-between rounded-control border border-border p-3.5">
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="text-xs font-bold text-foreground">Kengaytirilgan Moliya va ERP</h4>
-                    <Badge tone="neutral" className="text-[9px]">
+                    <Badge tone="neutral" className="text-2xs">
                       2-bosqich
                     </Badge>
                   </div>
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-caption text-muted-foreground">
                     Xarajatlar (ijara, maosh), kassa hisobi, qarzdorliklar (nasiya) va chuqur P&L hisoboti
                   </p>
                 </div>
-                <Switch
-                  checked={modules.advancedFinance}
-                  onCheckedChange={(val) => setModules({ ...modules, advancedFinance: val })}
-                />
+                <Switch checked={modules.advancedFinance} disabled />
               </div>
             </div>
           </div>

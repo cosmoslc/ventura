@@ -1,5 +1,5 @@
 export interface PcComponentItem {
-  role: "cpu" | "gpu" | "ram" | "ssd" | "motherboard" | "psu" | "case" | "cooler" | "other";
+  role: "cpu" | "gpu" | "ram" | "ssd" | "hdd" | "motherboard" | "psu" | "case" | "cooler" | "monitor" | "other";
   roleNameUz: string;
   productId: string;
   productName: string;
@@ -42,6 +42,11 @@ export interface PcBuildItem {
   description?: string;
   warrantyMonths?: number;
 }
+
+/** Public PC detail payload. Internal cost snapshots must never cross the server boundary. */
+export type PcBuildPublicItem = Omit<PcBuildItem, "costPrice" | "components" | "buyerName" | "buyerPhone" | "soldAt"> & {
+  components: Omit<PcComponentItem, "costSnapshot" | "sellPrice">[];
+};
 
 export interface ConfiguratorPart {
   id: string;

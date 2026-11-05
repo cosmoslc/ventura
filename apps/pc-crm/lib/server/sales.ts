@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, desc, sql } from "drizzle-orm";
+import { and, eq, desc, sql } from "drizzle-orm";
 import {
   sales,
   saleItems,
@@ -60,9 +60,10 @@ export async function getDbSales(): Promise<SaleItemView[]> {
 
   for (const s of salesRows) {
     const sItems = itemMap.get(s.id) ?? [];
-    const firstItem = sItems[0];
-    const name = firstItem?.item.nameSnapshot ??
-      ((firstItem?.prod?.name as I18nText)?.uz ?? "Kompyuter / Tovar");
+    const names = [...new Set(sItems.map(({ item, prod }) =>
+      item.nameSnapshot ?? ((prod?.name as I18nText)?.uz ?? "Kompyuter / Tovar")
+    ))];
+    const name = names.length > 2 ? `${names.slice(0, 2).join(", ")} va yana ${names.length - 2} ta` : names.join(", ") || "Kompyuter / Tovar";
 
     const totalRevenue = Number(s.total);
     const profitNum = Number(s.profit);
@@ -75,9 +76,9 @@ export async function getDbSales(): Promise<SaleItemView[]> {
       productName: name,
       buyerName: s.buyerName,
       buyerPhone: s.buyerPhone,
-      qty: firstItem?.item.qty ?? 1,
-      listPrice: firstItem?.item.listPrice ?? s.total,
-      soldPrice: firstItem?.item.soldPrice ?? s.total,
+      qty: sItems.reduce((sum, item) => sum + item.item.qty, 0) || 1,
+      listPrice: sItems.reduce((sum, item) => sum + item.item.listPrice * BigInt(item.item.qty), 0n) || s.total,
+      soldPrice: s.total,
       costSnapshot: s.costTotal,
       profit: s.profit,
       marginPercent: margin,
@@ -104,13 +105,23 @@ export async function createDbSale(input: {
   soldAt?: string;
 }) {
   const db = getDb();
-  const totalRevenue = input.soldPrice * BigInt(input.qty);
-  const totalCost = input.costSnapshot * BigInt(input.qty);
-  const netProfit = totalRevenue > totalCost ? totalRevenue - totalCost : 0n;
-
-  const [newSale] = await db
-    .insert(sales)
-    .values({
+  return db.transaction(async (tx) => {
+    let product: typeof products.$inferSelect | undefined;
+    let costSnapshot = input.costSnapshot;
+    let productName = input.productName;
+    let listPrice = input.listPrice;
+    if (input.productId) {
+      const [row] = await tx.select().from(products).where(eq(products.id, input.productId)).for("update");
+      if (!row || !row.isActive) throw new Error("Mahsulot topilmadi");
+      product = row;
+      costSnapshot = row.costPrice;
+      productName = (row.name as I18nText)?.uz ?? "Mahsulot";
+      listPrice = row.sellPrice;
+    }
+    const totalRevenue = input.soldPrice * BigInt(input.qty);
+    const totalCost = costSnapshot * BigInt(input.qty);
+    const netProfit = totalRevenue - totalCost;
+    const [newSale] = await tx.insert(sales).values({
       source: input.source,
       type: input.type,
       buyerName: input.buyerName,
@@ -119,84 +130,63 @@ export async function createDbSale(input: {
       total: totalRevenue,
       costTotal: totalCost,
       profit: netProfit,
-    })
-    .returning();
+    }).returning();
+    if (!newSale) throw new Error("Sotuv yozilmadi");
 
-  if (newSale) {
-    await db.insert(saleItems).values({
+    if (product) {
+      const [updated] = await tx.update(products).set({
+        stock: sql`${products.stock} - ${input.qty}`,
+        soldCount: sql`${products.soldCount} + ${input.qty}`,
+      }).where(and(
+        eq(products.id, product.id),
+        sql`${products.stock} - ${products.reserved} >= ${input.qty}`,
+      )).returning({ id: products.id });
+      if (!updated) throw new Error("Sotuv uchun qoldiq yetarli emas");
+    }
+    await tx.insert(saleItems).values({
       saleId: newSale.id,
       productId: input.productId,
-      nameSnapshot: input.productName,
+      nameSnapshot: productName,
       qty: input.qty,
-      listPrice: input.listPrice,
+      listPrice,
       soldPrice: input.soldPrice,
-      costSnapshot: input.costSnapshot,
+      costSnapshot,
       profit: netProfit,
     });
-
-    if (input.productId) {
-      await db
-        .update(products)
-        .set({
-          stock: sql`GREATEST(0, ${products.stock} - ${input.qty})`,
-          soldCount: sql`${products.soldCount} + ${input.qty}`,
-        })
-        .where(eq(products.id, input.productId));
-
-      await db.insert(stockMovements).values({
-        productId: input.productId,
-        reason: "sale",
-        delta: -input.qty,
-        refType: "order",
-        refId: newSale.id,
-      });
-    }
-  }
-
-  return newSale;
+    if (input.productId) await tx.insert(stockMovements).values({
+      productId: input.productId,
+      reason: "sale",
+      delta: -input.qty,
+      refType: "sale",
+      refId: newSale.id,
+    });
+    return newSale;
+  });
 }
 
 export async function voidDbSale(id: string) {
   const db = getDb();
-
-  const [sale] = await db
-    .select()
-    .from(sales)
-    .where(eq(sales.id, id))
-    .limit(1);
-
-  if (!sale || sale.voidedAt) return null;
-
-  const [updated] = await db
-    .update(sales)
-    .set({ voidedAt: new Date() })
-    .where(eq(sales.id, id))
-    .returning();
-
-  const items = await db
-    .select()
-    .from(saleItems)
-    .where(eq(saleItems.saleId, id));
-
-  for (const it of items) {
-    if (it.productId) {
-      await db
-        .update(products)
-        .set({
-          stock: sql`${products.stock} + ${it.qty}`,
-          soldCount: sql`GREATEST(0, ${products.soldCount} - ${it.qty})`,
-        })
-        .where(eq(products.id, it.productId));
-
-      await db.insert(stockMovements).values({
-        productId: it.productId,
+  return db.transaction(async (tx) => {
+    const [sale] = await tx.select().from(sales).where(eq(sales.id, id)).for("update");
+    if (!sale || sale.voidedAt) return null;
+    if (sale.orderId) throw new Error("Sayt buyurtmasi sotuvini buyurtma qaytarish oqimi orqali tuzatish kerak");
+    const items = await tx.select().from(saleItems).where(eq(saleItems.saleId, id));
+    for (const item of items) {
+      if (!item.productId) continue;
+      await tx.update(products).set({
+        stock: sql`${products.stock} + ${item.qty}`,
+        soldCount: sql`GREATEST(0, ${products.soldCount} - ${item.qty})`,
+      }).where(eq(products.id, item.productId));
+      await tx.insert(stockMovements).values({
+        productId: item.productId,
         reason: "return",
-        delta: it.qty,
-        refType: "order",
+        delta: item.qty,
+        refType: "sale",
         refId: sale.id,
       });
     }
-  }
-
-  return updated;
+    const [updated] = await tx.update(sales).set({ voidedAt: new Date() })
+      .where(and(eq(sales.id, id), sql`${sales.voidedAt} IS NULL`)).returning();
+    return updated;
+  });
 }

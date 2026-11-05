@@ -1,4 +1,5 @@
 "use client";
+import { SelectField } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import { PackagePlus } from "lucide-react";
@@ -138,17 +139,17 @@ export function PurchaseFormModal({
         {/* Mahsulot tanlash */}
         <div className="space-y-1">
           <Label className="text-xs font-semibold">Kirim qilinayotgan tovar *</Label>
-          <select
+          <SelectField
             value={selectedProductId}
             onChange={(e) => handleProductSelect(e.target.value)}
-            className="h-(--control-h) w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-(--control-h) w-full rounded-control border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
 
         {/* Kirim turi: Dona yoki Optom */}
@@ -162,14 +163,14 @@ export function PurchaseFormModal({
                 const u = BigInt(unitCostStr || "0");
                 setTotalCostStr((u * BigInt(qty || 1)).toString());
               }}
-              className={`rounded-lg border p-2.5 text-center font-bold transition-all ${
+              className={`rounded-control border p-2.5 text-center font-bold transition-all ${
                 purchaseType === "piece"
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-muted-foreground hover:bg-secondary"
               }`}
             >
               Dona hisobi
-              <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">
+              <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
                 (Dona narxi × Soni = Jami)
               </span>
             </button>
@@ -181,14 +182,14 @@ export function PurchaseFormModal({
                 const t = BigInt(totalCostStr || "0");
                 setUnitCostStr(calcUnitCost(t, qty || 1).toString());
               }}
-              className={`rounded-lg border p-2.5 text-center font-bold transition-all ${
+              className={`rounded-control border p-2.5 text-center font-bold transition-all ${
                 purchaseType === "bulk"
                   ? "border-primary bg-primary/10 text-primary"
                   : "border-border text-muted-foreground hover:bg-secondary"
               }`}
             >
               Optom (Partiya)
-              <span className="block text-[10px] font-normal text-muted-foreground mt-0.5">
+              <span className="block text-2xs font-normal text-muted-foreground mt-0.5">
                 (Jami summa / Soni = Dona tannarxi)
               </span>
             </button>
@@ -238,16 +239,16 @@ export function PurchaseFormModal({
         </div>
 
         {/* Hisob xulosasi bloki */}
-        <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 p-3.5">
+        <div className="flex items-center justify-between rounded-card border border-border bg-muted/20 p-3.5">
           <div>
-            <p className="text-[11px] text-muted-foreground">Hisoblangan 1 dona tannarxi:</p>
+            <p className="text-caption text-muted-foreground">Hisoblangan 1 dona tannarxi:</p>
             <p className="text-base font-black text-foreground">
               {formatMoney(BigInt(unitCostStr || "0"))}
             </p>
           </div>
 
           <div className="text-right">
-            <p className="text-[11px] text-muted-foreground">Jami toʻlangan summa:</p>
+            <p className="text-caption text-muted-foreground">Jami toʻlangan summa:</p>
             <p className="text-base font-black text-primary">
               {formatMoney(BigInt(totalCostStr || "0"))}
             </p>
@@ -276,10 +277,10 @@ export function PurchaseFormModal({
         </div>
 
         {/* Checkbox: Mahsulot tannarxi ham yangilansinmi */}
-        <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+        <div className="rounded-control border border-border p-3 flex items-center justify-between">
           <div>
             <p className="font-bold text-foreground">Katalogdagi tannarx yangilansin</p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               Mahsulotning bazadagi tannarxi oxirgi kirim narxiga ({formatMoney(BigInt(unitCostStr || "0"))}) moslashtiriladi
             </p>
           </div>

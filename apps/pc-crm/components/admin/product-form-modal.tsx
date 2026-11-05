@@ -1,4 +1,5 @@
 "use client";
+import { SelectField } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
@@ -152,11 +153,6 @@ export function ProductFormModal({
     onOpenChange(false);
   };
 
-  // Rang variant qo'shish
-  const addVariant = () => {
-    setVariants([...variants, { colorName: "Qora", colorHex: "#000000", stock: 1 }]);
-  };
-
   // Xususiyat qo'shish
   const addSpec = () => {
     setSpecs([...specs, { key: `spec_${Date.now()}`, title: "Yadro soni", value: "8 yadro", helpText: "Protsessorning parallel ishlash qobiliyati" }]);
@@ -208,10 +204,10 @@ export function ProductFormModal({
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-1">
               <Label className="text-xs font-semibold">Toifa (Kategoriya)</Label>
-              <select
+              <SelectField
                 value={categorySlug}
                 onChange={(e) => setCategorySlug(e.target.value)}
-                className="h-(--control-h) w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-(--control-h) w-full rounded-control border border-input bg-background px-3 text-xs font-medium text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
               >
                 <option value="protsessorlar">Protsessorlar (CPU)</option>
                 <option value="videokartalar">Videokartalar (GPU)</option>
@@ -222,7 +218,7 @@ export function ProductFormModal({
                 <option value="blok-pitaniya">Blok pitaniya (PSU)</option>
                 <option value="sovutish">Kuler va sovutish tizimi</option>
                 <option value="monitorlar">Monitorlar</option>
-              </select>
+              </SelectField>
             </div>
 
             <div className="space-y-1">
@@ -255,7 +251,7 @@ export function ProductFormModal({
         </div>
 
         {/* 2. Narx va Foyda Kalkulyatori */}
-        <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
+        <div className="rounded-control border border-border bg-muted/20 p-4 space-y-3">
           <h3 className="font-bold text-foreground">Narxlar va Kutilayotgan Foyda</h3>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
@@ -306,15 +302,15 @@ export function ProductFormModal({
           </div>
 
           {/* Jonli hisob natijasi */}
-          <div className="flex flex-wrap items-center justify-between rounded-lg bg-card p-3 border border-border/80">
+          <div className="flex flex-wrap items-center justify-between rounded-control bg-card p-3 border border-border/80">
             <div>
-              <p className="text-[11px] text-muted-foreground">Xaridor koʻradigan yakuniy narx:</p>
+              <p className="text-caption text-muted-foreground">Xaridor koʻradigan yakuniy narx:</p>
               <p className="text-sm font-black text-foreground">{formatMoney(finalPrice)}</p>
             </div>
 
             <div className="text-right">
-              <p className="text-[11px] text-muted-foreground">Kutilayotgan sof foyda (dona):</p>
-              <p className={`text-sm font-black ${profit >= 0n ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
+              <p className="text-caption text-muted-foreground">Kutilayotgan sof foyda (dona):</p>
+              <p className={`text-sm font-black ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
                 {profit >= 0n ? "+" : ""}{formatMoney(profit)}
               </p>
             </div>
@@ -367,62 +363,16 @@ export function ProductFormModal({
           </div>
         </div>
 
-        {/* 4. Rang variantlari */}
-        <div className="space-y-2.5 border-t border-border pt-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-bold text-foreground">Rang variantlari (ixtiyoriy)</h3>
-              <p className="text-[11px] text-muted-foreground">Har bir rangning alohida qoldigʻi va hex kodi</p>
-            </div>
-            <Button variant="ghost" size="sm" type="button" onClick={addVariant} className="gap-1 text-xs">
-              <Plus size={13} /> Variant qoʻshish
-            </Button>
-          </div>
-
-          {variants.map((v, i) => (
-            <div key={i} className="flex items-center gap-2 rounded-lg border border-border p-2">
-              <input
-                type="color"
-                value={v.colorHex}
-                onChange={(e) => {
-                  setVariants(variants.map((item, idx) => idx === i ? { ...item, colorHex: e.target.value } : item));
-                }}
-                className="h-8 w-8 cursor-pointer rounded border border-input p-0"
-              />
-              <Input
-                value={v.colorName}
-                onChange={(e) => {
-                  setVariants(variants.map((item, idx) => idx === i ? { ...item, colorName: e.target.value } : item));
-                }}
-                placeholder="Rang nomi (Qora, Oq, Kumush)"
-                className="flex-1"
-              />
-              <Input
-                type="number"
-                value={v.stock}
-                onChange={(e) => {
-                  setVariants(variants.map((item, idx) => idx === i ? { ...item, stock: Number(e.target.value) } : item));
-                }}
-                placeholder="Dona"
-                className="w-24"
-              />
-              <button
-                type="button"
-                onClick={() => setVariants(variants.filter((_, idx) => idx !== i))}
-                className="text-muted-foreground hover:text-rose-500 p-1"
-              >
-                <Trash2 size={16} />
-              </button>
-            </div>
-          ))}
-        </div>
+        <p className="border-t border-border pt-4 text-xs text-muted-foreground">
+          Rang variantlari alohida qoldiq va buyurtma oqimiga ulanmaguncha bu formada tahrirlanmaydi.
+        </p>
 
         {/* 5. Texnik xususiyatlar ("?" tushuntirish bilan) */}
         <div className="space-y-2.5 border-t border-border pt-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-foreground">Texnik xususiyatlar (Specs)</h3>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Xaridor koʻradigan parametrlar va "?" tushuntirish modali matni
               </p>
             </div>
@@ -432,7 +382,7 @@ export function ProductFormModal({
           </div>
 
           {specs.map((s, i) => (
-            <div key={i} className="space-y-2 rounded-lg border border-border p-3 bg-muted/10">
+            <div key={i} className="space-y-2 rounded-control border border-border p-3 bg-muted/10">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                 <Input
                   value={s.title}
@@ -456,12 +406,12 @@ export function ProductFormModal({
                     setSpecs(specs.map((item, idx) => idx === i ? { ...item, helpText: e.target.value } : item));
                   }}
                   placeholder="? tushuntirish matni (masalan: Protsessor takt chastotasi nima?)"
-                  className="flex-1 text-[11px]"
+                  className="flex-1 text-caption"
                 />
                 <button
                   type="button"
                   onClick={() => setSpecs(specs.filter((_, idx) => idx !== i))}
-                  className="text-muted-foreground hover:text-rose-500 p-1"
+                  className="text-muted-foreground hover:text-(--danger-fg) p-1"
                 >
                   <Trash2 size={16} />
                 </button>

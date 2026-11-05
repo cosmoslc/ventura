@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
+import { Input } from "@ventura/ui/input";
 import { authClient, signIn, signUp } from "@/lib/auth-client";
 
 interface AuthModalProps {
@@ -83,8 +84,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
       return;
     }
 
-    if (password.trim().length < 8) {
-      setErrorMsg("Parol kamida 8 ta belgidan iborat boʻlishi kerak.");
+    if (password.trim().length < 12) {
+      setErrorMsg("Parol kamida 12 ta belgidan iborat boʻlishi kerak.");
       return;
     }
 
@@ -155,21 +156,21 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
         role="dialog"
         aria-modal="true"
         aria-label={mode === "login" ? "Tizimga kirish" : "Yangi hisob yaratish"}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in-0 zoom-in-95 duration-200 text-foreground"
+        className="relative z-10 w-full max-w-md rounded-modal border border-border bg-card p-6 shadow-modal animate-in fade-in-0 zoom-in-95 duration-200 text-foreground"
       >
         {/* Yopish tugmasi */}
         <button
           type="button"
           onClick={onClose}
           aria-label="Yopish"
-          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-control text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
         >
           <X size={18} />
         </button>
 
         {/* Sarlavha va Logo */}
         <div className="text-center pb-5">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-modal bg-primary/10 text-primary">
             <KeyRound size={24} />
           </div>
           <h2 className="text-xl font-black tracking-tight">
@@ -184,14 +185,14 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
 
         {/* Xato yoki muvaffaqiyat xabari */}
         {errorMsg && (
-          <div className="mb-4 flex items-start gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-400">
+          <div className="mb-4 flex items-start gap-2 rounded-card border border-(--danger-border) bg-(--danger-bg) p-3 text-xs text-(--danger-fg)">
             <AlertCircle size={16} className="shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-600 dark:text-emerald-400 font-semibold">
+          <div className="mb-4 flex items-center gap-2 rounded-card border border-(--success-border) bg-(--success-bg) p-3 text-xs text-(--success-fg) font-semibold">
             <CheckCircle2 size={16} />
             <span>{successMsg}</span>
           </div>
@@ -204,7 +205,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-background py-2.5 px-4 text-xs font-bold text-foreground transition-all hover:bg-secondary hover:border-primary/40 disabled:opacity-60 shadow-xs cursor-pointer"
+            className="flex w-full items-center justify-center gap-3 rounded-card border border-border bg-background py-2.5 px-4 text-xs font-bold text-foreground transition-all hover:bg-secondary hover:border-primary/40 disabled:opacity-60 shadow-control cursor-pointer"
           >
             {/* Google rangli G logosi */}
             <svg className="h-4 w-4" viewBox="0 0 24 24">
@@ -234,7 +235,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
           <div className="absolute inset-0 flex items-center">
             <span className="w-full border-t border-border" />
           </div>
-          <span className="relative bg-card px-3 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+          <span className="relative bg-card px-3 text-caption font-semibold text-muted-foreground uppercase tracking-wider">
             yoki email orqali
           </span>
         </div>
@@ -246,17 +247,15 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
               <label className="mb-1 block text-xs font-semibold text-foreground">
                 Toʻliq ismingiz
               </label>
-              <div className="relative flex items-center">
-                <User size={15} className="absolute left-3 text-muted-foreground" />
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ismingizni kiriting"
-                  className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
-                  required
-                />
-              </div>
+              <Input
+                icon={<User />}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ismingizni kiriting"
+                className="text-xs"
+                required
+              />
             </div>
           )}
 
@@ -264,42 +263,38 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
             <label className="mb-1 block text-xs font-semibold text-foreground">
               Email
             </label>
-            <div className="relative flex items-center">
-              <Mail size={15} className="absolute left-3 text-muted-foreground" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="nomi@gmail.com"
-                className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
-                required
-              />
-            </div>
+            <Input
+              icon={<Mail />}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nomi@gmail.com"
+              className="text-xs"
+              required
+            />
           </div>
 
           <div>
             <label className="mb-1 block text-xs font-semibold text-foreground">
               Parol
             </label>
-            <div className="relative flex items-center">
-              <Lock size={15} className="absolute left-3 text-muted-foreground" />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Kamida 8 ta belgi"
-                minLength={8}
-                className="w-full rounded-xl border border-input bg-background py-2 pl-9 pr-3 text-xs text-foreground placeholder:text-muted-foreground/70 focus:border-primary focus:outline-hidden focus:ring-1 focus:ring-primary"
-                required
-              />
-            </div>
+            <Input
+              icon={<Lock />}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Kamida 8 ta belgi"
+              minLength={8}
+              className="text-xs"
+              required
+            />
           </div>
 
           <Button
             type="submit"
             variant="primary"
             disabled={isLoading}
-            className="w-full mt-2 font-bold text-xs py-2.5 shadow-sm"
+            className="w-full mt-2 font-bold text-xs py-2.5 shadow-card"
           >
             {isLoading ? (
               <span className="flex items-center gap-1.5">

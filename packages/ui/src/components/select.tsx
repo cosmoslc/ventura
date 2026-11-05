@@ -21,6 +21,17 @@ interface SelectCtx {
   setQuery: (q: string) => void;
 }
 
+/** Native select uchun tokenli ko'rinish; OS select xulqi kerak bo'lgan oddiy forma maydonlari uchun. */
+export function SelectField({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <select
+      data-slot="select-field"
+      className={cn(controlClass, "cursor-pointer pr-3", className)}
+      {...props}
+    />
+  );
+}
+
 /** Shundan ko'p band bo'lsa ro'yxat tepasida qidiruv chiqadi (kurs, o'qituvchi, guruh ko'payganda) */
 const SEARCH_FROM = 12;
 

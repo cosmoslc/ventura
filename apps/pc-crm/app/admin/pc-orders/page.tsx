@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertCircle,
@@ -26,9 +26,12 @@ import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { SelectField, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
+import { StatCard } from "@ventura/ui/stat-card";
 import { calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
-import { type PcOrderItem, SAMPLE_PC_ORDERS } from "@/lib/pc-data";
+import { type PcOrderItem } from "@/lib/pc-data";
+import { getAdminPcOrdersAction, updatePcOrderStatusAction } from "@/lib/server/actions";
 
 const STATUS_LABELS: Record<PcOrderItem["status"], { label: string; tone: "info" | "warning" | "success" | "danger" | "neutral" }> = {
   new: { label: "Yangi zakaz", tone: "info" },
@@ -42,7 +45,16 @@ const STATUS_LABELS: Record<PcOrderItem["status"], { label: string; tone: "info"
 };
 
 export default function AdminPcOrdersPage() {
-  const [orders, setOrders] = useState<PcOrderItem[]>(SAMPLE_PC_ORDERS);
+  const [orders, setOrders] = useState<PcOrderItem[]>([]);
+  const [error, setError] = useState("");
+
+  const loadOrders = useCallback(async () => {
+    const result = await getAdminPcOrdersAction();
+    if (!result.success) { setError(result.error ?? "PC buyurtmalarini yuklab bo'lmadi"); return; }
+    setError("");
+    setOrders(result.orders);
+  }, []);
+  useEffect(() => { void loadOrders(); }, [loadOrders]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -93,7 +105,7 @@ export default function AdminPcOrdersPage() {
     setNewStatus(order.status);
   };
 
-  const handleSaveOrderChanges = (e: React.FormEvent) => {
+  const handleSaveOrderChanges = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrder) return;
 
@@ -106,50 +118,21 @@ export default function AdminPcOrdersPage() {
       }
     }
 
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === selectedOrder.id
-          ? {
-              ...o,
-              status: newStatus,
-              quotedPrice: parsedQuote,
-              operatorNote,
-            }
-          : o
-      )
-    );
-
+    const result = await updatePcOrderStatusAction(selectedOrder.id, newStatus, parsedQuote, operatorNote);
+    if (!result.success) { setError(result.error ?? "PC buyurtmasini yangilab bo'lmadi"); return; }
     setSuccessNotification(`"${selectedOrder.orderNumber}" buyurtmasi yangilandi.`);
     setSelectedOrder(null);
-  };
-
-  // "PC ga aylantirish" (Convert custom order to ready PcBuild)
-  const handleConvertToBuild = (order: PcOrderItem) => {
-    setOrders((prev) =>
-      prev.map((o) =>
-        o.id === order.id
-          ? {
-              ...o,
-              status: "assembling",
-              convertedPcId: `pc-converted-${Date.now()}`,
-              operatorNote: "PC ga aylantirildi va sexga montajga berildi.",
-            }
-          : o
-      )
-    );
-
-    setSuccessNotification(
-      `"${order.orderNumber}" zakazi "PcBuild" ga aylantirildi! Komponentlar omborda zaxiralandi.`
-    );
-    setSelectedOrder(null);
+    await loadOrders();
   };
 
   return (
     <div className="space-y-6">
+      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">PC Zakazlar (Konfigurator)</h1>
+          <h1 className="text-2xl font-black tracking-tight">PC Zakazlar</h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
             Mijozlar onlayn konfigurator orqali tanlagan individual kompyuter yigʻish buyurtmalari
           </p>
@@ -158,7 +141,7 @@ export default function AdminPcOrdersPage() {
 
       {/* Muvaffaqiyat bildirishnomasi */}
       {successNotification && (
-        <div className="flex items-center justify-between rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-4 text-xs sm:text-sm text-emerald-600 dark:text-emerald-400">
+        <div className="flex items-center justify-between rounded-control bg-(--success-bg) border border-(--success-border) p-4 text-xs sm:text-sm text-(--success-fg)">
           <div className="flex items-center gap-2">
             <CheckCircle2 size={18} />
             <span>{successNotification}</span>
@@ -174,60 +157,11 @@ export default function AdminPcOrdersPage() {
       )}
 
       {/* 4 ta Statistik karta */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Yangi zakazlar
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">{stats.newCount} ta</span>
-            <Badge tone="info">Koʻrib chiqish kerak</Badge>
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Sayt konfiguratoridan kelgan
-          </span>
-        </div>
-
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Jarayonda
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">{stats.inProgressCount} ta</span>
-            <Clock size={20} className="text-amber-500" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Kelishuvda yoki yigʻilmoqda
-          </span>
-        </div>
-
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Tayyor / Yetkazilgan
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">{stats.readyDeliveredCount} ta</span>
-            <CheckCircle2 size={20} className="text-emerald-500" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Muvaffaqiyatli topshirildi
-          </span>
-        </div>
-
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Kutilayotgan umumiy qiymat
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-xl font-black font-mono text-primary truncate">
-              {formatMoney(stats.totalRevenue)}
-            </span>
-            <Wrench size={20} className="text-primary shrink-0 ml-1" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Barcha faol zakazlar summasi
-          </span>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={<Layers />} label="Yangi zakazlar" value={`${stats.newCount} ta`} tone={1} />
+        <StatCard icon={<Clock />} label="Jarayonda" value={`${stats.inProgressCount} ta`} tone={2} />
+        <StatCard icon={<CheckCircle2 />} label="Tayyor / Yetkazilgan" value={`${stats.readyDeliveredCount} ta`} tone={3} />
+        <StatCard icon={<Wrench />} label="Kutilayotgan umumiy qiymat" value={formatMoney(stats.totalRevenue)} tone={4} valueClassName="whitespace-nowrap text-title" />
       </div>
 
       {/* Filterlar qatori */}
@@ -235,38 +169,39 @@ export default function AdminPcOrdersPage() {
         {/* Qidiruv */}
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Buyurtma ID, mijoz ismi yoki telefon..."
-            className="w-full rounded-[var(--r-input,8px)] border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            className="w-full rounded-control border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
         </div>
 
         {/* Holat filteri */}
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="rounded-[var(--r-input,8px)] border border-input bg-card px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
-        >
-          <option value="all">Barcha statuslar</option>
-          <option value="new">Yangi zakazlar</option>
-          <option value="reviewing">Koʻrib chiqilmoqda</option>
-          <option value="quoted">Narx taklif etildi</option>
-          <option value="confirmed">Tasdiqlangan</option>
-          <option value="assembling">Yigʻilmoqda</option>
-          <option value="ready">Tayyor (Testda)</option>
-          <option value="delivered">Yetkazildi</option>
-          <option value="cancelled">Bekor qilindi</option>
-        </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger aria-label="PC zakaz holati" className="w-auto min-w-48 text-xs">
+            <SelectValue placeholder="Barcha statuslar" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Barcha statuslar</SelectItem>
+            <SelectItem value="new">Yangi zakazlar</SelectItem>
+            <SelectItem value="reviewing">Koʻrib chiqilmoqda</SelectItem>
+            <SelectItem value="quoted">Narx taklif etildi</SelectItem>
+            <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
+            <SelectItem value="assembling">Yigʻilmoqda</SelectItem>
+            <SelectItem value="ready">Tayyor (Testda)</SelectItem>
+            <SelectItem value="delivered">Yetkazildi</SelectItem>
+            <SelectItem value="cancelled">Bekor qilindi</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Zakazlar jadvali */}
-      <div className="rounded-[var(--r-card,12px)] border border-border bg-card overflow-hidden shadow-xs">
+      <div className="rounded-card border border-border bg-card overflow-hidden shadow-control">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="border-b border-border bg-muted/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <thead className="border-b border-border bg-muted/40 text-caption font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="py-3 px-4">Buyurtma</th>
                 <th className="py-3 px-4">Mijoz maʼlumotlari</th>
@@ -299,7 +234,7 @@ export default function AdminPcOrdersPage() {
                         <span className="font-mono font-bold text-foreground block">
                           {order.orderNumber}
                         </span>
-                        <span className="font-mono text-[11px] text-muted-foreground">
+                        <span className="font-mono text-caption text-muted-foreground">
                           {order.createdAt.split("T")[0]}
                         </span>
                       </td>
@@ -309,11 +244,11 @@ export default function AdminPcOrdersPage() {
                         <span className="font-bold text-foreground block">
                           {order.customerName}
                         </span>
-                        <span className="font-mono text-[11px] text-muted-foreground block">
+                        <span className="font-mono text-caption text-muted-foreground block">
                           {order.customerPhone}
                         </span>
                         {order.deliveryAddress && (
-                          <span className="text-[11px] text-muted-foreground truncate block max-w-xs">
+                          <span className="text-caption text-muted-foreground truncate block max-w-xs">
                             {order.deliveryAddress}
                           </span>
                         )}
@@ -328,13 +263,13 @@ export default function AdminPcOrdersPage() {
                           {order.components.slice(0, 3).map((c) => (
                             <span
                               key={c.role}
-                              className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground font-mono"
+                              className="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground font-mono"
                             >
                               {c.roleNameUz}: {c.productName.split(" ")[0]}
                             </span>
                           ))}
                           {order.components.length > 3 && (
-                            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            <span className="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
                               +{order.components.length - 3} ta
                             </span>
                           )}
@@ -353,7 +288,7 @@ export default function AdminPcOrdersPage() {
                             <span className="font-bold text-foreground block">
                               {formatMoney(order.quotedPrice!)}
                             </span>
-                            <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                            <span className="text-caption text-(--success-fg) font-semibold">
                               +{formatMoney(order.quotedPrice! - order.costPrice)} ({estimatedMargin}%)
                             </span>
                           </>
@@ -413,7 +348,7 @@ export default function AdminPcOrdersPage() {
         {selectedOrder && (
           <form onSubmit={handleSaveOrderChanges} className="space-y-4 text-xs sm:text-sm">
             {/* Mijoz haqida ma'lumot */}
-            <div className="rounded-lg bg-muted/60 p-3.5 space-y-2">
+            <div className="rounded-control bg-muted/60 p-3.5 space-y-2">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="font-bold text-foreground text-sm">{selectedOrder.customerName}</h4>
@@ -449,11 +384,11 @@ export default function AdminPcOrdersPage() {
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block mb-2">
                 Tanlangan qismlar ({selectedOrder.components.length} ta):
               </span>
-              <div className="rounded-lg border border-border divide-y divide-border max-h-48 overflow-y-auto pr-1">
+              <div className="rounded-control border border-border divide-y divide-border max-h-48 overflow-y-auto pr-1">
                 {selectedOrder.components.map((c, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2.5 text-xs">
                     <div className="flex items-center gap-2">
-                      <span className="font-bold uppercase text-[10px] text-muted-foreground min-w-[70px]">
+                      <span className="font-bold uppercase text-2xs text-muted-foreground min-w-18">
                         {c.roleNameUz}
                       </span>
                       <span className="font-semibold text-foreground">{c.productName}</span>
@@ -468,7 +403,7 @@ export default function AdminPcOrdersPage() {
 
             {/* Hisob-kitob qatori */}
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border">
-              <div className="rounded-lg bg-muted/40 p-2.5 text-xs">
+              <div className="rounded-control bg-muted/40 p-2.5 text-xs">
                 <span className="text-muted-foreground block">Komponentlar tannarxi:</span>
                 <span className="font-mono font-bold text-sm text-foreground">
                   {formatMoney(selectedOrder.costPrice)}
@@ -495,10 +430,10 @@ export default function AdminPcOrdersPage() {
                 <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Statusni yangilash
                 </Label>
-                <select
+                <SelectField
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value as any)}
-                  className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
                 >
                   <option value="new">Yangi zakaz</option>
                   <option value="reviewing">Koʻrib chiqilmoqda</option>
@@ -508,7 +443,7 @@ export default function AdminPcOrdersPage() {
                   <option value="ready">Tayyor (Testda)</option>
                   <option value="delivered">Yetkazildi</option>
                   <option value="cancelled">Bekor qilindi</option>
-                </select>
+                </SelectField>
               </div>
 
               <div className="space-y-1">
@@ -525,20 +460,6 @@ export default function AdminPcOrdersPage() {
 
             {/* Amallar */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-3 border-t border-border">
-              {/* PC ga aylantirish tugmasi */}
-              {selectedOrder.status !== "assembling" && selectedOrder.status !== "ready" && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleConvertToBuild(selectedOrder)}
-                  className="gap-1.5 text-xs text-primary hover:bg-primary/10"
-                >
-                  <Wrench size={14} />
-                  PC ga aylantirish (Zaxiralash)
-                </Button>
-              )}
-
               <div className="flex justify-end gap-2">
                 <Button
                   type="button"

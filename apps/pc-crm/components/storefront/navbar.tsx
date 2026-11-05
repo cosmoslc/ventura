@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Bell,
-  Heart,
   KeyRound,
   LogOut,
   Menu,
@@ -112,7 +111,7 @@ export function Navbar({
       <div className="mx-auto flex max-w-[var(--storefront-max-w,1320px)] items-center justify-between gap-4 px-4 py-3 sm:px-6">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 text-foreground font-black text-xl tracking-tight">
-          <div className="flex h-9 w-9 items-center justify-center rounded-[var(--r-btn,8px)] bg-primary text-primary-foreground shadow-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
             <Monitor size={20} />
           </div>
           <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text">
@@ -148,7 +147,7 @@ export function Navbar({
             type="button"
             onClick={() => setMobileSearchOpen(!mobileSearchOpen)}
             aria-label="Qidirish"
-            className={`md:hidden relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs ${
+            className={`md:hidden relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control ${
               mobileSearchOpen ? "border-primary text-primary bg-primary/10" : ""
             }`}
           >
@@ -156,45 +155,31 @@ export function Navbar({
           </button>
 
           {/* Dark / Light toggle */}
-          <ThemeToggle className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs" />
+          <ThemeToggle className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control" />
 
           {/* Bildirishnomalar */}
           <button
             type="button"
             onClick={() => setNotificationsOpen(true)}
             aria-label="Bildirishnomalar"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
           >
             <Bell size={18} />
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-xs">
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-bold text-primary-foreground shadow-control">
               {unreadNotifsCount > 0 ? unreadNotifsCount : 2}
             </span>
           </button>
-
-          {/* Sevimlilar */}
-          <Link
-            href="/profile/liked"
-            aria-label="Sevimlilar"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs"
-          >
-            <Heart size={18} />
-            {likedCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white shadow-xs">
-                {likedCount}
-              </span>
-            )}
-          </Link>
 
           {/* Savatcha */}
           <button
             type="button"
             onClick={onOpenCart}
             aria-label="Xarid savatchasi"
-            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs"
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
           >
             <ShoppingBag size={18} />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground shadow-xs">
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-2xs font-bold text-primary-foreground shadow-control">
                 {cartCount}
               </span>
             )}
@@ -207,7 +192,7 @@ export function Navbar({
                 type="button"
                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                 aria-label="Profil"
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs overflow-hidden"
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control overflow-hidden"
               >
                 {session.user.image ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
@@ -221,7 +206,7 @@ export function Navbar({
                     {session.user.name ? session.user.name.charAt(0).toUpperCase() : "U"}
                   </span>
                 )}
-                <span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full bg-emerald-500 ring-1 ring-card" />
+                <span className="absolute bottom-0.5 right-0.5 h-2 w-2 rounded-full bg-(--success-fg) ring-1 ring-card" />
               </button>
             ) : (
               <button
@@ -229,7 +214,7 @@ export function Navbar({
                 onClick={() => setAuthModalOpen(true)}
                 aria-label="Profil"
                 title="Tizimga kirish"
-                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs"
+                className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
               >
                 <User size={18} />
               </button>
@@ -237,16 +222,16 @@ export function Navbar({
 
             {/* Profil ochiluvchi menyusi */}
             {profileDropdownOpen && session?.user && (
-              <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl border border-border bg-card p-2 shadow-2xl z-50 animate-in fade-in-0 zoom-in-95 duration-150">
+              <div className="absolute right-0 top-full mt-2 w-56 rounded-modal border border-border bg-card p-2 shadow-modal z-50 animate-in fade-in-0 zoom-in-95 duration-150">
                 {/* Foydalanuvchi ma'lumotlari */}
                 <div className="border-b border-border/80 px-3 py-2.5">
                   <p className="font-bold text-xs text-foreground truncate">
                     {session.user.name}
                   </p>
-                  <p className="text-[11px] text-muted-foreground truncate">
+                  <p className="text-caption text-muted-foreground truncate">
                     {session.user.email}
                   </p>
-                  <span className="mt-1.5 inline-block rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary capitalize">
+                  <span className="mt-1.5 inline-block rounded-control bg-primary/10 px-1.5 py-0.5 text-2xs font-bold text-primary capitalize">
                     {(session.user as any).role || "Mijoz"}
                   </span>
                 </div>
@@ -256,7 +241,7 @@ export function Navbar({
                   <Link
                     href="/profile"
                     onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 rounded-control px-3 py-2 hover:bg-secondary transition-colors"
                   >
                     <User size={14} className="text-muted-foreground" />
                     <span>Mening profilim</span>
@@ -265,7 +250,7 @@ export function Navbar({
                   <Link
                     href="/profile/orders"
                     onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 rounded-control px-3 py-2 hover:bg-secondary transition-colors"
                   >
                     <ShoppingBag size={14} className="text-muted-foreground" />
                     <span>Buyurtmalarim</span>
@@ -274,7 +259,7 @@ export function Navbar({
                   <Link
                     href="/profile/settings"
                     onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 rounded-control px-3 py-2 hover:bg-secondary transition-colors"
                   >
                     <KeyRound size={14} className="text-muted-foreground" />
                     <span>Sozlamalar</span>
@@ -284,7 +269,7 @@ export function Navbar({
                     <Link
                       href="/admin"
                       onClick={() => setProfileDropdownOpen(false)}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-primary hover:bg-primary/10 transition-colors"
+                      className="flex items-center gap-2 rounded-control px-3 py-2 text-primary hover:bg-primary/10 transition-colors"
                     >
                       <Sparkles size={14} />
                       <span>Admin paneli</span>
@@ -301,7 +286,7 @@ export function Navbar({
                       setProfileDropdownOpen(false);
                       window.location.reload();
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-500/10 transition-colors"
+                    className="flex w-full items-center gap-2 rounded-control px-3 py-2 text-xs font-semibold text-(--danger-fg) hover:bg-(--danger-bg) transition-colors"
                   >
                     <LogOut size={14} />
                     <span>Tizimdan chiqish</span>
@@ -316,7 +301,7 @@ export function Navbar({
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Menyu"
-            className="lg:hidden relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-xs"
+            className="lg:hidden relative flex h-9 w-9 shrink-0 items-center justify-center rounded-card border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-secondary hover:border-primary/40 transition-all shadow-control"
           >
             {mobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
           </button>
@@ -365,7 +350,7 @@ export function Navbar({
             <Link
               href="/admin"
               onClick={() => setMobileMenuOpen(false)}
-              className="mt-2 rounded-[var(--r-btn,8px)] border border-border bg-secondary/50 py-2 text-center text-xs font-bold text-foreground hover:bg-secondary"
+              className="mt-2 rounded-btn border border-border bg-secondary/50 py-2 text-center text-xs font-bold text-foreground hover:bg-secondary"
             >
               Boshqaruv paneliga oʻtish (Admin)
             </Link>

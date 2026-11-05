@@ -1,4 +1,5 @@
 "use client";
+import { SelectField } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
 import { Button } from "@ventura/ui/button";
@@ -146,17 +147,17 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
         {/* Mahsulot tanlash */}
         <div className="space-y-1 border-t border-border pt-3">
           <Label className="text-xs font-semibold">Sotilgan tovar *</Label>
-          <select
+          <SelectField
             value={selectedProductId}
             onChange={(e) => handleProductSelect(e.target.value)}
-            className="h-(--control-h) w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+            className="h-(--control-h) w-full rounded-control border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
           >
             {products.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
-          </select>
+          </SelectField>
         </div>
 
         {/* Narx va soni */}
@@ -191,7 +192,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
         </div>
 
         {/* Sof foyda va Marja hisob-kitob kartasi */}
-        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-2">
+        <div className="rounded-card border border-border bg-muted/20 p-4 space-y-2">
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Tannarx snapshot (1 dona):</span>
             <span className="font-semibold text-foreground">{formatMoney(costSnapshot)}</span>
@@ -204,7 +205,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave }: SaleForm
 
           <div className="flex items-center justify-between border-t border-border/80 pt-2 text-sm font-bold">
             <span>Ushbu sotuvdan sof daromad:</span>
-            <span className={profit >= 0n ? "text-emerald-600 dark:text-emerald-400 font-black" : "text-rose-500 font-black"}>
+            <span className={profit >= 0n ? "text-(--success-fg) font-black" : "text-(--danger-fg) font-black"}>
               {profit >= 0n ? "+" : ""}{formatMoney(profit)} ({marginPercent}% marja)
             </span>
           </div>

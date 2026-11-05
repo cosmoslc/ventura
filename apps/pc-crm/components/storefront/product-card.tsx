@@ -5,6 +5,8 @@ import Link from "next/link";
 import { Eye, Heart, ShoppingCart } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
+import { Card } from "@ventura/ui/card";
+import { cn } from "@ventura/ui/lib/utils";
 import { PriceView } from "./price-view";
 import { RatingStars } from "./rating-stars";
 
@@ -59,37 +61,42 @@ export function ProductCard({
   const inStock = product.stock > 0;
 
   return (
-    <div
-      className={`group relative flex flex-col justify-between rounded-[var(--r-card,12px)] border border-border bg-card p-3 transition-shadow duration-200 hover:shadow-[var(--card-shadow-hover,0_8px_24px_rgba(0,0,0,0.06))] ${className}`}
+    <Card
+      className={cn(
+        "group relative flex flex-col justify-between p-3 transition-[transform,box-shadow,border-color] duration-300 ease-ios",
+        "hover:translate-y-(--card-hover-y) hover:border-(--card-hover-border) hover:shadow-card-hover",
+        className,
+      )}
     >
       {/* Rasm va brend bloki */}
-      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-[calc(var(--r-card,12px)-4px)] bg-white p-3">
+      <div className="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-control bg-media p-3">
         {/* Teglar: Yangi / Hit */}
         <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
           {product.isHit && (
-            <Badge tone="danger" className="text-[10px] uppercase font-bold tracking-wider">
+            <Badge tone="danger" className="text-2xs uppercase font-bold tracking-wider">
               Hit
             </Badge>
           )}
           {product.isNew && (
-            <Badge tone="info" className="text-[10px] uppercase font-bold tracking-wider">
+            <Badge tone="info" className="text-2xs uppercase font-bold tracking-wider">
               Yangi
             </Badge>
           )}
         </div>
 
         {/* Yurakcha (Liked) */}
-        <button
-          type="button"
+        <Button
+          variant="icon"
+          size="icon-sm"
           onClick={() => onToggleLike?.(product.id)}
           aria-label="Sevimlilarga qo'shish"
-          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-foreground shadow-sm transition-transform hover:scale-110 active:scale-95"
+          className="absolute top-2 right-2 z-10 rounded-avatar bg-card/80 text-foreground shadow-card backdrop-blur-sm"
         >
           <Heart
             size={16}
-            className={isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground hover:text-rose-500"}
+            className={isLiked ? "fill-(--danger-fg) text-(--danger-fg)" : "text-muted-foreground hover:text-(--danger-fg)"}
           />
-        </button>
+        </Button>
 
         {/* Asosiy Rasm */}
         <Link href={`/products/${product.slug}`} className="flex h-full w-full items-center justify-center">
@@ -104,7 +111,7 @@ export function ProductCard({
 
         {/* Brend nomi (yarim shaffof span) */}
         {product.brandName && (
-          <span className="absolute bottom-2 left-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
+          <span className="absolute bottom-2 left-2 rounded-badge bg-foreground/80 px-1.5 py-0.5 text-2xs font-medium text-background backdrop-blur-sm">
             {product.brandName}
           </span>
         )}
@@ -115,7 +122,7 @@ export function ProductCard({
             <Button
               size="sm"
               variant="ghost"
-              className="w-full gap-1.5 bg-white/90 shadow-md backdrop-blur-sm text-foreground"
+              className="w-full gap-1.5 bg-card/90 shadow-card-hover backdrop-blur-sm text-foreground"
               onClick={() => onQuickView(product)}
             >
               <Eye size={14} />
@@ -162,11 +169,11 @@ export function ProductCard({
             <RatingStars rating={product.ratingAvg ?? 0} count={product.ratingCount} size="sm" />
             <span>
               {inStock ? (
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="font-medium text-(--success-fg)">
                   Omborda: {product.stock} dona
                 </span>
               ) : (
-                <span className="text-rose-500 font-medium">Tugagan</span>
+                <span className="font-medium text-(--danger-fg)">Tugagan</span>
               )}
             </span>
           </div>
@@ -202,6 +209,6 @@ export function ProductCard({
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

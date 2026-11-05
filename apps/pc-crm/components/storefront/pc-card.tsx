@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Heart, ShoppingCart } from "lucide-react";
 import { Button } from "@ventura/ui/button";
+import { Card } from "@ventura/ui/card";
+import { cn } from "@ventura/ui/lib/utils";
 import { PriceView } from "./price-view";
 import { RatingStars } from "./rating-stars";
 
@@ -41,23 +43,28 @@ export function PcCard({
   const isAvailable = pc.isAvailable !== false;
 
   return (
-    <div
-      className={`group relative flex flex-col justify-between rounded-[var(--r-card,12px)] border border-border bg-card p-3.5 transition-shadow duration-200 hover:shadow-[var(--card-shadow-hover,0_8px_24px_rgba(0,0,0,0.06))] ${className}`}
+    <Card
+      className={cn(
+        "group relative flex flex-col justify-between p-3.5 transition-[transform,box-shadow,border-color] duration-300 ease-ios",
+        "hover:translate-y-(--card-hover-y) hover:border-(--card-hover-border) hover:shadow-card-hover",
+        className,
+      )}
     >
       {/* Rasm qismi */}
-      <div className="relative mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-[calc(var(--r-card,12px)-4px)] bg-white p-3">
+      <div className="relative mb-3 flex aspect-[4/3] w-full items-center justify-center overflow-hidden rounded-control bg-media p-3">
         {/* Liked button */}
-        <button
-          type="button"
+        <Button
+          variant="icon"
+          size="icon-sm"
           onClick={() => onToggleLike?.(pc.id)}
           aria-label="Sevimlilarga qo'shish"
-          className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 backdrop-blur-sm text-foreground shadow-sm transition-transform hover:scale-110 active:scale-95"
+          className="absolute top-2 right-2 z-10 rounded-avatar bg-card/80 text-foreground shadow-card backdrop-blur-sm"
         >
           <Heart
             size={16}
-            className={isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground hover:text-rose-500"}
+            className={isLiked ? "fill-(--danger-fg) text-(--danger-fg)" : "text-muted-foreground hover:text-(--danger-fg)"}
           />
-        </button>
+        </Button>
 
         <Link href={`/computers/${pc.slug}`} className="flex h-full w-full items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -81,7 +88,7 @@ export function PcCard({
 
         <div className="mt-1 flex items-center justify-between text-xs">
           <RatingStars rating={pc.ratingAvg ?? 0} count={pc.ratingCount} size="sm" />
-          <span className={isAvailable ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-rose-500 font-semibold"}>
+          <span className={isAvailable ? "font-semibold text-(--success-fg)" : "font-semibold text-(--danger-fg)"}>
             {isAvailable ? "Mavjud" : "Sotilgan"}
           </span>
         </div>
@@ -116,6 +123,6 @@ export function PcCard({
           </Button>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

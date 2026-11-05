@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Cpu, HardDrive, Monitor, Search, Sparkles, X } from "lucide-react";
+import { Input } from "@ventura/ui/input";
 import { useCart } from "@/lib/cart-context";
 import { formatMoney } from "@/lib/format";
 
@@ -93,17 +94,17 @@ export function SearchModal() {
       />
 
       {/* Modal oynasi */}
-      <div className="relative w-full max-w-2xl rounded-2xl border border-border bg-card p-4 shadow-2xl text-foreground">
+      <div className="relative w-full max-w-2xl rounded-modal border border-border bg-card p-4 shadow-modal text-foreground">
         {/* Qidiruv formasi */}
         <form onSubmit={handleSearchSubmit} className="relative flex items-center border-b border-border pb-3">
           <Search size={18} className="text-primary mr-3 shrink-0" />
-          <input
+          <Input
             type="text"
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Nomi, modeli yoki toifasi boʻyicha qidiring..."
-            className="w-full bg-transparent text-sm font-semibold placeholder:text-muted-foreground focus:outline-none"
+            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-sm font-semibold shadow-none placeholder:text-muted-foreground focus-visible:border-0 focus-visible:shadow-none"
           />
           <button
             type="button"
@@ -119,7 +120,7 @@ export function SearchModal() {
           {query.trim() === "" ? (
             <div className="space-y-4">
               <div>
-                <p className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-[11px] text-muted-foreground mb-2">
+                <p className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-caption text-muted-foreground mb-2">
                   <Sparkles size={13} className="text-primary" />
                   Koʻp qidirilayotganlar
                 </p>
@@ -133,7 +134,7 @@ export function SearchModal() {
                         setIsSearchOpen(false);
                         router.push(`/products?q=${encodeURIComponent(item)}`);
                       }}
-                      className="rounded-lg border border-border bg-secondary/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary hover:text-primary transition-colors"
+                      className="rounded-control border border-border bg-secondary/40 px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary hover:text-primary transition-colors"
                     >
                       {item}
                     </button>
@@ -142,14 +143,14 @@ export function SearchModal() {
               </div>
 
               <div className="border-t border-border/70 pt-3">
-                <p className="font-bold text-[11px] text-muted-foreground mb-2">
+                <p className="font-bold text-caption text-muted-foreground mb-2">
                   Kategoriyalar boʻyicha tezkor oʻtish
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   <Link
                     href="/products?category=protsessorlar"
                     onClick={() => setIsSearchOpen(false)}
-                    className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 rounded-control p-2 text-foreground hover:bg-secondary transition-colors"
                   >
                     <Cpu size={15} className="text-primary" />
                     <span className="font-semibold">Protsessorlar</span>
@@ -157,7 +158,7 @@ export function SearchModal() {
                   <Link
                     href="/products?category=videokartalar"
                     onClick={() => setIsSearchOpen(false)}
-                    className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 rounded-control p-2 text-foreground hover:bg-secondary transition-colors"
                   >
                     <Monitor size={15} className="text-primary" />
                     <span className="font-semibold">Videokartalar</span>
@@ -165,7 +166,7 @@ export function SearchModal() {
                   <Link
                     href="/products?category=ssd-disklar"
                     onClick={() => setIsSearchOpen(false)}
-                    className="flex items-center gap-2 rounded-lg p-2 text-foreground hover:bg-secondary transition-colors"
+                    className="flex items-center gap-2 rounded-control p-2 text-foreground hover:bg-secondary transition-colors"
                   >
                     <HardDrive size={15} className="text-primary" />
                     <span className="font-semibold">SSD toʻplovchilar</span>
@@ -175,7 +176,7 @@ export function SearchModal() {
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="font-bold text-[11px] text-muted-foreground mb-2">
+              <p className="font-bold text-caption text-muted-foreground mb-2">
                 Qidiruv natijalari: ({filtered.length} ta)
               </p>
 
@@ -189,10 +190,10 @@ export function SearchModal() {
                     key={idx}
                     href={item.type === "product" ? `/products/${item.slug}` : `/products?category=${item.slug}`}
                     onClick={() => setIsSearchOpen(false)}
-                    className="flex items-center justify-between rounded-lg p-2.5 hover:bg-secondary transition-colors"
+                    className="flex items-center justify-between rounded-control p-2.5 hover:bg-secondary transition-colors"
                   >
                     <div className="flex items-center gap-2.5">
-                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary uppercase">
+                      <span className="rounded bg-primary/10 px-1.5 py-0.5 text-2xs font-bold text-primary uppercase">
                         {item.type}
                       </span>
                       <span className="font-semibold text-foreground">{item.name}</span>

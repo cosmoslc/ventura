@@ -1,4 +1,5 @@
 "use client";
+import { SelectField } from "@ventura/ui/select";
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Layers, Plus, Sparkles, Trash2, Wrench } from "lucide-react";
@@ -9,33 +10,32 @@ import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import {
   calcFinalPrice,
-  calcItemProfit,
   calcMarginPercent,
   calcPcCostPrice,
   calcSellPriceFromMargin,
 } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
-import { CONFIGURATOR_CATALOG, type PcBuildItem, type PcComponentItem, type PcSpecItem } from "@/lib/pc-data";
+import { type PcBuildItem, type PcComponentItem, type PcSpecItem, type ConfiguratorPart } from "@/lib/pc-data";
 
 interface PcBuildFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData?: PcBuildItem | null;
-  onSave: (build: PcBuildItem) => void;
+  parts: ConfiguratorPart[];
+  onSave: (build: PcBuildItem) => Promise<boolean> | boolean;
 }
 
 export function PcBuildFormModal({
   open,
   onOpenChange,
   initialData,
+  parts,
   onSave,
 }: PcBuildFormModalProps) {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
-  const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [status, setStatus] = useState<"available" | "sold" | "hidden">("available");
-  const [warrantyMonths, setWarrantyMonths] = useState(12);
 
   // Komponentlar ro'yxati
   const [components, setComponents] = useState<PcComponentItem[]>([]);
@@ -53,10 +53,8 @@ export function PcBuildFormModal({
     if (initialData) {
       setName(initialData.name);
       setSlug(initialData.slug);
-      setDescription(initialData.description ?? "");
       setImageUrl(initialData.images[0] ?? "");
       setStatus(initialData.status);
-      setWarrantyMonths(initialData.warrantyMonths ?? 12);
       setComponents(initialData.components);
       setSellPriceStr(initialData.sellPrice.toString());
       setDiscountPercent(initialData.discountPercent);
@@ -64,104 +62,12 @@ export function PcBuildFormModal({
     } else {
       setName("");
       setSlug("");
-      setDescription("");
-      setImageUrl("https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80");
+      setImageUrl("");
       setStatus("available");
-      setWarrantyMonths(12);
       setDiscountPercent(0);
-
-      // Standart 8 ta komponent shabloni
-      const defaultComps: PcComponentItem[] = [
-        {
-          role: "cpu",
-          roleNameUz: "Protsessor",
-          productId: "cfg-cpu-2",
-          productName: "Intel Core i7-14700K",
-          qty: 1,
-          costSnapshot: 4_600_000n,
-          sellPrice: 5_200_000n,
-          inStock: true,
-        },
-        {
-          role: "motherboard",
-          roleNameUz: "Ona plata",
-          productId: "cfg-mb-2",
-          productName: "MSI MAG Z790 TOMAHAWK WIFI",
-          qty: 1,
-          costSnapshot: 2_950_000n,
-          sellPrice: 3_400_000n,
-          inStock: true,
-        },
-        {
-          role: "gpu",
-          roleNameUz: "Videokarta",
-          productId: "cfg-gpu-2",
-          productName: "ASUS Dual RTX 4070 SUPER 12GB",
-          qty: 1,
-          costSnapshot: 7_750_000n,
-          sellPrice: 8_900_000n,
-          inStock: true,
-        },
-        {
-          role: "ram",
-          roleNameUz: "RAM",
-          productId: "cfg-ram-2",
-          productName: "Kingston FURY Beast RGB 32GB DDR5",
-          qty: 1,
-          costSnapshot: 1_400_000n,
-          sellPrice: 1_750_000n,
-          inStock: true,
-        },
-        {
-          role: "ssd",
-          roleNameUz: "SSD",
-          productId: "cfg-ssd-2",
-          productName: "Samsung 990 PRO 1TB PCIe 4.0 NVMe",
-          qty: 1,
-          costSnapshot: 1_500_000n,
-          sellPrice: 1_850_000n,
-          inStock: true,
-        },
-        {
-          role: "psu",
-          roleNameUz: "PSU",
-          productId: "cfg-psu-2",
-          productName: "Corsair RM850e 850W Gold Modulli",
-          qty: 1,
-          costSnapshot: 1_350_000n,
-          sellPrice: 1_650_000n,
-          inStock: true,
-        },
-        {
-          role: "cooler",
-          roleNameUz: "Cooler",
-          productId: "cfg-clr-3",
-          productName: "DeepCool LT720 360mm AIO",
-          qty: 1,
-          costSnapshot: 1_100_000n,
-          sellPrice: 1_450_000n,
-          inStock: true,
-        },
-        {
-          role: "case",
-          roleNameUz: "Korpus",
-          productId: "cfg-cs-2",
-          productName: "NZXT H7 Flow RGB Black",
-          qty: 1,
-          costSnapshot: 1_250_000n,
-          sellPrice: 1_550_000n,
-          inStock: true,
-        },
-      ];
-      setComponents(defaultComps);
-      setSellPriceStr("26500000");
-
-      setSpecs([
-        { key: "cpu", title: "Protsessor (CPU)", value: "Intel Core i7-14700K (20 yadro, 5.6 GHz)", filterable: true },
-        { key: "gpu", title: "Videokarta (GPU)", value: "NVIDIA GeForce RTX 4070 SUPER 12GB", filterable: true },
-        { key: "ram", title: "Operativ xotira (RAM)", value: "32GB (2x16GB) DDR5 6000MHz RGB" },
-        { key: "ssd", title: "Doimiy xotira (SSD)", value: "1TB Samsung 990 PRO NVMe (7450 MB/s)" },
-      ]);
+      setComponents([]);
+      setSellPriceStr("0");
+      setSpecs([]);
     }
   }, [initialData, open]);
 
@@ -213,7 +119,7 @@ export function PcBuildFormModal({
 
   // Komponent tanlanganda
   const handleSelectProductForComponent = (index: number, partId: string) => {
-    const part = CONFIGURATOR_CATALOG.find((p) => p.id === partId);
+    const part = parts.find((p) => p.id === partId);
     if (!part) return;
 
     setComponents((prev) =>
@@ -221,6 +127,8 @@ export function PcBuildFormModal({
         i === index
           ? {
               ...c,
+              role: part.role,
+              roleNameUz: part.roleLabel,
               productId: part.id,
               productName: part.name,
               costSnapshot: part.costPrice,
@@ -239,17 +147,33 @@ export function PcBuildFormModal({
     );
   };
 
+  const handleComponentRoleChange = (index: number, role: ConfiguratorPart["role"]) => {
+    const part = parts.find((candidate) => candidate.role === role);
+    if (!part) return;
+    setComponents((prev) => prev.map((component, i) => i === index ? {
+      ...component,
+      role: part.role,
+      roleNameUz: part.roleLabel,
+      productId: part.id,
+      productName: part.name,
+      costSnapshot: part.costPrice,
+      sellPrice: part.price,
+      inStock: part.stock >= component.qty,
+    } : component));
+  };
+
   const handleRemoveComponent = (index: number) => {
     setComponents((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddComponentRow = () => {
-    const defaultPart = CONFIGURATOR_CATALOG[0]!;
+    const defaultPart = parts[0];
+    if (!defaultPart) return;
     setComponents((prev) => [
       ...prev,
       {
-        role: "other",
-        roleNameUz: "Qoʻshimcha",
+        role: defaultPart.role,
+        roleNameUz: defaultPart.roleLabel,
         productId: defaultPart.id,
         productName: defaultPart.name,
         qty: 1,
@@ -260,9 +184,9 @@ export function PcBuildFormModal({
     ]);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!name.trim() || components.length === 0) return;
 
     const cpuSpec = components.find((c) => c.role === "cpu")?.productName ?? "Intel Core i7";
     const gpuSpec = components.find((c) => c.role === "gpu")?.productName ?? "GeForce RTX";
@@ -273,13 +197,11 @@ export function PcBuildFormModal({
       id: initialData?.id ?? `pc-${Date.now()}`,
       slug: slug || `pc-${Date.now()}`,
       name,
-      description,
-      images: [imageUrl || "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80"],
+      images: imageUrl ? [imageUrl] : [],
       costPrice: totalCostPrice,
       sellPrice,
       discountPercent,
       status,
-      warrantyMonths,
       ratingAvg: initialData?.ratingAvg ?? 5.0,
       ratingCount: initialData?.ratingCount ?? 0,
       cpu: cpuSpec,
@@ -290,8 +212,8 @@ export function PcBuildFormModal({
       specs,
     };
 
-    onSave(buildRecord);
-    onOpenChange(false);
+    const saved = await onSave(buildRecord);
+    if (saved) onOpenChange(false);
   };
 
   return (
@@ -330,15 +252,14 @@ export function PcBuildFormModal({
             <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Holati
             </Label>
-            <select
+            <SelectField
               value={status}
               onChange={(e) => setStatus(e.target.value as any)}
-              className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
+              className="w-full rounded-control border border-input bg-background px-3 py-2 text-xs font-medium text-foreground focus:border-primary focus:outline-none"
             >
               <option value="available">Mavjud (Sotuvda)</option>
-              <option value="sold">Sotilgan</option>
               <option value="hidden">Yashirin (Qoralama)</option>
-            </select>
+            </SelectField>
           </div>
 
           <div className="space-y-1.5 sm:col-span-2">
@@ -352,18 +273,6 @@ export function PcBuildFormModal({
             />
           </div>
 
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Tavsifi (User storefront uchun)
-            </Label>
-            <textarea
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Kompyuterning maqsadi, unumdorligi va kafolat shartlari..."
-              className="w-full rounded-[var(--r-input,8px)] border border-input bg-background px-3 py-2 text-xs text-foreground focus:border-primary focus:outline-none resize-none"
-            />
-          </div>
         </div>
 
         {/* 2. Komponentlar ro'yxati (Tannarx kalkulyatori bilan) */}
@@ -374,7 +283,7 @@ export function PcBuildFormModal({
                 <Wrench size={16} className="text-primary" />
                 Komponentlar (Ombordan yigʻish)
               </h3>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-caption text-muted-foreground">
                 Tannarx komponentlar summasidan jonli hisoblanadi
               </p>
             </div>
@@ -383,6 +292,7 @@ export function PcBuildFormModal({
               variant="ghost"
               size="sm"
               onClick={handleAddComponentRow}
+              disabled={parts.length === 0}
               className="gap-1 text-xs"
             >
               <Plus size={13} />
@@ -394,28 +304,34 @@ export function PcBuildFormModal({
             {components.map((comp, idx) => (
               <div
                 key={idx}
-                className="grid grid-cols-12 items-center gap-2 rounded-lg border border-border bg-card p-2 text-xs"
+                className="grid grid-cols-12 items-center gap-2 rounded-control border border-border bg-card p-2 text-xs"
               >
                 <div className="col-span-3">
-                  <span className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground block truncate">
-                    {comp.roleNameUz}
-                  </span>
-                  <select
+                  <SelectField
+                    value={comp.role}
+                    onChange={(e) => handleComponentRoleChange(idx, e.target.value as ConfiguratorPart["role"])}
+                    className="mb-1 w-full rounded border border-input bg-background p-1 text-2xs font-bold"
+                  >
+                    {[...new Set(parts.map((item) => item.role))].map((role) => (
+                      <option key={role} value={role}>{parts.find((item) => item.role === role)?.roleLabel ?? role}</option>
+                    ))}
+                  </SelectField>
+                  <SelectField
                     value={comp.productId}
                     onChange={(e) => handleSelectProductForComponent(idx, e.target.value)}
-                    className="w-full rounded border border-input bg-background p-1 text-[11px] font-medium"
+                    className="w-full rounded border border-input bg-background p-1 text-caption font-medium"
                   >
-                    {CONFIGURATOR_CATALOG.map((item) => (
+                    {parts.filter((item) => item.role === comp.role).map((item) => (
                       <option key={item.id} value={item.id}>
-                        {item.name} ({formatMoney(item.costPrice)})
+                        {item.name} · {formatMoney(item.costPrice)} · mavjud: {item.stock}
                       </option>
                     ))}
-                  </select>
+                  </SelectField>
                 </div>
 
                 <div className="col-span-2 text-center">
-                  <span className="text-[10px] text-muted-foreground block">Soni</span>
-                  <input
+                  <span className="text-2xs text-muted-foreground block">Soni</span>
+                  <Input
                     type="number"
                     min={1}
                     value={comp.qty}
@@ -425,14 +341,14 @@ export function PcBuildFormModal({
                 </div>
 
                 <div className="col-span-3 text-right">
-                  <span className="text-[10px] text-muted-foreground block">Dona tannarx</span>
+                  <span className="text-2xs text-muted-foreground block">Dona tannarx</span>
                   <span className="font-mono text-xs font-semibold">
                     {formatMoney(comp.costSnapshot)}
                   </span>
                 </div>
 
                 <div className="col-span-3 text-right">
-                  <span className="text-[10px] text-muted-foreground block">Jami tannarx</span>
+                  <span className="text-2xs text-muted-foreground block">Jami tannarx</span>
                   <span className="font-mono text-xs font-bold text-foreground">
                     {formatMoney(comp.costSnapshot * BigInt(comp.qty))}
                   </span>
@@ -442,7 +358,7 @@ export function PcBuildFormModal({
                   <button
                     type="button"
                     onClick={() => handleRemoveComponent(idx)}
-                    className="text-muted-foreground hover:text-rose-500 p-1"
+                    className="text-muted-foreground hover:text-(--danger-fg) p-1"
                     aria-label="Oʻchirish"
                   >
                     <Trash2 size={13} />
@@ -453,7 +369,7 @@ export function PcBuildFormModal({
           </div>
 
           {/* Jonli tannarx indikatori */}
-          <div className="flex items-center justify-between rounded-lg bg-primary/10 border border-primary/20 p-3">
+          <div className="flex items-center justify-between rounded-control bg-primary/10 border border-primary/20 p-3">
             <span className="font-bold text-xs uppercase tracking-wider text-primary">
               PC Jami Tannarxi:
             </span>
@@ -476,13 +392,13 @@ export function PcBuildFormModal({
                 Kutilayotgan Marja %
               </Label>
               <div className="flex items-center gap-2">
-                <input
+                <Input
                   type="number"
                   min={0}
                   max={100}
                   value={marginPercent}
                   onChange={(e) => handleMarginChange(parseInt(e.target.value) || 0)}
-                  className="w-full rounded-[var(--r-input,8px)] border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
+                  className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
                 />
                 <span className="text-xs font-bold">%</span>
               </div>
@@ -505,22 +421,22 @@ export function PcBuildFormModal({
               <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Chegirma foizi %
               </Label>
-              <input
+              <Input
                 type="number"
                 min={0}
                 max={90}
                 value={discountPercent}
                 onChange={(e) => setDiscountPercent(parseInt(e.target.value) || 0)}
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
+                className="w-full rounded-control border border-input bg-background p-2 font-mono text-xs text-foreground focus:border-primary focus:outline-none"
               />
             </div>
           </div>
 
           {/* Jonli natija bloki */}
-          <div className="rounded-lg bg-muted/60 p-3 space-y-1 text-xs">
+          <div className="rounded-control bg-muted/60 p-3 space-y-1 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Sof kutilayotgan foyda:</span>
-              <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="font-mono font-bold text-(--success-fg)">
                 +{formatMoney(expectedProfit)} ({calculatedMargin}%)
               </span>
             </div>

@@ -62,8 +62,8 @@ test.describe("Storefront asosiy oqimi: Bosh sahifa -> Katalog -> Mahsulot -> Sa
     // 3. Brend bo'yicha filtrlash (Headerdagi Brend filtri)
     const allCatFilter = page.locator("aside").getByRole("button", { name: /Barcha toifalar/i });
     await allCatFilter.click();
-    const samsungFilter = page.getByRole("button", { name: "Samsung" });
-    await samsungFilter.click();
+    // Brend bo'yicha filtrlash (header dropdown)
+    await page.locator('select[aria-label*="Brend"]').selectOption("Samsung");
     await expect(page.getByText(/Samsung 990 PRO/i).first()).toBeVisible();
   });
 

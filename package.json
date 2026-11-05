@@ -36,7 +36,8 @@
     "edu:seed": "pnpm --filter @ventura/scripts edu:seed",
     "edu:seed-reports": "pnpm --filter @ventura/scripts edu:seed-reports",
     "pc:tenant": "pnpm --filter @ventura/scripts pc:tenant",
-    "pc:seed": "pnpm --filter @ventura/scripts pc:seed"
+    "pc:seed": "pnpm --filter @ventura/scripts pc:seed",
+    "pc:admin:create": "pnpm --filter @ventura/pc-crm admin:create"
   },
   "devDependencies": {
     "turbo": "^2.11.7",

@@ -24,10 +24,20 @@ export async function updateDbSetting(key: string, value: unknown) {
     });
 }
 
-export async function getDbShippingRates() {
+export async function getDbShippingRates(includeDisabled = false) {
   const db = getDb();
-  return db
-    .select()
-    .from(shippingRates)
-    .where(eq(shippingRates.enabled, true));
+  const query = db.select().from(shippingRates);
+  return includeDisabled ? query : query.where(eq(shippingRates.enabled, true));
+}
+
+export async function saveDbShippingRates(rates: { region: string; price: bigint; enabled: boolean; estimatedDays?: string }[]) {
+  const db = getDb();
+  return db.transaction(async (tx) => {
+    for (const rate of rates) {
+      await tx.insert(shippingRates).values(rate).onConflictDoUpdate({
+        target: shippingRates.region,
+        set: { price: rate.price, enabled: rate.enabled, estimatedDays: rate.estimatedDays, updatedAt: new Date() },
+      });
+    }
+  });
 }

@@ -42,7 +42,7 @@ export function PriceView({
       )}
 
       {discountPercent > 0 && (
-        <span className="rounded bg-rose-500/10 px-1.5 py-0.5 text-[11px] font-bold text-rose-600 dark:text-rose-400">
+        <span className="rounded bg-(--danger-bg) px-1.5 py-0.5 text-caption font-bold text-(--danger-fg)">
           -{discountPercent}%
         </span>
       )}

@@ -117,8 +117,8 @@ export default function AboutPage() {
         <section className="py-14 border-b border-border">
           <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-6 space-y-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="rounded-card border border-border bg-card p-6 space-y-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-control bg-primary/10 text-primary">
                   <ShieldCheck size={22} />
                 </div>
                 <h3 className="text-lg font-bold">100% Halol va Sifatli detallar</h3>
@@ -127,8 +127,8 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-6 space-y-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="rounded-card border border-border bg-card p-6 space-y-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-control bg-primary/10 text-primary">
                   <Wrench size={22} />
                 </div>
                 <h3 className="text-lg font-bold">Mukammal yigʻish madaniyati</h3>
@@ -137,8 +137,8 @@ export default function AboutPage() {
                 </p>
               </div>
 
-              <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-6 space-y-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="rounded-card border border-border bg-card p-6 space-y-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-control bg-primary/10 text-primary">
                   <Zap size={22} />
                 </div>
                 <h3 className="text-lg font-bold">24 soatlik toʻliq stress-test</h3>
@@ -164,7 +164,7 @@ export default function AboutPage() {
               {TEAM.map((member) => (
                 <div
                   key={member.name}
-                  className="rounded-[var(--r-card,12px)] border border-border bg-card p-4 text-center transition-all hover:shadow-xs"
+                  className="rounded-card border border-border bg-card p-4 text-center transition-all hover:shadow-control"
                 >
                   <div className="relative mx-auto mb-3 h-32 w-32 overflow-hidden rounded-full border-2 border-border">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -174,7 +174,7 @@ export default function AboutPage() {
                   <span className="text-xs text-primary font-medium block mt-0.5">{member.role}</span>
                   <a
                     href={`tel:${member.phone.replace(/\s+/g, "")}`}
-                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-mono text-muted-foreground hover:text-foreground"
+                    className="mt-2 inline-flex items-center gap-1 text-caption font-mono text-muted-foreground hover:text-foreground"
                   >
                     <Phone size={11} />
                     {member.phone}
@@ -199,7 +199,7 @@ export default function AboutPage() {
               {BRANCHES.map((b, idx) => (
                 <div
                   key={idx}
-                  className="rounded-[var(--r-card,12px)] border border-border bg-card p-6 space-y-3"
+                  className="rounded-card border border-border bg-card p-6 space-y-3"
                 >
                   <div className="flex items-center gap-2">
                     <MapPin size={20} className="text-primary" />

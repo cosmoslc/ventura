@@ -1,14 +1,10 @@
 "use client";
+import { Input } from "@ventura/ui/input";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Ban,
-  CheckCircle2,
-  Lock,
-  Mail,
-  Phone,
   Search,
-  ShieldAlert,
   ShieldCheck,
   ShoppingBag,
   Unlock,
@@ -17,14 +13,16 @@ import {
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
+import { StatCard } from "@ventura/ui/stat-card";
 import { formatMoney } from "@/lib/format";
+import { getAdminUsersAction, toggleUserActiveAction } from "@/lib/server/actions";
 
 interface AdminUserItem {
   id: string;
   name: string;
   phone: string;
   email?: string;
-  provider: "phone" | "google";
+  provider: "email" | "google";
   ordersCount: number;
   totalSpent: bigint;
   registeredAt: string;
@@ -32,69 +30,28 @@ interface AdminUserItem {
   status: "active" | "blocked";
 }
 
-const INITIAL_USERS: AdminUserItem[] = [
-  {
-    id: "usr-1",
-    name: "Sardorbek Rahimov",
-    phone: "+998 90 123 45 67",
-    email: "sardor@example.com",
-    provider: "phone",
-    ordersCount: 4,
-    totalSpent: 28_950_000n,
-    registeredAt: "2026-08-12",
-    lastLoginAt: "2026-10-29 14:15",
-    status: "active",
-  },
-  {
-    id: "usr-2",
-    name: "Azizbek Yusupov",
-    phone: "+998 97 765 43 21",
-    email: "azizbek.dev@gmail.com",
-    provider: "google",
-    ordersCount: 2,
-    totalSpent: 16_200_000n,
-    registeredAt: "2026-09-01",
-    lastLoginAt: "2026-10-28 18:20",
-    status: "active",
-  },
-  {
-    id: "usr-3",
-    name: "Doston Qodirov",
-    phone: "+998 93 333 44 55",
-    email: "doston.q@yandex.ru",
-    provider: "phone",
-    ordersCount: 1,
-    totalSpent: 48_000_000n,
-    registeredAt: "2026-10-20",
-    lastLoginAt: "2026-10-27 10:12",
-    status: "active",
-  },
-  {
-    id: "usr-4",
-    name: "Botir Ergashev",
-    phone: "+998 91 999 88 77",
-    provider: "phone",
-    ordersCount: 0,
-    totalSpent: 0n,
-    registeredAt: "2026-10-25",
-    lastLoginAt: "2026-10-25 11:00",
-    status: "active",
-  },
-  {
-    id: "usr-5",
-    name: "Spam / Shubhali Profil",
-    phone: "+998 95 000 00 00",
-    provider: "phone",
-    ordersCount: 0,
-    totalSpent: 0n,
-    registeredAt: "2026-10-26",
-    lastLoginAt: "2026-10-26 03:12",
-    status: "blocked",
-  },
-];
-
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<AdminUserItem[]>(INITIAL_USERS);
+  const [users, setUsers] = useState<AdminUserItem[]>([]);
+  const [error, setError] = useState("");
+
+  const loadUsers = useCallback(async () => {
+    const result = await getAdminUsersAction();
+    if (!result.success) { setError(result.error ?? "Foydalanuvchilarni yuklab bo'lmadi"); return; }
+    setError("");
+    setUsers(result.users.map((u) => ({
+      id: u.id,
+      name: u.name,
+      phone: u.phone ?? "—",
+      email: u.email,
+      provider: u.provider,
+      ordersCount: u.ordersCount,
+      totalSpent: u.totalSpent,
+      registeredAt: u.createdAt,
+      lastLoginAt: u.lastLoginAt ?? "—",
+      status: u.isActive ? "active" : "blocked",
+    })));
+  }, []);
+  useEffect(() => { void loadUsers(); }, [loadUsers]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
 
@@ -127,18 +84,16 @@ export default function AdminUsersPage() {
     };
   }, [users]);
 
-  const toggleUserStatus = (id: string) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? { ...u, status: u.status === "active" ? "blocked" : "active" }
-          : u
-      )
-    );
+  const toggleUserStatus = async (id: string) => {
+    const result = await toggleUserActiveAction(id);
+    if (!result.success) { setError(result.error ?? "Foydalanuvchi holatini o'zgartirib bo'lmadi"); return; }
+    await loadUsers();
   };
 
   return (
     <div className="space-y-6">
+      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -150,60 +105,11 @@ export default function AdminUsersPage() {
       </div>
 
       {/* 4 ta Statistik karta */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Jami foydalanuvchilar
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">{stats.totalUsers} ta</span>
-            <Users size={20} className="text-primary" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Roʻyxatdan oʻtgan profil
-          </span>
-        </div>
-
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Faol mijozlar
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">{stats.activeUsers} ta</span>
-            <UserCheck size={20} className="text-emerald-500" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Bloklanmagan profillar
-          </span>
-        </div>
-
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Xaridorlar soni
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-black">{stats.payingUsers} ta</span>
-            <ShoppingBag size={20} className="text-primary" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Kamida 1 ta buyurtma bergan
-          </span>
-        </div>
-
-        <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-4">
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Jami xaridlar summasi
-          </span>
-          <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-lg font-black font-mono text-foreground truncate">
-              {formatMoney(stats.totalSpentAll)}
-            </span>
-            <ShieldCheck size={20} className="text-emerald-500 shrink-0 ml-1" />
-          </div>
-          <span className="text-[11px] text-muted-foreground mt-1 block">
-            Barcha mijozlar boʻyicha
-          </span>
-        </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard icon={<Users />} label="Jami foydalanuvchilar" value={`${stats.totalUsers} ta`} tone={1} hint="Roʻyxatdan oʻtgan profil" />
+        <StatCard icon={<UserCheck />} label="Faol mijozlar" value={`${stats.activeUsers} ta`} tone={2} hint="Bloklanmagan profillar" />
+        <StatCard icon={<ShoppingBag />} label="Xaridorlar soni" value={`${stats.payingUsers} ta`} tone={3} hint="Kamida 1 ta buyurtma bergan" />
+        <StatCard icon={<ShieldCheck />} label="Jami xaridlar summasi" value={formatMoney(stats.totalSpentAll)} tone={4} valueClassName="whitespace-nowrap text-title" hint="Barcha mijozlar boʻyicha" />
       </div>
 
       {/* Filterlar qatori */}
@@ -211,17 +117,17 @@ export default function AdminUsersPage() {
         {/* Qidiruv */}
         <div className="relative flex-1 max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <Input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Ism, telefon raqam yoki email..."
-            className="w-full rounded-[var(--r-input,8px)] border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
+            className="w-full rounded-control border border-input bg-card py-2 pl-9 pr-4 text-xs sm:text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none"
           />
         </div>
 
         {/* Holat tablari */}
-        <div className="flex items-center gap-1 rounded-lg border border-border bg-card p-1">
+        <div className="flex items-center gap-1 rounded-control border border-border bg-card p-1">
           {(
             [
               { label: "Barchasi", value: "all" },
@@ -233,9 +139,9 @@ export default function AdminUsersPage() {
               key={t.value}
               type="button"
               onClick={() => setStatusFilter(t.value)}
-              className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+              className={`rounded-control px-3 py-1 text-xs font-semibold transition-all ${
                 statusFilter === t.value
-                  ? "bg-primary text-primary-foreground shadow-xs"
+                  ? "bg-primary text-primary-foreground shadow-control"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
@@ -246,10 +152,10 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Foydalanuvchilar jadvali */}
-      <div className="rounded-[var(--r-card,12px)] border border-border bg-card overflow-hidden shadow-xs">
+      <div className="rounded-card border border-border bg-card overflow-hidden shadow-control">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="border-b border-border bg-muted/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            <thead className="border-b border-border bg-muted/40 text-caption font-bold uppercase tracking-wider text-muted-foreground">
               <tr>
                 <th className="py-3 px-4">Foydalanuvchi</th>
                 <th className="py-3 px-4">Kirish usuli</th>
@@ -279,7 +185,7 @@ export default function AdminUsersPage() {
                         </div>
                         <div>
                           <span className="font-bold text-foreground block">{user.name}</span>
-                          <span className="font-mono text-[11px] text-muted-foreground block">
+                          <span className="font-mono text-caption text-muted-foreground block">
                             {user.phone}
                           </span>
                         </div>
@@ -288,8 +194,8 @@ export default function AdminUsersPage() {
 
                     {/* Kirish usuli */}
                     <td className="py-3.5 px-4">
-                      <Badge tone={user.provider === "google" ? "info" : "neutral"} className="gap-1 text-[11px]">
-                        {user.provider === "google" ? "Google" : "SMS Telefon"}
+                      <Badge tone={user.provider === "google" ? "info" : "neutral"} className="gap-1 text-caption">
+                        {user.provider === "google" ? "Google" : "Email / parol"}
                       </Badge>
                     </td>
 
@@ -304,12 +210,12 @@ export default function AdminUsersPage() {
                     </td>
 
                     {/* Sana */}
-                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-[11px]">
+                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-caption">
                       {user.registeredAt}
                     </td>
 
                     {/* Oxirgi kirish */}
-                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-[11px]">
+                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-caption">
                       {user.lastLoginAt}
                     </td>
 
@@ -327,8 +233,8 @@ export default function AdminUsersPage() {
                         onClick={() => toggleUserStatus(user.id)}
                         className={`inline-flex items-center gap-1 rounded px-2.5 py-1 text-xs font-semibold transition-colors ${
                           user.status === "active"
-                            ? "text-rose-500 hover:bg-rose-500/10"
-                            : "text-emerald-500 hover:bg-emerald-500/10"
+                            ? "text-(--danger-fg) hover:bg-(--danger-bg)"
+                            : "text-(--success-fg) hover:bg-(--success-bg)"
                         }`}
                       >
                         {user.status === "active" ? (

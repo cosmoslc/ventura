@@ -28,7 +28,7 @@ export default function CartPage() {
             <button
               type="button"
               onClick={clearCart}
-              className="text-xs font-semibold text-rose-500 hover:underline"
+              className="text-xs font-semibold text-(--danger-fg) hover:underline"
             >
               Savatchani tozalash
             </button>
@@ -36,7 +36,7 @@ export default function CartPage() {
         </div>
 
         {items.length === 0 ? (
-          <div className="flex h-80 flex-col items-center justify-center text-center rounded-2xl border border-border bg-card p-6">
+          <div className="flex h-80 flex-col items-center justify-center text-center rounded-modal border border-border bg-card p-6">
             <ShoppingBag size={54} className="text-muted-foreground/30 mb-4" />
             <h2 className="text-lg font-bold text-foreground">Savatchangiz boʻsh</h2>
             <p className="text-xs text-muted-foreground mt-1 max-w-sm mb-6">
@@ -55,17 +55,17 @@ export default function CartPage() {
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-border bg-card p-4 shadow-xs"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-card border border-border bg-card p-4 shadow-control"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg border border-border bg-white p-2">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-control border border-border bg-media p-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain" />
                     </div>
 
                     <div>
                       {item.brandName && (
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
                           {item.brandName}
                         </span>
                       )}
@@ -79,7 +79,7 @@ export default function CartPage() {
 
                   {/* Miqdor va o'chirish */}
                   <div className="flex items-center justify-between sm:justify-end gap-6 border-t sm:border-t-0 pt-2 sm:pt-0 border-border/60">
-                    <div className="flex items-center rounded-lg border border-border bg-background">
+                    <div className="flex items-center rounded-control border border-border bg-background">
                       <button
                         type="button"
                         onClick={() => updateQty(item.id, item.qty - 1)}
@@ -97,7 +97,7 @@ export default function CartPage() {
                       </button>
                     </div>
 
-                    <div className="text-right min-w-[100px]">
+                    <div className="text-right min-w-25">
                       <p className="font-black text-foreground text-sm">
                         {formatMoney(item.price * BigInt(item.qty))}
                       </p>
@@ -106,7 +106,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="text-muted-foreground hover:text-rose-500 p-1.5 transition-colors"
+                      className="text-muted-foreground hover:text-(--danger-fg) p-1.5 transition-colors"
                       title="Oʻchirish"
                     >
                       <Trash2 size={16} />
@@ -118,7 +118,7 @@ export default function CartPage() {
 
             {/* O'ng tomon: Buyurtma tafsilotlari kartasi */}
             <div>
-              <div className="sticky top-20 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+              <div className="sticky top-20 rounded-modal border border-border bg-card p-6 shadow-card space-y-4">
                 <h2 className="text-base font-black text-foreground">Buyurtma tafsilotlari</h2>
 
                 <div className="space-y-2.5 text-xs text-muted-foreground">
@@ -131,7 +131,7 @@ export default function CartPage() {
                     <span>Yetkazib berish:</span>
                     <span className="font-bold text-foreground">
                       {shipping === 0n ? (
-                        <span className="text-emerald-600 dark:text-emerald-400">Bepul</span>
+                        <span className="text-(--success-fg)">Bepul</span>
                       ) : (
                         formatMoney(shipping)
                       )}
@@ -145,12 +145,12 @@ export default function CartPage() {
                 </div>
 
                 <Link href="/checkout" className="block pt-2">
-                  <Button variant="primary" size="default" className="w-full gap-2 font-bold shadow-md">
+                  <Button variant="primary" size="default" className="w-full gap-2 font-bold shadow-card-hover">
                     Toʻlovga oʻtish <ArrowRight size={16} />
                   </Button>
                 </Link>
 
-                <p className="text-center text-[11px] text-muted-foreground">
+                <p className="text-center text-caption text-muted-foreground">
                   Xavfsiz buyurtma va rasmiy kafolat bilan
                 </p>
               </div>

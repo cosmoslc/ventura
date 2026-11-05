@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle,
   Boxes,
-  CheckCircle2,
   Edit,
-  Eye,
   Plus,
   Search,
   Tag,
@@ -16,102 +14,45 @@ import {
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
 import { type ProductFormData, ProductFormModal } from "@/components/admin/product-form-modal";
 import { formatMoney } from "@/lib/format";
-
-// Boshlang'ich namunaviy mahsulotlar
-const INITIAL_PRODUCTS: ProductFormData[] = [
-  {
-    id: "p-1",
-    nameUz: "Intel Core i7-14700K 3.4GHz LGA1700 Protsessor",
-    nameRu: "Процессор Intel Core i7-14700K",
-    categorySlug: "protsessorlar",
-    brandName: "Intel",
-    sku: "CPU-INT-14700K",
-    imageUrl: "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&q=80",
-    costPrice: 4_500_000n,
-    sellPrice: 5_200_000n,
-    marginPercent: 15,
-    discountPercent: 10,
-    stock: 8,
-    minStock: 2,
-    isNew: true,
-    isHit: true,
-    isActive: true,
-    variants: [],
-    specs: [
-      { key: "cores", title: "Yadro soni", value: "20 yadro (8P + 12E)", helpText: "Protsessor bir vaqtning oʻzida bir nechta vazifani bajarish kuchi" },
-      { key: "freq", title: "Maksimal chastota", value: "5.6 GHz" },
-    ],
-  },
-  {
-    id: "p-2",
-    nameUz: "ASUS ROG Strix GeForce RTX 4070 Ti SUPER 16GB",
-    nameRu: "Видеокарта ASUS ROG Strix RTX 4070 Ti SUPER",
-    categorySlug: "videokartalar",
-    brandName: "ASUS",
-    sku: "GPU-ASUS-4070TIS",
-    imageUrl: "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=500&q=80",
-    costPrice: 11_800_000n,
-    sellPrice: 13_500_000n,
-    marginPercent: 14,
-    discountPercent: 5,
-    stock: 3,
-    minStock: 2,
-    isNew: false,
-    isHit: true,
-    isActive: true,
-    variants: [
-      { colorName: "Qora (Black)", colorHex: "#111111", stock: 2 },
-      { colorName: "Oq (White Edition)", colorHex: "#f5f5f5", stock: 1 },
-    ],
-    specs: [
-      { key: "vram", title: "Xotira hajmi", value: "16 GB GDDR6X", helpText: "Oʻyinlar va 3D teksturalar uchun video xotira" },
-    ],
-  },
-  {
-    id: "p-3",
-    nameUz: "Kingston FURY Beast RGB 32GB (2x16GB) 6000MHz DDR5",
-    categorySlug: "operativ-xotira",
-    brandName: "Kingston",
-    sku: "RAM-KNG-32DDR5",
-    imageUrl: "https://images.unsplash.com/photo-1541029071515-84cc54f84dc5?w=500&q=80",
-    costPrice: 1_450_000n,
-    sellPrice: 1_750_000n,
-    marginPercent: 20,
-    discountPercent: 0,
-    stock: 14,
-    minStock: 3,
-    isNew: true,
-    isHit: false,
-    isActive: true,
-    variants: [],
-    specs: [],
-  },
-  {
-    id: "p-4",
-    nameUz: "Samsung 990 PRO 2TB PCIe 4.0 NVMe M.2 SSD",
-    categorySlug: "ssd-disklar",
-    brandName: "Samsung",
-    sku: "SSD-SAM-990P-2T",
-    imageUrl: "https://images.unsplash.com/photo-1597872200969-2b65d56bd16b?w=500&q=80",
-    costPrice: 2_150_000n,
-    sellPrice: 2_600_000n,
-    marginPercent: 21,
-    discountPercent: 12,
-    stock: 1, // kam qolgan
-    minStock: 2,
-    isNew: false,
-    isHit: true,
-    isActive: true,
-    variants: [],
-    specs: [],
-  },
-];
+import { deleteProductAction, getAdminProductsAction, saveProductAction } from "@/lib/server/actions";
 
 export default function AdminProductsPage() {
-  const [productsList, setProductsList] = useState<ProductFormData[]>(INITIAL_PRODUCTS);
+  const [productsList, setProductsList] = useState<ProductFormData[]>([]);
+  const [loadError, setLoadError] = useState("");
+  const loadProducts = useCallback(async () => {
+    const result = await getAdminProductsAction();
+    if (!result.success) {
+      setLoadError(result.error ?? "Mahsulotlarni yuklab bo'lmadi");
+      return;
+    }
+    setLoadError("");
+    setProductsList(result.products.map((product) => ({
+      id: product.id,
+      nameUz: product.name,
+      nameRu: product.nameRu,
+      categorySlug: product.categorySlug,
+      brandName: product.brandName ?? "",
+      sku: product.sku ?? "",
+      imageUrl: product.imageUrl,
+      costPrice: product.costPrice,
+      sellPrice: product.sellPrice,
+      marginPercent: product.marginPercent ?? 0,
+      discountPercent: product.discountPercent,
+      stock: product.stock,
+      minStock: product.minStock,
+      isNew: product.isNew,
+      isHit: product.isHit,
+      isActive: product.isActive,
+      variants: (product.variants ?? []).map(({ colorName, colorHex, stock }) => ({ colorName, colorHex, stock })),
+      specs: product.specs ?? [],
+    })));
+  }, []);
+
+  useEffect(() => { void loadProducts(); }, [loadProducts]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
@@ -155,25 +96,41 @@ export default function AdminProductsPage() {
     setModalOpen(true);
   };
 
-  const handleDelete = (id?: string) => {
-    if (!id) return;
-    if (confirm("Haqiqatan ham ushbu mahsulotni oʻchirmoqchimisiz?")) {
-      setProductsList(productsList.filter((p) => p.id !== id));
+  const handleDelete = async (id?: string) => {
+    if (!id || !confirm("Haqiqatan ham ushbu mahsulotni oʻchirmoqchimisiz?")) return;
+    const result = await deleteProductAction(id);
+    if (!result.success) {
+      setLoadError(result.error ?? "Mahsulotni o'chirib bo'lmadi");
+      return;
     }
+    await loadProducts();
   };
 
-  const handleSaveProduct = (data: ProductFormData) => {
-    if (data.id) {
-      // Tahrirlash
-      setProductsList(productsList.map((p) => (p.id === data.id ? data : p)));
-    } else {
-      // Yangi qo'shish
-      const newProduct: ProductFormData = {
-        ...data,
-        id: `p-${Date.now()}`,
-      };
-      setProductsList([newProduct, ...productsList]);
+  const handleSaveProduct = async (data: ProductFormData) => {
+    const result = await saveProductAction({
+      id: data.id,
+      nameUz: data.nameUz,
+      nameRu: data.nameRu,
+      categorySlug: data.categorySlug,
+      brandName: data.brandName,
+      sku: data.sku,
+      costPrice: data.costPrice,
+      sellPrice: data.sellPrice,
+      discountPercent: data.discountPercent,
+      stock: data.stock,
+      minStock: data.minStock,
+      isNew: data.isNew,
+      isHit: data.isHit,
+      isActive: data.isActive,
+      imageUrl: data.imageUrl,
+      specs: data.specs,
+    });
+    if (!result.success) {
+      setLoadError(result.error ?? "Mahsulotni saqlab bo'lmadi");
+      return;
     }
+    setModalOpen(false);
+    await loadProducts();
   };
 
   return (
@@ -195,6 +152,8 @@ export default function AdminProductsPage() {
         </Button>
       </div>
 
+      {loadError && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{loadError}</div>}
+
       {/* 2. Statistik kartalar */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -210,6 +169,7 @@ export default function AdminProductsPage() {
           label="Ombor tannarxi"
           value={formatMoney(totalCostValue)}
           tone={2}
+          valueClassName="whitespace-nowrap text-title"
           hint="Jami xarid tannarxi"
         />
 
@@ -218,8 +178,8 @@ export default function AdminProductsPage() {
           label="Kutilayotgan sof foyda"
           value={formatMoney(expectedProfit)}
           tone={3}
-          trend={{ value: "Sotuv qiymatidan", up: true }}
-          hint={formatMoney(totalSellValue)}
+          valueClassName="whitespace-nowrap text-title"
+          hint={<span className="whitespace-nowrap">Sotuv: {formatMoney(totalSellValue)}</span>}
         />
 
         <StatCard
@@ -227,14 +187,13 @@ export default function AdminProductsPage() {
           label="Kam qolganlar"
           value={`${lowStockCount} ta`}
           tone={4}
-          trend={{ value: "Diqqat", up: false }}
           hint="Zaxirasi tugamoqda"
         />
       </div>
 
       {/* 3. Qidiruv va Filtrlar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-sm">
-        <div className="relative flex-1 min-w-[240px]">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-card p-3 shadow-card">
+        <div className="relative flex-1 min-w-60">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
@@ -246,37 +205,39 @@ export default function AdminProductsPage() {
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Toifa filter */}
-          <select
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="all">Barcha toifalar</option>
-            <option value="protsessorlar">Protsessorlar</option>
-            <option value="videokartalar">Videokartalar</option>
-            <option value="operativ-xotira">Operativ xotira</option>
-            <option value="ssd-disklar">SSD toʻplovchilar</option>
-          </select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger aria-label="Mahsulot toifasi" className="w-auto min-w-44 text-xs">
+              <SelectValue placeholder="Barcha toifalar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Barcha toifalar</SelectItem>
+              <SelectItem value="protsessorlar">Protsessorlar</SelectItem>
+              <SelectItem value="videokartalar">Videokartalar</SelectItem>
+              <SelectItem value="operativ-xotira">Operativ xotira</SelectItem>
+              <SelectItem value="ssd-disklar">SSD toʻplovchilar</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Qoldiq filter */}
-          <select
-            value={stockFilter}
-            onChange={(e) => setStockFilter(e.target.value)}
-            className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="all">Barcha qoldiqlar</option>
-            <option value="in_stock">Mavjud (Bor)</option>
-            <option value="low_stock">Kam qolgan</option>
-            <option value="out_of_stock">Tugagan</option>
-          </select>
+          <Select value={stockFilter} onValueChange={setStockFilter}>
+            <SelectTrigger aria-label="Ombor qoldigʻi" className="w-auto min-w-40 text-xs">
+              <SelectValue placeholder="Barcha qoldiqlar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Barcha qoldiqlar</SelectItem>
+              <SelectItem value="in_stock">Mavjud (Bor)</SelectItem>
+              <SelectItem value="low_stock">Kam qolgan</SelectItem>
+              <SelectItem value="out_of_stock">Tugagan</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* 4. Mahsulotlar Jadvali */}
-      <div className="overflow-x-auto rounded-[var(--r-card,12px)] border border-border bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-card shadow-card">
         <table className="w-full border-collapse text-left text-xs">
           <thead>
-            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-[11px] tracking-wider">
+            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5">Mahsulot</th>
               <th className="p-3.5">SKU / Brend</th>
               <th className="p-3.5 text-center">Qoldiq</th>
@@ -306,7 +267,7 @@ export default function AdminProductsPage() {
                     {/* Mahsulot rasm + nom */}
                     <td className="p-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-white p-1">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-border/80 bg-media p-1">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src={p.imageUrl}
@@ -320,17 +281,17 @@ export default function AdminProductsPage() {
                           </p>
                           <div className="flex items-center gap-1.5 mt-0.5">
                             {p.isHit && (
-                              <span className="rounded bg-rose-500/10 px-1 text-[9px] font-bold text-rose-600">
+                              <span className="rounded bg-(--danger-bg) px-1 text-2xs font-bold text-(--danger-fg)">
                                 HIT
                               </span>
                             )}
                             {p.isNew && (
-                              <span className="rounded bg-primary/10 px-1 text-[9px] font-bold text-primary">
+                              <span className="rounded bg-primary/10 px-1 text-2xs font-bold text-primary">
                                 YANGI
                               </span>
                             )}
                             {p.variants.length > 0 && (
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-2xs text-muted-foreground">
                                 {p.variants.length} ta rang
                               </span>
                             )}
@@ -342,7 +303,7 @@ export default function AdminProductsPage() {
                     {/* SKU & Brend */}
                     <td className="p-3.5">
                       <p className="font-mono text-xs font-semibold text-foreground">{p.sku}</p>
-                      <p className="text-[11px] text-muted-foreground">{p.brandName || "Brendsiz"}</p>
+                      <p className="text-caption text-muted-foreground">{p.brandName || "Brendsiz"}</p>
                     </td>
 
                     {/* Qoldiq */}
@@ -351,16 +312,16 @@ export default function AdminProductsPage() {
                         <span
                           className={
                             isOut
-                              ? "text-rose-500"
+                              ? "text-(--danger-fg)"
                               : isLow
-                                ? "text-amber-500"
-                                : "text-emerald-600 dark:text-emerald-400"
+                                ? "text-(--warning-fg)"
+                                : "text-(--success-fg)"
                           }
                         >
                           {p.stock} dona
                         </span>
                         {isLow && (
-                          <span title="Kam qoldi" className="text-amber-500">
+                          <span title="Kam qoldi" className="text-(--warning-fg)">
                             ⚠
                           </span>
                         )}
@@ -377,7 +338,7 @@ export default function AdminProductsPage() {
                       <div>
                         {formatMoney(p.sellPrice)}
                         {p.discountPercent > 0 && (
-                          <span className="block text-[10px] text-rose-500">
+                          <span className="block text-2xs text-(--danger-fg)">
                             -{p.discountPercent}% chegirma
                           </span>
                         )}
@@ -385,13 +346,13 @@ export default function AdminProductsPage() {
                     </td>
 
                     {/* Sof foyda */}
-                    <td className="p-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                    <td className="p-3.5 text-right font-bold text-(--success-fg)">
                       +{formatMoney(profitPerItem)}
                     </td>
 
                     {/* Holat */}
                     <td className="p-3.5 text-center">
-                      <Badge tone={p.isActive ? "success" : "neutral"} className="text-[10px]">
+                      <Badge tone={p.isActive ? "success" : "neutral"} className="text-2xs">
                         {p.isActive ? "Faol" : "Nofaol"}
                       </Badge>
                     </td>
@@ -410,7 +371,7 @@ export default function AdminProductsPage() {
                         <button
                           type="button"
                           onClick={() => handleDelete(p.id)}
-                          className="rounded p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600 transition-colors"
+                          className="rounded p-1.5 text-muted-foreground hover:bg-(--danger-bg) hover:text-(--danger-fg) transition-colors"
                           title="Oʻchirish"
                         >
                           <Trash2 size={15} />

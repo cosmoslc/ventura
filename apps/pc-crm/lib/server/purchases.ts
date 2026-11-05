@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, desc, sql } from "drizzle-orm";
+import { and, eq, desc, ne, sql } from "drizzle-orm";
 import {
   purchases,
   products,
@@ -61,77 +61,65 @@ export async function createDbPurchase(input: {
   note?: string;
 }) {
   const db = getDb();
-
-  const [row] = await db
-    .insert(purchases)
-    .values({
+  if (!Number.isInteger(input.qty) || input.qty <= 0 || input.totalCost < 0n) {
+    throw new Error("Kirim ma'lumotlari noto'g'ri");
+  }
+  const unitCost = input.totalCost / BigInt(input.qty);
+  return db.transaction(async (tx) => {
+    const [row] = await tx.insert(purchases).values({
       productId: input.productId,
       type: input.type,
       qty: input.qty,
       totalCost: input.totalCost,
-      unitCost: input.unitCost,
+      unitCost,
       supplier: input.supplier,
       note: input.note,
       purchasedAt: input.purchasedAt ? new Date(input.purchasedAt) : new Date(),
-    })
-    .returning();
-
-  // Mahsulot qoldig'i va tannarxini yangilash
-  await db
-    .update(products)
-    .set({
-      stock: sql`${products.stock} + ${input.qty}`,
-      costPrice: input.unitCost,
-    })
-    .where(eq(products.id, input.productId));
-
-  // Ombor harakati
-  if (row) {
-    await db.insert(stockMovements).values({
+    }).returning();
+    if (!row) throw new Error("Kirim yozilmadi");
+    const [updated] = await tx.update(products)
+      .set({ stock: sql`${products.stock} + ${input.qty}`, costPrice: unitCost })
+      .where(eq(products.id, input.productId))
+      .returning({ id: products.id });
+    if (!updated) throw new Error("Mahsulot topilmadi");
+    await tx.insert(stockMovements).values({
       productId: input.productId,
       reason: "purchase",
       delta: input.qty,
       refType: "purchase",
       refId: row.id,
     });
-  }
-
-  return row;
+    return row;
+  });
 }
 
 export async function voidDbPurchase(id: string) {
   const db = getDb();
-
-  const [pur] = await db
-    .select()
-    .from(purchases)
-    .where(eq(purchases.id, id))
-    .limit(1);
-
-  if (!pur || pur.voidedAt) return null;
-
-  // Bekor qilish belgisini qo'yish
-  const [updated] = await db
-    .update(purchases)
-    .set({ voidedAt: new Date() })
-    .where(eq(purchases.id, id))
-    .returning();
-
-  // Mahsulot qoldig'ini qaytarish
-  await db
-    .update(products)
-    .set({
-      stock: sql`GREATEST(0, ${products.stock} - ${pur.qty})`,
-    })
-    .where(eq(products.id, pur.productId));
-
-  await db.insert(stockMovements).values({
-    productId: pur.productId,
-    reason: "adjust",
-    delta: -pur.qty,
-    refType: "purchase",
-    refId: pur.id,
+  return db.transaction(async (tx) => {
+    const [pur] = await tx.select().from(purchases).where(eq(purchases.id, id)).for("update");
+    if (!pur || pur.voidedAt) return null;
+    const [updatedProduct] = await tx.update(products)
+      .set({ stock: sql`${products.stock} - ${pur.qty}` })
+      .where(and(eq(products.id, pur.productId), sql`${products.stock} - ${products.reserved} >= ${pur.qty}`))
+      .returning({ id: products.id });
+    if (!updatedProduct) throw new Error("Kirimni bekor qilib bo'lmaydi: mahsulotning bir qismi band yoki sotilgan");
+    const [updated] = await tx.update(purchases)
+      .set({ voidedAt: new Date() })
+      .where(and(eq(purchases.id, id), sql`${purchases.voidedAt} IS NULL`))
+      .returning();
+    const [latestPurchase] = await tx.select({ unitCost: purchases.unitCost })
+      .from(purchases)
+      .where(and(eq(purchases.productId, pur.productId), ne(purchases.id, pur.id), sql`${purchases.voidedAt} IS NULL`))
+      .orderBy(desc(purchases.purchasedAt))
+      .limit(1);
+    if (latestPurchase) await tx.update(products).set({ costPrice: latestPurchase.unitCost }).where(eq(products.id, pur.productId));
+    await tx.insert(stockMovements).values({
+      productId: pur.productId,
+      reason: "adjust",
+      delta: -pur.qty,
+      refType: "purchase",
+      refId: pur.id,
+    });
+    return updated;
   });
-
-  return updated;
 }

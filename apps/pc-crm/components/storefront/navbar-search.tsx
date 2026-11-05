@@ -17,6 +17,7 @@ import {
   Zap,
 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
+import { Input } from "@ventura/ui/input";
 
 export interface SearchProductItem {
   id: string;
@@ -99,37 +100,37 @@ const SEARCH_CATEGORIES = [
     name: "Videokartalar",
     query: "4070",
     icon: Zap,
-    color: "text-amber-500 bg-amber-500/10",
+    color: "text-(--warning-fg) bg-(--warning-bg)",
   },
   {
     name: "Protsessorlar",
     query: "intel",
     icon: Cpu,
-    color: "text-blue-500 bg-blue-500/10",
+    color: "text-(--info-fg) bg-(--info-bg)",
   },
   {
     name: "Kompyuterlar",
     href: "/computers",
     icon: Monitor,
-    color: "text-purple-500 bg-purple-500/10",
+    color: "text-primary-text bg-primary-soft",
   },
   {
     name: "Operativ xotira",
     query: "ddr5",
     icon: Layers,
-    color: "text-emerald-500 bg-emerald-500/10",
+    color: "text-(--success-fg) bg-(--success-bg)",
   },
   {
     name: "SSD disklar",
     query: "ssd",
     icon: HardDrive,
-    color: "text-rose-500 bg-rose-500/10",
+    color: "text-(--danger-fg) bg-(--danger-bg)",
   },
   {
     name: "Top chegirmalar",
     query: "chegirma",
     icon: Flame,
-    color: "text-orange-500 bg-orange-500/10",
+    color: "text-(--warning-fg) bg-(--warning-bg)",
   },
 ];
 
@@ -265,16 +266,16 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
         isMobile
           ? "w-full"
           : isExpanded
-          ? "w-[420px] lg:w-[480px] xl:w-[520px] z-50"
-          : "w-[240px] lg:w-[280px] z-30"
+          ? "w-105 lg:w-120 xl:w-130 z-50"
+          : "w-60 lg:w-70 z-30"
       } ${className}`}
     >
       {/* Input container: ikki tomonga qarab kengayadi */}
       <form
         onSubmit={handleSubmit}
-        className={`relative flex items-center rounded-xl border bg-background/90 px-3 py-1.5 shadow-xs transition-all duration-200 ${
+        className={`relative flex items-center rounded-card border bg-background/90 px-3 py-1.5 shadow-control transition-all duration-200 ${
           isExpanded
-            ? "border-primary ring-2 ring-primary/20 shadow-md bg-background"
+            ? "border-primary ring-2 ring-primary/20 shadow-card-hover bg-background"
             : "border-input hover:border-primary/50"
         }`}
       >
@@ -285,14 +286,14 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
           }`}
         />
 
-        <input
+        <Input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsExpanded(true)}
           placeholder="Kompyuter, videokarta, protsessor qidirish..."
-          className="ml-2 w-full bg-transparent text-xs text-foreground placeholder:text-muted-foreground/80 focus:outline-hidden"
+          className="ml-2 h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-xs shadow-none placeholder:text-muted-foreground/80 focus-visible:border-0 focus-visible:shadow-none"
           aria-label="Qidiruv"
         />
 
@@ -313,7 +314,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
 
       {/* Pastga qarab kengayuvchi panel (Kategoriyalar va Oxirgi qidirilganlar) */}
       {isExpanded && (
-        <div className="absolute left-0 right-0 top-full mt-2 rounded-2xl border border-border bg-card p-4 shadow-2xl backdrop-blur-md animate-in fade-in-0 zoom-in-95 duration-200 z-50 max-h-[460px] overflow-y-auto">
+        <div className="absolute left-0 right-0 top-full mt-2 rounded-modal border border-border bg-card p-4 shadow-modal backdrop-blur-md animate-in fade-in-0 zoom-in-95 duration-200 z-50 max-h-115 overflow-y-auto">
           {/* 1. AGAR QUERY BO'SH BO'LSA: Oxirgi qidiruvlar & Kategoriyalar */}
           {!query.trim() ? (
             <div className="space-y-4">
@@ -321,14 +322,14 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
               {recentSearches.length > 0 && (
                 <div>
                   <div className="flex items-center justify-between pb-2">
-                    <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    <span className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-muted-foreground">
                       <Clock size={13} className="text-primary" />
                       Oxirgi qidirilganlar
                     </span>
                     <button
                       type="button"
                       onClick={clearAllRecent}
-                      className="text-[11px] font-medium text-muted-foreground hover:text-rose-500 transition-colors"
+                      className="text-caption font-medium text-muted-foreground hover:text-(--danger-fg) transition-colors"
                     >
                       Tozalash
                     </button>
@@ -339,14 +340,14 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                       <div
                         key={item}
                         onClick={() => handleSelectQuery(item)}
-                        className="group flex cursor-pointer items-center gap-1.5 rounded-lg border border-border/80 bg-secondary/50 px-2.5 py-1 text-xs text-foreground hover:border-primary/50 hover:bg-primary/10 transition-colors"
+                        className="group flex cursor-pointer items-center gap-1.5 rounded-control border border-border/80 bg-secondary/50 px-2.5 py-1 text-xs text-foreground hover:border-primary/50 hover:bg-primary/10 transition-colors"
                       >
                         <Clock size={11} className="text-muted-foreground group-hover:text-primary" />
                         <span>{item}</span>
                         <button
                           type="button"
                           onClick={(e) => removeRecentSearch(item, e)}
-                          className="ml-1 rounded p-0.5 text-muted-foreground/60 hover:text-rose-500 hover:bg-background transition-colors"
+                          className="ml-1 rounded p-0.5 text-muted-foreground/60 hover:text-(--danger-fg) hover:bg-background transition-colors"
                           title="Oʻchirish"
                         >
                           <X size={11} />
@@ -359,7 +360,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
 
               {/* Ommabop Kategoriyalar */}
               <div className={recentSearches.length > 0 ? "border-t border-border/70 pt-3" : ""}>
-                <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
+                <span className="flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
                   <Sparkles size={13} className="text-primary" />
                   Ommabop kategoriyalar
                 </span>
@@ -375,10 +376,10 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                           setIsExpanded(false);
                           if (isMobile && onCloseMobile) onCloseMobile();
                         }}
-                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-secondary/30 p-2.5 hover:bg-secondary hover:border-primary/40 transition-colors text-left"
+                        className="flex items-center gap-2 rounded-card border border-border/60 bg-secondary/30 p-2.5 hover:bg-secondary hover:border-primary/40 transition-colors text-left"
                       >
                         <div
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${cat.color}`}
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-control ${cat.color}`}
                         >
                           <IconComponent size={14} />
                         </div>
@@ -391,10 +392,10 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                         key={cat.name}
                         type="button"
                         onClick={() => handleSelectQuery(cat.query || cat.name)}
-                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-secondary/30 p-2.5 hover:bg-secondary hover:border-primary/40 transition-colors text-left"
+                        className="flex items-center gap-2 rounded-card border border-border/60 bg-secondary/30 p-2.5 hover:bg-secondary hover:border-primary/40 transition-colors text-left"
                       >
                         <div
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${cat.color}`}
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-control ${cat.color}`}
                         >
                           <IconComponent size={14} />
                         </div>
@@ -414,7 +415,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                 <span className="text-xs font-bold text-foreground">
                   Natijalar ({filteredProducts.length})
                 </span>
-                <span className="text-[11px] text-muted-foreground">
+                <span className="text-caption text-muted-foreground">
                   Enter bosib toʻliq qidiring
                 </span>
               </div>
@@ -423,7 +424,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                 <div className="py-8 text-center text-xs text-muted-foreground">
                   <Search size={28} className="mx-auto mb-2 text-muted-foreground/30" />
                   <p className="font-semibold text-foreground">"{query}" boʻyicha mahsulot topilmadi</p>
-                  <p className="mt-1 text-[11px]">Boshqa soʻz yoki toifa nomi bilan qidirib koʻring</p>
+                  <p className="mt-1 text-caption">Boshqa soʻz yoki toifa nomi bilan qidirib koʻring</p>
                 </div>
               ) : (
                 <div className="divide-y divide-border/60 py-1">
@@ -436,9 +437,9 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                         setIsExpanded(false);
                         if (isMobile && onCloseMobile) onCloseMobile();
                       }}
-                      className="group flex items-center gap-3 p-2 rounded-lg hover:bg-secondary/70 transition-colors"
+                      className="group flex items-center gap-3 p-2 rounded-control hover:bg-secondary/70 transition-colors"
                     >
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-white p-1">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-border/80 bg-media p-1">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={p.imageUrl}
@@ -452,7 +453,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                           {p.name}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="rounded bg-muted px-1.5 py-0.2 text-[10px] font-semibold text-muted-foreground">
+                          <span className="rounded bg-muted px-1.5 py-0.2 text-2xs font-semibold text-muted-foreground">
                             {p.category}
                           </span>
                           <span className="text-xs font-black text-primary">
@@ -474,7 +475,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
               <button
                 type="button"
                 onClick={() => handleSelectQuery(query)}
-                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-secondary/40 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-control border border-border bg-secondary/40 py-2 text-xs font-bold text-primary hover:bg-primary hover:text-primary-foreground transition-all"
               >
                 <span>Barcha natijalarni koʻrish ("{query}")</span>
                 <ArrowRight size={13} />

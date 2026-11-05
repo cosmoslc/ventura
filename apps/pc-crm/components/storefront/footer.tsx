@@ -8,7 +8,7 @@ export function Footer() {
       <div className="border-b border-border/60 py-8">
         <div className="mx-auto grid max-w-[var(--storefront-max-w,1320px)] grid-cols-1 gap-6 px-4 sm:grid-cols-2 lg:grid-cols-4 sm:px-6">
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-primary/10 text-primary">
               <Truck size={22} />
             </div>
             <div>
@@ -18,7 +18,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-primary/10 text-primary">
               <ShieldCheck size={22} />
             </div>
             <div>
@@ -28,7 +28,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-primary/10 text-primary">
               <Monitor size={22} />
             </div>
             <div>
@@ -38,7 +38,7 @@ export function Footer() {
           </div>
 
           <div className="flex items-center gap-3.5">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-card bg-primary/10 text-primary">
               <Headphones size={22} />
             </div>
             <div>
@@ -55,7 +55,7 @@ export function Footer() {
           {/* Kompaniya info */}
           <div className="lg:col-span-2">
             <Link href="/" className="mb-4 inline-flex items-center gap-2 text-foreground font-black text-xl">
-              <div className="flex h-8 w-8 items-center justify-center rounded-[var(--r-btn,8px)] bg-primary text-primary-foreground shadow-sm">
+              <div className="flex h-8 w-8 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
                 <Monitor size={18} />
               </div>
               <span>

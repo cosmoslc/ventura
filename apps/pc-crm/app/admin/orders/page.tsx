@@ -1,24 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CheckCircle2,
   Clock,
   Eye,
   MapPin,
-  MessageCircle,
   Phone,
   Search,
   ShoppingCart,
   Truck,
-  XCircle,
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { Modal } from "@ventura/ui/modal";
 import { StatCard } from "@ventura/ui/stat-card";
 import { formatDate, formatMoney } from "@/lib/format";
+import { getAdminOrdersAction, updateOrderStatusAction } from "@/lib/server/actions";
 
 export interface OrderItemDetail {
   name: string;
@@ -43,83 +43,31 @@ export interface AdminOrder {
   items: OrderItemDetail[];
 }
 
-const INITIAL_ORDERS: AdminOrder[] = [
-  {
-    id: "ord-1",
-    publicId: "ORD-1008",
-    customerName: "Javohir Toshmatov",
-    customerPhone: "+998 90 123 45 67",
-    region: "Toshkent shahri",
-    address: "Yunusobod 4-mavze, 12-uy, 45-xonadon",
-    subtotal: 24_800_000n,
-    shipping: 0n,
-    total: 24_800_000n,
-    paymentMethod: "Operator orqali (Naqd / Telegram)",
-    status: "new",
-    createdAt: "2026-10-29T11:45:00",
-    items: [
-      {
-        name: "Ventura Gaming Titan: i7-14700K / RTX 4070 Ti",
-        qty: 1,
-        price: 24_800_000n,
-        cost: 20_200_000n,
-      },
-    ],
-  },
-  {
-    id: "ord-2",
-    publicId: "ORD-1007",
-    customerName: "Sardor Alimov",
-    customerPhone: "+998 97 765 43 21",
-    region: "Samarqand viloyati",
-    address: "Samarqand sh., Registon koʻchasi 8",
-    subtotal: 4_350_000n,
-    shipping: 60_000n,
-    total: 4_410_000n,
-    paymentMethod: "Click Up",
-    status: "confirmed",
-    createdAt: "2026-10-29T09:30:00",
-    items: [
-      {
-        name: "Samsung 990 PRO 2TB NVMe M.2 SSD",
-        qty: 1,
-        price: 2_600_000n,
-        cost: 2_150_000n,
-      },
-      {
-        name: "Kingston FURY Beast RGB 32GB DDR5",
-        qty: 1,
-        price: 1_750_000n,
-        cost: 1_450_000n,
-      },
-    ],
-  },
-  {
-    id: "ord-3",
-    publicId: "ORD-1006",
-    customerName: "Bobur Zokirov",
-    customerPhone: "+998 93 333 44 55",
-    region: "Toshkent shahri",
-    address: "Chilonzor 9-mavze, 5-uy",
-    subtotal: 5_200_000n,
-    shipping: 0n,
-    total: 5_200_000n,
-    paymentMethod: "Operator orqali",
-    status: "delivered",
-    createdAt: "2026-10-28T16:20:00",
-    items: [
-      {
-        name: "Intel Core i7-14700K 3.4GHz Protsessor",
-        qty: 1,
-        price: 5_200_000n,
-        cost: 4_500_000n,
-      },
-    ],
-  },
-];
-
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState<AdminOrder[]>(INITIAL_ORDERS);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [error, setError] = useState("");
+
+  const loadOrders = useCallback(async () => {
+    const result = await getAdminOrdersAction();
+    if (!result.success) { setError(result.error ?? "Buyurtmalarni yuklab bo'lmadi"); return; }
+    setError("");
+    setOrders(result.orders.map((o) => ({
+      id: o.id,
+      publicId: o.publicId,
+      customerName: o.name,
+      customerPhone: o.phone,
+      region: o.region ?? "",
+      address: o.address ?? "",
+      subtotal: o.subtotal,
+      shipping: o.shipping,
+      total: o.total,
+      paymentMethod: o.paymentMethod,
+      status: o.status,
+      createdAt: o.createdAt,
+      items: o.items.map(({ name, qty, price, cost }) => ({ name, qty, price, cost })),
+    })));
+  }, []);
+  useEffect(() => { void loadOrders(); }, [loadOrders]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
@@ -135,22 +83,14 @@ export default function AdminOrdersPage() {
     return matchSearch && matchStatus;
   });
 
-  const handleUpdateStatus = (
+  const handleUpdateStatus = async (
     orderId: string,
     newStatus: "new" | "confirmed" | "shipping" | "delivered" | "cancelled"
   ) => {
-    setOrders(
-      orders.map((o) => {
-        if (o.id === orderId) {
-          return { ...o, status: newStatus };
-        }
-        return o;
-      })
-    );
-
-    if (selectedOrder && selectedOrder.id === orderId) {
-      setSelectedOrder({ ...selectedOrder, status: newStatus });
-    }
+    const result = await updateOrderStatusAction(orderId, newStatus);
+    if (!result.success) { setError(result.error ?? "Buyurtma holatini yangilab bo'lmadi"); return; }
+    await loadOrders();
+    setSelectedOrder((current) => current ? { ...current, status: newStatus } : current);
   };
 
   const getStatusBadge = (status: AdminOrder["status"]) => {
@@ -181,6 +121,8 @@ export default function AdminOrdersPage() {
           </p>
         </div>
       </div>
+
+      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
 
       {/* Statistika kartalari */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -213,13 +155,14 @@ export default function AdminOrdersPage() {
           label="Jami buyurtmalar summasi"
           value={formatMoney(orders.reduce((sum, o) => sum + o.total, 0n))}
           tone={4}
+          valueClassName="whitespace-nowrap text-title"
           hint="Barcha faol buyurtmalar"
         />
       </div>
 
       {/* Qidiruv va Filtr */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 shadow-sm">
-        <div className="relative flex-1 min-w-[240px]">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-control border border-border bg-card p-3 shadow-card">
+        <div className="relative flex-1 min-w-60">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={searchQuery}
@@ -230,26 +173,27 @@ export default function AdminOrdersPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-(--control-h) rounded-[var(--r-input,8px)] border border-input bg-background px-3 text-xs font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-          >
-            <option value="all">Barcha statuslar</option>
-            <option value="new">Yangi</option>
-            <option value="confirmed">Tasdiqlangan</option>
-            <option value="shipping">Yetkazilmoqda</option>
-            <option value="delivered">Yetkazilgan</option>
-            <option value="cancelled">Bekor qilingan</option>
-          </select>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger aria-label="Buyurtma holati" className="w-auto min-w-44 text-xs">
+            <SelectValue placeholder="Barcha statuslar" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Barcha statuslar</SelectItem>
+            <SelectItem value="new">Yangi</SelectItem>
+            <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
+            <SelectItem value="shipping">Yetkazilmoqda</SelectItem>
+            <SelectItem value="delivered">Yetkazilgan</SelectItem>
+            <SelectItem value="cancelled">Bekor qilingan</SelectItem>
+          </SelectContent>
+        </Select>
         </div>
       </div>
 
       {/* Buyurtmalar Jadvali */}
-      <div className="overflow-x-auto rounded-[var(--r-card,12px)] border border-border bg-card shadow-sm">
+      <div className="overflow-x-auto rounded-card border border-border bg-card shadow-card">
         <table className="w-full border-collapse text-left text-xs">
           <thead>
-            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-[11px] tracking-wider">
+            <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5">ID / Sana</th>
               <th className="p-3.5">Xaridor</th>
               <th className="p-3.5">Hudud / Manzil</th>
@@ -272,17 +216,17 @@ export default function AdminOrdersPage() {
                 <tr key={order.id} className="hover:bg-muted/30 transition-colors">
                   <td className="p-3.5">
                     <p className="font-mono font-black text-foreground">{order.publicId}</p>
-                    <p className="text-[11px] text-muted-foreground">{formatDate(order.createdAt)}</p>
+                    <p className="text-caption text-muted-foreground">{formatDate(order.createdAt)}</p>
                   </td>
 
                   <td className="p-3.5">
                     <p className="font-bold text-foreground">{order.customerName}</p>
-                    <p className="text-[11px] font-mono text-muted-foreground">{order.customerPhone}</p>
+                    <p className="text-caption font-mono text-muted-foreground">{order.customerPhone}</p>
                   </td>
 
                   <td className="p-3.5 max-w-xs">
                     <p className="font-semibold text-foreground truncate">{order.region}</p>
-                    <p className="text-[11px] text-muted-foreground truncate" title={order.address}>
+                    <p className="text-caption text-muted-foreground truncate" title={order.address}>
                       {order.address}
                     </p>
                   </td>
@@ -333,7 +277,7 @@ export default function AdminOrdersPage() {
               <div className="flex items-center gap-2">
                 {selectedOrder.status === "new" && (
                   <Button
-                    variant="primary"
+                    variant="success"
                     size="sm"
                     onClick={() => handleUpdateStatus(selectedOrder.id, "confirmed")}
                   >
@@ -353,10 +297,9 @@ export default function AdminOrdersPage() {
 
                 {selectedOrder.status === "shipping" && (
                   <Button
-                    variant="primary"
+                    variant="success"
                     size="sm"
                     onClick={() => handleUpdateStatus(selectedOrder.id, "delivered")}
-                    className="bg-emerald-600 hover:bg-emerald-700"
                   >
                     Yetkazildi (Foydani qayd etish)
                   </Button>
@@ -377,7 +320,7 @@ export default function AdminOrdersPage() {
         >
           <div className="space-y-4 text-xs">
             {/* Xaridor va Manzil */}
-            <div className="rounded-xl border border-border bg-muted/20 p-3.5 space-y-2">
+            <div className="rounded-card border border-border bg-muted/20 p-3.5 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="font-semibold text-foreground flex items-center gap-1.5">
                   <MapPin size={14} className="text-primary" /> Yetkazish manzili:
@@ -385,7 +328,7 @@ export default function AdminOrdersPage() {
                 <span className="font-bold text-foreground">{selectedOrder.region}</span>
               </div>
               <p className="text-muted-foreground">{selectedOrder.address}</p>
-              <div className="flex items-center gap-4 pt-1 text-[11px]">
+              <div className="flex items-center gap-4 pt-1 text-caption">
                 <a
                   href={`tel:${selectedOrder.customerPhone}`}
                   className="text-primary font-bold hover:underline flex items-center gap-1"
@@ -398,21 +341,21 @@ export default function AdminOrdersPage() {
             {/* Buyurtmadagi tovarlar */}
             <div>
               <h4 className="font-bold text-foreground mb-2">Buyurtma tarkibi:</h4>
-              <div className="divide-y divide-border/60 rounded-xl border border-border bg-card">
+              <div className="divide-y divide-border/60 rounded-card border border-border bg-card">
                 {selectedOrder.items.map((item, idx) => {
                   const itemProfit = item.price - item.cost;
                   return (
                     <div key={idx} className="p-3 flex items-center justify-between">
                       <div>
                         <p className="font-bold text-foreground">{item.name}</p>
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-caption text-muted-foreground">
                           {item.qty} dona × {formatMoney(item.price)} (Tannarxi: {formatMoney(item.cost)})
                         </p>
                       </div>
 
                       <div className="text-right">
                         <p className="font-black text-foreground">{formatMoney(item.price * BigInt(item.qty))}</p>
-                        <p className="text-[10px] text-emerald-600 font-semibold">
+                        <p className="text-2xs text-(--success-fg) font-semibold">
                           +{formatMoney(itemProfit * BigInt(item.qty))} sof foyda
                         </p>
                       </div>
@@ -423,7 +366,7 @@ export default function AdminOrdersPage() {
             </div>
 
             {/* Hisob-kitob jami */}
-            <div className="rounded-xl border border-border p-3.5 space-y-1.5 text-muted-foreground">
+            <div className="rounded-card border border-border p-3.5 space-y-1.5 text-muted-foreground">
               <div className="flex justify-between">
                 <span>Oraliq summa:</span>
                 <span className="font-bold text-foreground">{formatMoney(selectedOrder.subtotal)}</span>

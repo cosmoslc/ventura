@@ -1,4 +1,5 @@
 "use client";
+import { Textarea } from "@ventura/ui/textarea";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -144,7 +145,7 @@ export default function ProfileOrdersPage() {
   return (
     <div className="space-y-6">
       {/* Sarlavha va Tablar */}
-      <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5">
+      <div className="rounded-card border border-border bg-card p-5">
         <h1 className="text-2xl font-black tracking-tight">Mening buyurtmalarim</h1>
         <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
           Barcha onlayn xaridlaringiz holati, yetkazib berish jarayoni va toʻlovlar
@@ -155,9 +156,9 @@ export default function ProfileOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab("in_progress")}
-            className={`flex items-center gap-2 rounded-[var(--r-btn,8px)] px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 rounded-btn px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
               activeTab === "in_progress"
-                ? "bg-primary text-primary-foreground shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-control"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >
@@ -168,9 +169,9 @@ export default function ProfileOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab("delivered")}
-            className={`flex items-center gap-2 rounded-[var(--r-btn,8px)] px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 rounded-btn px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
               activeTab === "delivered"
-                ? "bg-primary text-primary-foreground shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-control"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >
@@ -181,9 +182,9 @@ export default function ProfileOrdersPage() {
           <button
             type="button"
             onClick={() => setActiveTab("custom_pc")}
-            className={`flex items-center gap-2 rounded-[var(--r-btn,8px)] px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
+            className={`flex items-center gap-2 rounded-btn px-4 py-2 text-xs sm:text-sm font-semibold transition-all ${
               activeTab === "custom_pc"
-                ? "bg-primary text-primary-foreground shadow-xs"
+                ? "bg-primary text-primary-foreground shadow-control"
                 : "text-muted-foreground hover:bg-secondary hover:text-foreground"
             }`}
           >
@@ -196,13 +197,13 @@ export default function ProfileOrdersPage() {
       {/* Yuklanish skeleti */}
       {isPageLoading ? (
         <div className="space-y-4 animate-pulse">
-          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-3">
+          <div className="rounded-card border border-border bg-card p-5 space-y-3">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <div className="h-5 w-32 bg-muted rounded" />
               <div className="h-5 w-24 bg-muted rounded" />
             </div>
             <div className="flex items-center gap-4 py-2">
-              <div className="h-14 w-14 rounded-lg bg-muted shrink-0" />
+              <div className="h-14 w-14 rounded-control bg-muted shrink-0" />
               <div className="space-y-2 flex-1">
                 <div className="h-4 w-48 bg-muted rounded" />
                 <div className="h-3 w-24 bg-muted rounded" />
@@ -210,13 +211,13 @@ export default function ProfileOrdersPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-3">
+          <div className="rounded-card border border-border bg-card p-5 space-y-3">
             <div className="flex justify-between items-center pb-3 border-b border-border">
               <div className="h-5 w-32 bg-muted rounded" />
               <div className="h-5 w-24 bg-muted rounded" />
             </div>
             <div className="flex items-center gap-4 py-2">
-              <div className="h-14 w-14 rounded-lg bg-muted shrink-0" />
+              <div className="h-14 w-14 rounded-control bg-muted shrink-0" />
               <div className="space-y-2 flex-1">
                 <div className="h-4 w-48 bg-muted rounded" />
                 <div className="h-3 w-24 bg-muted rounded" />
@@ -230,7 +231,7 @@ export default function ProfileOrdersPage() {
       {!isPageLoading && activeTab === "in_progress" && (
         <div className="space-y-4">
           {inProgressOrders.length === 0 ? (
-            <div className="rounded-[var(--r-card,12px)] border border-dashed border-border bg-card p-10 text-center">
+            <div className="rounded-card border border-dashed border-border bg-card p-10 text-center">
               <Package size={40} className="text-muted-foreground/40 mx-auto mb-2" />
               <h3 className="font-bold text-base">Hozirda faol buyurtmalaringiz yoʻq</h3>
               <p className="text-xs text-muted-foreground mt-1">
@@ -246,7 +247,7 @@ export default function ProfileOrdersPage() {
             inProgressOrders.map((ord) => (
               <div
                 key={ord.id}
-                className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4"
+                className="rounded-card border border-border bg-card p-5 space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border">
                   <div>
@@ -271,7 +272,7 @@ export default function ProfileOrdersPage() {
                 <div className="space-y-3">
                   {ord.products.map((p, idx) => (
                     <div key={idx} className="flex items-center gap-3">
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border bg-white p-1">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-control border border-border bg-media p-1">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={p.imageUrl} alt={p.name} className="max-h-full max-w-full object-contain" />
                       </div>
@@ -310,7 +311,7 @@ export default function ProfileOrdersPage() {
       {!isPageLoading && activeTab === "delivered" && (
         <div className="space-y-4">
           {deliveredOrders.length === 0 ? (
-            <div className="rounded-[var(--r-card,12px)] border border-dashed border-border bg-card p-10 text-center">
+            <div className="rounded-card border border-dashed border-border bg-card p-10 text-center">
               <CheckCircle2 size={40} className="text-muted-foreground/40 mx-auto mb-2" />
               <h3 className="font-bold text-base">Yetkazilgan buyurtmalar yoʻq</h3>
               <p className="text-xs text-muted-foreground mt-1">
@@ -321,7 +322,7 @@ export default function ProfileOrdersPage() {
             deliveredOrders.map((ord) => (
               <div
                 key={ord.id}
-                className="rounded-[var(--r-card,12px)] border border-border bg-card p-5 space-y-4"
+                className="rounded-card border border-border bg-card p-5 space-y-4"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border">
                   <div>
@@ -347,7 +348,7 @@ export default function ProfileOrdersPage() {
                   {ord.products.map((p, idx) => (
                     <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border bg-white p-1">
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-control border border-border bg-media p-1">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={p.imageUrl} alt={p.name} className="max-h-full max-w-full object-contain" />
                         </div>
@@ -366,7 +367,7 @@ export default function ProfileOrdersPage() {
                           onClick={() => setReviewingProduct(p.name)}
                           className="text-xs font-semibold gap-1.5 self-end sm:self-center"
                         >
-                          <Star size={13} className="text-amber-500 fill-amber-500" />
+                          <Star size={13} className="text-(--warning-fg) fill-rating-star" />
                           Sharh qoldirish
                         </Button>
                       )}
@@ -383,7 +384,7 @@ export default function ProfileOrdersPage() {
       {!isPageLoading && activeTab === "custom_pc" && (
         <div className="space-y-4">
           {customPcOrders.length === 0 ? (
-            <div className="rounded-[var(--r-card,12px)] border border-dashed border-border bg-card p-10 text-center">
+            <div className="rounded-card border border-dashed border-border bg-card p-10 text-center">
               <Wrench size={40} className="text-muted-foreground/40 mx-auto mb-2" />
               <h3 className="font-bold text-base">Hozircha shaxsiy yigʻilgan kompyuter buyurtmalari yoʻq</h3>
               <p className="text-xs text-muted-foreground mt-1">
@@ -399,7 +400,7 @@ export default function ProfileOrdersPage() {
             customPcOrders.map((pco) => (
               <div
                 key={pco.id}
-                className="rounded-[var(--r-card,12px)] border border-primary/20 bg-card p-5 space-y-4 shadow-xs"
+                className="rounded-card border border-primary/20 bg-card p-5 space-y-4 shadow-control"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border">
                   <div>
@@ -420,16 +421,16 @@ export default function ProfileOrdersPage() {
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-muted/40 p-3 text-xs space-y-2">
+                <div className="rounded-control bg-muted/40 p-3 text-xs space-y-2">
                   <div>
-                    <span className="font-bold uppercase tracking-wider text-muted-foreground text-[10px] block">
+                    <span className="font-bold uppercase tracking-wider text-muted-foreground text-2xs block">
                       Konfiguratsiya tarkibi:
                     </span>
                     <p className="font-medium text-foreground mt-0.5">{pco.summary}</p>
                   </div>
                   {pco.note && (
                     <div>
-                      <span className="font-bold text-primary text-[10px] uppercase block">
+                      <span className="font-bold text-primary text-2xs uppercase block">
                         Sizning istaklaringiz:
                       </span>
                       <p className="text-muted-foreground mt-0.5">{pco.note}</p>
@@ -464,13 +465,13 @@ export default function ProfileOrdersPage() {
       >
         {reviewSuccess ? (
           <div className="py-6 text-center space-y-2">
-            <CheckCircle2 size={40} className="text-emerald-500 mx-auto" />
+            <CheckCircle2 size={40} className="text-(--success-fg) mx-auto" />
             <h3 className="font-bold text-base">Sharhingiz qabul qilindi!</h3>
             <p className="text-xs text-muted-foreground">Katta rahmat! Fikringiz xaridorni toʻgʻri tanlov qilishiga yordam beradi.</p>
           </div>
         ) : (
           <form onSubmit={handleSubmitReview} className="space-y-4 text-xs sm:text-sm">
-            <div className="rounded-lg bg-muted/60 p-3">
+            <div className="rounded-control bg-muted/60 p-3">
               <span className="text-xs text-muted-foreground block font-bold uppercase tracking-wider">
                 Mahsulot:
               </span>
@@ -491,7 +492,7 @@ export default function ProfileOrdersPage() {
                   >
                     <Star
                       size={24}
-                      className={s <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"}
+                      className={s <= rating ? "fill-rating-star text-rating-star" : "text-muted-foreground/30"}
                     />
                   </button>
                 ))}
@@ -502,13 +503,13 @@ export default function ProfileOrdersPage() {
               <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
                 Fikringiz va taassurotlaringiz *
               </label>
-              <textarea
+              <Textarea
                 rows={3}
                 required
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 placeholder="Mahsulotning sifati, ishlashi va yetkazib berish xizmati qanday boʻldi?"
-                className="w-full rounded-[var(--r-input,8px)] border border-input bg-background p-2.5 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none resize-none"
+                className="w-full rounded-control border border-input bg-background p-2.5 text-xs sm:text-sm text-foreground focus:border-primary focus:outline-none resize-none"
               />
             </div>
 

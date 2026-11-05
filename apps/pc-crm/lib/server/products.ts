@@ -27,6 +27,7 @@ export interface DbProductListItem {
   marginPercent?: number;
   discountPercent: number;
   stock: number;
+  availableStock: number;
   minStock: number;
   ratingAvg: number;
   ratingCount: number;
@@ -52,12 +53,13 @@ export async function getDbProducts(options?: {
   brandSlug?: string;
   isHit?: boolean;
   isNew?: boolean;
+  includeInactive?: boolean;
   search?: string;
   limit?: number;
 }): Promise<DbProductListItem[]> {
   const db = getDb();
 
-  const conditions = [eq(products.isActive, true)];
+  const conditions = options?.includeInactive ? [] : [eq(products.isActive, true)];
 
   if (options?.categorySlug) {
     const cat = await db
@@ -123,6 +125,9 @@ export async function getDbProducts(options?: {
         .from(productVariants)
         .where(sql`${productVariants.productId} IN ${productIds}`)
     : [];
+  const specs = productIds.length > 0
+    ? await db.select().from(productSpecs).where(sql`${productSpecs.productId} IN ${productIds}`)
+    : [];
 
   const imageMap = new Map<string, string>();
   for (const img of images) {
@@ -136,6 +141,12 @@ export async function getDbProducts(options?: {
     const list = variantMap.get(v.productId) ?? [];
     list.push(v);
     variantMap.set(v.productId, list);
+  }
+  const specMap = new Map<string, typeof specs>();
+  for (const spec of specs) {
+    const list = specMap.get(spec.productId) ?? [];
+    list.push(spec);
+    specMap.set(spec.productId, list);
   }
 
   return rows.map(({ product, category, brand }) => {
@@ -171,6 +182,7 @@ export async function getDbProducts(options?: {
       marginPercent: margin,
       discountPercent: product.discountPercent,
       stock: product.stock,
+      availableStock: Math.max(0, product.stock - product.reserved),
       minStock: product.minStock,
       ratingAvg: Number(product.ratingAvg),
       ratingCount: product.ratingCount,
@@ -178,6 +190,12 @@ export async function getDbProducts(options?: {
       isHit: product.isHit,
       isActive: product.isActive,
       variants: pVariants,
+      specs: (specMap.get(product.id) ?? []).map((spec) => ({
+        key: spec.key,
+        title: (spec.title as I18nText)?.uz ?? spec.key,
+        value: (spec.value as I18nText)?.uz ?? "",
+        helpText: (spec.helpText as I18nText)?.uz,
+      })),
     };
   });
 }
@@ -231,6 +249,7 @@ export async function getDbProductBySlug(slug: string) {
     sellPrice: product.sellPrice,
     discountPercent: product.discountPercent,
     stock: product.stock,
+    reserved: product.reserved,
     minStock: product.minStock,
     ratingAvg: Number(product.ratingAvg),
     ratingCount: product.ratingCount,
@@ -269,6 +288,7 @@ export async function createDbProduct(input: {
   minStock?: number;
   isNew?: boolean;
   isHit?: boolean;
+  isActive?: boolean;
   imageUrl?: string;
   specs?: { key: string; title: string; value: string; helpText?: string }[];
 }) {
@@ -330,7 +350,7 @@ export async function createDbProduct(input: {
       minStock: input.minStock ?? 2,
       isNew: input.isNew ?? true,
       isHit: input.isHit ?? false,
-      isActive: true,
+      isActive: input.isActive ?? true,
     })
     .returning();
 
@@ -360,7 +380,12 @@ export async function createDbProduct(input: {
 export async function updateDbProduct(
   id: string,
   input: Partial<{
+    nameRu: string;
+    slug: string;
     nameUz: string;
+    categorySlug: string;
+    brandName: string;
+    sku: string;
     costPrice: bigint;
     sellPrice: bigint;
     discountPercent: number;
@@ -369,28 +394,97 @@ export async function updateDbProduct(
     isNew: boolean;
     isHit: boolean;
     isActive: boolean;
+    imageUrl: string;
+    specs: { key: string; title: string; value: string; helpText?: string }[];
   }>
 ) {
   const db = getDb();
-  const updateData: Record<string, unknown> = {};
+  return db.transaction(async (tx) => {
+    const updateData: Record<string, unknown> = {};
 
-  if (input.nameUz) updateData.name = { uz: input.nameUz };
-  if (input.costPrice !== undefined) updateData.costPrice = input.costPrice;
-  if (input.sellPrice !== undefined) updateData.sellPrice = input.sellPrice;
-  if (input.discountPercent !== undefined) updateData.discountPercent = input.discountPercent;
-  if (input.stock !== undefined) updateData.stock = input.stock;
-  if (input.minStock !== undefined) updateData.minStock = input.minStock;
-  if (input.isNew !== undefined) updateData.isNew = input.isNew;
-  if (input.isHit !== undefined) updateData.isHit = input.isHit;
-  if (input.isActive !== undefined) updateData.isActive = input.isActive;
+    if (input.stock !== undefined) {
+      const [current] = await tx.select({ reserved: products.reserved }).from(products).where(eq(products.id, id)).for("update");
+      if (!current) return undefined;
+      if (input.stock < current.reserved) throw new Error("Yangi qoldiq mavjud zaxiradan kam bo'lishi mumkin emas");
+    }
 
-  const [updated] = await db
-    .update(products)
-    .set(updateData)
-    .where(eq(products.id, id))
-    .returning();
+    if (input.nameUz !== undefined || input.nameRu !== undefined) {
+      const [current] = await tx.select({ name: products.name }).from(products).where(eq(products.id, id)).limit(1);
+      if (!current) return undefined;
+      const currentName = current.name as I18nText;
+      updateData.name = {
+        uz: input.nameUz ?? currentName.uz,
+        ...(input.nameRu !== undefined ? (input.nameRu ? { ru: input.nameRu } : {}) : currentName.ru ? { ru: currentName.ru } : {}),
+      };
+    }
 
-  return updated;
+    if (input.categorySlug !== undefined) {
+      let [category] = await tx.select({ id: categories.id }).from(categories).where(eq(categories.slug, input.categorySlug)).limit(1);
+      if (!category) {
+        [category] = await tx.insert(categories).values({ slug: input.categorySlug, name: { uz: input.categorySlug } }).returning({ id: categories.id });
+      }
+      if (!category) throw new Error("Mahsulot kategoriyasini saqlab bo'lmadi");
+      updateData.categoryId = category.id;
+    }
+
+    if (input.brandName !== undefined) {
+      if (!input.brandName.trim()) {
+        updateData.brandId = null;
+      } else {
+        const brandSlug = input.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        let [brand] = await tx.select({ id: brands.id }).from(brands).where(eq(brands.slug, brandSlug)).limit(1);
+        if (!brand) {
+          [brand] = await tx.insert(brands).values({ name: input.brandName.trim(), slug: brandSlug }).returning({ id: brands.id });
+        }
+        if (!brand) throw new Error("Mahsulot brendini saqlab bo'lmadi");
+        updateData.brandId = brand.id;
+      }
+    }
+
+    if (input.slug !== undefined) updateData.slug = input.slug;
+    if (input.sku !== undefined) updateData.sku = input.sku || null;
+    if (input.costPrice !== undefined) updateData.costPrice = input.costPrice;
+    if (input.sellPrice !== undefined) updateData.sellPrice = input.sellPrice;
+    if (input.discountPercent !== undefined) updateData.discountPercent = input.discountPercent;
+    if (input.stock !== undefined) updateData.stock = input.stock;
+    if (input.minStock !== undefined) updateData.minStock = input.minStock;
+    if (input.isNew !== undefined) updateData.isNew = input.isNew;
+    if (input.isHit !== undefined) updateData.isHit = input.isHit;
+    if (input.isActive !== undefined) updateData.isActive = input.isActive;
+
+    const [updated] = await tx.update(products).set(updateData).where(eq(products.id, id)).returning();
+
+    if (updated && input.imageUrl !== undefined) {
+      const [firstImage] = await tx
+        .select({ id: productImages.id })
+        .from(productImages)
+        .where(eq(productImages.productId, id))
+        .orderBy(productImages.sort)
+        .limit(1);
+      if (firstImage && input.imageUrl) {
+        await tx.update(productImages).set({ url: input.imageUrl }).where(eq(productImages.id, firstImage.id));
+      } else if (firstImage) {
+        await tx.delete(productImages).where(eq(productImages.id, firstImage.id));
+      } else if (input.imageUrl) {
+        await tx.insert(productImages).values({ productId: id, url: input.imageUrl, sort: 0 });
+      }
+    }
+
+    if (updated && input.specs !== undefined) {
+      await tx.delete(productSpecs).where(eq(productSpecs.productId, id));
+      if (input.specs.length) {
+        await tx.insert(productSpecs).values(input.specs.map((spec) => ({
+          productId: id,
+          key: spec.key,
+          title: { uz: spec.title },
+          value: { uz: spec.value },
+          helpText: spec.helpText ? { uz: spec.helpText } : undefined,
+        })));
+      }
+    }
+
+    return updated;
+  });
 }
 
 export async function deleteDbProduct(id: string) {

@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { phoneNumber } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
 import { accounts, sessions, users, verifications } from "@ventura/db/schema/pc-crm";
 import { getDb } from "./db";
@@ -9,9 +10,10 @@ const baseURL =
   process.env.NEXT_PUBLIC_APP_URL ??
   "http://localhost:3004";
 
-const secret =
-  process.env.BETTER_AUTH_SECRET ??
-  "ventura_pc_crm_secret_auth_key_2026_super_secure_token_999";
+const secret = process.env.BETTER_AUTH_SECRET ??
+  (process.env.NODE_ENV === "production"
+    ? (() => { throw new Error("Production uchun BETTER_AUTH_SECRET majburiy"); })()
+    : "local-only-pc-crm-secret-change-before-deploy-1234567890");
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -53,17 +55,31 @@ export const auth = betterAuth({
   },
   emailAndPassword: {
     enabled: true,
-    minPasswordLength: 6,
+    minPasswordLength: 12,
     maxPasswordLength: 128,
     autoSignIn: true,
   },
+  plugins: [phoneNumber({
+    sendOTP: async () => {
+      throw new Error("Telefon OTP hozir sozlanmagan; admin parol bilan kiradi");
+    },
+    phoneNumberValidator: (phone) => /^\+998\d{9}$/.test(phone),
+    schema: {
+      user: {
+        fields: {
+          phoneNumber: "phone",
+          phoneNumberVerified: "phoneVerified",
+        },
+      },
+    },
+  }), nextCookies()],
   socialProviders,
   user: {
     additionalFields: {
       firstName: { type: "string", required: false, defaultValue: "" },
       lastName: { type: "string", required: false, defaultValue: "" },
-      role: { type: "string", defaultValue: "customer" },
-      isActive: { type: "boolean", defaultValue: true },
+      role: { type: "string", defaultValue: "customer", input: false },
+      isActive: { type: "boolean", defaultValue: true, input: false },
       locale: { type: "string", defaultValue: "uz" },
     },
   },
@@ -71,7 +87,6 @@ export const auth = betterAuth({
     expiresIn: 30 * 24 * 60 * 60, // 30 kun
     updateAge: 24 * 60 * 60, // 1 kunda bir yangilash
   },
-  plugins: [nextCookies()],
 });
 
 export type Auth = typeof auth;

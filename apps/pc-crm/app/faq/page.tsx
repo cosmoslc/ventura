@@ -158,9 +158,9 @@ export default function FaqPage() {
                     key={cat.id}
                     type="button"
                     onClick={() => setActiveCategoryId(cat.id)}
-                    className={`flex w-full items-center gap-3 rounded-[var(--r-card,12px)] border p-3.5 text-left text-xs sm:text-sm font-bold transition-all ${
+                    className={`flex w-full items-center gap-3 rounded-card border p-3.5 text-left text-xs sm:text-sm font-bold transition-all ${
                       isActive
-                        ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                        ? "border-primary bg-primary text-primary-foreground shadow-control"
                         : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
                     }`}
                   >
@@ -179,7 +179,7 @@ export default function FaqPage() {
                 return (
                   <div
                     key={item.id}
-                    className="rounded-[var(--r-card,12px)] border border-border bg-card overflow-hidden transition-colors"
+                    className="rounded-card border border-border bg-card overflow-hidden transition-colors"
                   >
                     <button
                       type="button"
@@ -207,7 +207,7 @@ export default function FaqPage() {
           </div>
 
           {/* Pastdagi Mutaxassis CTA bloki */}
-          <div className="mt-14 max-w-3xl mx-auto rounded-[var(--r-card,12px)] border border-primary/20 bg-primary/5 p-6 sm:p-8 text-center space-y-3">
+          <div className="mt-14 max-w-3xl mx-auto rounded-card border border-primary/20 bg-primary/5 p-6 sm:p-8 text-center space-y-3">
             <h2 className="text-xl font-bold">Savolingizga javob topmadingizmi?</h2>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
               Mutaxassislarimiz har kuni 09:00 dan 21:00 gacha har qanday savolingizga javob berishga tayyor.

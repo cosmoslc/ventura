@@ -33,7 +33,7 @@ export function CartDrawer() {
       />
 
       {/* Drawer Panel */}
-      <div className="relative flex h-full w-full max-w-md flex-col justify-between bg-card p-5 text-foreground shadow-2xl transition-transform">
+      <div className="relative flex h-full w-full max-w-md flex-col justify-between bg-card p-5 text-foreground shadow-modal transition-transform">
         {/* Header */}
         <div>
           <div className="flex items-center justify-between border-b border-border pb-4">
@@ -56,13 +56,13 @@ export function CartDrawer() {
 
           {/* Bepul yetkazish indikatori */}
           {items.length > 0 && (
-            <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-2.5 text-xs">
+            <div className="mt-3 rounded-control border border-primary/20 bg-primary/5 p-2.5 text-xs">
               {remainingForFreeShipping > 0n ? (
                 <p className="text-muted-foreground">
                   Yana <span className="font-bold text-primary">{formatMoney(remainingForFreeShipping)}</span> xarid qiling va <span className="font-semibold text-foreground">bepul yetkazib berish</span>ga ega boʻling!
                 </p>
               ) : (
-                <p className="font-bold text-emerald-600 dark:text-emerald-400">
+                <p className="font-bold text-(--success-fg)">
                   🎉 Tabriklaymiz! Siz uchun yetkazib berish mutlaqo bepul!
                 </p>
               )}
@@ -76,7 +76,7 @@ export function CartDrawer() {
             <div className="flex h-full flex-col items-center justify-center text-center">
               <ShoppingBag size={48} className="text-muted-foreground/30 mb-3" />
               <p className="text-sm font-bold text-foreground">Savatchangiz hozircha boʻsh</p>
-              <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">
+              <p className="text-xs text-muted-foreground mt-1 max-w-50">
                 Katalogdan oʻzingizga yoqqan mahsulotlarni tanlang
               </p>
             </div>
@@ -84,10 +84,10 @@ export function CartDrawer() {
             items.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center gap-3 rounded-xl border border-border p-3 text-xs shadow-xs"
+                className="flex items-center gap-3 rounded-card border border-border p-3 text-xs shadow-control"
               >
                 {/* Rasm */}
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-white p-1">
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-control border border-border/80 bg-media p-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.imageUrl}
@@ -100,13 +100,13 @@ export function CartDrawer() {
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
                   {item.colorName && (
-                    <p className="text-[11px] text-muted-foreground">Rang: {item.colorName}</p>
+                    <p className="text-caption text-muted-foreground">Rang: {item.colorName}</p>
                   )}
                   <p className="mt-1 font-black text-foreground">{formatMoney(item.price)}</p>
 
                   {/* Miqdor hisoblagich (+/-) */}
                   <div className="mt-2 flex items-center justify-between">
-                    <div className="flex items-center rounded-md border border-border bg-background">
+                    <div className="flex items-center rounded-control border border-border bg-background">
                       <button
                         type="button"
                         onClick={() => updateQty(item.id, item.qty - 1)}
@@ -127,7 +127,7 @@ export function CartDrawer() {
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
-                      className="text-muted-foreground hover:text-rose-500 p-1 transition-colors"
+                      className="text-muted-foreground hover:text-(--danger-fg) p-1 transition-colors"
                       title="Oʻchirish"
                     >
                       <Trash2 size={15} />
@@ -151,7 +151,7 @@ export function CartDrawer() {
                 <span>Yetkazib berish:</span>
                 <span className="font-bold text-foreground">
                   {shipping === 0n ? (
-                    <span className="text-emerald-600 dark:text-emerald-400">Bepul</span>
+                    <span className="text-(--success-fg)">Bepul</span>
                   ) : (
                     formatMoney(shipping)
                   )}
@@ -179,7 +179,7 @@ export function CartDrawer() {
                 onClick={() => setIsCartDrawerOpen(false)}
                 className="w-full"
               >
-                <Button variant="primary" size="sm" className="w-full gap-1 text-xs font-bold shadow-md">
+                <Button variant="primary" size="sm" className="w-full gap-1 text-xs font-bold shadow-card-hover">
                   Buyurtmaga <ArrowRight size={13} />
                 </Button>
               </Link>

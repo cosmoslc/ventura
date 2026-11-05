@@ -19,6 +19,10 @@ import {
   settings,
   shippingRates,
   users,
+  faqCategories,
+  faqs,
+  heroSlides,
+  homeSections,
 } from "@ventura/db/schema/pc-crm";
 import { done, fail } from "./lib";
 import { flag } from "./edu-lib";
@@ -35,6 +39,8 @@ import { flag } from "./edu-lib";
  * - Sotuvlar (sales - sayt va oflayn)
  * - Xaridor buyurtmalari (orders)
  * - Super admin va foydalanuvchilar
+ * - FAQ kategoriyalari va savollar
+ * - Hero Slides va Home Sections
  */
 
 const databaseUrl =
@@ -725,6 +731,136 @@ try {
       { pcOrderId: pcOrder1.id, role: "gpu", productId: gpuId, qty: 1 },
     ]);
   }
+
+  // 11. Kontent (FAQ, Hero Slides, Home Sections)
+  console.log("[pc-seed] 11. Kontent yozilmoqda...");
+
+  // FAQ kategoriyalari
+  const [faqCat1] = await db
+    .insert(faqCategories)
+    .values([
+      { name: { uz: "Buyurtma va Yetkazib berish", ru: "Заказ и доставка", en: "Orders & Delivery" }, sort: 1 },
+    ])
+    .onConflictDoNothing()
+    .returning();
+
+  const [faqCat2] = await db
+    .insert(faqCategories)
+    .values([
+      { name: { uz: "Toʻlov va Kafolat", ru: "Оплата и Гарантия", en: "Payment & Warranty" }, sort: 2 },
+    ])
+    .onConflictDoNothing()
+    .returning();
+
+  const [faqCat3] = await db
+    .insert(faqCategories)
+    .values([
+      { name: { uz: "PC Konfigurator", ru: "PC Конфигуратор", en: "PC Configurator" }, sort: 3 },
+    ])
+    .onConflictDoNothing()
+    .returning();
+
+  if (faqCat1) {
+    await db.insert(faqs).values([
+      {
+        categoryId: faqCat1.id,
+        question: { uz: "Yetkazib berish qancha vaqt oladi?", ru: "Сколько времени занимает доставка?", en: "How long does delivery take?" },
+        answer: { uz: "Toshkent shahri bo'yicha 1 kun, viloyatlarga 2-4 ish kuni ichida yetkazib beramiz.", ru: "По Ташкенту — 1 день, по регионам — 2-4 рабочих дня.", en: "Tashkent city — 1 day, regions — 2-4 business days." },
+        sort: 1,
+      },
+      {
+        categoryId: faqCat1.id,
+        question: { uz: "Buyurtmani bekor qilish mumkinmi?", ru: "Можно ли отменить заказ?", en: "Can I cancel my order?" },
+        answer: { uz: "Ha, buyurtma 'Tasdiqlangan' holatiga o'tmaguncha bekor qilish mumkin. Operator bilan bog'laning.", ru: "Да, до подтверждения заказа отменить можно. Свяжитесь с оператором.", en: "Yes, orders can be cancelled before confirmation. Contact our operator." },
+        sort: 2,
+      },
+      {
+        categoryId: faqCat1.id,
+        question: { uz: "Buyurtma holatini qayerdan kuzataman?", ru: "Где отслеживать статус заказа?", en: "Where can I track my order?" },
+        answer: { uz: "Profilingiz → 'Mening buyurtmalarim' bo'limida real vaqt holatini ko'ring.", ru: "В профиле → раздел 'Мои заказы' — статус обновляется в реальном времени.", en: "Profile → 'My Orders' section — status updates in real time." },
+        sort: 3,
+      },
+    ]).onConflictDoNothing();
+  }
+
+  if (faqCat2) {
+    await db.insert(faqs).values([
+      {
+        categoryId: faqCat2.id,
+        question: { uz: "Qanday toʻlov usullari mavjud?", ru: "Какие способы оплаты доступны?", en: "What payment methods are available?" },
+        answer: { uz: "Hozircha naqd pul kuryer orqali (COD). Tez orada Click va Payme ham qo'shiladi.", ru: "Сейчас — наличными курьеру (COD). Скоро добавим Click и Payme.", en: "Currently cash on delivery (COD). Click and Payme coming soon." },
+        sort: 1,
+      },
+      {
+        categoryId: faqCat2.id,
+        question: { uz: "Kafolat muddati qancha?", ru: "Каков срок гарантии?", en: "What is the warranty period?" },
+        answer: { uz: "Barcha mahsulotlarga 12 oylik rasmiy ishlab chiqaruvchi kafolati beriladi.", ru: "На все товары — 12 месяцев официальной гарантии производителя.", en: "All products come with 12 months official manufacturer warranty." },
+        sort: 2,
+      },
+      {
+        categoryId: faqCat2.id,
+        question: { uz: "Mahsulotni qaytarish mumkinmi?", ru: "Можно ли вернуть товар?", en: "Can I return a product?" },
+        answer: { uz: "Qabul qilingan kundan 14 kun ichida asl qadoqda qaytarib olish mumkin.", ru: "Возврат в течение 14 дней с момента получения в оригинальной упаковке.", en: "Returns accepted within 14 days of delivery in original packaging." },
+        sort: 3,
+      },
+    ]).onConflictDoNothing();
+  }
+
+  if (faqCat3) {
+    await db.insert(faqs).values([
+      {
+        categoryId: faqCat3.id,
+        question: { uz: "PC konfigurator nima?", ru: "Что такое PC конфигуратор?", en: "What is the PC configurator?" },
+        answer: { uz: "O'zingizga mos kompyuterni qismlarini tanlab yig'ib, buyurtma bering. Mutaxassislarimiz siz uchun yig'adi.", ru: "Выберите компоненты и оформите заказ — наши специалисты соберут ПК для вас.", en: "Choose your components and order — our specialists will assemble the PC for you." },
+        sort: 1,
+      },
+      {
+        categoryId: faqCat3.id,
+        question: { uz: "Konfiguratorda tanlagan qismlar mos keladimi?", ru: "Совместимы ли выбранные компоненты?", en: "Are selected components compatible?" },
+        answer: { uz: "Mutaxassislarimiz buyurtma kelgach moslikni tekshiradi va agar muammo bo'lsa siz bilan bog'lanadi.", ru: "Наши специалисты проверяют совместимость и свяжутся с вами при необходимости.", en: "Our specialists verify compatibility and will contact you if needed." },
+        sort: 2,
+      },
+    ]).onConflictDoNothing();
+  }
+
+  // Hero Slides
+  await db.insert(heroSlides).values([
+    {
+      imageUrl: "/banners/hero-gaming-pc.jpg",
+      title: { uz: "Yangi avlod Gaming PClar", ru: "Gaming PC нового поколения", en: "Next-Gen Gaming PCs" },
+      subtitle: { uz: "RTX 4070 Ti Super va i7-14700K bilan qurollantirilgan", ru: "На базе RTX 4070 Ti Super и i7-14700K", en: "Powered by RTX 4070 Ti Super & i7-14700K" },
+      link: "/computers",
+      sort: 1,
+      position: "hero",
+    },
+    {
+      imageUrl: "/banners/hero-components.jpg",
+      title: { uz: "O'zing uchun PC yig'", ru: "Собери свой PC", en: "Build Your Own PC" },
+      subtitle: { uz: "Konfigurator orqali ideal kompyuterni tuzib oling", ru: "Создай идеальный компьютер через конфигуратор", en: "Build your perfect PC with our configurator" },
+      link: "/computers/custom",
+      sort: 2,
+      position: "hero",
+    },
+    {
+      imageUrl: "/banners/banner-processors.jpg",
+      title: { uz: "Intel & AMD Protsessorlar", ru: "Процессоры Intel & AMD", en: "Intel & AMD Processors" },
+      subtitle: { uz: "Eng yangi 14-avlod protsessorlari stokda", ru: "Последнее поколение процессоров в наличии", en: "Latest gen processors in stock" },
+      link: "/products?category=protsessorlar",
+      sort: 1,
+      position: "banner_1",
+    },
+  ]).onConflictDoNothing();
+
+  // Home Sections
+  await db.insert(homeSections).values([
+    { key: "hero",          title: { uz: "Bosh Banner",        ru: "Главный баннер",   en: "Hero Banner"       }, enabled: true,  sort: 1 },
+    { key: "categories",    title: { uz: "Toifalar",           ru: "Категории",        en: "Categories"        }, enabled: true,  sort: 2 },
+    { key: "new_arrivals",  title: { uz: "Yangi kelganlar",    ru: "Новинки",          en: "New Arrivals"      }, enabled: true,  sort: 3 },
+    { key: "best_sellers",  title: { uz: "Eng ko'p sotilgan", ru: "Бестселлеры",      en: "Best Sellers"      }, enabled: true,  sort: 4 },
+    { key: "pc_builds",     title: { uz: "Tayyor PClar",       ru: "Готовые ПК",       en: "Ready-Made PCs"    }, enabled: true,  sort: 5 },
+    { key: "banner_1",      title: { uz: "O'rta Banner",       ru: "Средний баннер",   en: "Middle Banner"     }, enabled: true,  sort: 6 },
+    { key: "promo_products",title: { uz: "Aksiyalar",          ru: "Акции",            en: "Promotions"        }, enabled: false, sort: 7 },
+  ]).onConflictDoNothing();
 
   console.log("[pc-seed] Muvaffaqiyatli yakunlandi!");
   done("PostgreSQL 'pc_crm_dev' bazasi real ma'lumotlar bilan to'ldirildi!");
