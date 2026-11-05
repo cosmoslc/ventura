@@ -112,6 +112,8 @@ try {
       ],
       user: {
         additionalFields: {
+          firstName: { type: "string", required: false, defaultValue: "" },
+          lastName: { type: "string", required: false, defaultValue: "" },
           role: { type: "string", input: false, defaultValue: "customer" },
           isActive: { type: "boolean", input: false, defaultValue: true },
           locale: { type: "string", input: false, defaultValue: "uz" },
@@ -127,13 +129,21 @@ try {
       userId = existing.id;
       await db
         .update(users)
-        .set({ name: input.owner.name, role: "admin", isActive: true, phoneVerified: true })
+        .set({
+          name: input.owner.name,
+          firstName: input.owner.name,
+          role: "admin",
+          isActive: true,
+          phoneVerified: true,
+        })
         .where(eq(users.id, userId));
     } else {
       const email = `admin+${input.owner.phone.replace(/\D/g, "")}@pc-crm.invalid`;
       const user = await context.internalAdapter.createUser(
         {
           name: input.owner.name,
+          firstName: input.owner.name,
+          lastName: "",
           email,
           emailVerified: false,
           phoneNumber: input.owner.phone,
