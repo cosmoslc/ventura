@@ -19,6 +19,7 @@ import { Button } from "@ventura/ui/button";
 import { Sidebar, type NavSection } from "@ventura/ui/sidebar";
 import { ThemeToggle } from "@ventura/ui/theme-toggle";
 import { Topbar } from "@ventura/ui/topbar";
+import { useStore } from "@/lib/store-context";
 
 interface AdminShellProps {
   children: React.ReactNode;
@@ -62,6 +63,7 @@ function activeFor(pathname: string) {
 }
 
 export function AdminShell({ children }: AdminShellProps) {
+  const { branding } = useStore();
   const pathname = usePathname();
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -78,7 +80,7 @@ export function AdminShell({ children }: AdminShellProps) {
       <Topbar
         collapsed={collapsed}
         onToggleSidebar={toggleSidebar}
-        brandName="VENTURA PC"
+        brandName={branding.name || "VENTURA PC"}
         brandMark={<Monitor className="size-5" />}
         brandSubtitle="Boshqaruv paneli"
       >

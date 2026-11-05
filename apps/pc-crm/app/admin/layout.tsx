@@ -6,11 +6,15 @@ import { AdminAccessGate } from "@/components/admin/admin-access-gate";
 import { getServerSession, requireAdmin } from "@/lib/server/auth";
 import { getDb } from "@/lib/db";
 import { accounts, users } from "@ventura/db/schema/pc-crm";
+import { getStoreBranding } from "@/lib/server/branding";
 
-export const metadata: Metadata = {
-  title: "Admin Panel — VenturaPC",
-  description: "VenturaPC platformasi ichki boshqaruv va hisob-kitob paneli",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getStoreBranding();
+  return {
+    title: `Admin Panel — ${branding.name}`,
+    description: `${branding.name} platformasi ichki boshqaruv va hisob-kitob paneli`,
+  };
+}
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const reqHeaders = await headers();

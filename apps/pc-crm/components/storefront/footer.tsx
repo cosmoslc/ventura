@@ -1,7 +1,38 @@
+"use client";
+
 import Link from "next/link";
 import { Headphones, Mail, MapPin, Monitor, Phone, ShieldCheck, Truck } from "lucide-react";
+import { useStore } from "@/lib/store-context";
+
+function renderFooterLogo(name: string) {
+  const trimmed = name.trim();
+  const spaceIdx = trimmed.lastIndexOf(" ");
+  if (spaceIdx > 0) {
+    const firstPart = trimmed.slice(0, spaceIdx);
+    const lastPart = trimmed.slice(spaceIdx + 1);
+    return (
+      <span className="uppercase tracking-tight">
+        {firstPart} <span className="text-primary font-normal">{lastPart}</span>
+      </span>
+    );
+  }
+  const dashIdx = trimmed.lastIndexOf("-");
+  if (dashIdx > 0) {
+    const firstPart = trimmed.slice(0, dashIdx);
+    const lastPart = trimmed.slice(dashIdx + 1);
+    return (
+      <span className="uppercase tracking-tight">
+        {firstPart} <span className="text-primary font-normal">{lastPart}</span>
+      </span>
+    );
+  }
+  return <span className="uppercase tracking-tight">{trimmed}</span>;
+}
 
 export function Footer() {
+  const { branding } = useStore();
+  const storeName = (branding.name || "Ventura PC").trim();
+
   return (
     <footer className="mt-16 border-t border-border bg-card text-card-foreground">
       {/* Afzalliklar bloki (Nega biz) */}
@@ -58,9 +89,7 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
                 <Monitor size={18} />
               </div>
-              <span>
-                VENTURA<span className="text-primary font-normal">PC</span>
-              </span>
+              {renderFooterLogo(storeName)}
             </Link>
             <p className="mb-4 max-w-sm text-xs leading-relaxed text-muted-foreground">
               Kompyuterlar, ehtiyot qismlar, monitor va aksessuarlar sotuvchi eng ishonchli doʻkon. Oʻz orzuingizdagi
@@ -68,13 +97,13 @@ export function Footer() {
             </p>
             <div className="flex flex-col gap-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-2">
-                <MapPin size={14} className="text-primary" /> Toshkent shahri, Yunusobod tumani
+                <MapPin size={14} className="text-primary" /> {branding.contacts?.address || "Toshkent shahri, Yunusobod tumani"}
               </span>
               <span className="flex items-center gap-2">
-                <Phone size={14} className="text-primary" /> +998 71 200 00 00
+                <Phone size={14} className="text-primary" /> {branding.contacts?.phone || "+998 71 200 00 00"}
               </span>
               <span className="flex items-center gap-2">
-                <Mail size={14} className="text-primary" /> info@venturapc.uz
+                <Mail size={14} className="text-primary" /> {branding.contacts?.email || "info@venturapc.uz"}
               </span>
             </div>
           </div>
@@ -104,61 +133,67 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=monitorlar" className="hover:text-primary transition-colors">
-                  Monitorlar
+                <Link href="/computers" className="hover:text-primary transition-colors">
+                  Tayyor kompyuterlar
+                </Link>
+              </li>
+              <li>
+                <Link href="/computers/custom" className="hover:text-primary transition-colors">
+                  PC Konfigurator
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Kompyuterlar */}
+          {/* Xaridorga */}
           <div>
-            <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Kompyuterlar</h4>
+            <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Xaridorga</h4>
             <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
               <li>
-                <Link href="/computers?type=gaming" className="hover:text-primary transition-colors">
-                  Oʻyin kompyuterlari (Gaming)
+                <Link href="/cart" className="hover:text-primary transition-colors">
+                  Savatcha
                 </Link>
               </li>
               <li>
-                <Link href="/computers?type=office" className="hover:text-primary transition-colors">
-                  Ofis va Oʻqish uchun
+                <Link href="/profile/orders" className="hover:text-primary transition-colors">
+                  Buyurtmalarim
                 </Link>
               </li>
               <li>
-                <Link href="/computers?type=workstation" className="hover:text-primary transition-colors">
-                  Render va Montaj (Workstation)
+                <Link href="/profile/liked" className="hover:text-primary transition-colors">
+                  Yoqqan mahsulotlar
                 </Link>
               </li>
               <li>
-                <Link href="/computers/custom" className="text-primary font-semibold hover:underline">
-                  Oʻz kompyuteringni terish →
+                <Link href="/faq" className="hover:text-primary transition-colors">
+                  Koʻp beriladigan savollar
                 </Link>
               </li>
-            </ul>
-          </div>
-
-          {/* Ma'lumot */}
-          <div>
-            <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Mijozlarga</h4>
-            <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
               <li>
                 <Link href="/about" className="hover:text-primary transition-colors">
                   Biz haqimizda
                 </Link>
               </li>
+            </ul>
+          </div>
+
+          {/* Do'kon & Kafolat */}
+          <div>
+            <h4 className="mb-3 text-xs font-bold uppercase tracking-wider text-foreground">Servis</h4>
+            <ul className="flex flex-col gap-2 text-xs text-muted-foreground">
+              <li>
+                <span className="text-muted-foreground/80">Yetkazib berish: 1-3 kun</span>
+              </li>
+              <li>
+                <span className="text-muted-foreground/80">Kafolat: 12 oy</span>
+              </li>
               <li>
                 <Link href="/faq" className="hover:text-primary transition-colors">
-                  Koʻp soʻraladigan savollar
+                  Toʻlov usullari
                 </Link>
               </li>
               <li>
-                <Link href="/shipping" className="hover:text-primary transition-colors">
-                  Yetkazib berish va toʻlov
-                </Link>
-              </li>
-              <li>
-                <Link href="/warranty" className="hover:text-primary transition-colors">
+                <Link href="/about" className="hover:text-primary transition-colors">
                   Kafolat va qaytarish
                 </Link>
               </li>
@@ -174,7 +209,7 @@ export function Footer() {
 
       {/* Mualliflik huquqi */}
       <div className="border-t border-border/50 py-4 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} VenturaPC Platformasi. Barcha huquqlar himoyalangan.
+        © {new Date().getFullYear()} {storeName}. Barcha huquqlar himoyalangan.
       </div>
     </footer>
   );

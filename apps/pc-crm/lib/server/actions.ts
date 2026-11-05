@@ -556,3 +556,13 @@ export async function getStorefrontConfiguratorPartsAction() {
     return { success: false, error: "Konfigurator qismlarini yuklab bo'lmadi", parts: [] };
   }
 }
+
+export async function getStoreBrandingAction() {
+  try {
+    const { getStoreBranding } = await import("./branding");
+    return { success: true, branding: await getStoreBranding() };
+  } catch (err) {
+    console.error("getStoreBrandingAction error:", err);
+    return { success: false, error: "Branding yuklab bo'lmadi" };
+  }
+}

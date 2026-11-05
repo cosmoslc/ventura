@@ -4,6 +4,8 @@ import { Toaster } from "@ventura/ui/toast";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
 import { CartProvider } from "@/lib/cart-context";
 import { LikedProvider } from "@/lib/liked-context";
+import { StoreProvider } from "@/lib/store-context";
+import { getStoreBranding } from "@/lib/server/branding";
 import { fontVariables } from "@/lib/fonts";
 import "./globals.css";
 
@@ -13,25 +15,32 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export const metadata: Metadata = {
-  title: "Kompyuter va Texnika Do'koni",
-  description: "Onlayn kompyuter va elektronika do'koni, PC konfigurator va boshqaruv tizimi",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getStoreBranding();
+  return {
+    title: `${branding.name} — Kompyuter va Texnika Do'koni`,
+    description: `${branding.name} — Onlayn kompyuter va elektronika do'koni, PC konfigurator va boshqaruv tizimi`,
+  };
+}
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const branding = await getStoreBranding();
+
   return (
     <html lang="uz" data-brand="ventura" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-quicksand)]">
-        <CartProvider>
-          <LikedProvider>
-            {children}
-            <CartDrawer />
-            <Toaster />
-          </LikedProvider>
-        </CartProvider>
+        <StoreProvider initialBranding={branding}>
+          <CartProvider>
+            <LikedProvider>
+              {children}
+              <CartDrawer />
+              <Toaster />
+            </LikedProvider>
+          </CartProvider>
+        </StoreProvider>
       </body>
     </html>
   );

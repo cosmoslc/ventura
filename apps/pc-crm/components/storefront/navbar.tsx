@@ -22,8 +22,10 @@ import { useSession, signOut } from "@/lib/auth-client";
 import { AuthModal } from "./auth-modal";
 import { NavbarSearch } from "./navbar-search";
 import { NotificationsDrawer } from "./notifications-drawer";
+import { useStore } from "@/lib/store-context";
 
 interface NavbarProps {
+  storeName?: string;
   cartCount?: number;
   likedCount?: number;
   unreadNotifsCount?: number;
@@ -31,13 +33,45 @@ interface NavbarProps {
   onOpenSearch?: () => void;
 }
 
+function renderBrandLogo(name: string) {
+  const trimmed = name.trim();
+  const spaceIdx = trimmed.lastIndexOf(" ");
+  if (spaceIdx > 0) {
+    const firstPart = trimmed.slice(0, spaceIdx);
+    const lastPart = trimmed.slice(spaceIdx + 1);
+    return (
+      <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text uppercase tracking-tight">
+        {firstPart} <span className="text-primary font-normal">{lastPart}</span>
+      </span>
+    );
+  }
+  const dashIdx = trimmed.lastIndexOf("-");
+  if (dashIdx > 0) {
+    const firstPart = trimmed.slice(0, dashIdx);
+    const lastPart = trimmed.slice(dashIdx + 1);
+    return (
+      <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text uppercase tracking-tight">
+        {firstPart} <span className="text-primary font-normal">{lastPart}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text uppercase tracking-tight">
+      {trimmed}
+    </span>
+  );
+}
+
 export function Navbar({
+  storeName: propStoreName,
   cartCount: propCartCount,
   likedCount: propLikedCount,
   unreadNotifsCount = 0,
   onOpenCart: propOnOpenCart,
   onOpenSearch: propOnOpenSearch,
 }: NavbarProps) {
+  const { branding } = useStore();
+  const activeStoreName = (propStoreName || branding.name || "Ventura PC").trim();
   const { cartCount: contextCartCount, setIsCartDrawerOpen, setIsSearchOpen } = useCart();
   const { likedCount: contextLikedCount } = useLiked();
   const { data: session } = useSession();
@@ -73,7 +107,7 @@ export function Navbar({
           <div className="flex items-center gap-4">
             <span>Yetkazib berish butun Oʻzbekiston boʻylab</span>
             <span className="hidden sm:inline text-border">|</span>
-            <span className="hidden sm:inline">Aloqa: +998 71 200 00 00</span>
+            <span className="hidden sm:inline">Aloqa: {branding.contacts?.phone || "+998 71 200 00 00"}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -114,9 +148,7 @@ export function Navbar({
           <div className="flex h-9 w-9 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
             <Monitor size={20} />
           </div>
-          <span className="bg-gradient-to-r from-foreground via-foreground to-primary bg-clip-text">
-            VENTURA<span className="text-primary font-normal">PC</span>
-          </span>
+          {renderBrandLogo(activeStoreName)}
         </Link>
 
         {/* Qidiruv input (Ikki tomonga va pastga qarab kengayuvchi) */}
