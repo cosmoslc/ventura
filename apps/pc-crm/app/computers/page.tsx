@@ -149,31 +149,26 @@ export default function ComputersListingPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-transparent text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
 
-      <main className="flex-1">
+      <main className="mx-auto w-full max-w-[var(--storefront-max-w,1320px)] flex-1 px-4 py-6 sm:px-6">
         {/* Sarlavha & PC yig'ish */}
-        <section className="border-b border-border bg-card/60 py-4 sm:py-5">
-          <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 sm:px-6">
-            <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-                Tayyor oʻyin va ishchi kompyuterlar
-              </h1>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+            Tayyor oʻyin va ishchi kompyuterlar
+          </h1>
 
-              <Link href="/computers/custom" className="shrink-0">
-                <Button variant="primary" size="sm" className="gap-2 text-xs font-bold shadow-control h-9 px-4">
-                  <Wrench size={15} />
-                  <span>PC yigʻish</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
+          <Link href="/computers/custom" className="shrink-0">
+            <Button variant="primary" size="sm" className="gap-2 text-xs font-bold shadow-control h-9 px-4">
+              <Wrench size={15} />
+              <span>PC yigʻish</span>
+            </Button>
+          </Link>
+        </div>
 
         {/* Asosiy kontent: Filterlar va Kompyuterlar Grid */}
-        <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 py-8 sm:px-6">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
             {/* Chap tomon: Desktop Filter paneli */}
             <aside className="hidden lg:block lg:col-span-1 space-y-6">
               <div className="rounded-card border border-border bg-card p-5 shadow-card">
@@ -365,7 +360,6 @@ export default function ComputersListingPage() {
               )}
             </div>
           </div>
-        </div>
       </main>
 
       {/* Mobil Filtr Drawer */}

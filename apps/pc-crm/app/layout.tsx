@@ -34,7 +34,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
-      <body className="min-h-screen text-foreground antialiased font-[family-name:var(--font-quicksand)]">
+      <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-quicksand)]">
         <StoreProvider initialBranding={branding}>
           <CartProvider>
             <LikedProvider>
