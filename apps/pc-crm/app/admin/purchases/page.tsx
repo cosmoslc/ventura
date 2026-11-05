@@ -101,7 +101,6 @@ export default function AdminPurchasesPage() {
           value={formatMoney(totalSpent)}
           tone={1}
           valueClassName="whitespace-nowrap text-title"
-          hint="Barcha faol kirimlar summasi"
         />
 
         <StatCard
@@ -109,7 +108,6 @@ export default function AdminPurchasesPage() {
           label="Xarid qilingan jami dona"
           value={`${totalUnits} dona`}
           tone={2}
-          hint="Ombor zaxirasiga tushgan"
         />
 
         <StatCard
@@ -117,7 +115,6 @@ export default function AdminPurchasesPage() {
           label="Kirim partiyalari soni"
           value={`${purchases.filter((p) => !p.voidedAt).length} ta partiya`}
           tone={3}
-          hint="Yetkazib beruvchilardan"
         />
       </div>
 

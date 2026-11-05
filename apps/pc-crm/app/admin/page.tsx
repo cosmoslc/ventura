@@ -85,7 +85,6 @@ export default async function AdminDashboardPage() {
           value={formatMoney(monthlyRevenue)}
           tone={1}
           valueClassName="whitespace-nowrap text-title"
-          hint="Joriy oyda yakunlangan sotuvlar"
         />
 
         <StatCard
@@ -94,7 +93,6 @@ export default async function AdminDashboardPage() {
           value={formatMoney(monthlyProfit)}
           tone={2}
           valueClassName="whitespace-nowrap text-title"
-          hint="Tannarx snapshot boʻyicha, joriy oy"
         />
 
         <StatCard
@@ -103,7 +101,6 @@ export default async function AdminDashboardPage() {
           value={formatMoney(stockValue)}
           tone={3}
           valueClassName="whitespace-nowrap text-title"
-          hint={`${products.length} xil faol mahsulot qoldigʻi`}
         />
 
         <StatCard
@@ -111,7 +108,6 @@ export default async function AdminDashboardPage() {
           label="Yangi buyurtmalar"
           value={`${pendingOrders} ta`}
           tone={4}
-          hint="Yangi sayt va konfigurator zakazlari"
         />
       </div>
 

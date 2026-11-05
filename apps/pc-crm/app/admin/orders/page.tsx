@@ -131,7 +131,6 @@ export default function AdminOrdersPage() {
           label="Yangi buyurtmalar"
           value={`${orders.filter((o) => o.status === "new").length} ta`}
           tone={1}
-          hint="Operator tasdigʻi kutilmoqda"
         />
 
         <StatCard
@@ -139,7 +138,6 @@ export default function AdminOrdersPage() {
           label="Yetkazilayotganlar"
           value={`${orders.filter((o) => o.status === "shipping" || o.status === "confirmed").length} ta`}
           tone={2}
-          hint="Kuryer yoʻlida"
         />
 
         <StatCard
@@ -147,7 +145,6 @@ export default function AdminOrdersPage() {
           label="Muvaffaqiyatli topshirilgan"
           value={`${orders.filter((o) => o.status === "delivered").length} ta`}
           tone={3}
-          hint="Foydaga aylangan"
         />
 
         <StatCard
@@ -156,7 +153,6 @@ export default function AdminOrdersPage() {
           value={formatMoney(orders.reduce((sum, o) => sum + o.total, 0n))}
           tone={4}
           valueClassName="whitespace-nowrap text-title"
-          hint="Barcha faol buyurtmalar"
         />
       </div>
 

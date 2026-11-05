@@ -106,10 +106,10 @@ export default function AdminUsersPage() {
 
       {/* 4 ta Statistik karta */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<Users />} label="Jami foydalanuvchilar" value={`${stats.totalUsers} ta`} tone={1} hint="Roʻyxatdan oʻtgan profil" />
-        <StatCard icon={<UserCheck />} label="Faol mijozlar" value={`${stats.activeUsers} ta`} tone={2} hint="Bloklanmagan profillar" />
-        <StatCard icon={<ShoppingBag />} label="Xaridorlar soni" value={`${stats.payingUsers} ta`} tone={3} hint="Kamida 1 ta buyurtma bergan" />
-        <StatCard icon={<ShieldCheck />} label="Jami xaridlar summasi" value={formatMoney(stats.totalSpentAll)} tone={4} valueClassName="whitespace-nowrap text-title" hint="Barcha mijozlar boʻyicha" />
+        <StatCard icon={<Users />} label="Jami foydalanuvchilar" value={`${stats.totalUsers} ta`} tone={1} />
+        <StatCard icon={<UserCheck />} label="Faol mijozlar" value={`${stats.activeUsers} ta`} tone={2} />
+        <StatCard icon={<ShoppingBag />} label="Xaridorlar soni" value={`${stats.payingUsers} ta`} tone={3} />
+        <StatCard icon={<ShieldCheck />} label="Jami xaridlar summasi" value={formatMoney(stats.totalSpentAll)} tone={4} valueClassName="whitespace-nowrap text-title" />
       </div>
 
       {/* Filterlar qatori */}

@@ -161,7 +161,6 @@ export default function AdminProductsPage() {
           label="Mahsulot turlari"
           value={`${productsList.length} xil`}
           tone={1}
-          hint={`Omborda jami: ${totalStockUnits} dona`}
         />
 
         <StatCard
@@ -170,7 +169,6 @@ export default function AdminProductsPage() {
           value={formatMoney(totalCostValue)}
           tone={2}
           valueClassName="whitespace-nowrap text-title"
-          hint="Jami xarid tannarxi"
         />
 
         <StatCard
@@ -179,7 +177,6 @@ export default function AdminProductsPage() {
           value={formatMoney(expectedProfit)}
           tone={3}
           valueClassName="whitespace-nowrap text-title"
-          hint={<span className="whitespace-nowrap">Sotuv: {formatMoney(totalSellValue)}</span>}
         />
 
         <StatCard
@@ -187,7 +184,6 @@ export default function AdminProductsPage() {
           label="Kam qolganlar"
           value={`${lowStockCount} ta`}
           tone={4}
-          hint="Zaxirasi tugamoqda"
         />
       </div>
 

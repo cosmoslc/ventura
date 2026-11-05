@@ -115,7 +115,6 @@ export default function AdminSalesPage() {
           value={formatMoney(totalRevenue)}
           tone={1}
           valueClassName="whitespace-nowrap text-title"
-          hint={`Sotilgan: ${totalUnits} dona`}
         />
 
         <StatCard
@@ -124,7 +123,6 @@ export default function AdminSalesPage() {
           value={formatMoney(totalProfit)}
           tone={2}
           valueClassName="whitespace-nowrap text-title"
-          hint={`Sof qoʻshilgan qiymat · ${avgMargin}% marja`}
         />
 
         <StatCard
@@ -133,7 +131,6 @@ export default function AdminSalesPage() {
           value={formatMoney(totalCost)}
           tone={3}
           valueClassName="whitespace-nowrap text-title"
-          hint="Xarid narxlari yigʻindisi"
         />
 
         <StatCard
@@ -141,7 +138,6 @@ export default function AdminSalesPage() {
           label="Bitimlar soni"
           value={`${activeSales.length} ta`}
           tone={4}
-          hint="Sayt va oflayn savdolar"
         />
       </div>
 
