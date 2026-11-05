@@ -46,7 +46,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-transparent text-foreground">
       <Navbar />
 
       <main className="flex-1 py-8">

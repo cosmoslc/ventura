@@ -181,7 +181,7 @@ export default function CustomPcConfiguratorPage() {
   const activeCategoryMeta = CATEGORIES.find((c) => c.role === activeRole) ?? CATEGORIES[0]!;
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-transparent text-foreground">
       <Navbar />
 
       <main className="flex-1">

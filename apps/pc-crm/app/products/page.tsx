@@ -206,7 +206,7 @@ function ProductsCatalogContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-transparent text-foreground">
       <Navbar />
 
       <main className="mx-auto w-full max-w-[var(--storefront-max-w,1320px)] flex-1 px-4 py-8 sm:px-6">
@@ -509,7 +509,7 @@ export default function ProductsCatalogPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen flex-col bg-background text-foreground">
+        <div className="flex min-h-screen flex-col bg-transparent text-foreground">
           <Navbar />
           <div className="mx-auto w-full max-w-[var(--storefront-max-w,1320px)] flex-1 px-4 py-8 sm:px-6">
             <div className="h-8 w-48 bg-muted rounded animate-pulse mb-6" />

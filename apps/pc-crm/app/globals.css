@@ -28,8 +28,20 @@ body {
   min-height: 100vh;
 }
 
-/* Allow fixed background image to shine through storefront page wrappers */
-html:not(.dark) body > div,
-html:not(.dark) .min-h-screen.bg-background {
-  background-color: transparent !important;
+/* Dark rejimda storefront body foni */
+html.dark body,
+[data-brand="ventura"].dark body {
+  background-color: var(--background);
+  background-image: none;
+}
+
+/* Dropdown, select va modal panellari hech qachon shaffof bo'lib qolmasligi uchun */
+.morph-panel,
+[data-morph-layer="panel"],
+[role="menu"],
+[role="listbox"],
+[role="dialog"],
+[data-slot="dialog-content"] {
+  background-color: var(--popover) !important;
+  color: var(--popover-foreground) !important;
 }

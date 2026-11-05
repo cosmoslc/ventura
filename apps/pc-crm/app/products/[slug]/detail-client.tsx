@@ -82,7 +82,7 @@ export function ProductDetailClient({ product }: { product: ProductDetailData })
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-transparent text-foreground">
       <Navbar />
 
       <main className="mx-auto w-full max-w-[var(--storefront-max-w,1320px)] flex-1 px-4 py-6 sm:px-6">

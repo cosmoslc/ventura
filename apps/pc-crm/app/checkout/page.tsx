@@ -107,7 +107,7 @@ export default function CheckoutPage() {
   // 1. Agar buyurtma muvaffaqiyatli topshirilgan bo'lsa
   if (confirmedOrderId) {
     return (
-      <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <div className="flex min-h-screen flex-col bg-transparent text-foreground">
         <Navbar />
 
         <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center p-6 text-center">
@@ -157,7 +157,7 @@ export default function CheckoutPage() {
   // 2. Savat bo'sh bo'lsa
   if (items.length === 0) {
     return (
-      <div className="flex min-h-screen flex-col bg-background text-foreground">
+      <div className="flex min-h-screen flex-col bg-transparent text-foreground">
         <Navbar />
         <main className="mx-auto flex flex-1 flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold">Savatchangiz boʻsh</h2>
@@ -173,7 +173,7 @@ export default function CheckoutPage() {
 
   // 3. Checkout Formasi
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-transparent text-foreground">
       <Navbar />
 
       <main className="mx-auto w-full max-w-[var(--storefront-max-w,1320px)] flex-1 px-4 py-8 sm:px-6">
