@@ -17,7 +17,6 @@ import {
   Zap,
 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
-import { Input } from "@ventura/ui/input";
 
 export interface SearchProductItem {
   id: string;
@@ -273,27 +272,27 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
       {/* Input container: ikki tomonga qarab kengayadi */}
       <form
         onSubmit={handleSubmit}
-        className={`relative flex items-center rounded-card border bg-background/90 px-3 py-1.5 shadow-control transition-all duration-200 ${
+        className={`relative flex h-9 items-center rounded-card border bg-card pl-[9px] pr-2.5 shadow-control transition-all duration-200 ${
           isExpanded
-            ? "border-primary ring-2 ring-primary/20 shadow-card-hover bg-background"
-            : "border-input hover:border-primary/50"
+            ? "border-primary ring-2 ring-primary/20 shadow-card-hover bg-card"
+            : "border-border hover:border-primary/40"
         }`}
       >
         <Search
-          size={16}
+          size={18}
           className={`shrink-0 transition-colors ${
             isExpanded ? "text-primary" : "text-muted-foreground"
           }`}
         />
 
-        <Input
+        <input
           ref={inputRef}
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setIsExpanded(true)}
           placeholder="Kompyuter, videokarta, protsessor qidirish..."
-          className="ml-2 h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-xs shadow-none placeholder:text-muted-foreground/80 focus-visible:border-0 focus-visible:shadow-none"
+          className="ml-2 h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-xs text-foreground shadow-none outline-none placeholder:text-muted-foreground/80 focus:outline-none focus:ring-0"
           aria-label="Qidiruv"
         />
 
@@ -304,7 +303,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
               setQuery("");
               inputRef.current?.focus();
             }}
-            className="rounded p-0.5 text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-secondary hover:text-foreground"
             title="Tozalash"
           >
             <X size={14} />
