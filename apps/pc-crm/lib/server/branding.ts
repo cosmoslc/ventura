@@ -6,12 +6,18 @@ import type { StoreBranding } from "../store-context";
 export async function getStoreBranding(): Promise<StoreBranding> {
   let tenant = null;
   try {
-    tenant = (await currentTenant()) ?? allTenants()[0] ?? null;
+    tenant = (await currentTenant()) ?? null;
   } catch {
-    tenant = allTenants()[0] ?? null;
+    tenant = null;
   }
 
-  let name = tenant?.name || "Ventura PC";
+  // Agar aniqlangan tenant PC CRM ga tegishli bo'lmasa (masalan: boshqa sawmill yoki edu loyihasi bo'lsa),
+  // uni qabul qilmaymiz, toza Ventura PC brendini saqlaymiz.
+  if (tenant && tenant.slug !== "ventura-pc" && tenant.slug !== "pc-crm" && !tenant.features?.includes("products")) {
+    tenant = null;
+  }
+
+  let name = tenant?.name || "Ventura PC Store";
   let slug = tenant?.slug || "ventura-pc";
   let logoUrl = tenant?.brand?.logoUrl ?? null;
   let primary = tenant?.brand?.primary ?? null;
@@ -22,7 +28,13 @@ export async function getStoreBranding(): Promise<StoreBranding> {
 
   try {
     const settings = await getDbSettings();
-    const branding = settings.store_branding as { storeName?: string; slug?: string; logoUrl?: string } | undefined;
+    const branding = settings.store_branding as {
+      storeName?: string;
+      slug?: string;
+      logoUrl?: string;
+      primary?: string;
+      primaryColor?: string;
+    } | undefined;
     const contacts = settings.store_contacts as {
       storeName?: string;
       phone?: string;
@@ -45,6 +57,11 @@ export async function getStoreBranding(): Promise<StoreBranding> {
     }
     if (branding?.logoUrl) {
       logoUrl = branding.logoUrl;
+    }
+    if (branding?.primary?.trim()) {
+      primary = branding.primary.trim();
+    } else if (branding?.primaryColor?.trim()) {
+      primary = branding.primaryColor.trim();
     }
 
     const p = contacts?.storePhone || contacts?.phone;
