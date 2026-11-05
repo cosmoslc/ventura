@@ -313,13 +313,17 @@ export async function getDbPcOrders(): Promise<PcOrderItem[]> {
   const db = getDb();
 
   const orders = await db
-    .select()
+    .select({
+      order: pcOrders,
+      build: pcBuilds,
+    })
     .from(pcOrders)
+    .leftJoin(pcBuilds, eq(pcOrders.convertedPcId, pcBuilds.id))
     .orderBy(desc(pcOrders.createdAt));
 
   if (orders.length === 0) return [];
 
-  const orderIds = orders.map((o) => o.id);
+  const orderIds = orders.map((o) => o.order.id);
 
   const items = await db
     .select({
@@ -337,20 +341,39 @@ export async function getDbPcOrders(): Promise<PcOrderItem[]> {
     itemMap.set(it.item.pcOrderId, list);
   }
 
-  return orders.map((o) => {
+  // Barcha tayyor buildlar va komponentlar (agar convertedPcId ulanmagan bo'lsa)
+  const allBuilds = await db.select().from(pcBuilds);
+  const allBuildComps = await db.select().from(pcComponents);
+
+  return orders.map(({ order: o, build: b }) => {
     const oItems = itemMap.get(o.id) ?? [];
     const costTotal = oItems.reduce((sum, it) => sum + it.prod.costPrice * BigInt(it.item.qty), 0n);
 
-    const cpuItem = oItems.find((it) => it.item.role === "cpu");
-    const gpuItem = oItems.find((it) => it.item.role === "gpu");
-    const cpuTitle = cpuItem ? ((cpuItem.prod.name as I18nText)?.uz ?? "CPU") : null;
-    const gpuTitle = gpuItem ? ((gpuItem.prod.name as I18nText)?.uz ?? "GPU") : null;
+    let pcName = "";
+    if (b?.name) {
+      pcName = (b.name as I18nText)?.uz ?? (b.name as I18nText)?.ru ?? "";
+    }
 
-    let pcName = "Custom PC Build";
-    if (cpuTitle && gpuTitle) {
-      pcName = `${cpuTitle} / ${gpuTitle}`;
-    } else if (cpuTitle) {
-      pcName = `${cpuTitle} Custom PC`;
+    if (!pcName) {
+      // Komponentlar (CPU & GPU) bo'yicha mos keluvchi tayyor PC nomini qidirish
+      const cpuItem = oItems.find((it) => it.item.role === "cpu");
+      const gpuItem = oItems.find((it) => it.item.role === "gpu");
+
+      if (cpuItem && gpuItem) {
+        for (const build of allBuilds) {
+          const comps = allBuildComps.filter((c) => c.pcId === build.id);
+          const hasCpu = comps.some((c) => c.role === "cpu" && c.productId === cpuItem.item.productId);
+          const hasGpu = comps.some((c) => c.role === "gpu" && c.productId === gpuItem.item.productId);
+          if (hasCpu && hasGpu) {
+            pcName = (build.name as I18nText)?.uz ?? (build.name as I18nText)?.ru ?? "";
+            break;
+          }
+        }
+      }
+    }
+
+    if (!pcName) {
+      pcName = "Custom PC Build";
     }
 
     return {

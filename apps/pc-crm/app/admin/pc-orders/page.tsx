@@ -39,6 +39,7 @@ import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { StatCard } from "@ventura/ui/stat-card";
+import { toast } from "@ventura/ui/toast";
 import { calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
 import { type PcOrderItem } from "@/lib/pc-data";
@@ -67,13 +68,13 @@ const ORDER_TIMELINE_STEPS: { status: PcOrderItem["status"]; title: string; desc
 
 export default function AdminPcOrdersPage() {
   const [orders, setOrders] = useState<PcOrderItem[]>([]);
-  const [error, setError] = useState("");
-  const [successNotification, setSuccessNotification] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
     const result = await getAdminPcOrdersAction();
-    if (!result.success) { setError(result.error ?? "PC buyurtmalarini yuklab bo'lmadi"); return; }
-    setError("");
+    if (!result.success) {
+      toast({ tone: "danger", title: result.error ?? "PC buyurtmalarini yuklab boʻlmadi" });
+      return;
+    }
     setOrders(result.orders);
   }, []);
 
@@ -136,11 +137,14 @@ export default function AdminPcOrdersPage() {
 
     const result = await updatePcOrderStatusAction(order.id, nextStatus, order.quotedPrice, order.operatorNote);
     if (!result.success) {
-      setError(result.error ?? "Statusni oʻzgartirib boʻlmadi");
+      toast({ tone: "danger", title: result.error ?? "Statusni oʻzgartirib boʻlmadi" });
       await loadOrders(); // rollback
     } else {
-      setError("");
-      setSuccessNotification(`"${order.orderNumber}" buyurtmasi "${STATUS_LABELS[nextStatus].label}" bosqichiga oʻtkazildi.`);
+      toast({
+        tone: "success",
+        title: "Holat yangilandi",
+        description: `"${order.orderNumber}" buyurtmasi "${STATUS_LABELS[nextStatus].label}" bosqichiga oʻtkazildi.`,
+      });
     }
   };
 
@@ -167,8 +171,15 @@ export default function AdminPcOrdersPage() {
     }
 
     const result = await updatePcOrderStatusAction(selectedForDetail.id, modalStatus, parsedQuote, operatorNote);
-    if (!result.success) { setError(result.error ?? "PC buyurtmasini yangilab boʻlmadi"); return; }
-    setSuccessNotification(`"${selectedForDetail.orderNumber}" buyurtmasi muvaffaqiyatli yangilandi.`);
+    if (!result.success) {
+      toast({ tone: "danger", title: result.error ?? "PC buyurtmasini yangilab boʻlmadi" });
+      return;
+    }
+    toast({
+      tone: "success",
+      title: "Muvaffaqiyatli saqlandi",
+      description: `"${selectedForDetail.orderNumber}" buyurtmasi yangilandi.`,
+    });
     setSelectedForDetail(null);
     await loadOrders();
   };
@@ -177,17 +188,16 @@ export default function AdminPcOrdersPage() {
     const url = `${typeof window !== "undefined" ? window.location.origin : ""}/computers/custom?track=${orderNumber}`;
     void navigator.clipboard.writeText(url);
     setCopiedTrack(true);
+    toast({
+      tone: "success",
+      title: "Havola nusxalandi",
+      description: "Buyurtmani kuzatish havolasi clipboardga saqlandi.",
+    });
     setTimeout(() => setCopiedTrack(false), 2000);
   };
 
   return (
     <div className="space-y-6">
-      {error && (
-        <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">
-          {error}
-        </div>
-      )}
-
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -196,23 +206,6 @@ export default function AdminPcOrdersPage() {
           </h1>
         </div>
       </div>
-
-      {/* Muvaffaqiyat bildirishnomasi */}
-      {successNotification && (
-        <div className="flex items-center justify-between rounded-control bg-(--success-bg) border border-(--success-border) p-4 text-xs sm:text-sm text-(--success-fg)">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 size={18} />
-            <span>{successNotification}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSuccessNotification(null)}
-            className="hover:opacity-75"
-          >
-            <X size={16} />
-          </button>
-        </div>
-      )}
 
       {/* 4 ta Statistik karta */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
