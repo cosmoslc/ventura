@@ -16,6 +16,7 @@ import {
   FileText,
   Layers,
   MessageCircle,
+  MoreHorizontal,
   Phone,
   PhoneCall,
   Search,
@@ -26,6 +27,13 @@ import {
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@ventura/ui/dropdown-menu";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
@@ -256,7 +264,6 @@ export default function AdminPcOrdersPage() {
             <tr className="border-b border-border bg-muted/40 font-bold text-muted-foreground uppercase text-caption tracking-wider">
               <th className="p-3.5 whitespace-nowrap">Buyurtma ID</th>
               <th className="p-3.5 whitespace-nowrap">Zakaschi</th>
-              <th className="p-3.5 whitespace-nowrap">Telefon raqami</th>
               <th className="p-3.5">Zakaz qilingan PC nomi</th>
               <th className="p-3.5 text-right whitespace-nowrap">Tannarx</th>
               <th className="p-3.5 text-right whitespace-nowrap">Kelishilgan narx</th>
@@ -267,7 +274,7 @@ export default function AdminPcOrdersPage() {
           <tbody className="divide-y divide-border/60">
             {filteredOrders.length === 0 ? (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                <td colSpan={7} className="p-8 text-center text-muted-foreground">
                   Zakaz topilmadi.
                 </td>
               </tr>
@@ -283,31 +290,25 @@ export default function AdminPcOrdersPage() {
                       <p className="text-caption text-muted-foreground">{order.createdAt}</p>
                     </td>
 
-                    {/* 2. Zakaschi */}
-                    <td className="p-3.5">
+                    {/* 2. Zakaschi: Ism-familiya tagida telefon raqami */}
+                    <td className="p-3.5 min-w-[150px]">
                       <p className="font-bold text-foreground">{order.customerName}</p>
-                      {order.deliveryAddress ? (
-                        <p className="text-caption text-muted-foreground truncate max-w-[200px]" title={order.deliveryAddress}>
+                      <a
+                        href={`tel:${order.customerPhone}`}
+                        className="text-caption font-mono text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1 mt-0.5"
+                        title="Qoʻngʻiroq qilish"
+                      >
+                        <Phone size={11} className="text-muted-foreground" />
+                        <span>{order.customerPhone}</span>
+                      </a>
+                      {order.deliveryAddress && (
+                        <p className="text-2xs text-muted-foreground/80 truncate max-w-[200px] mt-0.5" title={order.deliveryAddress}>
                           {order.deliveryAddress}
                         </p>
-                      ) : (
-                        <p className="text-caption text-muted-foreground">Doʻkondan olib ketish</p>
                       )}
                     </td>
 
-                    {/* 3. Telefon raqami */}
-                    <td className="p-3.5 whitespace-nowrap">
-                      <a
-                        href={`tel:${order.customerPhone}`}
-                        className="text-caption font-mono text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5 font-medium"
-                        title="Qoʻngʻiroq qilish"
-                      >
-                        <Phone size={12} className="text-muted-foreground" />
-                        <span>{order.customerPhone}</span>
-                      </a>
-                    </td>
-
-                    {/* 4. Zakaz qilingan PC nomi */}
+                    {/* 3. Zakaz qilingan PC nomi */}
                     <td className="p-3.5 max-w-xs">
                       <p className="font-bold text-foreground truncate" title={order.pcName || "Custom PC Build"}>
                         {order.pcName || "Custom PC Build"}
@@ -317,12 +318,12 @@ export default function AdminPcOrdersPage() {
                       </p>
                     </td>
 
-                    {/* 5. Tannarx */}
+                    {/* 4. Tannarx */}
                     <td className="p-3.5 text-right font-mono font-semibold text-muted-foreground whitespace-nowrap">
                       {formatMoney(order.costPrice)}
                     </td>
 
-                    {/* 6. Kelishilgan narx */}
+                    {/* 5. Kelishilgan narx */}
                     <td className="p-3.5 text-right font-black text-foreground whitespace-nowrap">
                       {hasQuote ? (
                         formatMoney(order.quotedPrice!)
@@ -333,7 +334,7 @@ export default function AdminPcOrdersPage() {
                       )}
                     </td>
 
-                    {/* 7. Status (To'g'ridan-to'g'ri o'zgaruvchan Select) */}
+                    {/* 6. Status (To'g'ridan-to'g'ri o'zgaruvchan toza Selector Box, ortiqcha Badge'siz) */}
                     <td className="p-3.5 text-center whitespace-nowrap">
                       <Select
                         value={order.status}
@@ -341,11 +342,26 @@ export default function AdminPcOrdersPage() {
                       >
                         <SelectTrigger
                           aria-label="Holatni oʻzgartirish"
-                          className="h-7 w-auto min-w-[130px] text-caption font-semibold px-2 mx-auto bg-card"
+                          className="h-7.5 w-auto min-w-[145px] text-xs font-semibold px-2.5 mx-auto bg-card"
                         >
-                          <Badge tone={STATUS_LABELS[order.status].tone} className="py-0 px-1.5 text-caption font-semibold">
-                            {STATUS_LABELS[order.status].label}
-                          </Badge>
+                          <span className="inline-flex items-center gap-1.5 font-medium text-xs">
+                            <span
+                              className={`size-2 rounded-full shrink-0 ${
+                                order.status === "new" || order.status === "reviewing"
+                                  ? "bg-amber-500"
+                                  : order.status === "quoted"
+                                  ? "bg-blue-500"
+                                  : order.status === "confirmed" || order.status === "ready"
+                                  ? "bg-emerald-500"
+                                  : order.status === "assembling"
+                                  ? "bg-orange-500"
+                                  : order.status === "delivered"
+                                  ? "bg-slate-400"
+                                  : "bg-rose-500"
+                              }`}
+                            />
+                            <span className="text-foreground">{STATUS_LABELS[order.status].label}</span>
+                          </span>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new">Yangi zakaz</SelectItem>
@@ -360,55 +376,39 @@ export default function AdminPcOrdersPage() {
                       </Select>
                     </td>
 
-                    {/* 8. Amallar: Batafsil, Kuzatish, Foyda, Telefon */}
+                    {/* 7. Amallar: edu crm kabi 3 ta nuqta menyusi */}
                     <td className="p-3.5 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1">
-                        {/* Batafsil */}
-                        <Button
-                          variant="subtle"
-                          size="sm"
-                          onClick={() => handleOpenDetailModal(order)}
-                          className="h-7 px-2 text-caption gap-1 font-semibold text-foreground"
-                          title="Batafsil maʼlumot"
-                        >
-                          <FileText size={12} className="text-primary" />
-                          <span>Batafsil</span>
-                        </Button>
-
-                        {/* Kuzatish */}
-                        <Button
-                          variant="subtle"
-                          size="sm"
-                          onClick={() => setSelectedForTrack(order)}
-                          className="h-7 px-2 text-caption gap-1 font-semibold text-foreground"
-                          title="Buyurtma jarayoni va kuzatuv"
-                        >
-                          <Compass size={12} className="text-amber-500" />
-                          <span>Kuzatish</span>
-                        </Button>
-
-                        {/* Foyda ko'rish */}
-                        <Button
-                          variant="subtle"
-                          size="sm"
-                          onClick={() => setSelectedForProfit(order)}
-                          className="h-7 px-2 text-caption gap-1 font-semibold text-foreground"
-                          title="Sof foyda hisob-kitobi"
-                        >
-                          <TrendingUp size={12} className="text-(--success-fg)" />
-                          <span>Foyda</span>
-                        </Button>
-
-                        {/* Telefon qilish */}
-                        <a
-                          href={`tel:${order.customerPhone}`}
-                          className="inline-flex items-center justify-center gap-1 h-7 px-2.5 rounded-btn text-caption font-bold bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-                          title="Mijozga qoʻngʻiroq qilish"
-                        >
-                          <PhoneCall size={12} />
-                          <span>Qoʻngʻiroq</span>
-                        </a>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="subtle"
+                            size="icon-sm"
+                            aria-label="Amallar"
+                            className="size-7 text-muted-foreground hover:text-foreground"
+                          >
+                            <MoreHorizontal size={16} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem onSelect={() => handleOpenDetailModal(order)}>
+                            <FileText className="size-4 mr-2 text-primary" />
+                            <span>Batafsil</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setSelectedForTrack(order)}>
+                            <Compass className="size-4 mr-2 text-amber-500" />
+                            <span>Kuzatish</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setSelectedForProfit(order)}>
+                            <TrendingUp className="size-4 mr-2 text-(--success-fg)" />
+                            <span>Foyda koʻrish</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => window.open(`tel:${order.customerPhone}`, "_self")}>
+                            <PhoneCall className="size-4 mr-2 text-primary" />
+                            <span>Telefon qilish</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );
