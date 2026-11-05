@@ -252,9 +252,66 @@ export async function updateBrandAction(id: string, input: unknown): Promise<Res
   const { actor, meta, db } = await ctx();
   const parsed = brandSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: uz.common.loadError };
-  const [before] = await db.select({ brand: projects.brand }).from(projects).where(eq(projects.id, id)).limit(1);
+  const [before] = await db
+    .select({
+      id: projects.id,
+      slug: projects.slug,
+      templateKey: projects.templateKey,
+      dbStrategy: projects.dbStrategy,
+      serverId: projects.serverId,
+      settings: projects.settings,
+      brand: projects.brand,
+    })
+    .from(projects)
+    .where(eq(projects.id, id))
+    .limit(1);
   if (!before) return { ok: false, error: uz.common.loadError };
   await db.update(projects).set({ brand: parsed.data }).where(eq(projects.id, id));
+
+  if (before.templateKey === "pc-crm") {
+    try {
+      const tenantDb = await getProjectTenantDb(db, {
+        id: before.id,
+        templateKey: before.templateKey,
+        slug: before.slug,
+        dbStrategy: before.dbStrategy,
+        serverId: before.serverId,
+        settings: before.settings,
+      });
+      if (tenantDb) {
+        await tenantDb.run(async (tx) => {
+          await tx.execute(sql`
+            INSERT INTO settings (key, value)
+            VALUES (
+              'store_branding',
+              jsonb_build_object(
+                'primary', ${parsed.data.primary}::text,
+                'appearance', ${parsed.data.appearance}::text,
+                'logoUrl', ${parsed.data.logoUrl ?? null}::text
+              )
+            )
+            ON CONFLICT (key) DO UPDATE
+            SET value = jsonb_set(
+              jsonb_set(
+                jsonb_set(
+                  COALESCE(settings.value, '{}'::jsonb),
+                  '{primary}',
+                  to_jsonb(${parsed.data.primary}::text)
+                ),
+                '{appearance}',
+                to_jsonb(${parsed.data.appearance}::text)
+              ),
+              '{logoUrl}',
+              to_jsonb(${parsed.data.logoUrl ?? null}::text)
+            )
+          `);
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to sync brand to tenant db:", e);
+    }
+  }
+
   await audit.record(db, {
     actor,
     action: "project.brand",

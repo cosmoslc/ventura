@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties } from "react";
-import { themeInitScript } from "@ventura/ui/lib/theme";
+import { themeScript } from "@ventura/ui/lib/theme";
 import { Toaster } from "@ventura/ui/toast";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
 import { CartProvider } from "@/lib/cart-context";
@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="uz" data-brand="ventura" className={fontVariables} style={style} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeScript(branding.appearance ?? "system") }} />
       </head>
       <body className="min-h-screen bg-background text-foreground antialiased font-[family-name:var(--font-quicksand)]">
         <StoreProvider initialBranding={branding}>

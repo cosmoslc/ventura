@@ -9,6 +9,7 @@ export interface StoreBranding {
   slug: string;
   logoUrl?: string | null;
   primary?: string | null;
+  appearance?: "light" | "dark" | "system";
   storeMode?: StoreMode;
   contacts?: {
     phone?: string;
@@ -23,6 +24,7 @@ const DEFAULT_BRANDING: StoreBranding = {
   slug: "ventura-pc",
   logoUrl: null,
   primary: null,
+  appearance: "system",
   storeMode: "financial",
   contacts: {
     phone: "+998 71 200 00 00",

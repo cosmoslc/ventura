@@ -11,9 +11,29 @@ export async function getStoreBranding(): Promise<StoreBranding> {
     tenant = null;
   }
 
+  // Agar bitta tenant bo'lsa (masalan dedicated rejimda), lekin host mos kelmagan bo'lsa (IP yoki boshqa port bilan kirilganda)
+  if (!tenant) {
+    try {
+      const all = allTenants();
+      if (all.length === 1) {
+        tenant = all[0];
+      }
+    } catch {
+      tenant = null;
+    }
+  }
+
   // Agar aniqlangan tenant PC CRM ga tegishli bo'lmasa (masalan: boshqa sawmill yoki edu loyihasi bo'lsa),
   // uni qabul qilmaymiz, toza Ventura PC brendini saqlaymiz.
-  if (tenant && tenant.slug !== "ventura-pc" && tenant.slug !== "pc-crm" && !tenant.features?.includes("products")) {
+  if (
+    tenant &&
+    tenant.slug !== "ventura-pc" &&
+    tenant.slug !== "pc-crm" &&
+    !tenant.features?.includes("catalog") &&
+    !tenant.features?.includes("inventory") &&
+    !tenant.features?.includes("pc_builder") &&
+    !tenant.features?.includes("products")
+  ) {
     tenant = null;
   }
 
@@ -21,6 +41,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
   let slug = tenant?.slug || "ventura-pc";
   let logoUrl = tenant?.brand?.logoUrl ?? null;
   let primary = tenant?.brand?.primary ?? null;
+  let appearance: "light" | "dark" | "system" = tenant?.brand?.appearance ?? "system";
   let storeMode: "financial" | "inventory" =
     (tenant?.storeMode as "financial" | "inventory" | undefined) ?? "financial";
   let phone = "+998 71 200 00 00";
@@ -36,6 +57,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
       logoUrl?: string;
       primary?: string;
       primaryColor?: string;
+      appearance?: "light" | "dark" | "system";
       storeMode?: "financial" | "inventory";
     } | undefined;
     const contacts = settings.store_contacts as {
@@ -55,6 +77,10 @@ export async function getStoreBranding(): Promise<StoreBranding> {
       storeMode = branding.storeMode;
     }
 
+    if (branding?.appearance === "light" || branding?.appearance === "dark" || branding?.appearance === "system") {
+      appearance = branding.appearance;
+    }
+
     if (branding?.storeName?.trim()) {
       name = branding.storeName.trim();
     } else if (contacts?.storeName?.trim()) {
@@ -68,9 +94,9 @@ export async function getStoreBranding(): Promise<StoreBranding> {
       logoUrl = branding.logoUrl;
     }
     if (branding?.primary?.trim()) {
-      primary = branding.primary.trim();
+      primary = branding.primary.trim().replace(/^"+|"+$/g, "");
     } else if (branding?.primaryColor?.trim()) {
-      primary = branding.primaryColor.trim();
+      primary = branding.primaryColor.trim().replace(/^"+|"+$/g, "");
     }
 
     const p = contacts?.storePhone || contacts?.phone;
@@ -92,6 +118,7 @@ export async function getStoreBranding(): Promise<StoreBranding> {
     slug,
     logoUrl,
     primary,
+    appearance,
     storeMode,
     contacts: {
       phone,

@@ -22,6 +22,7 @@ if (!/^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/.test(slug)) {
 }
 
 const name = flag("name") ?? slug;
+const primary = flag("primary") || undefined;
 const databaseUrl = flag("database-url") ?? "";
 if (!/^postgres(ql)?:\/\//.test(databaseUrl)) {
   fail("--database-url kerak (masalan: postgres://user:pass@host:5432/db_name)");
@@ -50,7 +51,7 @@ try {
   await db
     .insert(settings)
     .values([
-      { key: "store_branding", value: { storeName: name, slug } },
+      { key: "store_branding", value: { storeName: name, slug, ...(primary ? { primary } : {}) } },
       { key: "usd_rate", value: { rate: 12850 } },
       { key: "tax_percent", value: { percent: 0 } },
       { key: "free_shipping_from", value: { amount: "1000000" } },
