@@ -10,6 +10,7 @@ import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 import { EmptyState } from "@ventura/ui/page-header";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
@@ -65,11 +66,11 @@ export function TeacherHomeworksView({
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!effectiveGroupId) {
-      toast({ tone: "danger", title: "Guruhni tanlang" });
+      toast({ tone: "danger", title: uz.homework.guruhniTanlang });
       return;
     }
     if (!title.trim()) {
-      toast({ tone: "danger", title: "Topshiriq mavzusi / sarlavhasini kiriting" });
+      toast({ tone: "danger", title: uz.homework.topshiriqMavzusiSarlavhasiniKiriting });
       return;
     }
 
@@ -115,9 +116,7 @@ export function TeacherHomeworksView({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="type-heading text-title text-foreground">Uy ishlari</h1>
-          <p className="text-body text-muted-foreground">
-            Barcha guruhlaringizga berilgan topshiriqlar va yangi vazifa berish
-          </p>
+          <p className="text-body text-muted-foreground">{uz.homework.barchaGuruhlaringizgaBerilganTopshiriqlar}</p>
         </div>
         <Button onClick={() => setOpen(true)} disabled={!groups.length}>
           <Plus /> {t.homeworkAdd}
@@ -130,7 +129,9 @@ export function TeacherHomeworksView({
           <Link
             href="/kabinet/uy-ishi"
             className={`px-3 py-1.5 text-caption font-semibold rounded-control transition-colors ${
-              !selectedGroupId ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+              !selectedGroupId
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >
             Hammasi ({homeworks.length})
@@ -229,7 +230,7 @@ export function TeacherHomeworksView({
                     href={`/kabinet/guruhlar/${hw.groupId}?tab=homework`}
                     className="text-primary hover:underline font-sans font-semibold"
                   >
-                    Guruhga o'tish →
+                    {uz.homework.guruhgaOtish}
                   </Link>
                 </div>
               </div>
@@ -239,8 +240,8 @@ export function TeacherHomeworksView({
       ) : (
         <EmptyState
           icon={<BookOpen />}
-          title={selectedGroupId ? "Ushbu guruhga hali uy vazifasi berilmagan" : t.homeworkEmpty}
-          description="Yangi topshiriq berish uchun yuqoridagi tugmani bosing. O'quvchilar uni o'z kabinetida ko'rishadi."
+          title={selectedGroupId ? uz.homework.ushbuGuruhgaHaliUy : t.homeworkEmpty}
+          description={uz.homework.yangiTopshiriqBerishUchun}
           action={
             <Button onClick={() => setOpen(true)} disabled={!groups.length} size="sm">
               <Plus /> {t.homeworkAdd}
@@ -284,20 +285,19 @@ export function TeacherHomeworksView({
         <form id="create-page-hw-form" onSubmit={handleCreate} className="space-y-4">
           {/* Guruh tanlash */}
           <div className="space-y-1.5">
-            <Label htmlFor="hw-group-select">Guruhni tanlang</Label>
-            <select
-              id="hw-group-select"
-              className="w-full h-(--control-h) rounded-control border border-border bg-card px-3 text-body text-foreground focus:outline-hidden focus:ring-2 focus:ring-primary/40"
-              required
-              value={effectiveGroupId}
-              onChange={(e) => setCustomGroupId(e.target.value)}
-            >
-              {groups.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name} ({g.courseName})
-                </option>
-              ))}
-            </select>
+            <Label htmlFor="hw-group-select">{uz.homework.guruhniTanlang}</Label>
+            <Select value={effectiveGroupId} onValueChange={setCustomGroupId}>
+              <SelectTrigger id="hw-group-select" className="w-full">
+                <SelectValue placeholder={uz.homework.guruhniTanlang} />
+              </SelectTrigger>
+              <SelectContent>
+                {groups.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    {g.name} ({g.courseName})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -321,7 +321,7 @@ export function TeacherHomeworksView({
                 min={lessonDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />
-              <FieldHint>Ixtiyoriy</FieldHint>
+              <FieldHint>{uz.homework.ixtiyoriy}</FieldHint>
             </div>
           </div>
 
@@ -329,7 +329,7 @@ export function TeacherHomeworksView({
             <Label htmlFor="hw-page-title">{t.homeworkTaskTitle}</Label>
             <Input
               id="hw-page-title"
-              placeholder="Masalan: 4-mavzu mashqlari, 32-bet"
+              placeholder={uz.homework.masalan4MavzuMashqlari}
               required
               maxLength={200}
               value={title}
@@ -341,25 +341,25 @@ export function TeacherHomeworksView({
             <Label htmlFor="hw-page-desc">{t.homeworkDescription}</Label>
             <Textarea
               id="hw-page-desc"
-              placeholder="Topshiriq shartlari va qo'shimcha ko'rsatmalar..."
+              placeholder={uz.homework.topshiriqShartlariVaQoshimcha}
               rows={4}
               maxLength={2000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <FieldHint>O'quvchilar ushbu tavsifni o'z portalida ko'rishadi</FieldHint>
+            <FieldHint>{uz.homework.oquvchilarUshbuTavsifniOz}</FieldHint>
           </div>
 
           {/* Fayllar va materiallar biriktirish */}
           <div className="space-y-1.5 pt-1">
-            <Label>Topshiriq materiallari va fayllar</Label>
+            <Label>{uz.homework.topshiriqMateriallariVaFayllar}</Label>
             <FileAttachmentsUploader
               attachments={attachments}
               onChange={setAttachments}
               disabled={pending}
-              label="📎 Fayl yoki kitob biriktirish"
+              label={uz.homework.faylYokiKitobBiriktirish}
             />
-            <FieldHint>Darslik, mashqlar to'plami yoki audio/video qo'shishingiz mumkin</FieldHint>
+            <FieldHint>{uz.homework.darslikMashqlarToplamiYoki}</FieldHint>
           </div>
         </form>
       </Modal>

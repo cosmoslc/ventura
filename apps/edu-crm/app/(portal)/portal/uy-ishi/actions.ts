@@ -3,27 +3,21 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { attachmentListSchema, attachmentsBelongTo } from "@/lib/attachments";
 import { groupHomeworks, groupMemberships, homeworkSubmissions } from "@ventura/db/schema/tenant";
 import { type ActionResult, crmAction } from "@/lib/server/action";
 import { requireStudent } from "@/lib/server/session";
+import { uz } from "@/lib/uz";
 
 /*
  * O'quvchi portali: Uy vazifasiga javob topshirish amallari (ADR 0063).
  * Muallif / Agent: Google Gemini
  */
 
-const attachmentSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  url: z.string(),
-  size: z.number(),
-  mimeType: z.string().optional(),
-});
-
 const submitHomeworkInput = z.object({
   homeworkId: z.string().uuid(),
   text: z.string().trim().max(2000).optional(),
-  attachments: z.array(attachmentSchema).default([]),
+  attachments: attachmentListSchema,
 });
 
 export async function submitHomeworkAction(input: unknown): Promise<ActionResult> {
@@ -33,11 +27,12 @@ export async function submitHomeworkAction(input: unknown): Promise<ActionResult
     async (ctx) => {
       const student = await requireStudent();
       const parsed = submitHomeworkInput.safeParse(input);
-      if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Noto'g'ri ma'lumot" };
+      if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.portal.notogriMalumot };
       const { homeworkId, text, attachments } = parsed.data;
+      if (!attachmentsBelongTo(ctx.tenant.slug, attachments)) return { ok: false, error: uz.portal.notogriFayl };
 
       if (!text && !attachments.length) {
-        return { ok: false, error: "Javob matni yoki kamida bitta fayl yuborishingiz kerak" };
+        return { ok: false, error: uz.portal.javobMatniYokiKamida2 };
       }
 
       // Vazifani va o'quvchi guruhini tekshiramiz
@@ -47,7 +42,7 @@ export async function submitHomeworkAction(input: unknown): Promise<ActionResult
         .where(eq(groupHomeworks.id, homeworkId))
         .limit(1);
 
-      if (!hw) return { ok: false, error: "Vazifa topilmadi" };
+      if (!hw) return { ok: false, error: uz.portal.vazifaTopilmadi };
 
       // O'quvchi shu guruh a'zosimi
       const [m] = await ctx.db
@@ -62,17 +57,14 @@ export async function submitHomeworkAction(input: unknown): Promise<ActionResult
         )
         .limit(1);
 
-      if (!m) return { ok: false, error: "Siz bu guruh a'zosi emassiz" };
+      if (!m) return { ok: false, error: uz.portal.sizBuGuruhAzosi };
 
       // Bor bo'lsa yangilaymiz, bo'lmasa yaratamiz
       const [existing] = await ctx.db
         .select({ id: homeworkSubmissions.id })
         .from(homeworkSubmissions)
         .where(
-          and(
-            eq(homeworkSubmissions.homeworkId, homeworkId),
-            eq(homeworkSubmissions.studentId, student.studentId),
-          ),
+          and(eq(homeworkSubmissions.homeworkId, homeworkId), eq(homeworkSubmissions.studentId, student.studentId)),
         )
         .limit(1);
 

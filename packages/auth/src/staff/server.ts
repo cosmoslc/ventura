@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { phoneNumber, twoFactor } from "better-auth/plugins";
-import type { TenantDb } from "@ventura/db";
+import type { TenantDb, TenantTx } from "@ventura/db";
 import { accounts, sessions, twoFactors, users, verifications } from "@ventura/db/schema/tenant";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
 
@@ -15,7 +15,8 @@ import { type Telegram, escapeHtml } from "@ventura/integrations";
  */
 
 export interface StaffAuthDeps {
-  db: TenantDb;
+  /** Tranzaksiya ham bo'lishi mumkin (deploy provision skripti) */
+  db: TenantDb | TenantTx;
   /** Mijozning o'z boti; berilmasa kod yuborib bo'lmaydi va xodim kira olmaydi */
   telegram: Telegram | null | (() => Telegram | null);
   /** Markaz nomi: Telegram xabarida ko'rinadi */
@@ -27,16 +28,16 @@ export interface StaffAuthDeps {
 
 export function createStaffAuth({ db, telegram, appName, secret, baseURL }: StaffAuthDeps) {
   const schema = { user: users, session: sessions, account: accounts, verification: verifications, twoFactor: twoFactors };
-  const baseAdapter = drizzleAdapter(db as any, {
+  const baseAdapter = drizzleAdapter(db as unknown as Parameters<typeof drizzleAdapter>[0], {
     provider: "pg",
     schema,
   });
 
-  const tenantAdapter = (options: any) => {
+  const tenantAdapter = (options: Parameters<ReturnType<typeof drizzleAdapter>>[0]) => {
     const raw = baseAdapter(options);
     if (!("run" in db)) return raw;
 
-    const wrapped: any = { ...raw };
+    const wrapped: Record<string, unknown> = { ...raw };
     const methods = [
       "create",
       "update",
@@ -51,11 +52,14 @@ export function createStaffAuth({ db, telegram, appName, secret, baseURL }: Staf
     ] as const;
 
     for (const m of methods) {
-      if (typeof (raw as any)[m] === "function") {
-        wrapped[m] = async (...args: any[]) => {
+      if (typeof (raw as Record<string, unknown>)[m] === "function") {
+        wrapped[m] = async (...args: unknown[]) => {
           return db.run(async (tx) => {
-            const txAdapter = drizzleAdapter(tx as any, { provider: "pg", schema })(options);
-            return (txAdapter as any)[m](...args);
+            const txAdapter = drizzleAdapter(tx as unknown as Parameters<typeof drizzleAdapter>[0], { provider: "pg", schema })(options) as unknown as Record<string, ((...a: unknown[]) => unknown) | undefined>;
+            const fn = txAdapter[m];
+            if (typeof fn === "function") {
+              return fn(...args);
+            }
           });
         };
       }

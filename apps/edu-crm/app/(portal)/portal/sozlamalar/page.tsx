@@ -3,8 +3,9 @@ import { users } from "@ventura/db/schema/tenant";
 import { getTenantDb } from "@/lib/server/deps";
 import { requireStudent, requireTenant } from "@/lib/server/session";
 import { PortalSettingsView } from "./settings-view";
+import { uz } from "@/lib/uz";
 
-export const metadata = { title: "Sozlamalar — O'quvchi portali" };
+export const metadata = { title: uz.portal.sozlamalarOquvchiPortali };
 
 /**
  * O'quvchi xavfsizlik va sozlamalar sahifasi (ADR 0063).

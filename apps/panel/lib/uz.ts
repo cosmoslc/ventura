@@ -829,5 +829,6 @@ export const uz = {
     required: "Majburiy maydon",
     actions: "Amallar",
     loadError: "Ma'lumotni yuklab bo'lmadi",
+    saveError: "Saqlab bo'lmadi. Qayta urinib ko'ring",
   },
 } as const;

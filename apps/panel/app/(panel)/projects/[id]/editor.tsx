@@ -1,15 +1,12 @@
 "use client";
 
 import {
-  Calendar,
   CheckCircle2,
   CreditCard,
   Flame,
   KeyRound,
   Plus,
   RefreshCw,
-  ShieldAlert,
-  ShieldCheck,
   Snowflake,
   Sparkles,
   Trash2,
@@ -128,7 +125,6 @@ export function ProjectEditor({
   secretNames,
   deploys,
   director,
-  trial,
   billing,
 }: EditorProps) {
   const router = useRouter();

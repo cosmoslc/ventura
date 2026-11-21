@@ -52,7 +52,7 @@ const BOTS_META: Record<BotRole, BotMeta> = {
     role: "teacher",
     name: t.teacherBot,
     icon: GraduationCap,
-    colorClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    colorClass: "bg-(--neutral-bg) text-(--nav-hue-purple) border-(--neutral-border)",
     notificationOptions: TEACHER_NOTIFICATIONS,
     miniAppHint: "O'qituvchilar kabineti (masalan: /kabinet)",
   },
@@ -60,7 +60,7 @@ const BOTS_META: Record<BotRole, BotMeta> = {
     role: "student",
     name: t.studentBot,
     icon: Users,
-    colorClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20",
+    colorClass: "bg-(--info-bg) text-(--info-fg) border-(--info-border)",
     notificationOptions: STUDENT_NOTIFICATIONS,
     miniAppHint: "O'quvchilar portali (masalan: /portal)",
   },
@@ -68,7 +68,7 @@ const BOTS_META: Record<BotRole, BotMeta> = {
     role: "parent",
     name: t.parentBot,
     icon: ShieldCheck,
-    colorClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    colorClass: "bg-(--success-bg) text-(--success-fg) border-(--success-border)",
     notificationOptions: PARENT_NOTIFICATIONS,
     miniAppHint: "Ota-onalar uchun Mini App (ixtiyoriy)",
   },
@@ -99,18 +99,11 @@ export function TelegramBotsView({
   // Test xabar modali
   const [testingRole, setTestingRole] = React.useState<BotRole | null>(null);
   const [testChatId, setTestChatId] = React.useState("");
-  const [testMessage, setTestMessage] = React.useState(
-    "Assalomu alaykum! Bu Ventura CRM dan sinov xabarnomasi.",
-  );
+  const [testMessage, setTestMessage] = React.useState("Assalomu alaykum! Bu Ventura CRM dan sinov xabarnomasi.");
   const [testPending, startTestTransition] = React.useTransition();
 
   function openEditModal(role: BotRole) {
-    const bot =
-      role === "teacher"
-        ? config.teacherBot
-        : role === "student"
-          ? config.studentBot
-          : config.parentBot;
+    const bot = role === "teacher" ? config.teacherBot : role === "student" ? config.studentBot : config.parentBot;
 
     setEditingRole(role);
     setToken(bot.token || "");
@@ -206,11 +199,7 @@ export function TelegramBotsView({
         {roles.map((role) => {
           const meta = BOTS_META[role];
           const bot =
-            role === "teacher"
-              ? config.teacherBot
-              : role === "student"
-                ? config.studentBot
-                : config.parentBot;
+            role === "teacher" ? config.teacherBot : role === "student" ? config.studentBot : config.parentBot;
           const stat = stats[role];
           const Icon = meta.icon;
 
@@ -226,7 +215,9 @@ export function TelegramBotsView({
                 {/* 1. Sarlavha: Ikonka, Nomi va Holat nishoni */}
                 <div className="flex items-start justify-between gap-2.5">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`grid size-9 shrink-0 place-items-center rounded-lg border ${meta.colorClass}`}>
+                    <div
+                      className={`grid size-9 shrink-0 place-items-center rounded-control border ${meta.colorClass}`}
+                    >
                       <Icon className="size-4" />
                     </div>
                     <div className="min-w-0">
@@ -250,13 +241,17 @@ export function TelegramBotsView({
 
                   <div className="shrink-0">
                     {!isConfigured ? (
-                      <Badge tone="neutral" className="text-2xs">{t.noToken}</Badge>
+                      <Badge tone="neutral" className="text-2xs">
+                        {t.noToken}
+                      </Badge>
                     ) : bot.enabled ? (
                       <Badge tone="success" dot className="text-2xs">
                         {t.activeStatus}
                       </Badge>
                     ) : (
-                      <Badge tone="warning" className="text-2xs">{t.inactiveStatus}</Badge>
+                      <Badge tone="warning" className="text-2xs">
+                        {t.inactiveStatus}
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -264,7 +259,7 @@ export function TelegramBotsView({
                 {/* 2. Foydalanuvchilar statistikasi: sodda va ixcham 1 qator */}
                 <div className="flex items-center justify-between rounded-control border border-border/70 bg-muted/30 px-3 py-2 text-xs">
                   <div className="flex items-center gap-1.5">
-                    <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="size-2 rounded-full bg-(--success-fg) shrink-0" />
                     <span className="text-muted-foreground">{t.activeCount}:</span>
                     <b className="font-mono text-foreground font-semibold">{stat.active}</b>
                   </div>
@@ -301,11 +296,7 @@ export function TelegramBotsView({
                 >
                   <Send className="size-3" /> Test
                 </Button>
-                <Button
-                  size="sm"
-                  className="flex-1 justify-center text-xs h-8"
-                  onClick={() => openEditModal(role)}
-                >
+                <Button size="sm" className="flex-1 justify-center text-xs h-8" onClick={() => openEditModal(role)}>
                   <Settings2 className="size-3" /> Sozlash
                 </Button>
               </div>
@@ -319,7 +310,9 @@ export function TelegramBotsView({
         <Sparkles className="size-4 shrink-0 text-primary mt-0.5" />
         <div className="leading-relaxed">
           <span className="font-semibold text-foreground">Botlarni sozlash: </span>
-          Telegramda <b>@BotFather</b> orqali yangi bot yarating, olingan API tokenni tegishli bot sozlamasiga kiriting va yoqing. O'qituvchi, o'quvchi va ota-onalar botga kirib <code>/start</code> yuborish orqali akkauntlarini ulaydilar.
+          Telegramda <b>@BotFather</b> orqali yangi bot yarating, olingan API tokenni tegishli bot sozlamasiga kiriting
+          va yoqing. O'qituvchi, o'quvchi va ota-onalar botga kirib <code>/start</code> yuborish orqali akkauntlarini
+          ulaydilar.
         </div>
       </div>
 
@@ -406,9 +399,7 @@ export function TelegramBotsView({
                       <Switch
                         id={`notif-${opt.key}`}
                         checked={on}
-                        onCheckedChange={(checked) =>
-                          setNotifications((prev) => ({ ...prev, [opt.key]: checked }))
-                        }
+                        onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, [opt.key]: checked }))}
                       />
                     </label>
                   );

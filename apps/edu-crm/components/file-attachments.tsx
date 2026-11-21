@@ -1,10 +1,23 @@
 "use client";
 
-import { Download, File, FileArchive, FileAudio, FileImage, FileSpreadsheet, FileText, FileVideo, Loader2, Paperclip, X } from "lucide-react";
+import {
+  Download,
+  File,
+  FileArchive,
+  FileAudio,
+  FileImage,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
+  Loader2,
+  Paperclip,
+  X,
+} from "lucide-react";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { toast } from "@ventura/ui/toast";
 import type { HomeworkAttachment } from "@ventura/db/schema/tenant";
+import { uz } from "@/lib/uz";
 
 /*
  * Fayllar yuklash va ko'rish komponentlari.
@@ -25,23 +38,23 @@ export function getFileIcon(filename: string) {
     case "png":
     case "gif":
     case "webp":
-      return <FileImage className="size-4 shrink-0 text-amber-500" />;
+      return <FileImage className="size-4 shrink-0 text-(--nav-hue-amber)" />;
     case "pdf":
     case "doc":
     case "docx":
     case "txt":
-      return <FileText className="size-4 shrink-0 text-blue-500" />;
+      return <FileText className="size-4 shrink-0 text-(--nav-hue-blue)" />;
     case "xls":
     case "xlsx":
-      return <FileSpreadsheet className="size-4 shrink-0 text-emerald-500" />;
+      return <FileSpreadsheet className="size-4 shrink-0 text-(--nav-hue-emerald)" />;
     case "zip":
     case "rar":
-      return <FileArchive className="size-4 shrink-0 text-purple-500" />;
+      return <FileArchive className="size-4 shrink-0 text-(--nav-hue-purple)" />;
     case "mp3":
     case "wav":
       return <FileAudio className="size-4 shrink-0 text-pink-500" />;
     case "mp4":
-      return <FileVideo className="size-4 shrink-0 text-red-500" />;
+      return <FileVideo className="size-4 shrink-0 text-(--nav-hue-rose)" />;
     default:
       return <File className="size-4 shrink-0 text-muted-foreground" />;
   }
@@ -52,7 +65,7 @@ export function FileAttachmentsUploader({
   attachments,
   onChange,
   disabled,
-  label = "📎 Fayl biriktirish",
+  label = uz.homework.faylBiriktirish,
 }: {
   attachments: HomeworkAttachment[];
   onChange: (items: HomeworkAttachment[]) => void;
@@ -71,7 +84,7 @@ export function FileAttachmentsUploader({
 
     for (const file of Array.from(files)) {
       if (file.size > 25 * 1024 * 1024) {
-        toast({ tone: "danger", title: `${file.name}: Fayl hajmi 25 MB dan oshmasligi kerak` });
+        toast({ tone: "danger", title: uz.homework.fileTooBig(file.name) });
         continue;
       }
 
@@ -87,16 +100,16 @@ export function FileAttachmentsUploader({
         if (data.ok && data.file) {
           newItems.push(data.file);
         } else {
-          toast({ tone: "danger", title: data.error || "Fayl yuklashda xatolik" });
+          toast({ tone: "danger", title: data.error || uz.homework.faylYuklashdaXatolik });
         }
       } catch {
-        toast({ tone: "danger", title: `${file.name}: Yuklab bo'lmadi` });
+        toast({ tone: "danger", title: uz.homework.uploadFailed(file.name) });
       }
     }
 
     if (newItems.length > 0) {
       onChange([...attachments, ...newItems]);
-      toast({ tone: "success", title: `${newItems.length} ta fayl yuklandi` });
+      toast({ tone: "success", title: uz.homework.uploaded(newItems.length) });
     }
 
     setUploading(false);
@@ -143,16 +156,18 @@ export function FileAttachmentsUploader({
               <span className="truncate max-w-[180px] sm:max-w-[240px] font-medium" title={file.name}>
                 {file.name}
               </span>
-              <span className="text-muted-foreground text-xs font-mono">{formatFileSize(file.size)}</span>
+              <span className="font-mono text-caption text-muted-foreground">{formatFileSize(file.size)}</span>
               {!disabled ? (
-                <button
-                  type="button"
+                <Button
+                  variant="subtle"
+                  size="icon-sm"
+                  className="ml-1 size-6"
                   onClick={() => handleRemove(file.id)}
-                  className="text-muted-foreground hover:text-destructive-text p-0.5 rounded transition-colors ml-1"
-                  title="O'chirish"
+                  title={uz.homework.ochirish}
+                  aria-label={uz.homework.ochirish}
                 >
-                  <X className="size-3.5" />
-                </button>
+                  <X />
+                </Button>
               ) : null}
             </div>
           ))}
@@ -188,7 +203,10 @@ export function FileAttachmentsList({
             className="flex items-center gap-2 px-2.5 py-1.5 rounded-control bg-card hover:bg-muted/80 border border-border-soft text-caption text-foreground transition-all group shadow-xs"
           >
             {getFileIcon(file.name)}
-            <span className="truncate max-w-[180px] sm:max-w-[260px] font-medium group-hover:text-primary transition-colors" title={file.name}>
+            <span
+              className="truncate max-w-[180px] sm:max-w-[260px] font-medium group-hover:text-primary transition-colors"
+              title={file.name}
+            >
               {file.name}
             </span>
             <span className="text-muted-foreground text-xs font-mono">{formatFileSize(file.size)}</span>

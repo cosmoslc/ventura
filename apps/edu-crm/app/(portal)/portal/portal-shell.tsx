@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  BookOpen,
-  House,
-  LogOut,
-  type LucideIcon,
-  Settings,
-  UsersRound,
-} from "lucide-react";
+import { BookOpen, House, LogOut, type LucideIcon, Settings, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
@@ -36,7 +29,7 @@ const ICONS: Record<PortalIcon, { icon: LucideIcon; hue: string }> = {
 
 const SECTIONS: NavSection[] = [
   {
-    title: "O'quvchi kabineti",
+    title: uz.portal.oquvchiKabineti,
     items: PORTAL_NAV.map((i) => ({
       id: i.href,
       label: i.label,
@@ -67,7 +60,7 @@ export function PortalShell({
   const active = portalActive(pathname);
 
   function toggleSidebar() {
-    if (window.matchMedia("(max-width: 900px)").matches) setMobileOpen((v) => !v);
+    if (window.matchMedia(uz.portal.maxWidth900px).matches) setMobileOpen((v) => !v);
     else setCollapsed((v) => !v);
   }
 
@@ -78,7 +71,7 @@ export function PortalShell({
         onToggleSidebar={toggleSidebar}
         brandName={brand.name}
         brandMark={brand.mark}
-        brandSubtitle="O'quvchi portali"
+        brandSubtitle={uz.portal.portalName}
       >
         <ThemeToggle />
         <DropdownMenu>
@@ -121,7 +114,7 @@ export function PortalShell({
 
       {/* Telefonda pastki menyu */}
       <nav
-        aria-label="O'quvchi kabineti"
+        aria-label={uz.portal.oquvchiKabineti}
         className="fixed inset-x-0 bottom-0 z-(--z-topbar) flex border-t border-border bg-card/95 backdrop-blur min-[901px]:hidden"
       >
         {PORTAL_NAV.map((i) => {

@@ -40,8 +40,8 @@ describe("checkCrmSlugAvailability", () => {
     }
   });
 
-  it("mavjud band subdomenni (cosmos) rad etadi", async () => {
-    const res = await checkCrmSlugAvailability("cosmos");
+  it("mavjud band subdomenni (oxford) rad etadi", async () => {
+    const res = await checkCrmSlugAvailability("oxford");
     expect(res.available).toBe(false);
     expect(res.error).toContain("band qilingan");
   });

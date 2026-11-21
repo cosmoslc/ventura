@@ -4,8 +4,9 @@ import { todayTashkent } from "@/lib/server/memberships";
 import { portalDashboardData } from "@/lib/server/portal";
 import { requireStudent, requireTenant } from "@/lib/server/session";
 import { PortalDashboardView } from "./dashboard-view";
+import { uz } from "@/lib/uz";
 
-export const metadata = { title: "Bosh sahifa — O'quvchi portali" };
+export const metadata = { title: uz.portal.boshSahifaOquvchiPortali };
 
 /**
  * O'quvchi kabineti bosh sahifasi (ADR 0063).

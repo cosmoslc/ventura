@@ -11,6 +11,7 @@ import { toast } from "@ventura/ui/toast";
 import { checkHomeworkSubmissionAction, getHomeworkSubmissionsAction } from "@/app/(kabinet)/kabinet/actions";
 import { FileAttachmentsList } from "@/components/file-attachments";
 import type { HomeworkSubmissionItem } from "@/lib/server/kabinet";
+import { uz } from "@/lib/uz";
 
 /*
  * O'qituvchi uchun o'quvchilar topshirgan uy vazifalarini ko'rish va baholash modali.
@@ -95,19 +96,19 @@ export function HomeworkSubmissionsModal({
       });
 
       if (!res.ok) {
-        toast({ tone: "danger", title: res.error || "Saqlab bo'lmadi" });
+        toast({ tone: "danger", title: res.error || uz.homework.saqlabBolmadi });
         return;
       }
 
       toast({
         tone: "success",
-        title: status === "checked" ? "Topshiriq tekshirildi va baholandi!" : "Topshiriq qaytarildi",
+        title: status === "checked" ? uz.homework.checkedToast : uz.homework.returnedToast,
       });
 
       if (homeworkId) void reloadData(homeworkId);
       onUpdated?.();
     } catch {
-      toast({ tone: "danger", title: "Amalni bajarib bo'lmadi" });
+      toast({ tone: "danger", title: uz.homework.amalniBajaribBolmadi });
     } finally {
       setCheckingId(null);
     }
@@ -117,22 +118,22 @@ export function HomeworkSubmissionsModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title={`O'quvchilar javoblari — ${homeworkTitle}`}
-      description="O'quvchilar yuborgan fayllar va izohlarni ko'rib, baho qo'yishingiz mumkin."
+      title={uz.homework.submissionsTitle(homeworkTitle)}
+      description={uz.homework.oquvchilarYuborganFayllarVa}
       position="center"
       wide
     >
       <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
         {loading ? (
           <div className="py-12 text-center text-body text-muted-foreground animate-pulse">
-            O'quvchilar topshiriqlari yuklanmoqda...
+            {uz.homework.oquvchilarTopshiriqlariYuklanmoqda}
           </div>
         ) : submissions.length === 0 ? (
           <div className="py-12 text-center space-y-2">
             <Clock className="size-10 text-muted-foreground/60 mx-auto" />
             <p className="text-body font-semibold text-foreground">Hozircha hech kim topshiriq yubormagan</p>
             <p className="text-caption text-muted-foreground max-w-sm mx-auto">
-              O'quvchilar o'z portali orqali javob va fayllarni yuborishi bilan ular shu yerda ko'rinadi.
+              {uz.homework.oquvchilarOzPortaliOrqali}
             </p>
           </div>
         ) : (
@@ -147,9 +148,9 @@ export function HomeworkSubmissionsModal({
                   key={s.id}
                   className={`p-4 rounded-card border transition-all ${
                     isChecked
-                      ? "border-emerald-500/30 bg-emerald-500/5"
+                      ? "border-(--success-border) bg-(--success-bg)"
                       : isRejected
-                        ? "border-red-500/30 bg-red-500/5"
+                        ? "border-(--danger-border) bg-(--danger-bg)"
                         : "border-border-soft bg-card shadow-xs"
                   }`}
                 >
@@ -203,29 +204,25 @@ export function HomeworkSubmissionsModal({
                   <div className="pt-3 border-t border-border-soft space-y-3 bg-muted/20 p-3 rounded-control">
                     <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
                       <div className="sm:col-span-1">
-                        <Label htmlFor={`grade-${s.id}`}>Baho (1-100 yoki 1-5)</Label>
+                        <Label htmlFor={`grade-${s.id}`}>{uz.homework.baho1100Yoki}</Label>
                         <Input
                           id={`grade-${s.id}`}
                           type="number"
                           min={1}
                           max={100}
-                          placeholder="Baho"
+                          placeholder={uz.homework.baho}
                           value={gradeInput[s.id] ?? ""}
-                          onChange={(e) =>
-                            setGradeInput((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
+                          onChange={(e) => setGradeInput((prev) => ({ ...prev, [s.id]: e.target.value }))}
                           disabled={isChecking}
                         />
                       </div>
                       <div className="sm:col-span-3">
-                        <Label htmlFor={`feedback-${s.id}`}>Izoh / Sharh (o'quvchiga ko'rinadi)</Label>
+                        <Label htmlFor={`feedback-${s.id}`}>{uz.homework.izohSharhOquvchigaKorinadi}</Label>
                         <Input
                           id={`feedback-${s.id}`}
-                          placeholder="Masalan: Barakalla! / Xatolarni to'g'irlang"
+                          placeholder={uz.homework.masalanBarakallaXatolarniTogirlang}
                           value={feedbackInput[s.id] ?? ""}
-                          onChange={(e) =>
-                            setFeedbackInput((prev) => ({ ...prev, [s.id]: e.target.value }))
-                          }
+                          onChange={(e) => setFeedbackInput((prev) => ({ ...prev, [s.id]: e.target.value }))}
                           disabled={isChecking}
                         />
                       </div>
@@ -250,7 +247,7 @@ export function HomeworkSubmissionsModal({
                         onClick={() => handleCheck(s.id, "checked")}
                       >
                         <CheckCircle2 className="size-4" />
-                        {isChecked ? "Qayta baholash" : "Tekshirildi va baholash"}
+                        {isChecked ? uz.homework.qaytaBaholash : uz.homework.tekshirildiVaBaholash}
                       </Button>
                     </div>
                   </div>

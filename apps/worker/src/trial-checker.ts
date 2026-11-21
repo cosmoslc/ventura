@@ -170,7 +170,7 @@ export async function checkTrialExpirations(
         console.log(`[worker] ${kind} expired for ${p.slug} → paused`);
       }
     }
-  } catch (err: any) {
-    console.error("[worker] checkTrialExpirations error:", err.message);
+  } catch (err) {
+    console.error("[worker] checkTrialExpirations error:", err instanceof Error ? err.message : String(err));
   }
 }

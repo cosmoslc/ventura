@@ -1,9 +1,7 @@
 "use client";
 
 import {
-  AlertTriangle,
   ArrowRightLeft,
-  Check,
   Cloud,
   Copy,
   Database,
@@ -664,13 +662,16 @@ function MoveToSupabaseModal({
   const [testResult, setTestResult] = React.useState<{ ok: boolean; message: string } | null>(null);
   const [pending, startTransition] = React.useTransition();
 
-  React.useEffect(() => {
+  // Tanlangan loyiha o'zgarsa — formani unga moslash (render paytida, effektsiz)
+  const [syncedProject, setSyncedProject] = React.useState(project);
+  if (project !== syncedProject) {
+    setSyncedProject(project);
     if (project) {
       setSelectedProjectId(project.id);
       if (project.targetRef) setProjectRef(project.targetRef);
       else if (supabaseProjects[0]?.id) setProjectRef(supabaseProjects[0].id);
     }
-  }, [project, supabaseProjects]);
+  }
 
   const currentProject = allProjects.find((p) => p.id === selectedProjectId) || project;
 
@@ -1209,12 +1210,14 @@ function RenameSupabaseModal({
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
+  const [syncedTarget, setSyncedTarget] = React.useState(target);
+  if (target !== syncedTarget) {
+    setSyncedTarget(target);
     if (target) {
       setName(target.name);
       setError(null);
     }
-  }, [target]);
+  }
 
   if (!target) return null;
 

@@ -43,6 +43,46 @@ export function cash(e: Pick<LedgerEntry, "kind" | "amount">): number {
   return e.kind === "payment" ? e.amount : e.kind === "refund" ? -e.amount : 0;
 }
 
+/**
+ * To'lovni bekor qilish holatida:
+ * Mavjud qaytarishlar (refund) qolgan haqiqiy to'lovlardan oshib ketmasligi shart.
+ */
+export function canVoidPaymentWithoutRefundConflict(
+  activeEntries: readonly Pick<LedgerEntry, "id" | "kind" | "amount">[],
+  paymentIdToVoid: string,
+): boolean {
+  const remainingPaid = activeEntries
+    .filter((e) => e.id !== paymentIdToVoid && e.kind === "payment")
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  const totalRefunded = activeEntries
+    .filter((e) => e.id !== paymentIdToVoid && e.kind === "refund")
+    .reduce((sum, e) => sum + e.amount, 0);
+
+  return totalRefunded <= remainingPaid;
+}
+
+/**
+ * To'lov yoki qaytarish summasi o'zgartirilganda (yoki bekor qilingan qaytarish tiklanganda):
+ * Jami qaytarishlar jami to'lovlardan oshib ketmasligi shart.
+ */
+export function canUpdatePaymentAmountWithoutRefundConflict(
+  activeEntries: readonly Pick<LedgerEntry, "id" | "kind" | "amount">[],
+  entryId: string,
+  entryKind: EntryKind,
+  nextAmount: number,
+): boolean {
+  const nextPaid = activeEntries
+    .filter((e) => e.kind === "payment")
+    .reduce((sum, e) => sum + (e.id === entryId && entryKind === "payment" ? nextAmount : e.amount), 0);
+
+  const nextRefunded = activeEntries
+    .filter((e) => e.kind === "refund")
+    .reduce((sum, e) => sum + (e.id === entryId && entryKind === "refund" ? nextAmount : e.amount), 0);
+
+  return nextRefunded <= nextPaid;
+}
+
 export interface MonthStatus extends MonthCharge {
   covered: number;
   due: number;

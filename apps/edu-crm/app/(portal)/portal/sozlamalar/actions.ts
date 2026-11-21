@@ -21,7 +21,7 @@ import { uz } from "@/lib/uz";
  */
 
 const nicknameInput = z.object({
-  name: z.string().trim().min(1, "Ism kiritilishi shart").max(120),
+  name: z.string().trim().min(1, uz.portal.ismKiritilishiShart).max(120),
 });
 
 export async function updatePortalNicknameAction(input: unknown): Promise<ActionResult> {
@@ -48,8 +48,8 @@ export async function updatePortalNicknameAction(input: unknown): Promise<Action
 }
 
 const passwordInput = z.object({
-  currentPassword: z.string().min(1, "Joriy parol kiritilmadi"),
-  newPassword: z.string().min(6, "Yangi parol kamida 6 belgi bo'lishi kerak").max(128),
+  currentPassword: z.string().min(1, uz.portal.joriyParolKiritilmadi),
+  newPassword: z.string().min(6, uz.portal.yangiParolKamida6).max(128),
 });
 
 export async function changePortalPasswordAction(input: unknown): Promise<ActionResult> {
@@ -70,7 +70,7 @@ export async function changePortalPasswordAction(input: unknown): Promise<Action
       const auth = deps.auth(await requestOrigin());
 
       const valid = await verifyStaffPassword(auth, student.id, currentPassword);
-      if (!valid) return { ok: false, error: "Joriy parol noto'g'ri" };
+      if (!valid) return { ok: false, error: uz.portal.joriyParolNotogri };
 
       await setStaffPassword(auth, student.id, newPassword);
       await ctx.audit("student.self_password_change", { type: "student", id: student.studentId });
@@ -80,12 +80,15 @@ export async function changePortalPasswordAction(input: unknown): Promise<Action
   );
 }
 
-export async function togglePortal2FAAction(enable: boolean): Promise<ActionResult<{ needTelegram?: boolean }>> {
+export async function togglePortal2FAAction(input: unknown): Promise<ActionResult<{ needTelegram?: boolean }>> {
   return crmAction(
     "students",
     null,
     async (ctx) => {
       const student = await requireStudent();
+      const flag = z.boolean().safeParse(input);
+      if (!flag.success) return { ok: false, error: uz.common.invalid };
+      const enable = flag.data;
       const [u] = await ctx.db
         .select({ telegramChatId: users.telegramChatId })
         .from(users)

@@ -59,7 +59,7 @@ export function HomeworkTab({
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim()) {
-      toast({ tone: "danger", title: "Topshiriq mavzusi / sarlavhasini kiriting" });
+      toast({ tone: "danger", title: uz.homework.topshiriqMavzusiSarlavhasiniKiriting });
       return;
     }
 
@@ -115,7 +115,10 @@ export function HomeworkTab({
       {homeworks.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {homeworks.map((hw) => (
-            <Card key={hw.id} className="p-5 space-y-3 flex flex-col justify-between hover:border-primary/40 transition-colors">
+            <Card
+              key={hw.id}
+              className="p-5 space-y-3 flex flex-col justify-between hover:border-primary/40 transition-colors"
+            >
               <div className="space-y-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="text-body font-bold text-foreground leading-snug">{hw.title}</h3>
@@ -160,12 +163,7 @@ export function HomeworkTab({
               </div>
 
               <div className="pt-3 border-t border-border-soft flex items-center justify-between gap-2">
-                <Button
-                  variant="subtle"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setSelectedHwForSubmissions(hw)}
-                >
+                <Button variant="subtle" size="sm" className="gap-1.5" onClick={() => setSelectedHwForSubmissions(hw)}>
                   <Inbox className="size-4 text-primary" />
                   <span>Javoblar ({hw.submissionsCount})</span>
                   {hw.checkedCount > 0 ? (
@@ -253,7 +251,7 @@ export function HomeworkTab({
                 min={lessonDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />
-              <FieldHint>Ixtiyoriy</FieldHint>
+              <FieldHint>{uz.homework.ixtiyoriy}</FieldHint>
             </div>
           </div>
 
@@ -261,7 +259,7 @@ export function HomeworkTab({
             <Label htmlFor="hw-title">{t.homeworkTaskTitle}</Label>
             <Input
               id="hw-title"
-              placeholder="Masalan: 4-mavzu mashqlari, 32-bet"
+              placeholder={uz.homework.masalan4MavzuMashqlari}
               required
               maxLength={200}
               value={title}
@@ -273,25 +271,25 @@ export function HomeworkTab({
             <Label htmlFor="hw-desc">{t.homeworkDescription}</Label>
             <Textarea
               id="hw-desc"
-              placeholder="Topshiriq shartlari va ko'rsatmalar..."
+              placeholder={uz.homework.topshiriqShartlariVaKorsatmalar}
               rows={4}
               maxLength={2000}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <FieldHint>O'quvchilar ushbu tavsifni o'z portalida ko'rishadi</FieldHint>
+            <FieldHint>{uz.homework.oquvchilarUshbuTavsifniOz}</FieldHint>
           </div>
 
           {/* Fayllar va materiallar biriktirish */}
           <div className="space-y-1.5 pt-1">
-            <Label>Topshiriq materiallari va fayllar</Label>
+            <Label>{uz.homework.topshiriqMateriallariVaFayllar}</Label>
             <FileAttachmentsUploader
               attachments={attachments}
               onChange={setAttachments}
               disabled={pending}
-              label="📎 Fayl yoki kitob biriktirish"
+              label={uz.homework.faylYokiKitobBiriktirish}
             />
-            <FieldHint>Darslik, mashqlar to'plami yoki audio/video qo'shishingiz mumkin</FieldHint>
+            <FieldHint>{uz.homework.darslikMashqlarToplamiYoki}</FieldHint>
           </div>
         </form>
       </Modal>

@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  BookOpen,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  RotateCcw,
-  Upload,
-  User,
-  XCircle,
-} from "lucide-react";
+import { BookOpen, Calendar, CheckCircle2, Clock, RotateCcw, Upload, User, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -19,11 +10,13 @@ import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { Textarea } from "@ventura/ui/textarea";
 import { toast } from "@ventura/ui/toast";
+import { ViewSwitch } from "@ventura/ui/view-switch";
 import type { HomeworkAttachment } from "@ventura/db/schema/tenant";
 import { FileAttachmentsList, FileAttachmentsUploader } from "@/components/file-attachments";
 import { formatDate } from "@/lib/format";
 import type { PortalHomeworkItem } from "@/lib/server/portal";
 import { submitHomeworkAction } from "./actions";
+import { uz } from "@/lib/uz";
 
 /**
  * O'quvchi uy vazifalari sahifasi (ADR 0063).
@@ -56,7 +49,7 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
     e.preventDefault();
     if (!replyingHw) return;
     if (!replyText.trim() && attachments.length === 0) {
-      toast({ tone: "danger", title: "Javob matni yoki kamida bitta fayl yuklang" });
+      toast({ tone: "danger", title: uz.portal.javobMatniYokiKamida });
       return;
     }
 
@@ -68,11 +61,11 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
       });
 
       if (!res.ok) {
-        toast({ tone: "danger", title: res.error || "Topshiriqni yuborib bo'lmadi" });
+        toast({ tone: "danger", title: res.error || uz.portal.topshiriqniYuboribBolmadi });
         return;
       }
 
-      toast({ tone: "success", title: "Topshiriq muvaffaqiyatli yuborildi!" });
+      toast({ tone: "success", title: uz.portal.topshiriqMuvaffaqiyatliYuborildi });
       closeReplyModal();
       router.refresh();
     });
@@ -88,41 +81,21 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="type-heading text-title text-foreground">Uy vazifalari</h1>
-          <p className="text-body text-muted-foreground">
-            O'qituvchilaringiz tomonidan berilgan topshiriqlar va javoblarni yuborish
-          </p>
+          <p className="text-body text-muted-foreground">{uz.portal.oqituvchilaringizTomonidanBerilganTopshiriqlar}</p>
         </div>
 
         {/* Filtr tugmalari */}
-        <div className="flex items-center gap-1.5 p-1 bg-muted rounded-control self-start sm:self-auto">
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1 text-caption font-semibold rounded-control transition-colors ${
-              filter === "all" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Hammasi ({items.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("pending")}
-            className={`px-3 py-1 text-caption font-semibold rounded-control transition-colors ${
-              filter === "pending" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Kutilmoqda ({items.filter((i) => i.status === "pending").length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilter("done")}
-            className={`px-3 py-1 text-caption font-semibold rounded-control transition-colors ${
-              filter === "done" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            Bajarildi ({items.filter((i) => i.status === "done").length})
-          </button>
-        </div>
+        <ViewSwitch
+          aria-label={uz.portal.vazifalarFiltri}
+          className="self-start sm:self-auto"
+          value={filter}
+          onValueChange={setFilter}
+          options={[
+            { value: "all", label: uz.portal.filterAll(items.length) },
+            { value: "pending", label: uz.portal.filterPending(items.filter((i) => i.status === "pending").length) },
+            { value: "done", label: uz.portal.filterDone(items.filter((i) => i.status === "done").length) },
+          ]}
+        />
       </div>
 
       {visible.length > 0 ? (
@@ -183,26 +156,26 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
                   <div
                     className={`p-4 rounded-card border space-y-2.5 transition-all ${
                       isChecked
-                        ? "border-emerald-500/30 bg-emerald-500/5"
+                        ? "border-(--success-border) bg-(--success-bg)"
                         : isRejected
-                          ? "border-red-500/30 bg-red-500/5"
+                          ? "border-(--danger-border) bg-(--danger-bg)"
                           : "border-border-soft bg-muted/30"
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-caption font-bold text-foreground flex items-center gap-1.5">
                         {isChecked ? (
-                          <CheckCircle2 className="size-4 text-emerald-500" />
+                          <CheckCircle2 className="size-4 text-(--success-fg)" />
                         ) : isRejected ? (
-                          <XCircle className="size-4 text-red-500" />
+                          <XCircle className="size-4 text-(--danger-fg)" />
                         ) : (
-                          <Clock className="size-4 text-amber-500" />
+                          <Clock className="size-4 text-(--warning-fg)" />
                         )}
                         {isChecked
-                          ? "O'qituvchi tekshirdi va baholadi"
+                          ? uz.portal.oqituvchiTekshirdiVaBaholadi
                           : isRejected
-                            ? "Topshiriq qaytarildi"
-                            : "Siz topshirgan javob"}
+                            ? uz.portal.topshiriqQaytarildi
+                            : uz.portal.sizTopshirganJavob}
                       </span>
 
                       {!isChecked ? (
@@ -219,11 +192,9 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
 
                     {/* Baho va o'qituvchi sharhi */}
                     {isChecked ? (
-                      <div className="p-3 rounded-control bg-emerald-500/10 border border-emerald-500/20 space-y-1">
+                      <div className="p-3 rounded-control bg-(--success-bg) border border-(--success-border) space-y-1">
                         {sub.grade ? (
-                          <div className="text-body font-bold text-emerald-700 dark:text-emerald-400">
-                            Qo'yilgan baho: {sub.grade}
-                          </div>
+                          <div className="text-body font-bold text-(--success-fg)">Qo'yilgan baho: {sub.grade}</div>
                         ) : null}
                         {sub.feedback ? (
                           <p className="text-body text-foreground">
@@ -233,7 +204,7 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
                         ) : null}
                       </div>
                     ) : isRejected && sub.feedback ? (
-                      <div className="p-3 rounded-control bg-red-500/10 border border-red-500/20 text-body text-red-700 dark:text-red-400">
+                      <div className="p-3 rounded-control bg-(--danger-bg) border border-(--danger-border) text-body text-(--danger-fg)">
                         <span className="font-semibold">Sabab: </span>
                         {sub.feedback}
                       </div>
@@ -259,9 +230,7 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
                   </div>
                 ) : (
                   <div className="p-3.5 rounded-control border border-dashed border-border-soft flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-card">
-                    <span className="text-caption text-muted-foreground">
-                      Ushbu vazifaga hali javob yoki fayl topshirmagansiz
-                    </span>
+                    <span className="text-caption text-muted-foreground">{uz.portal.ushbuVazifagaHaliJavob}</span>
                     <Button size="sm" className="gap-1.5 self-start sm:self-auto" onClick={() => openReplyModal(h)}>
                       <Upload className="size-3.5" /> Javob topshirish
                     </Button>
@@ -295,7 +264,7 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
           <BookOpen className="size-10 mx-auto text-muted-foreground/40" />
           <h3 className="text-body font-bold text-foreground">Topshiriqlar mavjud emas</h3>
           <p className="text-caption text-muted-foreground max-w-sm mx-auto">
-            Hozircha sizga biriktirilgan yangi uy vazifalari yo'q.
+            {uz.portal.hozirchaSizgaBiriktirilganYangi}
           </p>
         </Card>
       )}
@@ -307,12 +276,12 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
           if (!v) closeReplyModal();
         }}
         position="center"
-        title="Vazifani topshirish"
+        title={uz.portal.vazifaniTopshirish}
         description={replyingHw?.title ?? ""}
         footer={
           <>
             <Button type="button" variant="ghost" onClick={closeReplyModal} disabled={submitting}>
-              Bekor qilish
+              {uz.portal.bekorQilish}
             </Button>
             <Button form="submit-hw-form" type="submit" disabled={submitting}>
               {submitting ? "Yuborilmoqda..." : "Topshirish"}
@@ -322,10 +291,10 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
       >
         <form id="submit-hw-form" onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="reply-text">Javob matni yoki izohingiz</Label>
+            <Label htmlFor="reply-text">{uz.portal.javobMatniYokiIzohingiz}</Label>
             <Textarea
               id="reply-text"
-              placeholder="Vazifa bo'yicha javobingiz, yechimlar yoki o'qituvchiga izoh..."
+              placeholder={uz.portal.vazifaBoyichaJavobingizYechimlar}
               rows={4}
               maxLength={2000}
               value={replyText}
@@ -334,12 +303,12 @@ export function PortalHomeworkView({ items }: { items: PortalHomeworkItem[] }) {
           </div>
 
           <div className="space-y-1.5">
-            <Label>Fayllar va daftaringiz fotosuratlari</Label>
+            <Label>{uz.portal.fayllarVaDaftaringizFotosuratlari}</Label>
             <FileAttachmentsUploader
               attachments={attachments}
               onChange={setAttachments}
               disabled={submitting}
-              label="📎 Rasm yoki fayl yuklash"
+              label={uz.portal.rasmYokiFaylYuklash}
             />
           </div>
         </form>

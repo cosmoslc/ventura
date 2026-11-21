@@ -3,59 +3,79 @@ import path from "node:path";
 import { Readable } from "node:stream";
 import { type NextRequest, NextResponse } from "next/server";
 import { getMimeType, getUploadsDir } from "@/lib/server/uploads";
+import { getStaff } from "@/lib/server/session";
 import { currentTenant } from "@/lib/server/tenant";
+import { uz } from "@/lib/uz";
 
 export const dynamic = "force-dynamic";
+
+/** Brauzerda ochiladigan xavfsiz turlar; qolgani (svg, html, office...) yuklab olinadi */
+const INLINE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "application/pdf",
+  "audio/mpeg",
+  "video/mp4",
+]);
 
 /*
  * Yuklangan fayllarni o'qish / ko'rsatish / yuklab olish (streaming API).
  * Qat'iy Multi-tenant izolyatsiyasi: har bir markaz faqat o'z fayllarini ko'ra oladi.
  * Muallif / Agent: Google Gemini
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ file: string[] }> },
-) {
+export async function GET(_request: NextRequest, { params }: { params: Promise<{ file: string[] }> }) {
   const { file } = await params;
-  const relativePath = file.join("/");
 
   // Directory traversal himoyasi
-  if (relativePath.includes("..") || path.isAbsolute(relativePath)) {
-    return new NextResponse("Noto'g'ri fayl yo'li", { status: 400 });
+  if (
+    !file ||
+    file.length === 0 ||
+    file.some(
+      (segment) => segment.includes("..") || segment.includes("/") || segment.includes("\\") || segment.includes("\0"),
+    )
+  ) {
+    return new NextResponse(uz.uploads.notogriFaylYoli, { status: 400 });
+  }
+
+  const relativePath = file.join("/");
+  if (path.isAbsolute(relativePath)) {
+    return new NextResponse(uz.uploads.notogriFaylYoli, { status: 400 });
   }
 
   const tenant = await currentTenant();
-  const uploadsDir = getUploadsDir();
-
-  // Multi-tenant izolyatsiyasi:
-  // Agar yo'lda mijoz slug'i berilgan bo'lsa (masalan /api/uploads/bilim/photo.jpg),
-  // joriy so'rov domeni aynan shu mijozga tegishli bo'lishi shart!
-  if (tenant && file.length > 1) {
-    const requestedSlug = file[0];
-    if (requestedSlug !== tenant.slug) {
-      // Begona markaz faylini ochishga urinish — bloklanadi
-      return new NextResponse("Fayl topilmadi", { status: 404 });
-    }
+  if (!tenant) {
+    return new NextResponse(uz.uploads.faylTopilmadi, { status: 404 });
   }
 
-  let filePath = path.join(uploadsDir, relativePath);
+  // Fayllar (uy vazifalari, javoblar) shaxsiy: faqat shu markazga kirgan foydalanuvchi ochadi
+  const viewer = await getStaff();
+  if (!viewer || viewer.state !== "ok") {
+    return new NextResponse(uz.uploads.ruxsatBerilmagan, { status: 401 });
+  }
 
-  // Agar bitta nom bilan chaqirilgan bo'lsa (/api/uploads/file.pdf)
-  if (!fs.existsSync(filePath) && file.length === 1 && tenant) {
-    // Faqat joriy mijozning o'z papkasidan qidirish (begona markaz papkalariga kirmaydi)
-    const tenantSpecific = path.join(uploadsDir, tenant.slug, file[0]!);
-    if (fs.existsSync(tenantSpecific)) {
-      filePath = tenantSpecific;
-    }
+  // Multi-tenant izolyatsiyasi:
+  // Fayl yo'lining birinchi segmenti qat'iy joriy mijoz (tenant.slug) ga mos kelishi shart.
+  if (file.length < 2 || file[0] !== tenant.slug) {
+    return new NextResponse(uz.uploads.faylTopilmadi, { status: 404 });
+  }
+
+  const uploadsDir = getUploadsDir();
+  const safeBase = path.resolve(uploadsDir, tenant.slug);
+  const filePath = path.resolve(uploadsDir, ...file);
+
+  if (!filePath.startsWith(safeBase + path.sep)) {
+    return new NextResponse(uz.uploads.notogriFaylYoli, { status: 400 });
   }
 
   if (!fs.existsSync(filePath)) {
-    return new NextResponse("Fayl topilmadi", { status: 404 });
+    return new NextResponse(uz.uploads.faylTopilmadi, { status: 404 });
   }
 
   const stat = fs.statSync(filePath);
   if (!stat.isFile()) {
-    return new NextResponse("Noto'g'ri fayl", { status: 400 });
+    return new NextResponse(uz.uploads.notogriFayl, { status: 400 });
   }
 
   const mimeType = getMimeType(filePath);
@@ -68,8 +88,12 @@ export async function GET(
     headers: {
       "Content-Type": mimeType,
       "Content-Length": String(stat.size),
-      "Cache-Control": "public, max-age=31536000, immutable",
-      "Content-Disposition": `inline; filename="${encodeURIComponent(path.basename(filePath))}"`,
+      "Cache-Control": "private, max-age=31536000, immutable",
+      // Yuklangan fayl skript ishga tushira olmasin (SVG/HTML orqali XSS)
+      "Content-Security-Policy":
+        "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox",
+      "X-Content-Type-Options": "nosniff",
+      "Content-Disposition": `${INLINE_TYPES.has(mimeType) ? "inline" : "attachment"}; filename*=UTF-8''${encodeURIComponent(path.basename(filePath))}`,
     },
   });
 }

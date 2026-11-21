@@ -19,7 +19,7 @@ import { enqueueServerJob, purgeProject, trashedProject } from "@ventura/deploy"
 import { escapeHtml } from "@ventura/integrations";
 import { audit, putSecret } from "@ventura/security";
 import { type Feature, withRequirements } from "@ventura/tenants";
-import { BASE_DOMAIN, deployProblem, projectInputSchema, slugProblem } from "@/lib/project-rules";
+import { BASE_DOMAIN, UUID_RE, deployProblem, projectInputSchema, slugProblem } from "@/lib/project-rules";
 import { deps, queue } from "@/lib/server/deps";
 import { getProjectTenantDb, resetProjectDirectorPassword, unlockProjectDirector } from "@/lib/server/project-tenant";
 import { requestMeta } from "@/lib/server/request";
@@ -82,80 +82,86 @@ export async function createProjectAction(input: unknown): Promise<Result<{ id: 
   const features = await resolveFeatures(v.templateKey, v.features);
   if (!features) return { ok: false, error: uz.common.loadError };
 
-  const id = await db.transaction(async (tx) => {
-    let clientId = v.clientId;
-    if (!clientId && v.newClient) {
-      const phone = v.newClient.phone ? normalizeUzPhone(v.newClient.phone) : null;
-      const [c] = await tx.insert(clients).values({ name: v.newClient.name, phone }).returning({ id: clients.id });
-      clientId = c!.id;
-    }
-    const [p] = await tx
-      .insert(projects)
-      .values({
-        clientId: clientId!,
-        templateKey: v.templateKey,
-        slug: v.slug,
+  try {
+    const id = await db.transaction(async (tx) => {
+      let clientId = v.clientId;
+      if (!clientId && v.newClient) {
+        const phone = v.newClient.phone ? normalizeUzPhone(v.newClient.phone) : null;
+        const [c] = await tx.insert(clients).values({ name: v.newClient.name, phone }).returning({ id: clients.id });
+        clientId = c!.id;
+      }
+      const [p] = await tx
+        .insert(projects)
+        .values({
+          clientId: clientId!,
+          templateKey: v.templateKey,
+          slug: v.slug,
+          name: v.name,
+          mode: v.mode,
+          target: v.target,
+          dbStrategy: v.dbStrategy,
+          status: "draft",
+          brand: v.brand,
+          settings: { storeMode: v.storeMode ?? "financial" },
+          ownerName: v.ownerName,
+          ownerPhone: `+998${v.ownerPhone}`,
+          createdBy: viewer.id,
+        })
+        .returning({ id: projects.id });
+      const projectId = p!.id;
+      if (features.length) {
+        await tx.insert(projectFeatures).values(features.map((f) => ({ ...f, projectId, updatedBy: viewer.id })));
+      }
+      await tx
+        .insert(domains)
+        .values([
+          { projectId, hostname: hosts[0]!, kind: "subdomain", isPrimary: v.domainKind === "subdomain" },
+          ...(v.domainKind === "custom"
+            ? [{ projectId, hostname: v.customDomain, kind: "custom" as const, isPrimary: true }]
+            : []),
+        ]);
+      return projectId;
+    });
+
+    // Sirlar shifrlangan holda (tranzaksiyadan keyin: kalit fayli o'qiladi)
+    await putSecret(db, { type: "project", id }, "owner_password", v.ownerPassword);
+    if (v.telegramToken) await putSecret(db, { type: "project", id }, "telegram_bot_token", v.telegramToken);
+
+    await audit.record(db, {
+      actor,
+      action: "project.create",
+      target: { type: "project", id },
+      ...meta,
+      metadata: {
         name: v.name,
+        slug: v.slug,
+        template: v.templateKey,
         mode: v.mode,
         target: v.target,
         dbStrategy: v.dbStrategy,
-        status: "draft",
-        brand: v.brand,
-        settings: { storeMode: v.storeMode ?? "financial" },
-        ownerName: v.ownerName,
-        ownerPhone: `+998${v.ownerPhone}`,
-        createdBy: viewer.id,
-      })
-      .returning({ id: projects.id });
-    const projectId = p!.id;
-    if (features.length) {
-      await tx.insert(projectFeatures).values(features.map((f) => ({ ...f, projectId, updatedBy: viewer.id })));
-    }
-    await tx
-      .insert(domains)
-      .values([
-        { projectId, hostname: hosts[0]!, kind: "subdomain", isPrimary: v.domainKind === "subdomain" },
-        ...(v.domainKind === "custom"
-          ? [{ projectId, hostname: v.customDomain, kind: "custom" as const, isPrimary: true }]
-          : []),
-      ]);
-    return projectId;
-  });
-
-  // Sirlar shifrlangan holda (tranzaksiyadan keyin: kalit fayli o'qiladi)
-  await putSecret(db, { type: "project", id }, "owner_password", v.ownerPassword);
-  if (v.telegramToken) await putSecret(db, { type: "project", id }, "telegram_bot_token", v.telegramToken);
-
-  await audit.record(db, {
-    actor,
-    action: "project.create",
-    target: { type: "project", id },
-    ...meta,
-    metadata: {
-      name: v.name,
-      slug: v.slug,
-      template: v.templateKey,
-      mode: v.mode,
-      target: v.target,
-      dbStrategy: v.dbStrategy,
-      domains: hosts,
-      features: features.filter((f) => f.enabled).map((f) => f.featureKey),
-      secrets: ["owner_password", ...(v.telegramToken ? ["telegram_bot_token"] : [])],
-    },
-  });
-  await notifySuperAdmins(
-    { db, telegram },
-    `🆕 <b>Loyiha yaratildi</b>: ${escapeHtml(v.name)} (<code>${escapeHtml(hosts[0]!)}</code>)\nKim: ${escapeHtml(viewer.name)}`,
-  );
-  revalidatePath("/projects");
-  return { ok: true, id };
+        domains: hosts,
+        features: features.filter((f) => f.enabled).map((f) => f.featureKey),
+        secrets: ["owner_password", ...(v.telegramToken ? ["telegram_bot_token"] : [])],
+      },
+    });
+    await notifySuperAdmins(
+      { db, telegram },
+      `🆕 <b>Loyiha yaratildi</b>: ${escapeHtml(v.name)} (<code>${escapeHtml(hosts[0]!)}</code>)\nKim: ${escapeHtml(viewer.name)}`,
+    );
+    revalidatePath("/projects");
+    return { ok: true, id };
+  } catch (e) {
+    // Xato matni (SQL, cheklov nomlari) brauzerga chiqmaydi — faqat server logida
+    console.error("[createProjectAction]", e);
+    return { ok: false, error: uz.common.saveError };
+  }
 }
 
 /* ---------- Tahrirlash ---------- */
 
 const generalSchema = z.object({
   name: z.string().trim().min(2).max(120),
-  clientId: z.string().uuid(),
+  clientId: z.string().regex(UUID_RE, uz.wizard.pickClient),
   status: z.enum(PROJECT_STATUSES),
   mode: z.enum(DEPLOY_MODES),
   target: z.enum(TARGET_KINDS),
@@ -182,7 +188,7 @@ export async function updateProjectAction(id: string, input: unknown): Promise<R
   if (sharedDbChanged && before.status !== "draft") return { ok: false, error: uz.projects.dbChangeLocked };
   const { storageLimitGb, storeMode, ...restFields } = parsed.data;
   const currentSettings = (before.settings ?? {}) as Record<string, unknown>;
-  let nextSettings = { ...currentSettings };
+  const nextSettings = { ...currentSettings };
   if (storageLimitGb !== undefined) {
     nextSettings.storageLimitMb = Math.round(storageLimitGb * 1024);
   }

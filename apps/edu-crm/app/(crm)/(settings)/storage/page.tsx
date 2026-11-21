@@ -4,9 +4,10 @@ import { getTenantDb } from "@/lib/server/deps";
 import { requireStaff, requireTenant } from "@/lib/server/session";
 import { getStorageStats } from "@/lib/server/storage";
 import { StorageView } from "./storage-view";
+import { uz } from "@/lib/uz";
 
 export const metadata = {
-  title: "Xotira va fayllar | Ventura EDU",
+  title: uz.storage.xotiraVaFayllarVentura,
 };
 
 /**

@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createTelegram, escapeHtml } from "@ventura/integrations";
 import { type ActionResult, crmAction } from "@/lib/server/action";
-import { getTelegramBotsConfig, saveTelegramBotsConfig } from "@/lib/server/telegram-bots";
+import { tenantDeps } from "@/lib/server/deps";
+import { getBotWebhookSecret, getTelegramBotsConfig, saveTelegramBotsConfig } from "@/lib/server/telegram-bots";
+import { botWebhookUrl } from "@/lib/server/telegram-webhook-sync";
 import { type TelegramBotsConfig } from "@/lib/telegram-bots";
 import { uz } from "@/lib/uz";
 
@@ -51,12 +53,10 @@ export async function saveBotConfigAction(input: unknown): Promise<ActionResult>
       try {
         const tg = createTelegram(token);
         if (enabled) {
-          // Webhook manzilini markazning o'z subdomeni bo'yicha quramiz
-          const domain =
-            tenant.hosts?.find((h) => !h.includes("localhost") && !h.includes("127.0.0.1")) ||
-            `${tenant.slug}.ventura.uz`;
-          const webhookUrl = `https://${domain}/api/telegram/webhook?role=${role}`;
-          await tg.setWebhook(webhookUrl);
+          const webhookUrl = botWebhookUrl(tenant, role);
+          const deps = tenantDeps(tenant);
+          const secret = deps ? getBotWebhookSecret(nextConfig[botKey], deps.secret, role) : undefined;
+          await tg.setWebhook(webhookUrl, secret);
         } else {
           await tg.deleteWebhook().catch(() => {});
         }
@@ -65,11 +65,7 @@ export async function saveBotConfigAction(input: unknown): Promise<ActionResult>
       }
     }
 
-    await audit(
-      "telegram_bots.update",
-      { type: "settings", id: "telegram_bots" },
-      { role, enabled, username },
-    );
+    await audit("telegram_bots.update", { type: "settings", id: "telegram_bots" }, { role, enabled, username });
 
     revalidatePath("/telegram-bots");
     return { ok: true };
@@ -89,12 +85,7 @@ export async function sendTestBotMessageAction(input: unknown): Promise<ActionRe
 
     const { role, chatId, message } = parsed.data;
     const config = await getTelegramBotsConfig(db);
-    const bot =
-      role === "teacher"
-        ? config.teacherBot
-        : role === "student"
-          ? config.studentBot
-          : config.parentBot;
+    const bot = role === "teacher" ? config.teacherBot : role === "student" ? config.studentBot : config.parentBot;
 
     if (!bot.token) {
       return { ok: false, error: "Bot tokeni sozlanmagan. Avval tokenni kiriting va saqlang." };
@@ -128,12 +119,7 @@ export async function syncBotWebhookAction(input: unknown): Promise<ActionResult
 
     const { role } = parsed.data;
     const config = await getTelegramBotsConfig(db);
-    const bot =
-      role === "teacher"
-        ? config.teacherBot
-        : role === "student"
-          ? config.studentBot
-          : config.parentBot;
+    const bot = role === "teacher" ? config.teacherBot : role === "student" ? config.studentBot : config.parentBot;
 
     if (!bot.token) {
       return { ok: false, error: "Bot tokeni mavjud emas" };
@@ -141,11 +127,10 @@ export async function syncBotWebhookAction(input: unknown): Promise<ActionResult
 
     try {
       const tg = createTelegram(bot.token);
-      const domain =
-        tenant.hosts?.find((h) => !h.includes("localhost") && !h.includes("127.0.0.1")) ||
-        `${tenant.slug}.ventura.uz`;
-      const webhookUrl = `https://${domain}/api/telegram/webhook?role=${role}`;
-      await tg.setWebhook(webhookUrl);
+      const webhookUrl = botWebhookUrl(tenant, role);
+      const deps = tenantDeps(tenant);
+      const secret = deps ? getBotWebhookSecret(bot, deps.secret, role) : undefined;
+      await tg.setWebhook(webhookUrl, secret);
       revalidatePath("/telegram-bots");
       return { ok: true };
     } catch (e) {

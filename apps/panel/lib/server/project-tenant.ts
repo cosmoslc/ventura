@@ -1,6 +1,6 @@
 import "server-only";
 import { and, eq, isNull } from "drizzle-orm";
-import { createStaffAuth, setStaffPassword } from "@ventura/auth/staff";
+import { createStaffAuth } from "@ventura/auth/staff";
 import { type PanelDb, type TenantDb, createTenantDb } from "@ventura/db";
 import { projects } from "@ventura/db/schema/panel";
 import { accounts, users } from "@ventura/db/schema/tenant";
@@ -23,14 +23,36 @@ export interface ProjectDirectorInfo {
   mustChangePassword: boolean;
 }
 
+export interface ProjectSupabaseSettings {
+  projectRef: string;
+  region?: string;
+  poolerHost?: string;
+  poolerPort?: number;
+}
+
+export interface ProjectSettings {
+  supabase?: ProjectSupabaseSettings;
+  [key: string]: unknown;
+}
+
+export interface ProjectTenantTarget {
+  id: string;
+  templateKey: string;
+  slug: string;
+  dbStrategy: string;
+  serverId: string | null;
+  ownerPhone?: string | null;
+  settings?: ProjectSettings | Record<string, unknown> | null;
+}
+
 export async function getProjectTenantDb(
   panelDb: PanelDb,
-  project: { id: string; templateKey: string; slug: string; dbStrategy: string; serverId: string | null; settings?: any },
+  project: ProjectTenantTarget,
 ): Promise<TenantDb | null> {
   try {
     // 1. Agar loyiha Supabase'ga ko'chirilgan bo'lsa (settings.supabase)
-    if (project.settings?.supabase?.projectRef) {
-      const supa = project.settings.supabase;
+    const supa = (project.settings as ProjectSettings | undefined)?.supabase;
+    if (supa?.projectRef) {
       const dbPassword = await readSecret(panelDb, { type: "project", id: project.id }, "db_password");
       if (!dbPassword) return null;
       const databaseUrl = buildSupabaseDatabaseUrl({
@@ -61,7 +83,7 @@ export async function getProjectTenantDb(
 
 export async function getProjectDirectorInfo(
   panelDb: PanelDb,
-  project: { id: string; templateKey: string; slug: string; dbStrategy: string; serverId: string | null; ownerPhone?: string | null; settings?: any },
+  project: ProjectTenantTarget,
 ): Promise<ProjectDirectorInfo | null> {
   const tenantDb = await getProjectTenantDb(panelDb, project);
   if (!tenantDb) return null;
@@ -213,8 +235,9 @@ export async function unlockProjectDirector(
     });
 
     return { ok: true };
-  } catch (err: any) {
-    return { ok: false, error: err.message ?? "Blokdan chiqarishda xatolik yuz berdi" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Blokdan chiqarishda xatolik yuz berdi";
+    return { ok: false, error: message };
   } finally {
     void tenantDb.close().catch(() => {});
   }
@@ -348,8 +371,9 @@ export async function resetProjectDirectorPassword(
     });
 
     return { ok: true };
-  } catch (err: any) {
-    return { ok: false, error: err.message ?? "Parolni yangilashda xatolik yuz berdi" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Parolni yangilashda xatolik yuz berdi";
+    return { ok: false, error: message };
   } finally {
     void tenantDb.close().catch(() => {});
   }

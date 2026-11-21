@@ -3,7 +3,7 @@ import type { PanelDb } from "@ventura/db";
 import { apps, domains, projects, templates } from "@ventura/db/schema/panel";
 import { putSecret, readSecret } from "@ventura/security";
 import { parseSecrets } from "@ventura/tenants";
-import { DB_NAME_RE, DB_PASSWORD_RE, dbNameFor, dbPasswordOwner } from "./databases";
+import { DB_PASSWORD_RE, dbNameFor, dbPasswordOwner } from "./databases";
 import { instanceName } from "./drivers/ssh";
 import { type ServerRow, openSession } from "./servers";
 import { type SshSession, sh } from "./ssh";
@@ -83,7 +83,7 @@ export async function moveProjectToSupabase(
   const serviceKey = keys.find((k) => k.name === "service_role")?.api_key;
 
   let poolerHost = pooler?.db_host || `aws-0-${supaProject.region}.pooler.supabase.com`;
-  let poolerPort = pooler?.db_port || 5432;
+  const poolerPort = pooler?.db_port || 5432;
   const poolerUser = `postgres.${opts.projectRef}`;
 
   // Parol ko'rsatilmagan bo'lsa yoki autoReset bo'lsa — yangi kuchli parol generatsiya qilib Supabase'da yangilaymiz

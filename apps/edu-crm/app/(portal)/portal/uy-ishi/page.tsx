@@ -2,8 +2,9 @@ import { getTenantDb } from "@/lib/server/deps";
 import { portalStudentHomeworks } from "@/lib/server/portal";
 import { requireStudent, requireTenant } from "@/lib/server/session";
 import { PortalHomeworkView } from "./homework-view";
+import { uz } from "@/lib/uz";
 
-export const metadata = { title: "Uy vazifalari — O'quvchi portali" };
+export const metadata = { title: uz.portal.uyVazifalariOquvchiPortali };
 
 /**
  * O'quvchi uy vazifalari sahifasi (ADR 0063).

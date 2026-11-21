@@ -4,8 +4,9 @@ import { getTenantDb } from "@/lib/server/deps";
 import { portalStudentGroupDetail } from "@/lib/server/portal";
 import { requireStudent, requireTenant } from "@/lib/server/session";
 import { PortalGroupDetailView } from "./group-view";
+import { uz } from "@/lib/uz";
 
-export const metadata = { title: "Guruh tafsilotlari — O'quvchi portali" };
+export const metadata = { title: uz.portal.guruhTafsilotlariOquvchiPortali };
 
 /**
  * Guruh tafsilotlari sahifasi (ADR 0063).
@@ -14,7 +15,10 @@ export const metadata = { title: "Guruh tafsilotlari — O'quvchi portali" };
 export default async function PortalGroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const tenant = await requireTenant();
   const staff = await requireStudent();
-  const idParsed = z.string().uuid().safeParse((await params).id);
+  const idParsed = z
+    .string()
+    .uuid()
+    .safeParse((await params).id);
   if (!idParsed.success) notFound();
 
   const db = getTenantDb(tenant);

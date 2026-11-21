@@ -10,6 +10,7 @@ import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
 import { toast } from "@ventura/ui/toast";
 import { changePortalPasswordAction, togglePortal2FAAction, updatePortalNicknameAction } from "./actions";
+import { uz } from "@/lib/uz";
 
 interface SettingsProps {
   initialName: string;
@@ -36,7 +37,7 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
     startNameTransition(async () => {
       const res = await updatePortalNicknameAction({ name });
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
-      toast({ tone: "success", title: "Ism muvaffaqiyatli yangilandi" });
+      toast({ tone: "success", title: uz.portal.ismMuvaffaqiyatliYangilandi });
       router.refresh();
     });
   }
@@ -50,12 +51,12 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
   function handleSavePassword(e: React.FormEvent) {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      return void toast({ tone: "danger", title: "Yangi parollar bir-biriga mos kelmadi" });
+      return void toast({ tone: "danger", title: uz.portal.yangiParollarBirBiriga });
     }
     startPasswordTransition(async () => {
       const res = await changePortalPasswordAction({ currentPassword, newPassword });
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
-      toast({ tone: "success", title: "Parol muvaffaqiyatli almashtirildi" });
+      toast({ tone: "success", title: uz.portal.parolMuvaffaqiyatliAlmashtirildi });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -70,11 +71,11 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
       const res = await togglePortal2FAAction(enable);
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
       if (res.needTelegram) {
-        toast({ tone: "info", title: "Avval Telegram botga ulanishingiz kerak" });
+        toast({ tone: "info", title: uz.portal.avvalTelegramBotgaUlanishingiz });
         router.push("/connect-telegram");
         return;
       }
-      toast({ tone: "success", title: enable ? "2FA muvaffaqiyatli yoqildi" : "2FA o'chirildi" });
+      toast({ tone: "success", title: enable ? uz.portal.t2faMuvaffaqiyatliYoqildi : uz.portal.t2faOchirildi });
       router.refresh();
     });
   }
@@ -95,20 +96,20 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
 
         <form onSubmit={handleSaveName} className="space-y-3">
           <div>
-            <Label htmlFor="portal-name">Ism yoki taxallus</Label>
+            <Label htmlFor="portal-name">{uz.portal.ismYokiTaxallus}</Label>
             <Input
               id="portal-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ismingizni kiriting"
+              placeholder={uz.portal.ismingizniKiriting}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="portal-phone">Telefon raqami (Login)</Label>
+            <Label htmlFor="portal-phone">{uz.portal.telefonRaqamiLogin}</Label>
             <Input id="portal-phone" value={phone} disabled className="opacity-70 bg-muted cursor-not-allowed" />
-            <FieldHint>Telefon raqamini faqat markaz administratori o'zgartira oladi</FieldHint>
+            <FieldHint>{uz.portal.telefonRaqaminiFaqatMarkaz}</FieldHint>
           </div>
 
           <div className="flex justify-end pt-2">
@@ -128,7 +129,7 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
 
         <form onSubmit={handleSavePassword} className="space-y-3">
           <div>
-            <Label htmlFor="current-pass">Hozirgi parol</Label>
+            <Label htmlFor="current-pass">{uz.portal.hozirgiParol}</Label>
             <Input
               id="current-pass"
               type="password"
@@ -140,12 +141,12 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
           </div>
 
           <div>
-            <Label htmlFor="new-pass">Yangi parol</Label>
+            <Label htmlFor="new-pass">{uz.portal.yangiParol}</Label>
             <Input
               id="new-pass"
               type="password"
               autoComplete="new-password"
-              placeholder="Kamida 6 belgi"
+              placeholder={uz.portal.kamida6Belgi}
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
@@ -153,12 +154,12 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
           </div>
 
           <div>
-            <Label htmlFor="confirm-pass">Yangi parolni tasdiqlang</Label>
+            <Label htmlFor="confirm-pass">{uz.portal.yangiParolniTasdiqlang}</Label>
             <Input
               id="confirm-pass"
               type="password"
               autoComplete="new-password"
-              placeholder="Yangi parolni qayta tering"
+              placeholder={uz.portal.yangiParolniQaytaTering}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -168,11 +169,9 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
           <div className="flex justify-end pt-2">
             <Button
               type="submit"
-              disabled={
-                savingPassword || !currentPassword || newPassword.length < 6 || newPassword !== confirmPassword
-              }
+              disabled={savingPassword || !currentPassword || newPassword.length < 6 || newPassword !== confirmPassword}
             >
-              Parolni yangilash
+              {uz.portal.parolniYangilash}
             </Button>
           </div>
         </form>
@@ -186,13 +185,13 @@ export function PortalSettingsView({ initialName, phone, twoFactorEnabled, hasTe
             <h2 className="text-subheading font-bold text-foreground">Ikki bosqichli tasdiqlash (2FA)</h2>
           </div>
           <Badge tone={twoFactorEnabled ? "success" : "neutral"}>
-            {twoFactorEnabled ? "Yoqilgan" : "O'chiq"}
+            {twoFactorEnabled ? uz.portal.on : uz.portal.off}
           </Badge>
         </div>
 
         <p className="text-caption text-muted-foreground leading-relaxed">
-          Ikki bosqichli tasdiqlash yoqilganda, tizimga kirishda parolingizdan tashqari markazning Telegram boti
-          orqali yuboriladigan maxsus tasdiq kodi ham talab qilinadi.
+          {uz.portal.ikkiBosqichliTasdiqlashYoqilganda}
+          {uz.portal.orqaliYuboriladiganMaxsusTasdiq}
         </p>
 
         <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">

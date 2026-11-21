@@ -2,8 +2,9 @@ import { getTenantDb } from "@/lib/server/deps";
 import { portalStudentGroups } from "@/lib/server/portal";
 import { requireStudent, requireTenant } from "@/lib/server/session";
 import { PortalGroupsView } from "./groups-view";
+import { uz } from "@/lib/uz";
 
-export const metadata = { title: "Mening guruhlarim — O'quvchi portali" };
+export const metadata = { title: uz.portal.meningGuruhlarimOquvchiPortali };
 
 /**
  * O'quvchi guruhlari sahifasi (ADR 0063).

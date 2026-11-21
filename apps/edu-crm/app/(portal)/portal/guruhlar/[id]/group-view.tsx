@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  Coins,
-  GraduationCap,
-  MapPin,
-  Trophy,
-  User,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, Coins, GraduationCap, MapPin, Trophy, User } from "lucide-react";
 import Link from "next/link";
 import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
@@ -20,6 +11,7 @@ import { Table, TableWrap, TBody, Td, Th, THead, Tr } from "@ventura/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@ventura/ui/tabs";
 import { formatDate, money } from "@/lib/format";
 import type { PortalGroupDetail } from "@/lib/server/portal";
+import { uz } from "@/lib/uz";
 
 const DAY_LABELS: Record<string, string> = {
   mon: "Dushanba",
@@ -65,7 +57,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
             <p className="text-body text-muted-foreground">{g.courseName}</p>
           </div>
           <Badge tone={g.status === "active" ? "success" : "neutral"} className="self-start sm:self-auto">
-            {g.status === "active" ? "Faol guruh" : g.status}
+            {g.status === "active" ? uz.portal.activeGroup : g.status}
           </Badge>
         </div>
       </div>
@@ -111,7 +103,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
         <StatCard
           tone={2}
           icon={<CheckCircle2 />}
-          label="Guruhdagi davomat"
+          label={uz.portal.guruhdagiDavomat}
           value={attendance.percent !== null ? `${attendance.percent}%` : "—"}
           hint={`${attendance.present} / ${attendance.total} ta dars`}
         />
@@ -119,17 +111,17 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
         <StatCard
           tone={1}
           icon={<GraduationCap />}
-          label="O'rtacha baho"
+          label={uz.portal.ortachaBaho}
           value={grades.average !== null ? `${grades.average}%` : "—"}
-          hint={`${grades.count} ta baholangan dars`}
+          hint={uz.portal.gradedLessons(grades.count)}
         />
 
         <StatCard
           tone={4}
           icon={<Trophy />}
-          label="Guruhdagi o'rningiz"
+          label={uz.portal.guruhdagiOrningiz}
           value={`${rank.current}-o'rin`}
-          hint={`Jami ${rank.total} o'quvchi orasida`}
+          hint={uz.portal.amongStudents(rank.total)}
         />
       </div>
 
@@ -151,7 +143,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
                 <Table>
                   <THead>
                     <Tr>
-                      <Th>Dars sanasi</Th>
+                      <Th>{uz.portal.darsSanasi}</Th>
                       <Th className="text-right">Holat</Th>
                     </Tr>
                   </THead>
@@ -172,7 +164,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
               </TableWrap>
             ) : (
               <div className="p-8 text-center text-caption text-muted-foreground">
-                Hozircha davomat belgilari mavjud emas
+                {uz.portal.hozirchaDavomatBelgilariMavjud}
               </div>
             )}
           </Card>
@@ -186,7 +178,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
                 <Table>
                   <THead>
                     <Tr>
-                      <Th>Dars sanasi</Th>
+                      <Th>{uz.portal.darsSanasi}</Th>
                       <Th className="text-center">Baho</Th>
                       <Th className="text-right">Uy vazifasi</Th>
                     </Tr>
@@ -206,9 +198,9 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
                         </Td>
                         <Td className="text-right">
                           {gItem.homework === true ? (
-                            <Badge tone="success">Bajardi</Badge>
+                            <Badge tone="success">{uz.portal.hwDone}</Badge>
                           ) : gItem.homework === false ? (
-                            <Badge tone="danger">Bajarmadi</Badge>
+                            <Badge tone="danger">{uz.portal.hwNotDone}</Badge>
                           ) : (
                             <span className="text-muted-foreground">—</span>
                           )}
@@ -220,7 +212,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
               </TableWrap>
             ) : (
               <div className="p-8 text-center text-caption text-muted-foreground">
-                Hozircha dars baholari qo'yilmagan
+                {uz.portal.hozirchaDarsBaholariQoyilmagan}
               </div>
             )}
           </Card>
@@ -234,7 +226,7 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
                 <THead>
                   <Tr>
                     <Th className="w-12">#</Th>
-                    <Th>O'quvchi</Th>
+                    <Th>{uz.portal.oquvchi}</Th>
                     <Th className="text-right">Coinlar</Th>
                   </Tr>
                 </THead>
@@ -245,7 +237,11 @@ export function PortalGroupDetailView({ data }: { data: PortalGroupDetail }) {
                       <Td>
                         <div className="flex items-center gap-2">
                           <span className="text-body text-foreground">{m.name}</span>
-                          {m.isMe ? <Badge tone="info" className="text-2xs">Siz</Badge> : null}
+                          {m.isMe ? (
+                            <Badge tone="info" className="text-2xs">
+                              Siz
+                            </Badge>
+                          ) : null}
                         </div>
                       </Td>
                       <Td className="text-right font-mono font-semibold text-foreground">

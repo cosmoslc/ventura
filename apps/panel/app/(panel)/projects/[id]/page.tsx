@@ -71,19 +71,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     activatedAt?: string;
   } | null;
 
-  const trialInfo = trialRaw
-    ? {
-        days: trialRaw.days ?? 7,
-        active: Boolean(trialRaw.active),
-        startedAt: trialRaw.startedAt ?? null,
-        expiresAt: trialRaw.expiresAt ?? null,
-        activatedAt: trialRaw.activatedAt ?? null,
-        expired: trialRaw.expiresAt ? new Date(trialRaw.expiresAt).getTime() <= Date.now() : false,
-        daysLeft: trialRaw.expiresAt
-          ? Math.max(0, Math.ceil((new Date(trialRaw.expiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000)))
-          : null,
-      }
-    : null;
+  const trialInfo = trialRaw ? trialSummary(trialRaw) : null;
 
   return (
     <>
@@ -137,4 +125,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       />
     </>
   );
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function trialSummary(
+  t: { days?: number; active?: boolean; startedAt?: string; expiresAt?: string; activatedAt?: string },
+  now: number = Date.now(),
+) {
+  const expiresMs = t.expiresAt ? new Date(t.expiresAt).getTime() : null;
+  return {
+    days: t.days ?? 7,
+    active: Boolean(t.active),
+    startedAt: t.startedAt ?? null,
+    expiresAt: t.expiresAt ?? null,
+    activatedAt: t.activatedAt ?? null,
+    expired: expiresMs !== null ? expiresMs <= now : false,
+    daysLeft: expiresMs !== null ? Math.max(0, Math.ceil((expiresMs - now) / DAY_MS)) : null,
+  };
 }

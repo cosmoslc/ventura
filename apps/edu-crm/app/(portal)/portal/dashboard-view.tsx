@@ -20,6 +20,7 @@ import { Card } from "@ventura/ui/card";
 import { StatCard } from "@ventura/ui/stat-card";
 import { money } from "@/lib/format";
 import type { PortalDashboard } from "@/lib/server/portal";
+import { uz } from "@/lib/uz";
 
 /**
  * O'quvchi portali bosh sahifasi (ADR 0063).
@@ -52,14 +53,14 @@ export function PortalDashboardView({ data }: { data: PortalDashboard }) {
         <StatCard
           tone={balance > 0 ? 2 : balance < 0 ? 3 : 1}
           icon={<Wallet />}
-          label="Mening balansim"
-          value={balance === 0 ? "0 so'm" : `${balance > 0 ? "+" : ""}${money(balance)}`}
+          label={uz.portal.meningBalansim}
+          value={balance === 0 ? uz.portal.t0Som : `${balance > 0 ? "+" : ""}${money(balance)}`}
           hint={
             isDebtor
-              ? "To'lov muddati yaqinlashmoqda"
+              ? uz.portal.tolovMuddatiYaqinlashmoqda
               : balance > 0
-                ? "Oldindan to'lov qilingan"
-                : "Hisob to'liq yopilgan"
+                ? uz.portal.oldindanTolovQilingan
+                : uz.portal.hisobToliqYopilgan
           }
         />
 
@@ -67,27 +68,27 @@ export function PortalDashboardView({ data }: { data: PortalDashboard }) {
         <StatCard
           tone={4}
           icon={<Coins />}
-          label="Mening coinlarim"
+          label={uz.portal.meningCoinlarim}
           value={`${money(coins)} coin`}
-          hint={`Jami ${rank.total} o'quvchi orasida ${rank.current}-o'rin`}
+          hint={uz.portal.rankAmong(rank.total, rank.current)}
         />
 
         {/* Davomat */}
         <StatCard
           tone={2}
           icon={<CheckCircle2 />}
-          label="Dars davomati"
+          label={uz.portal.darsDavomati}
           value={attendance.percent !== null ? `${attendance.percent}%` : "—"}
-          hint={`${attendance.present} ta darsga kelgan, ${attendance.absent} ta qoldirilgan`}
+          hint={uz.portal.attendanceHint(attendance.present, attendance.absent)}
         />
 
         {/* O'zlashtirish */}
         <StatCard
           tone={1}
           icon={<GraduationCap />}
-          label="O'rtacha o'zlashtirish"
+          label={uz.portal.ortachaOzlashtirish}
           value={grades.averagePercent !== null ? `${grades.averagePercent}%` : "—"}
-          hint={`Uy vazifalari: ${grades.homeworkPercent !== null ? `${grades.homeworkPercent}%` : "—"}`}
+          hint={uz.portal.homeworkPercent(grades.homeworkPercent)}
         />
       </div>
 
@@ -97,7 +98,10 @@ export function PortalDashboardView({ data }: { data: PortalDashboard }) {
           <h2 className="type-heading text-subheading text-foreground flex items-center gap-2">
             <Calendar className="size-5 text-primary" /> Bugungi darslar
           </h2>
-          <Link href="/portal/guruhlar" className="text-caption font-semibold text-primary hover:underline flex items-center gap-1">
+          <Link
+            href="/portal/guruhlar"
+            className="text-caption font-semibold text-primary hover:underline flex items-center gap-1"
+          >
             Barcha guruhlar <ArrowRight className="size-3.5" />
           </Link>
         </div>
@@ -145,7 +149,7 @@ export function PortalDashboardView({ data }: { data: PortalDashboard }) {
               </div>
               <div>
                 <h4 className="text-body font-bold text-foreground group-hover:text-primary transition-colors">
-                  Mening guruhlarim
+                  {uz.portal.meningGuruhlarim}
                 </h4>
                 <p className="text-caption text-muted-foreground">Dars jadvali, baholar va davomat</p>
               </div>
@@ -157,17 +161,17 @@ export function PortalDashboardView({ data }: { data: PortalDashboard }) {
         <Link href="/portal/uy-ishi">
           <Card className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors cursor-pointer group">
             <div className="flex items-center gap-3">
-              <div className="size-10 rounded-control bg-(--violet-soft,var(--primary-soft)) text-violet-600 grid place-items-center">
+              <div className="size-10 rounded-control bg-(--primary-soft) text-(--primary-text) grid place-items-center">
                 <BookOpen className="size-5" />
               </div>
               <div>
-                <h4 className="text-body font-bold text-foreground group-hover:text-violet-600 transition-colors">
-                  Uy vazifalari
+                <h4 className="text-body font-bold text-foreground group-hover:text-(--primary-text) transition-colors">
+                  {uz.portal.uyVazifalari}
                 </h4>
                 <p className="text-caption text-muted-foreground">O'qituvchi bergan topshiriqlar ro'yxati</p>
               </div>
             </div>
-            <ArrowRight className="size-4 text-muted-foreground group-hover:text-violet-600 transition-colors" />
+            <ArrowRight className="size-4 text-muted-foreground group-hover:text-(--primary-text) transition-colors" />
           </Card>
         </Link>
       </div>

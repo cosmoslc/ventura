@@ -1,4 +1,3 @@
-// Muallif / Agent: Google Gemini
 import { getSessionCookie } from "better-auth/cookies";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -24,6 +23,9 @@ export function proxy(request: NextRequest) {
       return response;
     }
     if (pathname === "/crm") {
+      if (request.method === "POST" || request.headers.has("next-action")) {
+        return NextResponse.next();
+      }
       return NextResponse.redirect(new URL("/", request.url));
     }
     // Agar foydalanuvchi /login ga kirsa (yoki avvalgi kesh bo'lsa), darhol landing sahifasiga qaytaramiz

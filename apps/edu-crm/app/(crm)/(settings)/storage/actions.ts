@@ -1,49 +1,49 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { canAny } from "@ventura/auth/staff/policy";
 import { pagePermissions } from "@/lib/access";
 import { getTenantDb } from "@/lib/server/deps";
 import { requireStaff, requireTenant } from "@/lib/server/session";
-import {
-  type CleanupFilter,
-  deleteSingleFile,
-  executeCleanup,
-  getCleanupEstimate,
-} from "@/lib/server/storage";
-import { putSetting } from "@/lib/server/center";
+import { type CleanupFilter, deleteSingleFile, executeCleanup, getCleanupEstimate } from "@/lib/server/storage";
+import { uz } from "@/lib/uz";
 
 /*
  * Xotira va fayllarni tozalash amallari (Server Actions).
  * Muallif / Agent: Google Gemini
  */
 
+const cleanupFilterSchema: z.ZodType<CleanupFilter> = z.enum(["1m", "3m", "4m", "6m", "all_submissions", "orphans"]);
+
 async function ensureStorageAccess() {
   const staff = await requireStaff();
   const tenant = await requireTenant();
   const allowed = staff.director || canAny(staff.access, pagePermissions("/storage"));
   if (!allowed) {
-    throw new Error("Xotira sozlamalarini boshqarish uchun ruxsat yetarli emas");
+    throw new Error(uz.storage.xotiraSozlamalariniBoshqarishUchun);
   }
   const db = getTenantDb(tenant);
   return { staff, tenant, db };
 }
 
 /** Tozalash bo'yicha taxminiy ma'lumotni hisoblash */
-export async function getCleanupEstimateAction(filter: CleanupFilter) {
+export async function getCleanupEstimateAction(input: unknown) {
   try {
+    const filter = cleanupFilterSchema.parse(input);
     const { tenant, db } = await ensureStorageAccess();
     const result = await getCleanupEstimate(tenant, db, filter);
     return { ok: true as const, ...result };
   } catch (e) {
-    const error = e instanceof Error ? e.message : "Hisoblashda xatolik";
+    const error = e instanceof Error ? e.message : uz.storage.hisoblashdaXatolik;
     return { ok: false as const, error };
   }
 }
 
 /** Tanlangan tozalash amalini bajarish */
-export async function executeCleanupAction(filter: CleanupFilter) {
+export async function executeCleanupAction(input: unknown) {
   try {
+    const filter = cleanupFilterSchema.parse(input);
     const { staff, tenant, db } = await ensureStorageAccess();
     const result = await executeCleanup(tenant, db, { id: staff.id, name: staff.name }, filter);
 
@@ -54,14 +54,19 @@ export async function executeCleanupAction(filter: CleanupFilter) {
 
     return { ok: true as const, filesDeleted: result.filesDeleted, bytesFreed: result.bytesFreed };
   } catch (e) {
-    const error = e instanceof Error ? e.message : "Tozalashda xatolik yuz berdi";
+    const error = e instanceof Error ? e.message : uz.storage.tozalashdaXatolikYuzBerdi;
     return { ok: false as const, error };
   }
 }
 
 /** Alohida bitta faylni o'chirish */
-export async function deleteSingleFileAction(fileUrl: string) {
+export async function deleteSingleFileAction(input: unknown) {
   try {
+    const fileUrl = z
+      .string()
+      .max(512)
+      .regex(/^\/api\/uploads\//)
+      .parse(input);
     const { staff, tenant, db } = await ensureStorageAccess();
     const result = await deleteSingleFile(tenant, db, { id: staff.id, name: staff.name }, fileUrl);
 
@@ -73,26 +78,7 @@ export async function deleteSingleFileAction(fileUrl: string) {
 
     return result;
   } catch (e) {
-    const error = e instanceof Error ? e.message : "Faylni o'chirishda xatolik yuz berdi";
-    return { ok: false, error };
-  }
-}
-
-/** Xotira limitini qo'lda o'zgartirish (faqat direktor uchun) */
-export async function updateStorageLimitSettingAction(limitGb: number) {
-  try {
-    const { staff, db } = await ensureStorageAccess();
-    if (!staff.director) {
-      return { ok: false, error: "Limitni faqat direktor o'zgartira oladi" };
-    }
-
-    const limitMb = Math.max(100, Math.round(limitGb * 1024));
-    await putSetting(db, "storage_limit", { limitMb, limitGb }, staff.id);
-
-    revalidatePath("/storage");
-    return { ok: true as const };
-  } catch (e) {
-    const error = e instanceof Error ? e.message : "Limitni saqlashda xatolik";
+    const error = e instanceof Error ? e.message : uz.storage.faylniOchirishdaXatolikYuz;
     return { ok: false, error };
   }
 }

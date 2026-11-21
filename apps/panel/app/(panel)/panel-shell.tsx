@@ -61,24 +61,24 @@ function sections(role: Role): NavSection[] {
     {
       title: uz.nav.main,
       items: [
-        { id: "home", label: uz.nav.home, icon: LayoutDashboard, color: "#006aff" },
-        { id: "projects", label: uz.nav.projects, icon: FolderKanban, color: "#8b5cf6", children: projectChildren },
-        { id: "clients", label: uz.nav.clients, icon: Users, color: "#f59e0b" },
-        { id: "templates", label: uz.nav.templates, icon: Blocks, color: "#27ae60" },
+        { id: "home", label: uz.nav.home, icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
+        { id: "projects", label: uz.nav.projects, icon: FolderKanban, color: "var(--nav-hue-violet)", children: projectChildren },
+        { id: "clients", label: uz.nav.clients, icon: Users, color: "var(--nav-hue-amber)" },
+        { id: "templates", label: uz.nav.templates, icon: Blocks, color: "var(--nav-hue-green)" },
       ],
     },
     {
       title: uz.nav.control,
       items: [
         { id: "servers", label: uz.nav.servers, icon: Server, color: "var(--nav-hue-sky)" },
-        { id: "sms", label: uz.nav.sms, icon: MessageSquareText, color: "#0ea5e9" },
-        { id: "databases", label: uz.nav.databases, icon: Database, color: "#14b8a6" },
-        { id: "audit", label: uz.nav.audit, icon: Activity, color: "#ec4899" },
+        { id: "sms", label: uz.nav.sms, icon: MessageSquareText, color: "var(--nav-hue-sky)" },
+        { id: "databases", label: uz.nav.databases, icon: Database, color: "var(--nav-hue-teal)" },
+        { id: "audit", label: uz.nav.audit, icon: Activity, color: "var(--nav-hue-pink)" },
       ],
     },
     {
       title: uz.nav.system,
-      items: [{ id: "settings", label: uz.nav.settings, icon: Settings, color: "#64748b", children: settingsChildren }],
+      items: [{ id: "settings", label: uz.nav.settings, icon: Settings, color: "var(--nav-hue-slate)", children: settingsChildren }],
     },
   ];
 }

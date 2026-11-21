@@ -14,6 +14,7 @@ import {
 } from "@ventura/db/schema/tenant";
 import { addDays } from "@/lib/billing";
 import { type CoinChange, coinMeta } from "@/lib/coins";
+import { canUpdatePaymentAmountWithoutRefundConflict, canVoidPaymentWithoutRefundConflict } from "@/lib/ledger";
 import { type ActionCtx, type ActionResult, crmAction } from "@/lib/server/action";
 import { type CoinRuntime, coinRuntime, syncPrepayCoin } from "@/lib/server/coins";
 import { FINANCE_SETTINGS_KEY, financeSettingsSchema, loadAccount } from "@/lib/server/finance";
@@ -341,14 +342,34 @@ export async function voidEntryAction(input: unknown): Promise<ActionResult> {
       if (gate) return gate;
       if (e.voidedAt) return { ok: true };
       const rt = await coinRuntime(ctx.tenant, ctx.db);
-      const coins = await ctx.db.transaction(async (tx) => {
+      let coins: (CoinChange | null)[] = [];
+      const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
         await lockStudent(tx, s.id);
+
+        // To'lovni bekor qilish: avval berilgan qaytarishlar (refund) qolgan haqiqiy to'lovlardan oshib ketmasligi shart
+        if (e.kind === "payment") {
+          const activeRows = await tx
+            .select({
+              id: payments.id,
+              kind: payments.kind,
+              amount: payments.amount,
+            })
+            .from(payments)
+            .where(and(eq(payments.studentId, s.id), isNull(payments.voidedAt)));
+
+          if (!canVoidPaymentWithoutRefundConflict(activeRows, e.id)) {
+            return { ok: false, error: uz.payments.voidPaymentRefundConflict };
+          }
+        }
+
         await tx
           .update(payments)
           .set({ voidedAt: new Date(), voidedBy: ctx.staff.id, voidReason: parsed.data.reason })
           .where(and(eq(payments.id, e.id), isNull(payments.voidedAt)));
-        return syncPrepay(tx, rt, s.id, [e]);
+        coins = await syncPrepay(tx, rt, s.id, [e]);
+        return { ok: true };
       });
+      if (!result.ok) return result;
       await ctx.audit(
         "payment.void",
         { type: "student", id: s.id },
@@ -386,10 +407,23 @@ export async function restoreEntryAction(id: unknown): Promise<ActionResult> {
       let coins: (CoinChange | null)[] = [];
       const result = await ctx.db.transaction(async (tx): Promise<ActionResult> => {
         await lockStudent(tx, s.id);
-        // Qaytarishni tiklash balansni manfiyga olib kelmasin
+        // Qaytarishni tiklash balansni manfiyga olib kelmasin va to'lovlardan oshib ketmasin
         if (e.kind === "refund") {
           const { summary } = await loadAccount(tx, s.id, todayTashkent());
           if (e.amount > Math.max(0, summary.balance)) return { ok: false, error: uz.payments.restoreRefundTooBig };
+
+          const activeRows = await tx
+            .select({
+              id: payments.id,
+              kind: payments.kind,
+              amount: payments.amount,
+            })
+            .from(payments)
+            .where(and(eq(payments.studentId, s.id), isNull(payments.voidedAt)));
+
+          if (!canUpdatePaymentAmountWithoutRefundConflict(activeRows, e.id, "refund", e.amount)) {
+            return { ok: false, error: uz.payments.voidPaymentRefundConflict };
+          }
         }
         await tx
           .update(payments)
@@ -469,6 +503,22 @@ export async function editEntryAction(input: unknown): Promise<ActionResult> {
               ok: false,
               error: uz.payments.refundTooBig(`${money(e.amount + Math.max(0, summary.balance))} ${uz.common.som}`),
             };
+        }
+
+        // To'lov kamaytirilsa yoki qaytarish oshirilsa — qaytarishlar to'lovlardan oshib ketmasligi shart
+        if ((e.kind === "payment" && v.amount < e.amount) || (e.kind === "refund" && v.amount > e.amount)) {
+          const activeRows = await tx
+            .select({
+              id: payments.id,
+              kind: payments.kind,
+              amount: payments.amount,
+            })
+            .from(payments)
+            .where(and(eq(payments.studentId, s.id), isNull(payments.voidedAt)));
+
+          if (!canUpdatePaymentAmountWithoutRefundConflict(activeRows, e.id, e.kind, v.amount)) {
+            return { ok: false, error: uz.payments.voidPaymentRefundConflict };
+          }
         }
         await tx.update(payments).set(next).where(eq(payments.id, e.id));
         coins = await syncPrepay(tx, rt, s.id, [e, next]);

@@ -1,4 +1,5 @@
 import "server-only";
+import { createHmac } from "node:crypto";
 import { and, eq, gt, isNotNull, isNull, sql } from "drizzle-orm";
 import { verifyStaffPassword } from "@ventura/auth/staff";
 import type { TenantDb } from "@ventura/db";
@@ -29,6 +30,16 @@ export async function saveTelegramBotsConfig(
   staffId: string,
 ): Promise<unknown> {
   return putSetting(db, TELEGRAM_BOTS_KEY, config, staffId);
+}
+
+/** Botning Telegram webhook maxfiy kalitini qaytaradi (sozlangan yoki deterministik hosil qilingan) */
+export function getBotWebhookSecret(bot: SingleBotSettings, secretKey: string, role: BotRole): string {
+  if (bot.webhookSecret && bot.webhookSecret.trim().length > 0) {
+    return bot.webhookSecret.trim();
+  }
+  return createHmac("sha256", secretKey)
+    .update(`tg-webhook:${role}:${bot.token}`)
+    .digest("hex");
 }
 
 /** Har bir bot bo'yicha "Ishlatyapti" va "Hali ishlatmayapti" statistikasini hisoblaydi */

@@ -6,6 +6,7 @@ import * as React from "react";
 import { Badge } from "@ventura/ui/badge";
 import { Card } from "@ventura/ui/card";
 import type { PortalGroupItem } from "@/lib/server/portal";
+import { uz } from "@/lib/uz";
 
 export const PORTAL_DAY_LABELS: Record<string, string> = {
   mon: "Du",
@@ -68,7 +69,7 @@ export function PortalGroupCard({ group: g, className = "" }: PortalGroupCardPro
         </div>
 
         <div className="pt-3 border-t border-border-soft flex items-center justify-between text-caption font-semibold text-primary">
-          <span>Guruh tafsilotlari</span>
+          <span>{uz.portal.guruhTafsilotlari}</span>
           <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </Card>

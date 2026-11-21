@@ -74,7 +74,7 @@ export function AccountView({
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
       toast({
         tone: "success",
-        title: checked ? "2FA muvaffaqiyatli yoqildi" : "2FA o'chirildi",
+        title: checked ? uz.accountExtra.t2faMuvaffaqiyatliYoqildi : uz.accountExtra.t2faOchirildi,
       });
       router.refresh();
     });
@@ -84,7 +84,7 @@ export function AccountView({
     start2FATransition(async () => {
       const res = await unlinkTelegramAction();
       if (!res.ok) return void toast({ tone: "danger", title: res.error });
-      toast({ tone: "success", title: "Telegram hisob uzildi" });
+      toast({ tone: "success", title: uz.accountExtra.telegramHisobUzildi });
       router.refresh();
     });
   }
@@ -120,10 +120,8 @@ export function AccountView({
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="size-5 text-primary" />
             <div>
-              <CardTitle>Ikki bosqichli tasdiqlash (2FA)</CardTitle>
-              <CardDescription>
-                Tizimga kirishda Telegram orqali xavfsizlik kodini so'rash
-              </CardDescription>
+              <CardTitle>{uz.accountExtra.ikkiBosqichliTasdiqlash2fa}</CardTitle>
+              <CardDescription>{uz.accountExtra.tizimgaKirishdaTelegramOrqali}</CardDescription>
             </div>
           </div>
           <Badge tone={twoFactorEnabled ? "success" : "neutral"} dot={twoFactorEnabled}>
@@ -133,9 +131,7 @@ export function AccountView({
         <CardContent className="space-y-4 pt-1">
           {!hasTelegramBot ? (
             <div className="flex flex-col gap-3 rounded-control border border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-body text-muted-foreground">
-                Markazning Telegram boti sozlanmagan. 2FA ishlashi uchun avval Telegram bot sozlanishi kerak.
-              </div>
+              <div className="text-body text-muted-foreground">{uz.accountExtra.markazningTelegramBotiSozlanmagan}</div>
               {director ? (
                 <Button variant="ghost" size="sm" asChild className="shrink-0">
                   <Link href="/telegram-bots">
@@ -163,19 +159,13 @@ export function AccountView({
               <div className="flex items-center justify-between p-3.5">
                 <div>
                   <div className="text-body font-semibold text-foreground">2FA orqali kirish</div>
-                  <div className="text-caption text-muted-foreground">
-                    Har safar paroldan so'ng Telegram botga 6 xonali tasdiq kodi yuboriladi
-                  </div>
+                  <div className="text-caption text-muted-foreground">{uz.accountExtra.harSafarParoldanSong}</div>
                 </div>
-                <Switch
-                  checked={twoFactorEnabled}
-                  disabled={pending2FA}
-                  onCheckedChange={handleToggle2FA}
-                />
+                <Switch checked={twoFactorEnabled} disabled={pending2FA} onCheckedChange={handleToggle2FA} />
               </div>
               <div className="flex items-center justify-between p-3.5">
                 <div className="flex items-center gap-2">
-                  <span className="size-2 rounded-full bg-emerald-500" />
+                  <span className="size-2 rounded-full bg-(--success-fg)" />
                   <span className="text-body text-foreground">Telegram hisob ulangan</span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -189,7 +179,7 @@ export function AccountView({
                     Uzish
                   </Button>
                   <Button variant="ghost" size="sm" asChild className="text-caption">
-                    <Link href="/connect-telegram?next=/account">Qayta ulash</Link>
+                    <Link href="/connect-telegram?next=/account">{uz.accountExtra.qaytaUlash}</Link>
                   </Button>
                 </div>
               </div>
@@ -288,9 +278,9 @@ export function AccountView({
       <ConfirmModal
         open={unlinkOpen}
         onOpenChange={setUnlinkOpen}
-        title="Telegram hisobni uzish"
-        message="Telegram hisob uzilsa, 2FA ham avtomatik o'chiriladi. Davom etasizmi?"
-        confirmLabel="Ha, uzish"
+        title={uz.accountExtra.telegramHisobniUzish}
+        message={uz.accountExtra.telegramHisobUzilsa2fa}
+        confirmLabel={uz.accountExtra.haUzish}
         cancelLabel={uz.common.cancel}
         onConfirm={() => void handleUnlinkTelegram()}
       />

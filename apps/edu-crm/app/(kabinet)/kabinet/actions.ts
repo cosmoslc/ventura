@@ -3,6 +3,7 @@
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { attachmentListSchema, attachmentsBelongTo } from "@/lib/attachments";
 import { passwordProblem } from "@ventura/auth/policy";
 import { groupHomeworks, groupMemberships, students, teachers, users } from "@ventura/db/schema/tenant";
 import { type ActionResult, crmAction } from "@/lib/server/action";
@@ -91,8 +92,7 @@ export async function setStudentPasswordByTeacherAction(input: unknown): Promise
         if (!ok) return { ok: false, error: uz.common.gone };
         await ctx.audit("student.password.teacher_reset", { type: "student", id: s.id }, { userId: s.userId });
       } else {
-        if (!(await studentPhoneFree(ctx, s.phone, s.id)))
-          return { ok: false, error: uz.students.phoneTaken };
+        if (!(await studentPhoneFree(ctx, s.phone, s.id))) return { ok: false, error: uz.students.phoneTaken };
         const login = await grantStudentLogin(ctx, s, password);
         if (!login.ok) return { ok: false, error: login.error === "phone_taken" ? "Telefon band" : "Xatolik" };
         await ctx.audit("student.password.teacher_grant", { type: "student", id: s.id }, { userId: login.userId });
@@ -108,21 +108,16 @@ export async function setStudentPasswordByTeacherAction(input: unknown): Promise
 
 /* ---------- Uy vazifasi berish (ADR 0063) ---------- */
 
-const attachmentInputSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  url: z.string(),
-  size: z.number(),
-  mimeType: z.string().optional(),
-});
-
 const homeworkInput = z.object({
   groupId: z.string().uuid(),
   lessonDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   title: z.string().trim().min(1, "Vazifa sarlavhasi kiritilishi shart").max(200),
   description: z.string().trim().max(2000).optional(),
-  dueDate: z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).optional(),
-  attachments: z.array(attachmentInputSchema).default([]),
+  dueDate: z
+    .string()
+    .regex(/^(\d{4}-\d{2}-\d{2})?$/)
+    .optional(),
+  attachments: attachmentListSchema,
 });
 
 export async function createGroupHomeworkAction(input: unknown): Promise<ActionResult> {
@@ -134,6 +129,7 @@ export async function createGroupHomeworkAction(input: unknown): Promise<ActionR
       const parsed = homeworkInput.safeParse(input);
       if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.invalid };
       const v = parsed.data;
+      if (!attachmentsBelongTo(ctx.tenant.slug, v.attachments)) return { ok: false, error: uz.common.invalid };
 
       // O'qituvchining o'z guruhi ekanini tekshirish
       const { groups: grpTable } = await import("@ventura/db/schema/tenant");
@@ -154,7 +150,11 @@ export async function createGroupHomeworkAction(input: unknown): Promise<ActionR
         createdBy: ctx.staff.id,
       });
 
-      await ctx.audit("group.homework.create", { type: "group", id: v.groupId }, { title: v.title, lessonDate: v.lessonDate });
+      await ctx.audit(
+        "group.homework.create",
+        { type: "group", id: v.groupId },
+        { title: v.title, lessonDate: v.lessonDate },
+      );
       revalidatePath(`/kabinet/guruhlar/${v.groupId}`);
       revalidatePath("/kabinet/uy-ishi");
       revalidatePath("/portal/uy-ishi");
@@ -181,7 +181,11 @@ export async function checkHomeworkSubmissionAction(input: unknown): Promise<Act
       if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.invalid };
       const v = parsed.data;
 
-      const { homeworkSubmissions: subTable, lessonGrades: lgTable, groups: grpTable } = await import("@ventura/db/schema/tenant");
+      const {
+        homeworkSubmissions: subTable,
+        lessonGrades: lgTable,
+        groups: grpTable,
+      } = await import("@ventura/db/schema/tenant");
 
       // Submissionni tekshiramiz
       const [sub] = await ctx.db
@@ -230,10 +234,7 @@ export async function checkHomeworkSubmissionAction(input: unknown): Promise<Act
           .limit(1);
 
         if (existingGrade) {
-          await ctx.db
-            .update(lgTable)
-            .set({ homework: true })
-            .where(eq(lgTable.id, existingGrade.id));
+          await ctx.db.update(lgTable).set({ homework: true }).where(eq(lgTable.id, existingGrade.id));
         } else {
           await ctx.db.insert(lgTable).values({
             groupId: sub.groupId,
@@ -279,12 +280,26 @@ export async function checkHomeworkSubmissionAction(input: unknown): Promise<Act
   );
 }
 
-export async function getHomeworkSubmissionsAction(homeworkId: string): Promise<ActionResult & { data?: unknown }> {
+export async function getHomeworkSubmissionsAction(input: unknown): Promise<ActionResult & { data?: unknown }> {
   return crmAction(
     "groups",
     null,
     async (ctx) => {
       if (ctx.staff.kind !== "teacher" || !ctx.staff.teacherId) return { ok: false, error: uz.common.forbidden };
+      const parsedId = z.string().uuid().safeParse(input);
+      if (!parsedId.success) return { ok: false, error: uz.common.invalid };
+      const homeworkId = parsedId.data;
+
+      // Faqat o'z guruhidagi vazifa javoblari
+      const { groups: grpTable } = await import("@ventura/db/schema/tenant");
+      const [own] = await ctx.db
+        .select({ teacherId: grpTable.teacherId })
+        .from(groupHomeworks)
+        .innerJoin(grpTable, eq(grpTable.id, groupHomeworks.groupId))
+        .where(eq(groupHomeworks.id, homeworkId))
+        .limit(1);
+      if (!own || own.teacherId !== ctx.staff.teacherId) return { ok: false, error: uz.common.forbidden };
+
       const { loadHomeworkSubmissions } = await import("@/lib/server/kabinet");
       const items = await loadHomeworkSubmissions(ctx.db, homeworkId);
       return { ok: true, data: items };

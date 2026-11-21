@@ -111,6 +111,7 @@ export interface SingleBotSettings {
   enabled: boolean;
   miniAppUrl: string;
   notifications: Record<string, boolean>;
+  webhookSecret: string;
 }
 
 export interface TelegramBotsConfig {
@@ -148,6 +149,7 @@ export const DEFAULT_TELEGRAM_BOTS_CONFIG: TelegramBotsConfig = {
     enabled: false,
     miniAppUrl: "/kabinet",
     notifications: defaultNotifications(TEACHER_NOTIFICATIONS),
+    webhookSecret: "",
   },
   studentBot: {
     token: "",
@@ -156,6 +158,7 @@ export const DEFAULT_TELEGRAM_BOTS_CONFIG: TelegramBotsConfig = {
     enabled: false,
     miniAppUrl: "/portal",
     notifications: defaultNotifications(STUDENT_NOTIFICATIONS),
+    webhookSecret: "",
   },
   parentBot: {
     token: "",
@@ -164,6 +167,7 @@ export const DEFAULT_TELEGRAM_BOTS_CONFIG: TelegramBotsConfig = {
     enabled: false,
     miniAppUrl: "",
     notifications: defaultNotifications(PARENT_NOTIFICATIONS),
+    webhookSecret: "",
   },
 };
 
@@ -174,6 +178,11 @@ const singleBotSchema = z.object({
   enabled: z.boolean().default(false),
   miniAppUrl: z.string().default(""),
   notifications: z.record(z.string(), z.boolean()).default({}),
+  webhookSecret: z
+    .string()
+    .regex(/^[a-zA-Z0-9_-]*$/, "Maxfiy kalit faqat harf, raqam, _ va - dan iborat bo'lishi kerak")
+    .max(256)
+    .default(""),
 });
 
 export const telegramBotsConfigSchema = z.object({

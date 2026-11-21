@@ -276,16 +276,16 @@ export async function testSupabaseConnectionAction(input: {
   try {
     const proj = await getSupabaseProject(token, input.projectRef);
     const pooler = await getSupabasePoolerConfig(token, input.projectRef);
-    let poolerHost = pooler?.db_host || `aws-0-${proj.region}.pooler.supabase.com`;
-    let poolerPort = pooler?.db_port || 5432;
-    let url = buildSupabaseDatabaseUrl({
+    const poolerHost = pooler?.db_host || `aws-0-${proj.region}.pooler.supabase.com`;
+    const poolerPort = pooler?.db_port || 5432;
+    const url = buildSupabaseDatabaseUrl({
       projectRef: input.projectRef,
       region: proj.region,
       dbPassword: input.dbPassword,
       poolerHost,
       poolerPort,
     });
-    let res = await testSupabaseConnection(url);
+    const res = await testSupabaseConnection(url);
     if (!res.ok && res.error.includes("not found") && poolerHost.includes("aws-0-")) {
       const altHost = poolerHost.replace("aws-0-", "aws-1-");
       const altUrl = buildSupabaseDatabaseUrl({
@@ -388,7 +388,7 @@ export async function renameSupabaseProjectAction(
       .where(isNull(projects.deletedAt));
 
     for (const p of all) {
-      const s = p.settings as Record<string, any> | null;
+      const s = p.settings as ({ supabase?: Record<string, unknown> & { projectRef?: string } } & Record<string, unknown>) | null;
       if (s?.supabase?.projectRef === projectRef) {
         const nextSettings = {
           ...s,

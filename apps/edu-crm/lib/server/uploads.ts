@@ -72,7 +72,7 @@ export function deleteUploadedFile(fileUrlOrName: string, tenantSlug?: string): 
     // Multi-tenant izolyatsiyasi:
     // Agar tenantSlug berilgan bo'lsa, URL dagi papka aynan shu tenant bo'lishi shart
     if (tenantSlug) {
-      if (parts.length > 1 && parts[0] !== tenantSlug) {
+      if (parts.length !== 2 || parts[0] !== tenantSlug) {
         console.warn(`[deleteUploadedFile] Multi-tenant bloklandi: ${tenantSlug} boshqa mijoz (${parts[0]}) faylini o'chirishga urindi.`);
         return false;
       }
@@ -84,13 +84,7 @@ export function deleteUploadedFile(fileUrlOrName: string, tenantSlug?: string): 
         return true;
       }
 
-      // Zaxira: faqat ildiz uploads papkasida turgan bo'lsa (boshqa mijoz papkasida emas)
-      const rootFile = path.join(baseDir, filename);
-      if (fs.existsSync(rootFile) && fs.statSync(rootFile).isFile()) {
-        fs.unlinkSync(rootFile);
-        return true;
-      }
-
+      // Ildiz papkadagi (umumiy) fayllar hech qaysi mijozniki emas — o'chirilmaydi
       return false;
     }
 
@@ -142,7 +136,7 @@ export function scanTenantDiskFiles(tenantSlug?: string): DiskFileInfo[] {
 }
 
 export function sanitizeFilename(originalName: string): string {
-  const ext = path.extname(originalName).toLowerCase();
+  const ext = path.extname(originalName).toLowerCase().replace(/[^a-z0-9.]/g, "").slice(0, 10);
   const rawBase = path.basename(originalName, ext);
   const cleanBase = rawBase.replace(/[^a-zA-Z0-9_\-\u0400-\u04FF]/g, "_").slice(0, 50) || "file";
   const unique = randomUUID().slice(0, 8);

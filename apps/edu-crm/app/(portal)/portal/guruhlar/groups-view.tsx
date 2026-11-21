@@ -5,6 +5,7 @@ import * as React from "react";
 import { Card } from "@ventura/ui/card";
 import type { PortalGroupItem } from "@/lib/server/portal";
 import { PortalGroupCard } from "./group-card";
+import { uz } from "@/lib/uz";
 
 /**
  * O'quvchi guruhlari ro'yxati (ADR 0063).
@@ -29,9 +30,7 @@ export function PortalGroupsView({ groups }: { groups: PortalGroupItem[] }) {
         <Card className="p-8 text-center space-y-3 border-dashed">
           <UsersRound className="size-10 mx-auto text-muted-foreground/40" />
           <h3 className="text-body font-bold text-foreground">Siz hali birorta guruhga qo'shilmagansiz</h3>
-          <p className="text-caption text-muted-foreground max-w-sm mx-auto">
-            Guruhga qo'shilish uchun o'quv markazingiz ma'muriyatiga yoki o'qituvchingizga murojaat qiling.
-          </p>
+          <p className="text-caption text-muted-foreground max-w-sm mx-auto">{uz.portal.guruhgaQoshilishUchunOquv}</p>
         </Card>
       )}
     </div>

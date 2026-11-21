@@ -43,7 +43,16 @@ function nodeText(node: React.ReactNode): string {
   return "";
 }
 
-const matches = (node: React.ReactNode, query: string) => !query || nodeText(node).toLocaleLowerCase().includes(query);
+function normalizeText(str: string): string {
+  return str.toLocaleLowerCase().replace(/[ʻʼ`'"]/g, "").trim();
+}
+
+function matches(node: React.ReactNode, query: string): boolean {
+  if (!query) return true;
+  const q = normalizeText(query);
+  if (!q) return true;
+  return normalizeText(nodeText(node)).includes(q);
+}
 
 const SelectContext = React.createContext<SelectCtx | null>(null);
 
@@ -180,23 +189,37 @@ export function SelectItem({
   value,
   className,
   hidden,
+  style,
   children,
+  ...props
 }: {
   value: string;
   className?: string;
   /** Qidiruvga mos kelmadi: ro'yxatda ko'rinmaydi (tanlangan nom yo'qolmasligi uchun o'chirilmaydi) */
   hidden?: boolean;
+  style?: React.CSSProperties;
   children: React.ReactNode;
-}) {
+} & Omit<React.ComponentProps<"div">, "onSelect" | "role">) {
   const { value: selected, setValue, query } = useSelect();
   const on = selected === value;
+  const isHidden = Boolean(hidden || !matches(children, query));
   return (
     <DropdownMenuItem
       role="option"
       aria-selected={on}
-      hidden={hidden || !matches(children, query.trim())}
+      hidden={isHidden}
+      style={{
+        ...style,
+        ...(isHidden ? { display: "none" } : {}),
+      }}
       onSelect={() => setValue(value)}
-      className={cn("relative pr-8", on && "text-primary-text data-highlighted:text-primary-text", className)}
+      className={cn(
+        "relative pr-8",
+        isHidden && "!hidden",
+        on && "text-primary-text data-highlighted:text-primary-text",
+        className,
+      )}
+      {...props}
     >
       <span className="truncate">{children}</span>
       {on ? <Check className="absolute right-2.5 text-primary-text!" /> : null}

@@ -50,29 +50,43 @@ export function createTenantDb(url: string, tenantId: string, options: TenantDbO
   // Standalone so'rovlar (tranzaksiyadan tashqari chaqirilgan select/insert/update/delete):
   // Supabase pooler (6543, transaction mode) sessiya holatini saqlamaydi.
   // Har qanday mustaqil so'rov avtomatik o'z tranzaksiyasida set_config bilan bajariladi.
-  const session = (db as any).session;
+  type SqlClient = {
+    begin?: (tx: (txSql: postgres.Sql) => Promise<unknown>) => Promise<unknown>;
+  };
+
+  type PreparedQueryWithSession = {
+    execute: (placeholderValues?: unknown) => Promise<unknown>;
+    all: (placeholderValues?: unknown) => Promise<unknown>;
+    client?: SqlClient;
+  };
+
+  type DrizzleSession = {
+    prepareQuery: (...args: unknown[]) => PreparedQueryWithSession;
+  };
+
+  const session = (db as unknown as { session: DrizzleSession }).session;
   const origPrepare = session.prepareQuery.bind(session);
-  session.prepareQuery = function (...args: any[]) {
+  session.prepareQuery = function (...args: unknown[]) {
     const pq = origPrepare(...args);
     const origExec = pq.execute.bind(pq);
     const origAll = pq.all.bind(pq);
 
-    pq.execute = async function (placeholderValues: any) {
+    pq.execute = async function (placeholderValues?: unknown) {
       if (typeof this.client?.begin === "function") {
-        return this.client.begin(async (txSql: any) => {
+        return this.client.begin(async (txSql: postgres.Sql) => {
           await txSql`select set_config(${TENANT_SETTING}, ${tenantId}, true)`;
-          this.client = txSql;
+          this.client = txSql as unknown as SqlClient;
           return origExec(placeholderValues);
         });
       }
       return origExec(placeholderValues);
     };
 
-    pq.all = async function (placeholderValues: any) {
+    pq.all = async function (placeholderValues?: unknown) {
       if (typeof this.client?.begin === "function") {
-        return this.client.begin(async (txSql: any) => {
+        return this.client.begin(async (txSql: postgres.Sql) => {
           await txSql`select set_config(${TENANT_SETTING}, ${tenantId}, true)`;
-          this.client = txSql;
+          this.client = txSql as unknown as SqlClient;
           return origAll(placeholderValues);
         });
       }
