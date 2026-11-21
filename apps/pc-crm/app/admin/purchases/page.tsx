@@ -35,6 +35,7 @@ export default function AdminPurchasesPage() {
       );
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadData();
   }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Check, DollarSign, Globe, MapPin, Save, Shield, Sliders, Truck } from "lucide-react";
+import { Check, DollarSign, Globe, Save, Sliders, Truck } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -83,6 +83,7 @@ export default function AdminSettingsPage() {
     );
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadSettings();
   }, [loadSettings]);
 

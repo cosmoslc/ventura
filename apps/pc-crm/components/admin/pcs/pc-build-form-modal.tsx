@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Check, Plus, Trash2, Wrench } from "lucide-react";
-import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { FieldHint, Label } from "@ventura/ui/label";
@@ -52,6 +51,7 @@ export function PcBuildFormModal({
   // initialData yuklanganda
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tahrirlanayotgan yozuvni formaga yuklash
       setName(initialData.name);
       setSlug(initialData.slug);
       setImageUrl(initialData.images[0] ?? "");
@@ -309,7 +309,7 @@ export function PcBuildFormModal({
 
           <div>
             <Label htmlFor="build-status">Holati</Label>
-            <Select value={status} onValueChange={(val) => setStatus(val as any)}>
+            <Select value={status} onValueChange={(val) => setStatus(val as typeof status)}>
               <SelectTrigger id="build-status" aria-label="Holati" className="w-full">
                 <SelectValue placeholder="Holatni tanlang" />
               </SelectTrigger>

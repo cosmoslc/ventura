@@ -8,7 +8,7 @@ import { ProductCard } from "@/components/storefront/product-card";
 import { useLiked } from "@/lib/liked-context";
 
 export default function ProfileLikedPage() {
-  const { likedBuilds, likedProducts, likedCount, toggleLike, removeLiked } = useLiked();
+  const { likedBuilds, likedProducts, likedCount, removeLiked } = useLiked();
 
   return (
     <div className="space-y-6">

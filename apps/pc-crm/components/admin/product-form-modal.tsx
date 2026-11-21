@@ -41,6 +41,11 @@ interface ProductFormModalProps {
   isFinancial?: boolean;
 }
 
+/** SKU kiritilmasa: vaqt bo'yicha qisqa kod (faqat saqlash paytida chaqiriladi) */
+function fallbackSku() {
+  return `SKU-${Date.now().toString().slice(-6)}`;
+}
+
 export function ProductFormModal({
   open,
   onOpenChange,
@@ -71,6 +76,7 @@ export function ProductFormModal({
 
   useEffect(() => {
     if (initialData) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- tahrirlanayotgan yozuvni formaga yuklash
       setNameUz(initialData.nameUz);
       setNameRu(initialData.nameRu ?? "");
       setCategorySlug(initialData.categorySlug);
@@ -145,7 +151,7 @@ export function ProductFormModal({
       nameRu,
       categorySlug,
       brandName,
-      sku: sku || `SKU-${Date.now().toString().slice(-6)}`,
+      sku: sku || fallbackSku(),
       imageUrl: imageUrl || "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&q=80",
       costPrice: costBig,
       sellPrice: sellBig,

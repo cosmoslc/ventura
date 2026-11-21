@@ -3,20 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertCircle,
   Check,
   CheckCircle2,
   Cpu,
   DollarSign,
   Edit2,
   ExternalLink,
-  Layers,
   Monitor,
   PackageCheck,
   Plus,
   Receipt,
   Search,
-  ShoppingCart,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -52,6 +49,7 @@ export default function AdminPcsPage() {
     else setParts(partsResult.parts);
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadData();
   }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");

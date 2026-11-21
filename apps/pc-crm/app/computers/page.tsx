@@ -4,8 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Cpu, Filter, Monitor, RotateCcw, Search, Sparkles, Wrench, X } from "lucide-react";
-import { Badge } from "@ventura/ui/badge";
+import { Filter, Monitor, RotateCcw, Search, Wrench, X } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { CartDrawer } from "@/components/storefront/cart-drawer";
 import { Footer } from "@/components/storefront/footer";
@@ -14,7 +13,6 @@ import { type PcBuildCardData, PcCard } from "@/components/storefront/pc-card";
 import { SearchModal } from "@/components/storefront/search-modal";
 import { useCart } from "@/lib/cart-context";
 import { useLiked } from "@/lib/liked-context";
-import { formatMoney } from "@/lib/format";
 import { getStorefrontPcBuildsAction } from "@/lib/server/actions";
 
 interface PcBuildListItem {
@@ -277,7 +275,7 @@ export default function ComputersListingPage() {
                   Filtrlar
                 </button>
 
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
+                <Select value={sortBy} onValueChange={(v) => setSortBy(v as typeof sortBy)}>
                   <SelectTrigger
                     aria-label="Kompyuterlarni saralash"
                     className="w-auto min-w-44 text-xs h-(--control-h)"

@@ -19,12 +19,15 @@ export interface LikedItem {
   isAvailable?: boolean;
 }
 
+/** Yoqtirish uchun kelgan karta ma'lumoti: id majburiy, qolganlari bo'lishi mumkin */
+type LikeInput = Partial<LikedItem> & { id: string };
+
 interface LikedContextType {
   items: LikedItem[];
   likedIds: Set<string>;
   likedCount: number;
   isLiked: (id: string) => boolean;
-  toggleLike: (item: LikedItem | { id: string; type?: "product" | "pc"; [key: string]: any }) => void;
+  toggleLike: (item: LikeInput) => void;
   removeLiked: (id: string) => void;
   clearLiked: () => void;
   likedProducts: LikedItem[];
@@ -49,6 +52,7 @@ export function LikedProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage faqat klientda o'qiladi
           setItems(parsed);
         } else {
           setItems([]);
@@ -97,7 +101,7 @@ export function LikedProvider({ children }: { children: React.ReactNode }) {
 
   const isLiked = (id: string) => likedIds.has(id);
 
-  const toggleLike = (item: any) => {
+  const toggleLike = (item: LikeInput) => {
     if (!item?.id) return;
     setItems((prev) => {
       const exists = prev.some((i) => i.id === item.id);

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull } from "drizzle-orm";
 import { notifications, userNotifications } from "@ventura/db/schema/pc-crm";
 import { getDb } from "@/lib/db";
 
@@ -80,7 +80,7 @@ export async function getDbNotifications(userId?: string): Promise<{
 
   const allRows = await db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(20);
 
-  let readMap = new Map<string, boolean>();
+  const readMap = new Map<string, boolean>();
 
   if (userId) {
     const userReads = await db

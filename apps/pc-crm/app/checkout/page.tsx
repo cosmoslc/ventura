@@ -3,17 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  CheckCircle2,
-  CreditCard,
-  MapPin,
-  MessageCircle,
-  Phone,
-  ShieldCheck,
-  Truck,
-  User,
-} from "lucide-react";
+import { ArrowLeft, CheckCircle2, CreditCard, MapPin, MessageCircle, ShieldCheck, Truck, User } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
@@ -26,7 +16,6 @@ import { formatMoney } from "@/lib/format";
 import { useFinancialMode } from "@/lib/store-context";
 import { createOrderAction } from "@/lib/server/actions";
 import { AuthModal } from "@/components/storefront/auth-modal";
-import { useSession } from "@/lib/auth-client";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -46,7 +35,6 @@ type CheckoutErrors = Partial<Record<keyof z.infer<typeof checkoutSchema>, strin
 export default function CheckoutPage() {
   const isFinancial = useFinancialMode();
   const { items, subtotal, shipping, total, clearCart } = useCart();
-  const { data: session } = useSession();
 
   // Formalar holati
   const [firstName, setFirstName] = useState("");
@@ -57,7 +45,7 @@ export default function CheckoutPage() {
   const [orderNote, setOrderNote] = useState("");
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<CheckoutErrors>({});
+  const [, setFieldErrors] = useState<CheckoutErrors>({});
 
   // Buyurtma qabul qilingan holati
   const [confirmedOrderId, setConfirmedOrderId] = useState<string | null>(null);

@@ -1,8 +1,11 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import { calcFinalPrice, calcOrderTotal } from "./calc/formulas";
+import { calcOrderTotal } from "./calc/formulas";
 import { useSession } from "./auth-client";
+
+/** localStorage'dagi ko'rinish: bigint satr bo'lib saqlanadi */
+type StoredCartItem = Omit<CartItem, "price" | "originalPrice"> & { price: string; originalPrice?: string };
 
 export interface CartItem {
   id: string; // unique item key: `${productId}_${variantId ?? 'default'}`
@@ -58,11 +61,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          const restored = parsed.map((item: any) => ({
+          const restored = parsed.map((item: StoredCartItem) => ({
             ...item,
             price: BigInt(item.price),
             originalPrice: item.originalPrice ? BigInt(item.originalPrice) : undefined,
           }));
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage faqat klientda o'qiladi
           setItems(restored);
         } else {
           setItems([]);
@@ -74,7 +78,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           if (guestStored) {
             const parsed = JSON.parse(guestStored);
             if (Array.isArray(parsed) && parsed.length > 0) {
-              const restored = parsed.map((item: any) => ({
+              const restored = parsed.map((item: StoredCartItem) => ({
                 ...item,
                 price: BigInt(item.price),
                 originalPrice: item.originalPrice ? BigInt(item.originalPrice) : undefined,

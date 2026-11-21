@@ -3,20 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  Heart,
-  HelpCircle,
-  Minus,
-  Plus,
-  ShieldCheck,
-  ShoppingCart,
-  Star,
-  Truck,
-  Zap,
-} from "lucide-react";
+import { ChevronRight, Heart, HelpCircle, Minus, Plus, ShieldCheck, ShoppingCart, Truck, Zap } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Modal } from "@ventura/ui/modal";
@@ -26,7 +13,6 @@ import { PriceView } from "@/components/storefront/price-view";
 import { RatingStars } from "@/components/storefront/rating-stars";
 import { useCart } from "@/lib/cart-context";
 import { useLiked } from "@/lib/liked-context";
-import { formatMoney } from "@/lib/format";
 
 export interface ProductDetailData {
   id: string;

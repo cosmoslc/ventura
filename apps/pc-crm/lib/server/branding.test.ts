@@ -1,3 +1,4 @@
+import type { Tenant } from "@ventura/tenants";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("server-only", () => ({}));
@@ -31,7 +32,7 @@ describe("getStoreBranding", () => {
         logoUrl: "https://example.com/logo.png",
       },
       features: ["catalog", "inventory", "sales"],
-    } as any);
+    } as unknown as Tenant);
 
     vi.mocked(getDbSettings).mockResolvedValue({});
 
@@ -53,7 +54,7 @@ describe("getStoreBranding", () => {
         appearance: "light",
       },
       features: ["catalog"],
-    } as any);
+    } as unknown as Tenant);
 
     vi.mocked(getDbSettings).mockResolvedValue({
       store_branding: {
@@ -79,7 +80,7 @@ describe("getStoreBranding", () => {
           appearance: "dark",
         },
         features: ["catalog", "orders"],
-      } as any,
+      } as unknown as Tenant,
     ]);
 
     vi.mocked(getDbSettings).mockResolvedValue({});
@@ -100,7 +101,7 @@ describe("getStoreBranding", () => {
         appearance: "light",
       },
       features: ["students", "attendance"],
-    } as any);
+    } as unknown as Tenant);
 
     vi.mocked(getDbSettings).mockResolvedValue({});
 

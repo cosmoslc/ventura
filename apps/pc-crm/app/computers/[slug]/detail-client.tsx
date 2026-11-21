@@ -5,24 +5,17 @@ import { Textarea } from "@ventura/ui/textarea";
 import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
   CheckCircle2,
   ChevronRight,
-  Cpu,
-  FileQuestion,
-  HardDrive,
   Headphones,
   Heart,
   HelpCircle,
-  MemoryStick,
-  Monitor,
   PackageCheck,
   Send,
   ShieldCheck,
   ShoppingCart,
   Star,
   Truck,
-  Wrench,
   Zap,
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
@@ -37,7 +30,6 @@ import { RatingStars } from "@/components/storefront/rating-stars";
 import { SearchModal } from "@/components/storefront/search-modal";
 import { useCart } from "@/lib/cart-context";
 import { useLiked } from "@/lib/liked-context";
-import { formatMoney } from "@/lib/format";
 import type { PcBuildPublicItem, PcSpecItem } from "@/lib/pc-data";
 
 interface PageProps {

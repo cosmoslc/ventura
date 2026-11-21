@@ -70,6 +70,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: bildirishnomalar server action'dan olinadi
     void fetchNotifications();
   }, [fetchNotifications]);
 

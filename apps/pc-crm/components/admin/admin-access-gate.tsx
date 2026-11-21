@@ -10,7 +10,7 @@ import { Input } from "@ventura/ui/input";
 import { normalizeUzPhone } from "@/lib/phone";
 import { authClient, signOut } from "@/lib/auth-client";
 
-export function AdminAccessGate({ signedIn, adminExists }: { signedIn: boolean; adminExists: boolean }) {
+export function AdminAccessGate({ signedIn }: { signedIn: boolean; adminExists: boolean }) {
   const [identifier, setIdentifier] = useState("+998902021479");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -92,8 +92,8 @@ export function AdminAccessGate({ signedIn, adminExists }: { signedIn: boolean; 
 
       // Muvaffaqiyatli: admin panelga yo'naltirish
       window.location.href = "/admin";
-    } catch (err: any) {
-      setError(err?.message || "Kirishda xatolik yuz berdi.");
+    } catch (err: unknown) {
+      setError((err instanceof Error ? err.message : "") || "Kirishda xatolik yuz berdi.");
       setBusy(false);
     }
   }

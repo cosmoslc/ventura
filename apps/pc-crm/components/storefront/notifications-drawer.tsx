@@ -18,6 +18,7 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
   const { notifications, unreadCount, markAsRead, markAllAsRead, loading } = useNotifications();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- portal mount belgisi
     setMounted(true);
   }, []);
 

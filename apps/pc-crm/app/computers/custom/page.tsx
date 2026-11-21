@@ -5,15 +5,10 @@ import { Textarea } from "@ventura/ui/textarea";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertCircle,
-  ArrowLeft,
-  ArrowRight,
   Check,
   CheckCircle2,
-  ChevronRight,
   Cpu,
   HardDrive,
-  Info,
   Layers,
   MemoryStick,
   Monitor,
@@ -22,10 +17,8 @@ import {
   RotateCcw,
   Search,
   Send,
-  ShieldCheck,
   Sparkles,
   Trash2,
-  Truck,
   Wrench,
   Zap,
 } from "lucide-react";
@@ -260,7 +253,7 @@ export default function CustomPcConfiguratorPage() {
             <div className="lg:col-span-8 space-y-6">
               {/* Kategoriya tablari (Gorizontal qator) */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                {CATEGORIES.map((cat, idx) => {
+                {CATEGORIES.map((cat) => {
                   const Icon = cat.icon;
                   const isSelected = Boolean(selectedParts[cat.role]);
                   const isActive = activeRole === cat.role;

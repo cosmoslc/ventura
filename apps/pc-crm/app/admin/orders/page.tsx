@@ -66,6 +66,7 @@ export default function AdminOrdersPage() {
     );
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadOrders();
   }, [loadOrders]);
   const [searchQuery, setSearchQuery] = useState("");

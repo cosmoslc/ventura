@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Boxes, DollarSign, Plus, Receipt, Search, TrendingUp, Undo2 } from "lucide-react";
-import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
@@ -31,6 +30,7 @@ export default function AdminSalesPage() {
       );
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadData();
   }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -55,7 +55,6 @@ export default function AdminSalesPage() {
   const totalCost = activeSales.reduce((sum, s) => sum + s.costSnapshot, 0n);
   const totalProfit = activeSales.reduce((sum, s) => sum + s.profit, 0n);
   const totalUnits = activeSales.reduce((sum, s) => sum + s.qty, 0);
-  const avgMargin = totalRevenue > 0n ? Number(((Number(totalProfit) / Number(totalRevenue)) * 100).toFixed(2)) : 0;
 
   const handleSaveSale = async (newSale: SaleItemData) => {
     const result = await saveSaleAction({

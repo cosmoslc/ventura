@@ -40,6 +40,7 @@ export default function ProfileOverviewPage() {
     if (isPending) return;
 
     if (!session?.user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sessiya holatiga qarab ma'lumotni tozalash/yuklash
       setOrdersCount(0);
       setSpentTotal(0n);
       setLatestOrder(null);

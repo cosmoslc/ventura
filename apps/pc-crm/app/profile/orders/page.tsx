@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   CheckCircle2,
   Clock,
-  ExternalLink,
   Headphones,
   MapPin,
   MessageCircle,
@@ -71,6 +70,7 @@ export default function ProfileOrdersPage() {
     if (isPending) return;
 
     if (!session?.user) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sessiya holatiga qarab ma'lumotni tozalash/yuklash
       setUserOrders([]);
       setLoading(false);
       return;
@@ -89,7 +89,7 @@ export default function ProfileOrdersPage() {
               id: o.id,
               orderNumber: o.publicId,
               date: o.createdAt.split("T")[0] ?? "2026-10-31",
-              status: (isDelivered ? "delivered" : "shipping") as any,
+              status: isDelivered ? ("delivered" as const) : ("shipping" as const),
               statusLabel:
                 o.status === "delivered"
                   ? "Yetkazib berildi"
@@ -98,7 +98,11 @@ export default function ProfileOrdersPage() {
                     : o.status === "shipping"
                       ? "Yetkazilmoqda (Kuryerda)"
                       : "Qabul qilindi",
-              statusTone: (isDelivered ? "success" : o.status === "new" ? "info" : "warning") as any,
+              statusTone: isDelivered
+                ? ("success" as const)
+                : o.status === "new"
+                  ? ("info" as const)
+                  : ("warning" as const),
               total: BigInt(o.total),
               address: o.address ? `${o.region ? `${o.region}, ` : ""}${o.address}` : "Toshkent shahri",
               products: o.items.map((it) => ({
@@ -106,7 +110,7 @@ export default function ProfileOrdersPage() {
                 qty: it.qty,
                 price: BigInt(it.price),
                 imageUrl:
-                  (it as any).imageUrl ||
+                  (it as { imageUrl?: string }).imageUrl ||
                   "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=300&auto=format&fit=crop&q=80",
                 canReview: isDelivered,
               })),

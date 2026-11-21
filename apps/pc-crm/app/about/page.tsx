@@ -1,22 +1,6 @@
 "use client";
 
-import Link from "next/link";
-import {
-  Award,
-  CheckCircle2,
-  Clock,
-  Headphones,
-  Mail,
-  MapPin,
-  MessageCircle,
-  Phone,
-  ShieldCheck,
-  Sparkles,
-  Users,
-  Wrench,
-  Zap,
-} from "lucide-react";
-import { Button } from "@ventura/ui/button";
+import { Clock, MapPin, Phone, ShieldCheck, Sparkles, Wrench, Zap } from "lucide-react";
 import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 

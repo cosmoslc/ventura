@@ -23,6 +23,7 @@ export default function ProfileSettingsPage() {
     if (session?.user) {
       if (session.user.name) {
         const parts = session.user.name.trim().split(" ");
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- sessiya holatiga qarab ma'lumotni tozalash/yuklash
         setFirstName(parts[0] || "");
         setLastName(parts.slice(1).join(" ") || "");
       }

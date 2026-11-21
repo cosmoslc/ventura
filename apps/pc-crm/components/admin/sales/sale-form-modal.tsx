@@ -54,6 +54,7 @@ export function SaleFormModal({
 
   useEffect(() => {
     if (products[0] && !selectedProductId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- birinchi mahsulotni standart tanlash
       setSelectedProductId(products[0].id);
       setSoldPriceStr(products[0].sellPrice.toString());
     }

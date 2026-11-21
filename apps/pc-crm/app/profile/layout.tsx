@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Heart, LogOut, Package, Settings, User, Wrench } from "lucide-react";
+import { Heart, LogOut, Package, Settings, User } from "lucide-react";
 import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 import { useSession, signOut } from "@/lib/auth-client";

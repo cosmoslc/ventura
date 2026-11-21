@@ -37,42 +37,6 @@ interface AdminShellProps {
   children: React.ReactNode;
 }
 
-const NAV: NavSection[] = [
-  {
-    title: "Boshqaruv",
-    items: [
-      { id: "/admin", label: "Boshqaruv paneli", icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
-      { id: "/admin/products", label: "Mahsulotlar", icon: Boxes, color: "var(--nav-hue-violet)" },
-      { id: "/admin/purchases", label: "Kirimlar (Ombor)", icon: PackagePlus, color: "var(--nav-hue-green)" },
-      { id: "/admin/sales", label: "Sotuvlar & Foyda", icon: Receipt, color: "var(--nav-hue-amber)" },
-      { id: "/admin/pcs", label: "PClar (Tayyor)", icon: Monitor, color: "var(--nav-hue-sky)" },
-      { id: "/admin/pc-orders", label: "PC Zakazlar", icon: Wrench, color: "var(--nav-hue-teal)" },
-      { id: "/admin/orders", label: "Buyurtmalar", icon: ShoppingCart, color: "var(--nav-hue-pink)" },
-      { id: "/admin/users", label: "Foydalanuvchilar", icon: Users, color: "var(--nav-hue-orange)" },
-    ],
-  },
-  {
-    title: "Tizim",
-    items: [{ id: "/admin/settings", label: "Sozlamalar", icon: Settings, color: "var(--nav-hue-slate)" }],
-  },
-];
-
-function activeFor(pathname: string) {
-  let activeId = "/admin";
-  let bestLength = 0;
-  for (const section of NAV) {
-    for (const item of section.items) {
-      const matches =
-        item.id === "/admin" ? pathname === item.id : pathname === item.id || pathname.startsWith(`${item.id}/`);
-      if (matches && item.id.length > bestLength) {
-        activeId = item.id;
-        bestLength = item.id.length;
-      }
-    }
-  }
-  return activeId;
-}
-
 export function AdminShell({ children }: AdminShellProps) {
   const { branding, isFinancial } = useStore();
   const { data: session } = useSession();
@@ -136,7 +100,7 @@ export function AdminShell({ children }: AdminShellProps) {
   }
 
   const userName = session?.user?.name || "Administrator";
-  const userRole = (session?.user as any)?.role || "Admin";
+  const userRole = (session?.user as { role?: string } | undefined)?.role || "Admin";
 
   return (
     <div className="min-h-dvh bg-background text-foreground">

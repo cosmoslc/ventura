@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, desc, and, ilike, sql } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import {
   brands,
   categories,

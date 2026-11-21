@@ -81,11 +81,26 @@ export function ImageUploadWithBgRemoval({
     }
   };
 
+  // Display canvasga chizish
+  const renderToDisplay = (sourceCanvas: HTMLCanvasElement) => {
+    const disp = displayCanvasRef.current;
+    if (!disp) return;
+
+    disp.width = sourceCanvas.width;
+    disp.height = sourceCanvas.height;
+    const ctx = disp.getContext("2d");
+    if (ctx) {
+      ctx.clearRect(0, 0, disp.width, disp.height);
+      ctx.drawImage(sourceCanvas, 0, 0);
+    }
+  };
+
   // Modal ochilganda rasmni canvasga chizish
   useEffect(() => {
     if (!modalOpen || !value) return;
 
     let isMounted = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- rasm tahlilini boshlash holati
     setLoadingImage(true);
     setAiError(null);
 
@@ -137,20 +152,6 @@ export function ImageUploadWithBgRemoval({
       isMounted = false;
     };
   }, [modalOpen, value]);
-
-  // Display canvasga chizish
-  const renderToDisplay = (sourceCanvas: HTMLCanvasElement) => {
-    const disp = displayCanvasRef.current;
-    if (!disp) return;
-
-    disp.width = sourceCanvas.width;
-    disp.height = sourceCanvas.height;
-    const ctx = disp.getContext("2d");
-    if (ctx) {
-      ctx.clearRect(0, 0, disp.width, disp.height);
-      ctx.drawImage(sourceCanvas, 0, 0);
-    }
-  };
 
   // Parametrlar o'zgarganda real vaqtda qayta hisoblash
   useEffect(() => {

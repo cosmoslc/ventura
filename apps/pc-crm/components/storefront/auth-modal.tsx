@@ -24,12 +24,14 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
   const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- portal mount belgisi va oyna ochilganda xabarlarni tozalash
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!isOpen) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- portal mount belgisi va oyna ochilganda xabarlarni tozalash
     setErrorMsg("");
     setSuccessMsg("");
 
@@ -58,9 +60,9 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
         );
         setIsLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       setErrorMsg(
-        err?.message ||
+        (err instanceof Error ? err.message : "") ||
           "Google OAuth xatosi. Iltimos, GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET sozlanganligini tekshiring.",
       );
       setIsLoading(false);
@@ -127,8 +129,8 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
           window.location.reload();
         }, 800);
       }
-    } catch (err: any) {
-      setErrorMsg(err?.message || "Xatolik yuz berdi.");
+    } catch (err: unknown) {
+      setErrorMsg((err instanceof Error ? err.message : "") || "Xatolik yuz berdi.");
       setIsLoading(false);
     }
   };

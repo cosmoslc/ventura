@@ -1,5 +1,4 @@
 "use client";
-import { Input } from "@ventura/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -51,6 +50,7 @@ function ProductsCatalogContent() {
   // URL query parametrlari o'zgarganda sinxronlash
   useEffect(() => {
     if (urlCategory) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL parametrlari bilan sinxronlash
       setCategory(urlCategory);
     } else if (searchParams.has("category") && !urlCategory) {
       setCategory("all");

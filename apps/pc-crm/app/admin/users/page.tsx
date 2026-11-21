@@ -49,6 +49,7 @@ export default function AdminUsersPage() {
     );
   }, []);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadUsers();
   }, [loadUsers]);
   const [searchQuery, setSearchQuery] = useState("");

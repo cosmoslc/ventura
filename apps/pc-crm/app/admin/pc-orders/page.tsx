@@ -3,16 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  AlertCircle,
   Check,
   CheckCircle2,
   Clock,
   Compass,
   Copy,
-  Cpu,
-  DollarSign,
-  ExternalLink,
-  Eye,
   FileText,
   Layers,
   MessageCircle,
@@ -21,9 +16,7 @@ import {
   PhoneCall,
   Search,
   TrendingUp,
-  Truck,
   Wrench,
-  X,
 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
@@ -105,6 +98,7 @@ export default function AdminPcOrdersPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ilk yuklash: ma'lumot server action'dan olinadi
     void loadOrders();
   }, [loadOrders]);
 

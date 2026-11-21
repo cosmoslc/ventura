@@ -17,7 +17,6 @@ import {
   User,
   X,
 } from "lucide-react";
-import { Button } from "@ventura/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -80,11 +79,10 @@ export function Navbar({
   likedCount: propLikedCount,
   unreadNotifsCount: propUnreadNotifsCount,
   onOpenCart: propOnOpenCart,
-  onOpenSearch: propOnOpenSearch,
 }: NavbarProps) {
   const { branding } = useStore();
   const activeStoreName = (propStoreName || branding.name || "Ventura PC").trim();
-  const { cartCount: contextCartCount, setIsCartDrawerOpen, setIsSearchOpen } = useCart();
+  const { cartCount: contextCartCount, setIsCartDrawerOpen } = useCart();
   const { likedCount: contextLikedCount } = useLiked();
   const { unreadCount: contextUnreadNotifsCount } = useNotifications();
   const { data: session } = useSession();
@@ -100,7 +98,6 @@ export function Navbar({
   const likedCount = propLikedCount ?? contextLikedCount;
   const unreadNotifsCount = propUnreadNotifsCount ?? contextUnreadNotifsCount;
   const onOpenCart = propOnOpenCart ?? (() => setIsCartDrawerOpen(true));
-  const onOpenSearch = propOnOpenSearch ?? (() => setMobileSearchOpen((v) => !v));
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border bg-card/95 backdrop-blur-md">
@@ -307,7 +304,7 @@ export function Navbar({
                     <p className="font-bold text-xs text-foreground truncate">{session.user.name}</p>
                     <p className="text-caption text-muted-foreground truncate">{session.user.email}</p>
                     <span className="mt-1.5 inline-block rounded-control bg-primary/10 px-1.5 py-0.5 text-2xs font-bold text-primary capitalize">
-                      {(session.user as any).role || "Mijoz"}
+                      {(session.user as { role?: string }).role || "Mijoz"}
                     </span>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -323,7 +320,7 @@ export function Navbar({
                     <KeyRound className="size-3.5 text-muted-foreground mr-2" />
                     <span>Sozlamalar</span>
                   </DropdownMenuItem>
-                  {(session.user as any).role === "admin" && (
+                  {(session.user as { role?: string }).role === "admin" && (
                     <DropdownMenuItem onSelect={() => router.push("/admin")}>
                       <Sparkles className="size-3.5 text-primary mr-2" />
                       <span className="text-primary font-semibold">Admin paneli</span>
