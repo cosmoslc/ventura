@@ -151,15 +151,13 @@ export async function sellDbPcBuild(input: { id: string; buyerName: string; buye
         )
         .returning({ id: products.id });
       if (!updated) throw new Error("PC komponentlari uchun zaxira yetarli emas");
-      await tx
-        .insert(stockMovements)
-        .values({
-          productId: component.productId,
-          reason: "sale",
-          delta: -component.qty,
-          refType: "pc_build",
-          refId: build.id,
-        });
+      await tx.insert(stockMovements).values({
+        productId: component.productId,
+        reason: "sale",
+        delta: -component.qty,
+        refType: "pc_build",
+        refId: build.id,
+      });
     }
     const soldPrice = calcFinalPrice(build.sellPrice, build.discountPercent);
     const costTotal = components.reduce((sum, component) => sum + component.costSnapshot * BigInt(component.qty), 0n);

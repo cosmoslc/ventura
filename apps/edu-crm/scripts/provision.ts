@@ -83,7 +83,8 @@ try {
         name: input.owner.name,
         password: input.owner.password,
         role: "director",
-        mustChangePassword: false,
+        // Formadagi parol vaqtinchalik: birinchi kirishda almashtiriladi (CI: server deploy testi)
+        mustChangePassword: true,
       });
       await tenantAudit.record(tx, {
         actor: { type: "system", name: "Ventura deploy" },
@@ -91,7 +92,7 @@ try {
         target: { type: "user", id: user.id },
         metadata: { role: "director", source: "project.owner" },
       });
-      console.log(`Direktor yaratildi: ${input.owner.name}`);
+      console.log(`Direktor yaratildi: ${input.owner.name} (birinchi kirishda parolni almashtiradi)`);
     }
   });
 } finally {
