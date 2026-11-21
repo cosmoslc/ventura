@@ -54,44 +54,47 @@ const input = parsed.data;
 await migrateTenantDb(input.databaseUrl);
 console.log("Migratsiyalar qo'llandi");
 
-const db = createTenantDb(input.databaseUrl, input.slug, { max: 1 });
+const db = createTenantDb(input.databaseUrl, input.slug);
 try {
-  const [branch] = await db.select({ id: branches.id }).from(branches).limit(1);
-  if (!branch) {
-    await db.insert(branches).values({ name: "Asosiy filial" });
-    console.log("Birinchi filial yaratildi: Asosiy filial");
-  }
+  await db.run(async (tx) => {
+    const [branch] = await tx.select({ id: branches.id }).from(branches).limit(1);
+    if (!branch) {
+      await tx.insert(branches).values({ name: "Asosiy filial" });
+      console.log("Birinchi filial yaratildi: Asosiy filial");
+    }
 
-  await ensurePositions(db);
+    await ensurePositions(tx);
 
-  const [director] = await db.select({ id: users.id }).from(users).where(eq(users.role, "director")).limit(1);
-  if (director) {
-    console.log("Direktor allaqachon bor — o'zgartirilmadi");
-  } else if (!input.owner) {
-    console.log("Ega (telefon va ism) kiritilmagan — direktor yaratilmadi");
-  } else {
-    const auth = createStaffAuth({
-      db,
-      telegram: null,
-      appName: input.name,
-      secret: input.authSecret,
-      baseURL: "http://localhost",
-    });
-    const user = await createStaffUser(auth, db, {
-      phone: input.owner.phone,
-      name: input.owner.name,
-      password: input.owner.password,
-      role: "director",
-      mustChangePassword: true,
-    });
-    await tenantAudit.record(db, {
-      actor: { type: "system", name: "Ventura deploy" },
-      action: "user.create",
-      target: { type: "user", id: user.id },
-      metadata: { role: "director", source: "project.owner" },
-    });
-    console.log(`Direktor yaratildi: ${input.owner.name} (birinchi kirishda parolni almashtiradi)`);
-  }
+    const [director] = await tx.select({ id: users.id }).from(users).where(eq(users.role, "director")).limit(1);
+    if (director) {
+      console.log("Direktor allaqachon bor — o'zgartirilmadi");
+    } else if (!input.owner) {
+      console.log("Ega (telefon va ism) kiritilmagan — direktor yaratilmadi");
+    } else {
+      const auth = createStaffAuth({
+        db: tx,
+        telegram: null,
+        appName: input.name,
+        secret: input.authSecret,
+        baseURL: "http://localhost",
+      });
+      const user = await createStaffUser(auth, tx, {
+        phone: input.owner.phone,
+        name: input.owner.name,
+        password: input.owner.password,
+        role: "director",
+        // Formadagi parol vaqtinchalik: birinchi kirishda almashtiriladi (CI: server deploy testi)
+        mustChangePassword: true,
+      });
+      await tenantAudit.record(tx, {
+        actor: { type: "system", name: "Ventura deploy" },
+        action: "user.create",
+        target: { type: "user", id: user.id },
+        metadata: { role: "director", source: "project.owner" },
+      });
+      console.log(`Direktor yaratildi: ${input.owner.name} (birinchi kirishda parolni almashtiradi)`);
+    }
+  });
 } finally {
   await db.close();
 }

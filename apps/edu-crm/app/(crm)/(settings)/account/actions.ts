@@ -1,8 +1,12 @@
 "use server";
 
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { endOtherSessions } from "@ventura/auth/staff";
+import { users } from "@ventura/db/schema/tenant";
 import { type ActionResult, crmAction } from "@/lib/server/action";
+import { uz } from "@/lib/uz";
 
 /*
  * Profil (E6g): xodim faqat o'z hisobi ustida ishlaydi, shuning uchun alohida lavozim ruxsati kerak emas.
@@ -19,6 +23,54 @@ export async function endOtherSessionsAction(): Promise<ActionResult<{ count: nu
       revalidatePath("/account");
       revalidatePath("/kabinet/profil");
       return { ok: true, count };
+    },
+    { teacher: true },
+  );
+}
+
+/**
+ * 2FA (Ikki bosqichli tasdiqlash) ni yoqish yoki o'chirish
+ * Muallif / Agent: Google Gemini
+ */
+export async function toggle2FAAction(input: unknown): Promise<ActionResult<{ enabled: boolean }>> {
+  return crmAction(
+    "students",
+    null,
+    async ({ staff, db, audit }) => {
+      const flag = z.boolean().safeParse(input);
+      if (!flag.success) return { ok: false, error: uz.common.invalid };
+      const enabled = flag.data;
+      const [u] = await db
+        .select({ telegramChatId: users.telegramChatId })
+        .from(users)
+        .where(eq(users.id, staff.id))
+        .limit(1);
+
+      if (enabled && !u?.telegramChatId) {
+        return { ok: false, error: uz.accountExtra.t2faniYoqishUchunAvval };
+      }
+
+      await db.update(users).set({ twoFactorEnabled: enabled }).where(eq(users.id, staff.id));
+      await audit("user.2fa_toggled", { type: "user", id: staff.id }, { enabled });
+      revalidatePath("/account");
+      revalidatePath("/kabinet/profil");
+      return { ok: true, enabled };
+    },
+    { teacher: true },
+  );
+}
+
+/** Telegram hisobini uzish */
+export async function unlinkTelegramAction(): Promise<ActionResult> {
+  return crmAction(
+    "students",
+    null,
+    async ({ staff, db, audit }) => {
+      await db.update(users).set({ telegramChatId: null, twoFactorEnabled: false }).where(eq(users.id, staff.id));
+      await audit("user.telegram_unlinked", { type: "user", id: staff.id });
+      revalidatePath("/account");
+      revalidatePath("/kabinet/profil");
+      return { ok: true };
     },
     { teacher: true },
   );

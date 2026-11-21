@@ -1,6 +1,7 @@
 import "server-only";
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { clients, domains, projects, templates } from "@ventura/db/schema/panel";
+import { type ProjectBillingSummary, parseProjectBilling } from "../project-billing";
 import { deps } from "./deps";
 
 export interface ProjectListRow {
@@ -16,6 +17,7 @@ export interface ProjectListRow {
   primary: string;
   createdAt: string;
   deletedAt: string | null;
+  billing: ProjectBillingSummary;
 }
 
 export async function listProjects(trashed: boolean): Promise<ProjectListRow[]> {
@@ -32,6 +34,7 @@ export async function listProjects(trashed: boolean): Promise<ProjectListRow[]> 
       target: projects.target,
       status: projects.status,
       brand: projects.brand,
+      settings: projects.settings,
       createdAt: projects.createdAt,
       deletedAt: projects.deletedAt,
     })
@@ -41,10 +44,11 @@ export async function listProjects(trashed: boolean): Promise<ProjectListRow[]> 
     .leftJoin(domains, and(eq(domains.projectId, projects.id), eq(domains.isPrimary, true)))
     .where(trashed ? isNotNull(projects.deletedAt) : isNull(projects.deletedAt))
     .orderBy(desc(trashed ? projects.deletedAt : projects.createdAt));
-  return rows.map(({ brand, ...r }) => ({
+  return rows.map(({ brand, settings, ...r }) => ({
     ...r,
     primary: brand.primary,
     createdAt: r.createdAt.toISOString(),
     deletedAt: r.deletedAt?.toISOString() ?? null,
+    billing: parseProjectBilling(settings, r.status),
   }));
 }

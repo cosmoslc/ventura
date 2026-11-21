@@ -20,6 +20,7 @@ import {
 import { ROLES, users } from "@ventura/db/schema/panel";
 import { escapeHtml } from "@ventura/integrations";
 import { audit } from "@ventura/security";
+import { type CrmContacts, setCrmContacts } from "@/lib/server/crm-contacts";
 import { deps } from "@/lib/server/deps";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
@@ -152,5 +153,39 @@ export async function resetTelegramAction(userId: string): Promise<SettingsResul
     `🛠 <b>2FA qayta o'rnatildi</b>: ${escapeHtml(target.name)}\nKim: ${escapeHtml(viewer.name)}`,
   );
   revalidatePath("/settings/admins");
+  return { ok: true };
+}
+
+/* ---------- CRM Aloqa va Manzil sozlamalari ---------- */
+
+const crmContactsSchema = z.object({
+  phonePrimary: z.string().trim().min(5, "Asosiy telefon raqamini kiriting"),
+  phoneSecondary: z.string().trim().optional().default(""),
+  telegramSupport: z.string().trim().optional().default(""),
+  telegramChannel: z.string().trim().optional().default(""),
+  email: z.string().trim().optional().default(""),
+  address: z.string().trim().min(3, "Manzilni kiriting"),
+  workHours: z.string().trim().min(2, "Ish vaqtini kiriting"),
+  mapUrl: z.string().trim().optional().default(""),
+});
+
+export async function saveCrmContactsAction(input: unknown): Promise<SettingsResult> {
+  const viewer = await requireViewer("settings.manage");
+  const parsed = crmContactsSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.loadError };
+  }
+  const { db } = deps();
+  await setCrmContacts(db, parsed.data as CrmContacts, viewer.id);
+  const meta = await requestMeta();
+  await audit.record(db, {
+    actor: { type: "user", id: viewer.id, name: viewer.name },
+    action: "settings.update",
+    target: { type: "system", id: "crm_contacts" },
+    ...meta,
+    metadata: { key: "crm_contacts", updated: Object.keys(parsed.data) },
+  });
+  revalidatePath("/crm");
+  revalidatePath("/settings/contacts");
   return { ok: true };
 }

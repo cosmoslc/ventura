@@ -7,6 +7,7 @@ import { uz } from "./uz";
 
 export const SLUG_RE = /^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/;
 export const HOST_RE = /^(?=.{4,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}$/;
+export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const RESERVED_SLUGS = new Set(["admin", "api", "www", "panel", "mail", "app", "static", "cdn"]);
 export const BASE_DOMAIN = "ventura.uz";
 
@@ -69,19 +70,21 @@ export const projectInputSchema = z
     templateKey: z.string().min(1),
     name: z.string().trim().min(2).max(120),
     slug: z.string().trim(),
-    clientId: z.string().uuid().nullable(),
+    clientId: z.string().regex(UUID_RE, uz.wizard.pickClient).nullable(),
     newClient: z.object({ name: z.string().trim().min(2).max(120), phone: z.string().trim() }).nullable(),
     domainKind: z.enum(["subdomain", "custom"]),
     customDomain: z.string().trim().toLowerCase(),
     brand: z.object({
       primary: z.string().regex(/^#[0-9a-f]{6}$/i),
       appearance: z.enum(["light", "dark", "system"]),
+      logoUrl: z.string().nullable().optional(),
     }),
     ownerName: z.string().trim().min(2, uz.projects.ownerNameInvalid).max(120),
     /** 9 raqam (PhoneInput): 901234567 */
     ownerPhone: z.string().regex(/^\d{9}$/, uz.projects.ownerPhoneInvalid),
     ownerPassword: z.string().min(8).max(128),
     features: z.array(z.string()),
+    storeMode: z.enum(["financial", "inventory"]).default("financial"),
     mode: z.enum(DEPLOY_MODES),
     target: z.enum(TARGET_KINDS),
     dbStrategy: z.enum(DB_STRATEGIES),

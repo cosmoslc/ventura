@@ -158,6 +158,15 @@ const REGISTRY: Record<string, Def> = {
   "student.archive": simple("student", "o'quvchini arxivga oldi", reason),
   "student.restore": simple("student", "o'quvchini arxivdan tikladi"),
   "student.purge": simple("student", "o'quvchini butunlay o'chirdi", reason),
+  "student.login.grant": simple("student", "o'quvchiga kabinetga kirish berdi"),
+  "student.login.revoke": simple("student", "o'quvchining kabinetga kirishini o'chirdi"),
+  "student.password.reset": simple("student", "o'quvchining kabinet parolini yangiladi"),
+  "student.password.teacher_grant": simple("student", "o'quvchiga kabinetga kirish berdi (o'qituvchi)"),
+  "student.password.teacher_reset": simple("student", "o'quvchining kabinet parolini yangiladi (o'qituvchi)"),
+  "student.self_name_update": simple("auth", "portalda ismini o'zgartirdi", (i) => str(i.m.name)),
+  "student.self_password_change": simple("auth", "portalda parolini almashtirdi"),
+  "student.2fa.enable": simple("auth", "portalda Telegram 2FA ni yoqdi"),
+  "student.2fa.disable": simple("auth", "portalda Telegram 2FA ni o'chirdi"),
   "student.note.create": simple("student", "o'quvchiga eslatma qo'shdi"),
   "student.note.delete": simple("student", "o'quvchining eslatmasini o'chirdi", (i) => str(i.m.text)),
   "student.enroll": simple("student", "o'quvchini guruhga qo'shdi", groupOf, (i) => i.who, true),
@@ -182,6 +191,15 @@ const REGISTRY: Record<string, Def> = {
   // Guruhlar
   "group.create": created("group", "yangi guruh ochdi", "Excel'dan guruh qo'shdi"),
   "group.update": simple("group", "guruhni tahrirladi", (i) => (obj(i.m.price) ? "narx o'zgardi" : null)),
+  "group.homework.create": simple("group", "guruhga yangi uy vazifasi berdi", (i) => str(i.m.title)),
+  "group.homework.delete": simple("group", "guruh uy vazifasini o'chirdi"),
+  "homework.submission.check": simple("group", "o'quvchi uy vazifasi javobini tekshirdi", (i) =>
+    parts(
+      str(i.m.status) === "accepted" ? "qabul qilindi" : "qaytarildi",
+      num(i.m.grade) !== null ? `${num(i.m.grade)} ball` : null,
+    ),
+  ),
+  "student.homework.submit": simple("student", "uy vazifasiga javob topshirdi", undefined, () => null),
   "group.archive": simple("group", "guruhni arxivga oldi"),
   "group.restore": simple("group", "guruhni arxivdan tikladi"),
   "group.enroll": simple("group", "guruhga o'quvchi qo'shdi", studentOf),
@@ -375,6 +393,23 @@ const REGISTRY: Record<string, Def> = {
     (i) => SETTING_LABEL[i.targetId ?? ""] ?? null,
     () => null,
   ),
+  "telegram_bots.update": simple("settings", "Telegram bot sozlamalarini yangiladi", undefined, () => null),
+  "storage.cleanup": simple(
+    "settings",
+    "xotirani tozaladi",
+    (i) =>
+      parts(
+        num(i.m.filesDeleted) !== null ? `${num(i.m.filesDeleted)} ta fayl o'chirildi` : null,
+        num(i.m.bytesFreedMb) !== null ? `${num(i.m.bytesFreedMb)} MB joy bo'shatildi` : null,
+      ),
+    () => null,
+  ),
+  "storage.file_delete": simple(
+    "settings",
+    "faylni o'chirdi",
+    (i) => str(i.m.fileUrl),
+    () => null,
+  ),
   // SMS (docs/EDU-CRM-SMS.md): kalit jurnalga yozilmaydi — faqat email, soatlar va test raqami
   "sms.connect": simple(
     "settings",
@@ -504,6 +539,13 @@ const REGISTRY: Record<string, Def> = {
   ),
   "user.create": simple("auth", "hisob yaratildi", undefined, () => null),
   "user.telegram_linked": simple("auth", "Telegramni ulab oldi", undefined, () => null),
+  "user.telegram_unlinked": simple("auth", "Telegram hisobini uzdi", undefined, () => null),
+  "user.2fa_toggled": simple(
+    "auth",
+    "2FA sozlamasini o'zgartirdi",
+    (i) => (i.m.enabled ? "yoqdi" : "o'chirdi"),
+    () => null,
+  ),
   "user.password_change": simple("auth", "parolini almashtirdi", undefined, () => null),
 };
 

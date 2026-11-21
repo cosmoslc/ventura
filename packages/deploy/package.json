@@ -21,6 +21,7 @@
     "@ventura/tenants": "workspace:*",
     "drizzle-orm": "^0.45.4",
     "pg-boss": "^12.37.1",
+    "postgres": "^3.4.9",
     "ssh2": "^1.17.0"
   },
   "devDependencies": {

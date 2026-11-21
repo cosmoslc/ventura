@@ -21,6 +21,10 @@ export const buttonVariants = cva(
           "hover:border-(--btn-ghost-border-hover) hover:bg-(--btn-ghost-bg-hover) hover:text-(--btn-ghost-fg-hover)",
         ],
         danger: "btn-danger-surface type-btn rounded-btn border border-transparent",
+        telegram:
+          "type-btn rounded-btn border border-transparent bg-telegram text-primary-foreground hover:bg-(--telegram-hover)",
+        success:
+          "type-btn rounded-btn border border-transparent bg-(--btn-success-bg) text-(--btn-success-fg) hover:bg-(--btn-success-hover)",
         icon: [
           "rounded-btn border",
           "border-(--icon-btn-border) bg-(--icon-btn-bg) text-(--icon-btn-fg)",

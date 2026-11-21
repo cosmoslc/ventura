@@ -35,9 +35,15 @@ function usePresence(open: boolean) {
   return [rendered, () => setRendered(false)] as const;
 }
 
-/** Modal ichidagi dropdown/select (body'ga portal qilingan) modalni yopib yubormasin. */
+/** Modal ichidagi dropdown/select (body'ga portal qilingan) modalni yopib yubormasin va fokusni to'smaydi. */
 const layerSafe = {
-  onInteractOutside: (e: Event) => {
+  onPointerDownOutside: (e: { target: EventTarget | null; preventDefault: () => void }) => {
+    if ((e.target as Element | null)?.closest?.(`[${MORPH_LAYER_ATTR}]`)) e.preventDefault();
+  },
+  onFocusOutside: (e: { target: EventTarget | null; preventDefault: () => void }) => {
+    if ((e.target as Element | null)?.closest?.(`[${MORPH_LAYER_ATTR}]`)) e.preventDefault();
+  },
+  onInteractOutside: (e: { target: EventTarget | null; preventDefault: () => void }) => {
     if ((e.target as Element | null)?.closest?.(`[${MORPH_LAYER_ATTR}]`)) e.preventDefault();
   },
   onEscapeKeyDown: (e: KeyboardEvent) => {
@@ -221,6 +227,7 @@ export interface ModalProps {
   /** Standart: o'ngdan chiqadigan panel (docs/design/STYLE.md, 11.16). */
   position?: "right" | "center";
   wide?: boolean;
+  className?: string;
   footer?: React.ReactNode;
   children: React.ReactNode;
 }
@@ -261,7 +268,7 @@ function ModalFooter({ children }: { children?: React.ReactNode }) {
   );
 }
 
-function DrawerModal({ open, onOpenChange, title, description, wide, footer, children }: ModalProps) {
+function DrawerModal({ open, onOpenChange, title, description, wide, className, footer, children }: ModalProps) {
   const [rendered, unmount] = usePresence(open);
   const [entered, setEntered] = React.useState(false);
   if (!open && entered) setEntered(false);
@@ -293,6 +300,7 @@ function DrawerModal({ open, onOpenChange, title, description, wide, footer, chi
             wide ? "max-w-2xl" : "max-w-md sm:max-w-lg",
             "transition-transform duration-[320ms] ease-ios",
             entered ? "translate-x-0" : "translate-x-full",
+            className,
           )}
         >
           <ModalHeader title={title} description={description} sticky />
@@ -304,7 +312,7 @@ function DrawerModal({ open, onOpenChange, title, description, wide, footer, chi
   );
 }
 
-function CenterModal({ open, onOpenChange, title, description, wide, footer, children }: ModalProps) {
+function CenterModal({ open, onOpenChange, title, description, wide, className, footer, children }: ModalProps) {
   const [rendered, unmount] = usePresence(open);
   const { overlayRef, panelRef, contentRef, contentIn } = useMorphDialog(open, rendered, unmount);
 
@@ -325,6 +333,7 @@ function CenterModal({ open, onOpenChange, title, description, wide, footer, chi
           className={cn(
             "fixed z-(--z-modal) max-h-[85vh] overflow-hidden rounded-modal border border-border bg-popover text-popover-foreground shadow-modal outline-none",
             wide ? "w-[min(42rem,calc(100vw-2rem))]" : "w-[min(28rem,calc(100vw-2rem))]",
+            className,
           )}
         >
           <div ref={contentRef} className="flex max-h-[85vh] shrink-0 origin-center flex-col">

@@ -123,6 +123,8 @@ export const teachers = pgTable(
     note: text("note"),
     /** Kabinetga kirish hisobi (ADR 0062); null — tizimga kirmaydi */
     userId: uuid("user_id"),
+    /** O'qituvchi Telegram boti chat ID */
+    telegramChatId: text("telegram_chat_id"),
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },

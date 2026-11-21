@@ -7,8 +7,10 @@ import { hasSecret } from "@ventura/security";
 import type { Feature } from "@ventura/tenants";
 import { Badge } from "@ventura/ui/badge";
 import { PageHeader } from "@ventura/ui/page-header";
+import { parseProjectBilling } from "@/lib/project-billing";
 import { listDeployments, workerAlive } from "@/lib/server/deployments-query";
 import { deps } from "@/lib/server/deps";
+import { getProjectDirectorInfo } from "@/lib/server/project-tenant";
 import { requireViewer } from "@/lib/server/session";
 import { uz } from "@/lib/uz";
 import { ProjectEditor } from "./editor";
@@ -29,7 +31,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
   if (!p) notFound();
 
   const owner = { type: "project", id };
-  const [tpl, cls, feats, doms, ownerPassword, telegramToken, deployRows, alive] = await Promise.all([
+  const [tpl, cls, feats, doms, ownerPassword, telegramToken, deployRows, alive, directorInfo] = await Promise.all([
     db.select().from(templates).where(eq(templates.key, p.templateKey)).limit(1),
     db.select({ id: clients.id, name: clients.name }).from(clients).orderBy(asc(clients.name)),
     db.select().from(projectFeatures).where(eq(projectFeatures.projectId, id)),
@@ -38,6 +40,15 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     hasSecret(db, owner, "telegram_bot_token"),
     listDeployments(id),
     workerAlive(),
+    getProjectDirectorInfo(db, {
+      id: p.id,
+      templateKey: p.templateKey,
+      slug: p.slug,
+      dbStrategy: p.dbStrategy,
+      serverId: p.serverId,
+      ownerPhone: p.ownerPhone,
+      settings: p.settings,
+    }),
   ]);
   const primary = doms.find((d) => d.isPrimary) ?? doms[0];
   // Sirlar tabi — faqat super admin (ADR 0059): nomlar, qiymatsiz
@@ -50,6 +61,17 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             .where(and(eq(secrets.ownerType, "project"), eq(secrets.ownerId, id)))
         ).map((r) => r.name)
       : null;
+
+  const rawSettings = (p.settings ?? {}) as Record<string, unknown>;
+  const trialRaw = (rawSettings.trial ?? null) as {
+    days?: number;
+    active?: boolean;
+    startedAt?: string;
+    expiresAt?: string;
+    activatedAt?: string;
+  } | null;
+
+  const trialInfo = trialRaw ? trialSummary(trialRaw) : null;
 
   return (
     <>
@@ -77,6 +99,13 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
           ownerName: p.ownerName,
           ownerPhone: p.ownerPhone,
           templateName: tpl[0]?.name ?? p.templateKey,
+          storageLimitMb:
+            typeof (p.settings as Record<string, unknown> | null)?.storageLimitMb === "number"
+              ? ((p.settings as Record<string, unknown>).storageLimitMb as number)
+              : 5120,
+          storeMode:
+            ((p.settings as Record<string, unknown> | null)?.storeMode as "financial" | "inventory" | undefined) ??
+            "financial",
         }}
         clients={cls}
         features={(tpl[0]?.manifest as Feature[] | undefined) ?? []}
@@ -84,6 +113,9 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
         domains={doms.map((d) => ({ hostname: d.hostname, kind: d.kind, isPrimary: d.isPrimary, status: d.status }))}
         secrets={{ ownerPassword, telegramToken }}
         secretNames={secretNames}
+        director={directorInfo}
+        trial={trialInfo}
+        billing={parseProjectBilling(p.settings, p.status)}
         deploys={{
           rows: deployRows,
           workerAlive: alive,
@@ -93,4 +125,22 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
       />
     </>
   );
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function trialSummary(
+  t: { days?: number; active?: boolean; startedAt?: string; expiresAt?: string; activatedAt?: string },
+  now: number = Date.now(),
+) {
+  const expiresMs = t.expiresAt ? new Date(t.expiresAt).getTime() : null;
+  return {
+    days: t.days ?? 7,
+    active: Boolean(t.active),
+    startedAt: t.startedAt ?? null,
+    expiresAt: t.expiresAt ?? null,
+    activatedAt: t.activatedAt ?? null,
+    expired: expiresMs !== null ? expiresMs <= now : false,
+    daysLeft: expiresMs !== null ? Math.max(0, Math.ceil((expiresMs - now) / DAY_MS)) : null,
+  };
 }

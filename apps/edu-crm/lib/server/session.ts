@@ -19,7 +19,7 @@ import {
   staffPermissionLists,
   staffPositions,
 } from "@ventura/auth/staff";
-import { type UserKind, groups, teachers } from "@ventura/db/schema/tenant";
+import { type UserKind, groups, students, teachers } from "@ventura/db/schema/tenant";
 import { type Tenant, hasFeature } from "@ventura/tenants";
 import { pagePermissions } from "@/lib/access";
 import { type TenantDeps, tenantDeps } from "./deps";
@@ -44,10 +44,12 @@ export interface Staff {
   name: string;
   phone: string;
   role: StaffRole;
-  /** `teacher` — faqat o'qituvchi kabineti (ADR 0062) */
+  /** `teacher` — faqat o'qituvchi kabineti (ADR 0062); `student` — o'quvchi portali (ADR 0063) */
   kind: UserKind;
   /** Bog'langan o'qituvchi (faqat `teacher` hisobida) */
   teacherId: string | null;
+  /** Bog'langan o'quvchi (faqat `student` hisobida) */
+  studentId: string | null;
   director: boolean;
   /** Ruxsatlar: direktor — hammasi, qolganlar — lavozimlaridan */
   access: StaffAccess;
@@ -95,8 +97,8 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
     return null;
   }
-  // O'qituvchi hisobi: bog'langan faol o'qituvchi bo'lmasa (arxivlangan yoki kirish olingan) — sessiya yopiladi
-  const kind: UserKind = u.kind === "teacher" ? "teacher" : "staff";
+  // O'qituvchi va o'quvchi hisoblari: bog'langan faol shaxs bo'lmasa — sessiya yopiladi
+  const kind: UserKind = u.kind === "teacher" ? "teacher" : u.kind === "student" ? "student" : "staff";
   const teacher =
     kind === "teacher"
       ? ((
@@ -107,6 +109,19 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
         )[0] ?? null)
       : null;
   if (kind === "teacher" && !teacher) {
+    await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
+    return null;
+  }
+  const student =
+    kind === "student"
+      ? ((
+          await deps.db
+            .select({ id: students.id, branchId: students.branchId })
+            .from(students)
+            .where(and(eq(students.userId, u.id), isNull(students.archivedAt)))
+        )[0] ?? null)
+      : null;
+  if (kind === "student" && !student) {
     await auth.api.revokeSession({ headers: h, body: { token: data.session.token } }).catch(() => {});
     return null;
   }
@@ -121,6 +136,7 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
     role: u.role,
     kind,
     teacherId: teacher?.id ?? null,
+    studentId: student?.id ?? null,
     director,
     access: accessFor(u.role, lists?.permissions ?? null, lists?.approvals ?? []),
     positions,
@@ -130,12 +146,15 @@ export const getStaff = cache(async (): Promise<Staff | null> => {
       mustChangePassword: !!u.mustChangePassword,
       twoFactorEnabled: !!u.twoFactorEnabled,
       telegramChatId: u.telegramChatId ?? null,
+      twoFactorOptional: kind === "student" || !deps.telegram,
     }),
     sessionId: data.session.id,
-    // O'qituvchi: o'z filiali va guruhlari turgan filiallar (ko'rinish baribir faqat o'z guruhlari bilan cheklanadi)
+    // O'qituvchi / o'quvchi o'z filiali
     scope: teacher
       ? await teacherBranches(deps.db, teacher)
-      : branchScope(director, director ? [] : await staffBranchIds(deps.db, u.id)),
+      : student
+        ? branchScope(false, [student.branchId])
+        : branchScope(director, director ? [] : await staffBranchIds(deps.db, u.id)),
   };
 });
 
@@ -170,15 +189,26 @@ export async function requireStaff(
   if (staff.state === "needs_telegram") redirect("/connect-telegram");
   if (staff.state !== "ok") redirect("/login");
   if (area === "admin" && staff.kind === "teacher") redirect("/kabinet");
+  if (area === "admin" && staff.kind === "student") redirect("/portal");
   if (permissions && !canAny(staff.access, permissions)) redirect("/?ruxsat=yoq");
   return staff;
 }
 
-/** O'qituvchi kabineti sahifasi (ADR 0062): faqat `teacher` hisobi; admin xodim CRM bosh sahifasiga */
+/** O'qituvchi kabineti sahifasi (ADR 0062): faqat `teacher` hisobi; admin xodim CRM bosh sahifasiga, o'quvchi portalga */
 export async function requireTeacher(): Promise<Staff & { teacherId: string }> {
   const staff = await requireStaff(undefined, "any");
+  if (staff.kind === "student") redirect("/portal");
   if (staff.kind !== "teacher" || !staff.teacherId) redirect("/");
   return { ...staff, teacherId: staff.teacherId };
+}
+
+/** O'quvchi kabineti sahifasi (ADR 0063): faqat `student` hisobi; admin yoki o'qituvchi o'z joyiga yo'naltiriladi */
+export async function requireStudent(): Promise<Staff & { studentId: string }> {
+  const staff = await requireStaff(undefined, "any");
+  if (staff.kind === "teacher") redirect("/kabinet");
+  if (staff.kind === "staff") redirect("/");
+  if (staff.kind !== "student" || !staff.studentId) redirect("/login");
+  return { ...staff, studentId: staff.studentId };
 }
 
 /**

@@ -3,11 +3,14 @@
 import {
   Bell,
   BookOpen,
+  Bot,
   Building2,
   CalendarOff,
   Coins,
   GraduationCap,
+  HardDrive,
   DoorOpen,
+  ListChecks,
   type LucideIcon,
   MessageSquareText,
   Search,
@@ -31,9 +34,12 @@ const ICONS: Record<SettingsIcon, LucideIcon> = {
   grades: GraduationCap,
   payments: Wallet,
   notifications: Bell,
+  bot: Bot,
   sms: MessageSquareText,
   profile: UserRound,
   security: ShieldCheck,
+  storage: HardDrive,
+  reasons: ListChecks,
 };
 
 const isActive = (pathname: string, href: string) => pathname === href || pathname.startsWith(`${href}/`);

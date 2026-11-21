@@ -166,6 +166,7 @@ export function DropdownMenuContent({
   const contentRef = React.useRef<HTMLDivElement>(null);
   const hideTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
   const doneTimer = React.useRef<ReturnType<typeof setTimeout>>(undefined);
+  const closedByScrollRef = React.useRef(false);
 
   // Ochilganda darhol (render paytida) DOM'ga qo'shiladi; yopilish animatsiyasidan keyin olib tashlanadi
   if (open && !mounted) setMounted(true);
@@ -213,6 +214,7 @@ export function DropdownMenuContent({
     const width = matchTriggerWidth ? `${tr.width}px` : WIDTH_CLASS.test(className ?? "") ? "" : "max-content";
 
     if (open) {
+      closedByScrollRef.current = false;
       clearTimeout(doneTimer.current);
       clearTimeout(hideTimer.current); // yopilayotgan paytda qayta ochilsa
       // 1. Tabiiy o'lchamni o'lchash
@@ -312,6 +314,11 @@ export function DropdownMenuContent({
     } else {
       clearTimeout(doneTimer.current);
       clearTimeout(hideTimer.current);
+      if (closedByScrollRef.current) {
+        closedByScrollRef.current = false;
+        setMounted(false);
+        return;
+      }
       if (reduce) {
         hideTimer.current = setTimeout(() => setMounted(false), 0);
         return;
@@ -397,12 +404,39 @@ export function DropdownMenuContent({
     };
   }, [open, mounted, close, highlight, triggerRef]);
 
+  // Sahifa aylantirilganda (scroll) yoki oyna o'lchami o'zgarganda (resize) panel qotib qolmasdan darhol yopiladi.
+  // Lekin agar scroll dropdown'ning o'z ichida bo'lsa (uzun ro'yxat) — yopilmaydi.
+  React.useEffect(() => {
+    if (!open || !mounted) return;
+
+    const onScroll = (e: Event) => {
+      const target = e.target;
+      if (panelRef.current && target instanceof Node && panelRef.current.contains(target)) {
+        return;
+      }
+      closedByScrollRef.current = true;
+      close();
+    };
+
+    const onResize = () => {
+      closedByScrollRef.current = true;
+      close();
+    };
+
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll, { capture: true });
+      window.removeEventListener("resize", onResize);
+    };
+  }, [open, mounted, close]);
+
   if (!mounted) return null;
 
   // Bosish fokusni trigger'dan olmasin (modal fokus tuzog'i bilan to'qnashmasin)
   // Fokus trigger'da qoladi; panel ichidagi qidiruv maydoni bundan mustasno (unga yoziladi)
   const keepFocus = (e: React.MouseEvent) => {
-    if (!(e.target as HTMLElement).closest("input, textarea")) e.preventDefault();
+    if (!(e.target as HTMLElement).closest("input, textarea, label")) e.preventDefault();
   };
 
   return createPortal(
@@ -414,6 +448,14 @@ export function DropdownMenuContent({
         aria-hidden
         onMouseDown={keepFocus}
         onClick={close}
+        onWheel={() => {
+          closedByScrollRef.current = true;
+          close();
+        }}
+        onTouchMove={() => {
+          closedByScrollRef.current = true;
+          close();
+        }}
       />
       <div
         {...{ [MORPH_LAYER_ATTR]: "panel" }}
@@ -449,6 +491,8 @@ export function DropdownMenuItem({
   className,
   danger,
   disabled,
+  hidden,
+  style,
   onSelect,
   onClick,
   role = "menuitem",
@@ -456,7 +500,8 @@ export function DropdownMenuItem({
 }: Omit<React.ComponentProps<"div">, "onSelect"> & {
   danger?: boolean;
   disabled?: boolean;
-  role?: "menuitem" | "option";
+  hidden?: boolean;
+  role?: "menuitem" | "option" | React.AriaRole;
   /** event.preventDefault() chaqirilsa menyu yopilmaydi. */
   onSelect?: (event: Event) => void;
 }) {
@@ -467,6 +512,7 @@ export function DropdownMenuItem({
       id={id}
       role={role}
       data-menu-item=""
+      hidden={hidden}
       aria-disabled={disabled || undefined}
       data-disabled={disabled || undefined}
       onPointerMove={(e) =>
@@ -480,9 +526,14 @@ export function DropdownMenuItem({
         onSelect?.(ev);
         if (!ev.defaultPrevented) close();
       }}
+      style={{
+        ...style,
+        ...(hidden ? { display: "none" } : {}),
+      }}
       className={cn(
         "morph-menu-item",
         menuItemClass,
+        hidden && "!hidden",
         danger
           ? "text-destructive-text data-highlighted:bg-(--danger-bg)"
           : "text-secondary-foreground data-highlighted:bg-secondary data-highlighted:text-foreground [&_svg]:text-muted-foreground",

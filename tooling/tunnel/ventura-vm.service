@@ -1,0 +1,18 @@
+# ~/.config/systemd/user/ventura-vm.service — uydagi server VM'i (ADR 0049)
+# O'rnatish: cp tooling/tunnel/ventura-vm.service ~/.config/systemd/user/ && systemctl --user daemon-reload \
+#            && systemctl --user enable --now ventura-vm.service   (loginctl enable-linger $USER — bir marta)
+[Unit]
+Description=Ventura Multipass VM Server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=%h/Projects/Ventura/tooling/tunnel/vm-up.sh
+Restart=on-failure
+RestartSec=20s
+TimeoutStartSec=10min
+
+[Install]
+WantedBy=default.target

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightLeft, ChevronLeft, Database, FolderKanban, HardDrive, Pencil, Plug } from "lucide-react";
+import { ArrowRightLeft, ChevronLeft, Cloud, Database, FolderKanban, HardDrive, Pencil, Plug } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
@@ -173,9 +173,21 @@ export function DatabaseProfile({
                             </Button>
                           ) : null}
                           {canMove ? (
-                            <Button size="sm" variant="ghost" onClick={() => setMoving(p)}>
-                              <ArrowRightLeft /> {p.dbStrategy === "shared_db" ? t.moveToOwn : t.moveToShared}
-                            </Button>
+                            <>
+                              <Button size="sm" variant="ghost" onClick={() => setMoving(p)}>
+                                <ArrowRightLeft /> {p.dbStrategy === "shared_db" ? t.moveToOwn : t.moveToShared}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                asChild
+                                className="text-emerald-600 hover:text-emerald-700"
+                              >
+                                <Link href="/databases">
+                                  <Cloud className="size-4" /> {t.moveToSupabase}
+                                </Link>
+                              </Button>
+                            </>
                           ) : null}
                         </div>
                       </Td>

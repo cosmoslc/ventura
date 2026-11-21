@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { phoneNumber, twoFactor } from "better-auth/plugins";
-import type { TenantDb } from "@ventura/db";
+import type { TenantDb, TenantTx } from "@ventura/db";
 import { accounts, sessions, twoFactors, users, verifications } from "@ventura/db/schema/tenant";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
 
@@ -15,9 +15,10 @@ import { type Telegram, escapeHtml } from "@ventura/integrations";
  */
 
 export interface StaffAuthDeps {
-  db: TenantDb;
+  /** Tranzaksiya ham bo'lishi mumkin (deploy provision skripti) */
+  db: TenantDb | TenantTx;
   /** Mijozning o'z boti; berilmasa kod yuborib bo'lmaydi va xodim kira olmaydi */
-  telegram: Telegram | null;
+  telegram: Telegram | null | (() => Telegram | null);
   /** Markaz nomi: Telegram xabarida ko'rinadi */
   appName: string;
   secret: string;
@@ -26,14 +27,60 @@ export interface StaffAuthDeps {
 }
 
 export function createStaffAuth({ db, telegram, appName, secret, baseURL }: StaffAuthDeps) {
+  const schema = {
+    user: users,
+    session: sessions,
+    account: accounts,
+    verification: verifications,
+    twoFactor: twoFactors,
+  };
+  const baseAdapter = drizzleAdapter(db as unknown as Parameters<typeof drizzleAdapter>[0], {
+    provider: "pg",
+    schema,
+  });
+
+  const tenantAdapter = (options: Parameters<ReturnType<typeof drizzleAdapter>>[0]) => {
+    const raw = baseAdapter(options);
+    if (!("run" in db)) return raw;
+
+    const wrapped: Record<string, unknown> = { ...raw };
+    const methods = [
+      "create",
+      "update",
+      "updateMany",
+      "findOne",
+      "findMany",
+      "delete",
+      "deleteMany",
+      "consumeOne",
+      "incrementOne",
+      "count",
+    ] as const;
+
+    for (const m of methods) {
+      if (typeof (raw as Record<string, unknown>)[m] === "function") {
+        wrapped[m] = async (...args: unknown[]) => {
+          return db.run(async (tx) => {
+            const txAdapter = drizzleAdapter(tx as unknown as Parameters<typeof drizzleAdapter>[0], {
+              provider: "pg",
+              schema,
+            })(options) as unknown as Record<string, ((...a: unknown[]) => unknown) | undefined>;
+            const fn = txAdapter[m];
+            if (typeof fn === "function") {
+              return fn(...args);
+            }
+          });
+        };
+      }
+    }
+    return wrapped;
+  };
+
   return betterAuth({
     appName,
     secret,
     baseURL,
-    database: drizzleAdapter(db, {
-      provider: "pg",
-      schema: { user: users, session: sessions, account: accounts, verification: verifications, twoFactor: twoFactors },
-    }),
+    database: tenantAdapter,
     advanced: {
       cookiePrefix: "edu",
       useSecureCookies: baseURL.startsWith("https://"),
@@ -78,9 +125,10 @@ export function createStaffAuth({ db, telegram, appName, secret, baseURL }: Staf
           storeOTP: "hashed",
           async sendOTP({ user, otp }) {
             const chatId = (user as { telegramChatId?: string | null }).telegramChatId;
-            if (!telegram) throw new Error("Telegram bot ulanmagan");
+            const tg = typeof telegram === "function" ? telegram() : telegram;
+            if (!tg) throw new Error("Telegram bot ulanmagan");
             if (!chatId) throw new Error("Telegram ulanmagan");
-            await telegram.sendMessage(
+            await tg.sendMessage(
               chatId,
               `🔐 <b>${escapeHtml(appName)}</b> kirish kodi: <code>${escapeHtml(otp)}</code>\n` +
                 `Kod 5 daqiqa amal qiladi. Siz so'ramagan bo'lsangiz, hech kimga bermang.`,

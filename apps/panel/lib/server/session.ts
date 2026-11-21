@@ -50,6 +50,11 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
       mustChangePassword: !!u.mustChangePassword,
       twoFactorEnabled: !!u.twoFactorEnabled,
       telegramChatId: u.telegramChatId ?? null,
+      twoFactorOptional:
+        process.env.NODE_ENV !== "production" ||
+        process.env.BETTER_AUTH_URL?.includes("localhost") ||
+        process.env.ALLOW_LOCAL_DEV_AUTH === "1" ||
+        !process.env.VERCEL,
     }),
     sessionId: data.session.id,
   };

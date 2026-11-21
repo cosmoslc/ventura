@@ -11,8 +11,15 @@ import {
   dbNameFor,
   dbPasswordOwner,
   enqueueServerJob,
+  buildSupabaseDatabaseUrl,
+  getSupabasePoolerConfig,
+  getSupabaseProject,
+  listSupabaseProjects,
+  testSupabaseConnection,
+  updateSupabaseProjectName,
+  type SupabaseProject,
 } from "@ventura/deploy";
-import { audit, readSecret } from "@ventura/security";
+import { audit, putSecret, readSecret } from "@ventura/security";
 import { deps, queue } from "@/lib/server/deps";
 import { requestMeta } from "@/lib/server/request";
 import { requireViewer } from "@/lib/server/session";
@@ -206,4 +213,212 @@ export async function moveProjectDbAction(input: unknown, confirm: string): Prom
   }
   revalidatePath("/databases", "layout");
   return { ok: true };
+}
+
+const SYSTEM_OWNER = { type: "system", id: "00000000-0000-0000-0000-000000000000" };
+const SUPABASE_TOKEN_KEY = "supabase:token";
+
+export async function getSupabaseTokenAction(): Promise<
+  { ok: true; hasToken: boolean; preview: string | null } | { ok: false; error: string }
+> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const token = await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY);
+  if (!token) return { ok: true, hasToken: false, preview: null };
+  const preview = token.length > 8 ? `${token.slice(0, 4)}...${token.slice(-4)}` : "••••••••";
+  return { ok: true, hasToken: true, preview };
+}
+
+export async function saveSupabaseTokenAction(
+  token: string,
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const clean = token.trim();
+  if (!clean) {
+    // Tokendan voz kechish
+    await putSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY, "");
+    revalidatePath("/databases", "layout");
+    return { ok: true, count: 0 };
+  }
+  try {
+    const list = await listSupabaseProjects(clean);
+    await putSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY, clean);
+    revalidatePath("/databases", "layout");
+    return { ok: true, count: list.length };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function listSupabaseProjectsAction(
+  customToken?: string,
+): Promise<{ ok: true; projects: SupabaseProject[] } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const token = customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase boshqaruv tokeni (Personal Access Token) topilmadi" };
+  try {
+    const projects = await listSupabaseProjects(token);
+    return { ok: true, projects };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function testSupabaseConnectionAction(input: {
+  projectRef: string;
+  dbPassword: string;
+  customToken?: string;
+}): Promise<{ ok: true; version: string } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const { db } = deps();
+  const token = input.customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase tokeni kiritilmagan" };
+  try {
+    const proj = await getSupabaseProject(token, input.projectRef);
+    const pooler = await getSupabasePoolerConfig(token, input.projectRef);
+    const poolerHost = pooler?.db_host || `aws-0-${proj.region}.pooler.supabase.com`;
+    const poolerPort = pooler?.db_port || 5432;
+    const url = buildSupabaseDatabaseUrl({
+      projectRef: input.projectRef,
+      region: proj.region,
+      dbPassword: input.dbPassword,
+      poolerHost,
+      poolerPort,
+    });
+    const res = await testSupabaseConnection(url);
+    if (!res.ok && res.error.includes("not found") && poolerHost.includes("aws-0-")) {
+      const altHost = poolerHost.replace("aws-0-", "aws-1-");
+      const altUrl = buildSupabaseDatabaseUrl({
+        projectRef: input.projectRef,
+        region: proj.region,
+        dbPassword: input.dbPassword,
+        poolerHost: altHost,
+        poolerPort,
+      });
+      const altRes = await testSupabaseConnection(altUrl);
+      if (altRes.ok) return altRes;
+    }
+    return res;
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+const moveToSupabaseSchema = z.object({
+  projectId: z.uuid(),
+  projectRef: z.string().min(1),
+  dbPassword: z.string().optional(),
+  autoResetPassword: z.boolean().optional(),
+  mode: z.enum(["full", "schema_only"]),
+  customToken: z.string().optional(),
+});
+
+export async function moveProjectToSupabaseAction(input: unknown, confirm: string): Promise<CreateResult> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const parsed = moveToSupabaseSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: uz.common.loadError };
+  const { db } = deps();
+
+  const [p] = await db
+    .select({
+      id: projects.id,
+      name: projects.name,
+      slug: projects.slug,
+      serverId: projects.serverId,
+    })
+    .from(projects)
+    .where(and(eq(projects.id, parsed.data.projectId), isNull(projects.deletedAt)));
+
+  if (!p?.serverId) return { ok: false, error: t.moveNoServer };
+  if (confirm.trim() !== p.slug) return { ok: false, error: t.moveMismatch };
+
+  const token = parsed.data.customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase boshqaruv tokeni kerak" };
+
+  try {
+    await enqueueServerJob(db, await queue(), {
+      serverId: p.serverId,
+      kind: "db_move_supabase",
+      projectId: p.id,
+      project: p.name,
+      supabase: {
+        token,
+        projectRef: parsed.data.projectRef,
+        dbPassword: parsed.data.dbPassword,
+        autoResetPassword: parsed.data.autoResetPassword ?? !parsed.data.dbPassword?.trim(),
+        mode: parsed.data.mode,
+      },
+      actor: { type: "user", id: viewer.id, name: viewer.name },
+    });
+  } catch {
+    return { ok: false, error: t.queueError };
+  }
+
+  revalidatePath("/databases", "layout");
+  return { ok: true };
+}
+
+const renameSupabaseSchema = z.object({
+  projectRef: z.string().min(1),
+  newName: z.string().trim().min(2, "Loyiha nomi kamida 2 ta belgidan iborat bo'lishi kerak").max(100),
+  customToken: z.string().optional(),
+});
+
+export async function renameSupabaseProjectAction(
+  input: unknown,
+): Promise<{ ok: true; name: string } | { ok: false; error: string }> {
+  const viewer = await requireViewer();
+  if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
+  const parsed = renameSupabaseSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? uz.common.loadError };
+  const { projectRef, newName, customToken } = parsed.data;
+
+  const { db } = deps();
+  const token = customToken?.trim() || (await readSecret(db, SYSTEM_OWNER, SUPABASE_TOKEN_KEY));
+  if (!token) return { ok: false, error: "Supabase boshqaruv tokeni kerak" };
+
+  try {
+    const updated = await updateSupabaseProjectName(token, projectRef, newName);
+
+    // Ventura'da ulangan loyihalar bo'lsa, ularning settings.supabase.projectName qiymatini ham yangilaymiz
+    const all = await db
+      .select({ id: projects.id, settings: projects.settings })
+      .from(projects)
+      .where(isNull(projects.deletedAt));
+
+    for (const p of all) {
+      const s = p.settings as
+        ({ supabase?: Record<string, unknown> & { projectRef?: string } } & Record<string, unknown>) | null;
+      if (s?.supabase?.projectRef === projectRef) {
+        const nextSettings = {
+          ...s,
+          supabase: {
+            ...s.supabase,
+            projectName: updated.name,
+          },
+        };
+        await db.update(projects).set({ settings: nextSettings }).where(eq(projects.id, p.id));
+      }
+    }
+
+    await audit.record(db, {
+      actor: { type: "user", id: viewer.id, name: viewer.name },
+      action: "supabase.project.rename",
+      target: { type: "system", id: SYSTEM_OWNER.id },
+      ...(await requestMeta()),
+      metadata: { projectRef, newName: updated.name },
+    });
+
+    revalidatePath("/databases", "layout");
+    return { ok: true, name: updated.name };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
 }

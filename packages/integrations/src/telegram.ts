@@ -12,6 +12,24 @@ export interface TelegramUser {
   username?: string;
 }
 
+export interface TelegramContact {
+  phone_number: string;
+  first_name: string;
+  last_name?: string;
+  user_id?: number;
+}
+
+export interface TelegramCallbackQuery {
+  id: string;
+  from: TelegramUser;
+  message?: {
+    message_id: number;
+    chat: { id: number; type: string };
+    text?: string;
+  };
+  data?: string;
+}
+
 export interface TelegramUpdate {
   update_id: number;
   message?: {
@@ -20,7 +38,9 @@ export interface TelegramUpdate {
     from?: TelegramUser;
     text?: string;
     date: number;
+    contact?: TelegramContact;
   };
+  callback_query?: TelegramCallbackQuery;
 }
 
 export interface WebhookInfo {
@@ -68,15 +88,35 @@ export function createTelegram(
     getUpdates: (offset?: number, timeoutSec = 0) =>
       call<TelegramUpdate[]>(
         "getUpdates",
-        { offset, timeout: timeoutSec, allowed_updates: ["message"] },
+        { offset, timeout: timeoutSec, allowed_updates: ["message", "callback_query"] },
         (timeoutSec + 10) * 1000,
       ),
-    sendMessage: (chatId: string | number, html: string) =>
+    sendMessage: (
+      chatId: string | number,
+      html: string,
+      options?: {
+        reply_markup?: unknown;
+        parse_mode?: string;
+        disable_web_page_preview?: boolean;
+      },
+    ) =>
       call<{ message_id: number }>("sendMessage", {
         chat_id: chatId,
         text: html,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
+        parse_mode: options?.parse_mode ?? "HTML",
+        disable_web_page_preview: options?.disable_web_page_preview ?? true,
+        ...(options?.reply_markup ? { reply_markup: options.reply_markup } : {}),
+      }),
+    setWebhook: (url: string, secretToken?: string) =>
+      call<boolean>("setWebhook", {
+        url,
+        ...(secretToken ? { secret_token: secretToken } : {}),
+      }),
+    deleteWebhook: () => call<boolean>("deleteWebhook"),
+    answerCallbackQuery: (callbackQueryId: string, text?: string) =>
+      call<boolean>("answerCallbackQuery", {
+        callback_query_id: callbackQueryId,
+        ...(text ? { text } : {}),
       }),
   };
 }

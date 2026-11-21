@@ -29,7 +29,7 @@ import {
 import { users, verifications } from "@ventura/db/schema/tenant";
 import { type Telegram, escapeHtml } from "@ventura/integrations";
 import { tenantAudit } from "@ventura/security";
-import type { TenantDeps } from "@/lib/server/deps";
+import { type TenantDeps, resolveTelegramBot } from "@/lib/server/deps";
 import { currentDeps, getStaff } from "@/lib/server/session";
 import { PENDING_COOKIE, ensureDeviceId, requestMeta, requestOrigin, secureRequest } from "@/lib/server/request";
 import { uz } from "@/lib/uz";
@@ -52,14 +52,14 @@ const signInSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-type Ready = { error: string } | { deps: TenantDeps; telegram: Telegram; auth: StaffAuth };
+type Ready = { error: string } | { deps: TenantDeps; telegram: Telegram | null; auth: StaffAuth };
 
-/** Kirish uchun mijoz bog'liqliklari; baza yoki bot sozlanmagan bo'lsa — xato matni. */
+/** Kirish uchun mijoz bog'liqliklari; baza sozlanmagan bo'lsa — xato matni. */
 async function ready(): Promise<Ready> {
   const { deps } = await currentDeps();
   if (!deps) return { error: uz.auth.notConfigured };
-  if (!deps.telegram) return { error: uz.auth.noBot };
-  return { deps, telegram: deps.telegram, auth: deps.auth(await requestOrigin()) };
+  const telegram = await resolveTelegramBot(deps);
+  return { deps, telegram, auth: deps.auth(await requestOrigin()) };
 }
 
 /* ---------- 1. Telefon + parol ---------- */
@@ -104,8 +104,9 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
     });
     return { next: "/login/verify" };
   }
-  // 2FA hali yoqilmagan (yangi xodim): sessiya bor, lekin tizim yopiq — parol yoki Telegram sahifasiga
-  return { next: "/" };
+  // 2FA hali yoqilmagan (yangi xodim yoki o'quvchi)
+  const next = user?.kind === "student" ? "/portal" : user?.kind === "teacher" ? "/kabinet" : "/";
+  return { next };
 }
 
 /* ---------- 2. Telegram kodi ---------- */
@@ -113,6 +114,7 @@ export async function signInAction(_prev: FormState, form: FormData): Promise<Fo
 export async function sendCodeAction(): Promise<FormState> {
   const r = await ready();
   if ("error" in r) return { error: r.error };
+  if (!r.telegram) return { error: uz.auth.noBot };
   try {
     await r.auth.api.sendTwoFactorOTP({ headers: await headers(), body: {} });
     return { info: uz.auth.codeSent };
@@ -152,7 +154,8 @@ export async function verifyCodeAction(_prev: FormState, form: FormData): Promis
     await auth.api.signOut({ headers: await headers() }).catch(() => {});
     return { error: uz.auth.deviceBlocked };
   }
-  return { next: "/" };
+  const next = user.kind === "student" ? "/portal" : user.kind === "teacher" ? "/kabinet" : "/";
+  return { next };
 }
 
 /* ---------- Chiqish ---------- */
@@ -187,13 +190,16 @@ export async function linkTokenAction(): Promise<{ url: string } | { error: stri
   if (!staff) return { error: uz.auth.sessionGone };
   const r = await ready();
   if ("error" in r) return { error: r.error };
+  if (!r.telegram) return { error: uz.auth.noBot };
   const { deps, telegram } = r;
   const token = randomBytes(9).toString("base64url");
-  await deps.db.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + staff.id));
-  await deps.db.insert(verifications).values({
-    identifier: LINK_PREFIX + staff.id,
-    value: token,
-    expiresAt: new Date(Date.now() + 10 * 60_000),
+  await deps.db.run(async (tx) => {
+    await tx.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + staff.id));
+    await tx.insert(verifications).values({
+      identifier: LINK_PREFIX + staff.id,
+      value: token,
+      expiresAt: new Date(Date.now() + 10 * 60_000),
+    });
   });
   const me = await telegram.getMe().catch(() => null);
   if (!me?.username) return { error: uz.auth.telegramDown };
@@ -205,6 +211,7 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
   if (!staff) return { error: uz.auth.sessionGone };
   const r = await ready();
   if ("error" in r) return { error: r.error };
+  if (!r.telegram) return { error: uz.auth.noBot };
   const { deps, telegram, auth } = r;
   const user = await findStaffById(deps.db, staff.id);
   if (!user) return { error: uz.auth.sessionGone };
@@ -215,11 +222,13 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
     return { error: locked ? uz.auth.lockedNow : uz.auth.wrongPassword };
   }
 
-  const [pending] = await deps.db
-    .select({ value: verifications.value })
-    .from(verifications)
-    .where(and(eq(verifications.identifier, LINK_PREFIX + user.id), gt(verifications.expiresAt, new Date())))
-    .limit(1);
+  const [pending] = await deps.db.run(async (tx) =>
+    tx
+      .select({ value: verifications.value })
+      .from(verifications)
+      .where(and(eq(verifications.identifier, LINK_PREFIX + user.id), gt(verifications.expiresAt, new Date())))
+      .limit(1),
+  );
   if (!pending) return { error: uz.auth.notStarted };
 
   // Botga kelgan /start <token> xabarini qidiramiz (bot webhook'siz — long polling)
@@ -236,8 +245,10 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
   }
   if (!chatId) return { error: uz.auth.notStarted };
 
-  await deps.db.update(users).set({ telegramChatId: chatId, twoFactorEnabled: true }).where(eq(users.id, user.id));
-  await deps.db.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + user.id));
+  await deps.db.run(async (tx) => {
+    await tx.update(users).set({ telegramChatId: chatId, twoFactorEnabled: true }).where(eq(users.id, user.id));
+    await tx.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + user.id));
+  });
   await tenantAudit.record(deps.db, {
     actor: staffActor(user),
     action: "user.telegram_linked",
@@ -249,7 +260,11 @@ export async function checkLinkAction(_prev: FormState, form: FormData): Promise
     { telegramChatId: chatId },
     `✅ <b>${escapeHtml(deps.appName)}</b>: Telegram ulandi — ${escapeHtml(user.name)} (${formatPhone(user.phoneNumber ?? "")})\nEndi har kirishda kod shu yerga keladi.`,
   );
-  // Parolning o'zi bilan ochilgan sessiya yopiladi — endi to'liq (kod bilan) kirish kerak
+  const nextTarget = text(form, "next");
+  if (nextTarget === "/account") {
+    return { next: "/account?telegram=ulandi" };
+  }
+  // Parolning o'zi bilan ochilgan sessiya yopiladi — endi to'liq (kod bilan) kirish kerak (login funnel paytida)
   await revokeStaffSessions(deps.db, user.id);
   return { next: "/login?telegram=ulandi" };
 }
@@ -278,7 +293,9 @@ export async function changePasswordAction(_prev: FormState, form: FormData): Pr
   if (await verifyStaffPassword(auth, user.id, next)) return { error: uz.auth.samePassword };
 
   await setStaffPassword(auth, user.id, next);
-  await deps.db.update(users).set({ mustChangePassword: false }).where(eq(users.id, user.id));
+  await deps.db.run(async (tx) => {
+    await tx.update(users).set({ mustChangePassword: false }).where(eq(users.id, user.id));
+  });
   await tenantAudit.record(deps.db, {
     actor: staffActor(user),
     action: "user.password_change",

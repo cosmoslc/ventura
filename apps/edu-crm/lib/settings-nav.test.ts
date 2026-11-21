@@ -25,7 +25,7 @@ describe("sozlamalar navbari", () => {
 
   it("ruxsat bo'yicha filtrlanadi, bo'sh guruh tushib qoladi", () => {
     const only = visibleSettings((i) => i.feature === null);
-    expect(only.flatMap((g) => g.items.map((i) => i.href))).toEqual(["/notifications", "/account"]);
+    expect(only.flatMap((g) => g.items.map((i) => i.href))).toEqual(["/notifications", "/telegram-bots", "/account"]);
     expect(only.map((g) => g.title)).toEqual(["Aloqa", "Hisob"]);
     expect(visibleSettings(() => true)).toEqual(SETTINGS_NAV);
   });

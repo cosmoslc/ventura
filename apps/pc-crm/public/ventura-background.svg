@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Base Linear Gradient (135deg: #FFFFFF -> #F5F7FF -> #EEF3FF) -->
+    <linearGradient id="linearBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="50%" stop-color="#F5F7FF" />
+      <stop offset="100%" stop-color="#EEF3FF" />
+    </linearGradient>
+
+    <!-- Top-Left Radial Gradient (620px 520px: rgba(74, 123, 255, 0.14) -> 0) -->
+    <radialGradient id="radTopLeft" cx="0" cy="0" r="1" gradientTransform="matrix(620 0 0 520 0 0)" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(74, 123, 255, 0.14)" />
+      <stop offset="70%" stop-color="rgba(74, 123, 255, 0.05)" />
+      <stop offset="100%" stop-color="rgba(74, 123, 255, 0)" />
+    </radialGradient>
+
+    <!-- Bottom-Right Radial Gradient (700px 600px: rgba(111, 83, 255, 0.12) -> 0) -->
+    <radialGradient id="radBottomRight" cx="0" cy="0" r="1" gradientTransform="matrix(700 0 0 600 1920 1080)" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="rgba(111, 83, 255, 0.12)" />
+      <stop offset="70%" stop-color="rgba(111, 83, 255, 0.04)" />
+      <stop offset="100%" stop-color="rgba(111, 83, 255, 0)" />
+    </radialGradient>
+
+    <!-- 24px Blur for Soft Abstract Shapes -->
+    <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="24" />
+    </filter>
+  </defs>
+
+  <!-- 1. Base Layer -->
+  <rect width="1920" height="1080" fill="url(#linearBase)" />
+
+  <!-- 2. Soft Abstract Corner Shapes (Decoration: opacity 0.45, blur 24px) -->
+  <g filter="url(#softBlur)" opacity="0.45">
+    <!-- Top-left abstract organic shape (#DCE7FF) -->
+    <path d="M -40,-40 
+             L 420,-40 
+             C 410,130 360,260 250,340 
+             C 140,420 30,370 -40,300 
+             Z" 
+          fill="#DCE7FF" />
+    
+    <path d="M 120,-40
+             C 280,-20 360,80 320,180
+             C 270,300 110,240 -10,190
+             Z"
+          fill="#E9E2FF" opacity="0.7" />
+
+    <!-- Bottom-right abstract organic shape (#E9E2FF) -->
+    <path d="M 1960,1120 
+             L 1480,1120 
+             C 1510,950 1570,820 1690,750 
+             C 1810,680 1910,770 1960,860 
+             Z" 
+          fill="#E9E2FF" />
+
+    <path d="M 1820,1120
+             C 1660,1100 1590,990 1630,890
+             C 1680,780 1840,840 1960,890
+             Z"
+          fill="#DCE7FF" opacity="0.65" />
+  </g>
+
+  <!-- 3. Radial Glow Layers -->
+  <rect width="1920" height="1080" fill="url(#radTopLeft)" />
+  <rect width="1920" height="1080" fill="url(#radBottomRight)" />
+</svg>

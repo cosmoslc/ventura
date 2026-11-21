@@ -5,10 +5,11 @@
 
 [data-brand="ventura"] {
   /* Ranglar */
-  --background: #f4f6fb;
+  --background: #f7f9ff;
   --foreground: #1c2333;
   --card: #ffffff;
   --card-foreground: #1c2333;
+  --media-surface: #ffffff;
   --popover: #ffffff;
   --popover-foreground: #1c2333;
   /* Brend rangi: shu bitta qiymatdan hover, yumshoq fon, fokus, sidebar urg'usi va soyalar hosil bo'ladi */
@@ -71,6 +72,9 @@
   --info-fg: #4338ca;
   --info-bg: #eef2ff;
   --info-border: #c7d2fe99;
+  --rating-star: #d97706;
+  --telegram-bg: #0088cc;
+  --telegram-hover: #0077b5;
 
   /* Grafik qatorlari (kategoriya tartibi qat'iy; dataviz validatori bilan tekshirilgan: oq va dark kartochkada) */
   --chart-1: #2a78d6;
@@ -138,6 +142,9 @@
   --btn-danger-bg: linear-gradient(90deg, #dc2626, #e11d48, #db2777);
   --btn-danger-bg-hover: linear-gradient(90deg, #b91c1c, #be123c, #be185d);
   --btn-danger-shadow: 0 4px 6px -1px rgb(225 29 72 / 0.2), 0 2px 4px -2px rgb(225 29 72 / 0.2);
+  --btn-success-bg: #047857;
+  --btn-success-hover: #065f46;
+  --btn-success-fg: #ffffff;
   --btn-ghost-bg: #f1f5f9;
   --btn-ghost-bg-hover: #e2e8f0;
   --btn-ghost-fg: #334155;
@@ -196,6 +203,7 @@
   /* Yumshoq, pastga cho'zilgan soyalar (Saidakbar qarori, 2026-10-10); hover nuri --primary rangida */
   --card-shadow: 0 10px 30px -18px rgb(17 17 19 / 0.22);
   --card-shadow-hover: 0 18px 40px -16px color-mix(in srgb, var(--primary) 35%, transparent);
+  --control-shadow: 0 1px 2px rgb(15 23 42 / 0.08);
   --card-hover-y: -3px;
   --card-hover-border: transparent;
   --popover-shadow: 0 24px 60px rgb(17 17 19 / 0.14), 0 0 0 1px rgb(17 17 19 / 0.08);
@@ -264,6 +272,7 @@
   --foreground: #f8fafc;
   --card: #0f172a;
   --card-foreground: #f8fafc;
+  --media-surface: #ffffff;
   --popover: #0f172a;
   --popover-foreground: #f8fafc;
   --primary: #4f79f6;
@@ -311,6 +320,9 @@
   --info-fg: #818cf8;
   --info-bg: rgb(49 46 129 / 0.5);
   --info-border: rgb(79 70 229 / 0.4);
+  --rating-star: #fbbf24;
+  --telegram-bg: #0088cc;
+  --telegram-hover: #0077b5;
 
   --chart-1: #3987e5;
   --chart-2: #d95926;
@@ -349,14 +361,19 @@
   --btn-ghost-bg-hover: #243048;
   --btn-ghost-fg: #cbd5e1;
   --btn-ghost-fg-hover: #ffffff;
+  --btn-success-bg: #059669;
+  --btn-success-hover: #047857;
+  --btn-success-fg: #ffffff;
   --btn-ghost-border: #1e293b;
   --btn-ghost-border-hover: #334155;
 
   --icon-btn-bg: #1e293b;
   --icon-btn-border: #334155;
   --icon-btn-fg: #cbd5e1;
+  --icon-btn-hover-bg: color-mix(in oklab, var(--primary) 18%, #1e293b);
   --icon-btn-hover-border: var(--primary-hover);
   --icon-btn-hover-fg: #ffffff;
+  --icon-btn-hover-transform: translateY(-1px);
 
   --logo-bg: linear-gradient(
     145deg,
@@ -370,6 +387,7 @@
   /* Dark: chuqurlik soya emas, fon farqi va ingichka chiziq bilan */
   --card-shadow: none;
   --card-shadow-hover: 0 18px 50px color-mix(in srgb, var(--primary) 18%, transparent);
+  --control-shadow: none;
   --popover-shadow: 0 24px 60px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(248 250 252 / 0.1);
   --modal-shadow: 0 0 0 1px rgb(248 250 252 / 0.1);
   --label-fg: #94a3b8;

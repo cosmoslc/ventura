@@ -1,5 +1,5 @@
 import { and, eq, sql } from "drizzle-orm";
-import type { TenantDb } from "@ventura/db";
+import type { TenantDb, TenantTx } from "@ventura/db";
 import {
   type StaffRole,
   type UserKind,
@@ -232,7 +232,7 @@ export interface NewStaff {
   kind?: UserKind;
 }
 
-export async function createStaffUser(auth: StaffAuth, db: TenantDb, input: NewStaff) {
+export async function createStaffUser(auth: StaffAuth, db: TenantDb | TenantTx, input: NewStaff) {
   const ctx = await auth.$context;
   const hash = await ctx.password.hash(input.password);
   const user = await ctx.internalAdapter.createUser(
@@ -290,6 +290,8 @@ export async function unlockStaff(db: TenantDb, userId: string) {
 
 /** Telegramni uzish: xodim keyingi kirishda botni qayta ulaydi; ochiq sessiyalar yopiladi */
 export async function resetStaffTelegram(db: TenantDb, userId: string) {
-  await db.update(users).set({ telegramChatId: null, twoFactorEnabled: false }).where(eq(users.id, userId));
-  await revokeStaffSessions(db, userId);
+  await db.run(async (tx) => {
+    await tx.update(users).set({ telegramChatId: null, twoFactorEnabled: false }).where(eq(users.id, userId));
+    await tx.delete(sessions).where(eq(sessions.userId, userId));
+  });
 }

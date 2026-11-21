@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Plus, User } from "lucide-react";
+import { Check, KeyRound, Plus, User } from "lucide-react";
 import * as React from "react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -28,6 +28,7 @@ interface Form {
   gender: string;
   note: string;
   customData: Record<string, string>;
+  password: string;
 }
 
 /**
@@ -63,6 +64,7 @@ export function StudentForm({
       gender: editing?.gender ?? "",
       note: editing?.note ?? "",
       customData: editing?.customData ?? {},
+      password: "",
     }),
     [editing, selectedBranch, branches],
   );
@@ -98,6 +100,7 @@ export function StudentForm({
       gender: form.gender === "male" || form.gender === "female" ? form.gender : null,
       note: form.note,
       customData: form.customData,
+      password: !editing ? form.password : "",
     });
     if (!parsed.success) return setError(firstError(parsed.error));
     const missing = missingRequired(form.customData, fields);
@@ -193,6 +196,23 @@ export function StudentForm({
             groups={groups}
           />
         ))}
+        {!editing ? (
+          <div className="sm:col-span-2">
+            <Label htmlFor="student-password">{uz.studentLogin.password}</Label>
+            <Input
+              id="student-password"
+              type="password"
+              autoComplete="new-password"
+              icon={<KeyRound />}
+              maxLength={128}
+              placeholder={uz.studentLogin.passwordPlaceholder}
+              value={form.password}
+              onChange={(e) => set("password", e.target.value)}
+            />
+            <FieldHint>{uz.studentLogin.hint}</FieldHint>
+          </div>
+        ) : null}
+
         <div className="sm:col-span-2">
           <Label htmlFor="student-note">{uz.students.note}</Label>
           <Textarea

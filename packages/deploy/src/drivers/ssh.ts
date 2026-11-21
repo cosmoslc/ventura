@@ -263,6 +263,13 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
         hosts,
         brand: project.brand,
         features: featureRows.map((f) => f.key).sort(),
+        storeMode:
+          (project.settings as Record<string, unknown> | null)?.storeMode === "inventory" ? "inventory" : "financial",
+        storageLimitMb:
+          typeof (project.settings as Record<string, unknown> | null)?.storageLimitMb === "number"
+            ? ((project.settings as Record<string, unknown>).storageLimitMb as number)
+            : 5120,
+        status: project.status,
       },
       sha,
       reuse: false,
@@ -276,17 +283,18 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `mkdir -p ${sh(`${root}/releases`)} ${sh(`${root}/shared`)}`);
     const current = await probe(`readlink -f ${sh(`${root}/current`)}`);
     const deployed = await probe(`cat ${sh(`${root}/current/.ventura-commit`)}`);
-    plan.previous = current.startsWith(`${root}/releases/`) ? current : null;
-    if (plan.previous && deployed === sha) {
-      plan.reuse = true;
-      plan.release = plan.previous;
+    const p = plan!;
+    p.previous = current.startsWith(`${root}/releases/`) ? current : null;
+    if (p.previous && deployed === sha) {
+      p.reuse = true;
+      p.release = p.previous;
       log(`Server allaqachon shu versiyada (${sha.slice(0, 7)}): kod va build qayta bajarilmaydi.`, "info");
     } else {
       const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, "");
-      plan.release = `${root}/releases/${stamp}-${sha.slice(0, 7)}`;
-      log(`Yangi reliz: ${plan.release}`, "info");
+      p.release = `${root}/releases/${stamp}-${sha.slice(0, 7)}`;
+      log(`Yangi reliz: ${p.release}`, "info");
     }
-    return { releasePath: plan.release, commitSha: sha };
+    return { releasePath: p.release, commitSha: sha };
   }
 
   async function fetch(log: StepLog) {
@@ -366,7 +374,7 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
     await remote(log, `cd ${sh(p.release)} && pnpm install --frozen-lockfile --filter ${filter}`, 15 * MINUTE);
     await remote(
       log,
-      `cd ${sh(p.release)} && NEXT_TELEMETRY_DISABLED=1 NODE_OPTIONS=--max-old-space-size=1536 pnpm --filter ${sh(`{${p.appPath}}`)} build`,
+      `cd ${sh(p.release)} && NEXT_TELEMETRY_DISABLED=1 NEXT_CPU_COUNT=2 NODE_OPTIONS=--max-old-space-size=2048 pnpm --filter ${sh(`{${p.appPath}}`)} build`,
       15 * MINUTE,
     );
   }
@@ -401,15 +409,26 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       `curl -fs --retry 20 --retry-delay 1 --retry-connrefused --max-time 5 ${probe} || curl -fsS --max-time 5 ${probe}`,
       MINUTE,
     );
-    let body: { ok?: boolean; tenant?: string | null; commit?: string | null; configured?: boolean };
+    let body: {
+      ok?: boolean;
+      status?: string;
+      tenant?: string | null;
+      tenantSlug?: string | null;
+      commit?: string | null;
+      configured?: boolean;
+      hasSecret?: boolean;
+      hasDbUrl?: boolean;
+    };
     try {
       body = JSON.parse(out);
     } catch {
       throw new StepError("Ilova kutilmagan javob qaytardi");
     }
-    if (body.tenant !== p.slug) throw new StepError(`Ilova bu domenni "${p.slug}" deb tanimadi`);
+    const tenant = body.tenant ?? body.tenantSlug;
+    if (tenant !== p.slug) throw new StepError(`Ilova bu domenni "${p.slug}" deb tanimadi`);
     if (body.commit !== p.sha) throw new StepError("Ilova eski versiyada ishlayapti");
-    if (p.provisioned && body.configured !== true) {
+    const configured = body.configured ?? (body.hasSecret && body.hasDbUrl);
+    if (p.provisioned && configured !== true) {
       throw new StepError("Ilova mijozning baza sozlamasini ko'rmayapti (VENTURA_TENANT_SECRETS_FILE)");
     }
   }
@@ -492,7 +511,14 @@ export function createSshDriver({ db, repoRoot }: SshDriverDeps): DeployDriver {
       log,
       `cd ${sh(appDir)} && node_modules/.bin/tsx ${PROVISION_SCRIPT}`,
       5 * MINUTE,
-      JSON.stringify({ slug: p.slug, name: p.tenant.name, databaseUrl, authSecret, owner }),
+      JSON.stringify({
+        slug: p.slug,
+        name: p.tenant.name,
+        databaseUrl,
+        authSecret,
+        owner,
+        storeMode: p.tenant.storeMode ?? "financial",
+      }),
     );
 
     // Ilova uchun maxfiy fayl: boshqa mijozlar yozuvlari saqlanadi; mazmuni logga chiqmaydi

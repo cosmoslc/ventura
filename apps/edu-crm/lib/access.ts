@@ -37,6 +37,7 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/rooms": ["settings.rooms"],
   "/branches": ["settings.branches"],
   "/settings": ["settings.branches"],
+  "/storage": ["settings.branches"],
   "/holidays": ["settings.branches"],
   "/attendance": ["attendance.student_mark", "attendance.student_edit_past", "attendance.export"],
   "/staff-attendance": ["attendance.employee_view", "attendance.employee_mark"],
@@ -71,6 +72,7 @@ export const PAGE_ACCESS: Record<string, readonly Permission[]> = {
   "/sms": ["settings.sms_gateways"],
   "/sms/settings": ["settings.sms_gateways"],
   "/sms/templates": ["settings.sms_gateways"],
+  "/telegram-bots": ["settings.sms_gateways", "settings.branches"],
   "/reports": ["dashboard.view", "dashboard.financial_stats", "dashboard.conversion_stats"],
   // Bugungi ishlar (ADR 0027): bloklaridan birortasini ko'ra oladigan xodimga ochiq
   "/bugun": [

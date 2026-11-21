@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { TENANT_POOL, createTenantDb } from "./tenant";
+import { beforeEach, describe, expect, it } from "vitest";
+import { TENANT_POOL, closeTenantClients, createTenantDb } from "./tenant";
 
 /*
  * Mijoz bazasi pul chegaralari (ADR 0060): bo'sh ulanish yopiladi, ulanish umri cheklangan, bitta mijozga oz ulanish.
@@ -9,10 +9,13 @@ import { TENANT_POOL, createTenantDb } from "./tenant";
 const URL = "postgres://app:app@127.0.0.1:1/edu";
 
 describe("mijoz bazasi puli", () => {
-  it("standart: max 3, bo'sh ulanish 30 soniyada, umri 30 daqiqada yopiladi", () => {
+  beforeEach(async () => {
+    await closeTenantClients();
+  });
+  it("standart: max 10, bo'sh ulanish 30 soniyada, umri 30 daqiqada yopiladi", () => {
     const db = createTenantDb(URL, "alfa");
-    expect(db.$client.options).toMatchObject({ max: 3, idle_timeout: 30, max_lifetime: 1800 });
-    expect(TENANT_POOL).toEqual({ max: 3, idleTimeoutSec: 30, maxLifetimeSec: 1800 });
+    expect(db.$client.options).toMatchObject({ max: 10, idle_timeout: 30, max_lifetime: 1800 });
+    expect(TENANT_POOL).toEqual({ max: 10, idleTimeoutSec: 30, maxLifetimeSec: 1800 });
   });
 
   it("chegaralarni chaqiruvchi o'zgartira oladi (skriptlar, testlar)", () => {

@@ -14,7 +14,7 @@ export const TENANT_SETTING = "app.tenant_id";
 export const tenantId = () =>
   text("tenant_id")
     .notNull()
-    .default(sql`current_setting('app.tenant_id')`);
+    .default(sql`nullif(current_setting('app.tenant_id', true), '')`);
 
 /** Faqat joriy ulanish mijozining qatorlari: o'qish, yozish, o'zgartirish, o'chirish. */
 export const tenantPolicy = (table: string) =>

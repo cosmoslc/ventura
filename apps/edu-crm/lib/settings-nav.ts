@@ -13,9 +13,12 @@ export type SettingsIcon =
   | "coins"
   | "payments"
   | "notifications"
+  | "bot"
   | "sms"
   | "profile"
-  | "security";
+  | "security"
+  | "storage"
+  | "reasons";
 
 export interface SettingsItem {
   href: string;
@@ -33,7 +36,11 @@ export interface SettingsGroup {
 export const SETTINGS_NAV: SettingsGroup[] = [
   {
     title: "Markaz",
-    items: [{ href: "/settings", label: "Markaz ma'lumotlari", feature: "students", icon: "center" }],
+    items: [
+      { href: "/settings", label: "Markaz ma'lumotlari", feature: "students", icon: "center" },
+      { href: "/reasons", label: "Sabablar", feature: "students", icon: "reasons" },
+      { href: "/storage", label: "Xotira va fayllar", feature: "students", icon: "storage" },
+    ],
   },
   {
     title: "O'quv jarayoni",
@@ -53,6 +60,7 @@ export const SETTINGS_NAV: SettingsGroup[] = [
     title: "Aloqa",
     items: [
       { href: "/notifications", label: "Bildirishnomalar", feature: null, icon: "notifications" },
+      { href: "/telegram-bots", label: "Telegram botlar", feature: null, icon: "bot" },
       { href: "/sms/settings", label: "SMS (Eskiz)", feature: "sms", icon: "sms" },
     ],
   },

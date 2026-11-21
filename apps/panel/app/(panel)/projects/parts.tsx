@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, TriangleAlert } from "lucide-react";
+import { Lock, Trash2, TriangleAlert, Upload } from "lucide-react";
 import * as React from "react";
 import type { ProjectBrand } from "@ventura/db/schema/panel";
 import { FEATURE_TYPE_LABELS, type Feature, dependentsOf, withRequirements } from "@ventura/tenants";
@@ -11,6 +11,7 @@ import { Label } from "@ventura/ui/label";
 import { Switch } from "@ventura/ui/switch";
 import { cn } from "@ventura/ui/lib/utils";
 import { BRAND_PRESETS, contrastWithWhite } from "@/lib/project-rules";
+import { processLogoFile } from "@/lib/logo";
 import { uz } from "@/lib/uz";
 
 /* ---------- Variant kartochkalari (rejim, manzil, baza) ---------- */
@@ -96,6 +97,57 @@ export function BrandPicker({ value, onChange }: { value: ProjectBrand; onChange
             ))}
           </RadioGroup>
         </div>
+        <div>
+          <Label>Logotip</Label>
+          {value.logoUrl ? (
+            <div className="flex items-center gap-3 rounded-control border border-border bg-input-bg p-3">
+              <img
+                src={value.logoUrl}
+                alt="Logotip"
+                className="size-11 rounded-btn object-cover border border-border bg-card shrink-0 shadow-xs"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-foreground truncate">Markaz logotipi yuklandi</p>
+                <p className="text-caption text-muted-foreground">Tizim sarlavhasi va avatarda ko'rinadi</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => onChange({ ...value, logoUrl: null })}
+                className="gap-1.5 text-destructive hover:text-destructive h-8 px-2.5 cursor-pointer"
+              >
+                <Trash2 className="size-3.5" />
+                <span className="text-xs">O'chirish</span>
+              </Button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center gap-1.5 rounded-control border border-dashed border-border bg-input-bg/40 p-4 cursor-pointer hover:border-primary/50 hover:bg-secondary/40 transition-colors">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    const dataUrl = await processLogoFile(file);
+                    onChange({ ...value, logoUrl: dataUrl });
+                  } catch (err) {
+                    alert((err as Error).message || "Faylni yuklashda xatolik");
+                  }
+                }}
+              />
+              <div className="size-8 rounded-btn bg-secondary flex items-center justify-center text-muted-foreground">
+                <Upload className="size-4" />
+              </div>
+              <div className="text-center">
+                <span className="text-xs font-semibold text-primary hover:underline">Logotip yuklash</span>
+                <p className="text-caption text-muted-foreground mt-0.5">PNG, JPG, WebP yoki SVG (maks. 2 MB)</p>
+              </div>
+            </label>
+          )}
+        </div>
       </div>
       <BrandPreview brand={value} />
     </div>
@@ -115,8 +167,24 @@ function BrandPreview({ brand }: { brand: ProjectBrand }) {
       >
         <div className="space-y-3 rounded-card border border-border bg-background p-4 text-foreground">
           <div className="flex items-center justify-between">
-            <span className="type-heading text-title">Bilim akademiyasi</span>
-            <Badge tone="success" dot>
+            <div className="flex items-center gap-2.5 min-w-0">
+              {brand.logoUrl ? (
+                <img
+                  src={brand.logoUrl}
+                  alt=""
+                  className="size-8 rounded-btn object-cover border border-border bg-card shrink-0 shadow-xs"
+                />
+              ) : (
+                <div
+                  className="size-8 rounded-btn flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-xs"
+                  style={{ background: "var(--avatar-bg)" }}
+                >
+                  B
+                </div>
+              )}
+              <span className="type-heading text-title truncate">Bilim akademiyasi</span>
+            </div>
+            <Badge tone="success" dot className="shrink-0">
               Faol
             </Badge>
           </div>

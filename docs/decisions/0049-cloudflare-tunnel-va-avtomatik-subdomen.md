@@ -66,3 +66,12 @@ Ikki muammo tunnelni yoqishdan oldin hal qilinishi kerak edi:
   bo'lishi va tunnelga alohida yozuv kerak. Hozircha o'z domen — online VPS + certbot (3-bosqich).
 - Panel internetga ochiq: himoya — majburiy 2FA, bloklash va audit. Qo'shimcha qatlam sifatida Cloudflare Access
   keyin qo'shilishi mumkin.
+
+## Qo'shimcha (2026-11-21): Linux kompyuterga ko'chirilgandan keyin
+
+- Tunnel endi Linux'da user systemd xizmati (`ventura-tunnel.service`); mijoz saytlari multipass VM
+  (`ventura-server`) ichidagi nginx'da. `*.ventura.uz` → VM IP manzili (`~/.cloudflared/config.yml`).
+- Muammo: boot paytida `multipass start ... || true` multipassd tayyor bo'lmasdan ishlardi, xato yashirinardi va
+  VM o'chiq qolardi — barcha subdomenlar ishlamasdi.
+- Yechim: `tooling/tunnel/vm-up.sh` (`ventura-vm.service`, `Restart=on-failure`) multipassd'ni kutadi, VM'ni
+  ishga tushiradi, VM IP o'zgargan bo'lsa tunnel sozlamasini yangilab tunnelni qayta yuklaydi va nginx'ni kutadi.

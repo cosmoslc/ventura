@@ -48,6 +48,7 @@ import type { GroupChoice, HistoryRow, StudentNoteRow, StudentRow } from "./data
 import { StatusBadge, StudentMenu, type StudentPerms, TransferDialog } from "./student-dialogs";
 import { StudentForm } from "./student-form";
 import { StudentGradesTab } from "./student-grades-tab";
+import { StudentLoginCard } from "./student-login-card";
 
 type Tab = "groups" | "grades" | "payments" | "discounts" | "notes" | "history";
 const NOTE_KINDS = ["call", "message", "parent", "result", "note", "warning"] as const;
@@ -257,6 +258,10 @@ export function StudentProfile({
             ) : null}
           </dl>
         ) : null}
+
+        <div className="mt-4 pt-4 border-t border-border-soft">
+          <StudentLoginCard studentId={s.id} hasLogin={s.hasLogin} perms={perms} />
+        </div>
       </Card>
 
       <div className="min-w-0 space-y-4">

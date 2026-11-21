@@ -28,8 +28,27 @@ function apply(dark: boolean) {
   }
 }
 
-export function ThemeToggle() {
+export interface ThemeToggleProps extends React.ComponentProps<"button"> {
+  className?: string;
+}
+
+export function ThemeToggle({ className, ...props }: ThemeToggleProps) {
   const dark = useIsDark();
+
+  if (className) {
+    return (
+      <button
+        type="button"
+        onClick={() => apply(!dark)}
+        aria-label={dark ? "Yorug' rejimga o'tish" : "Qorong'i rejimga o'tish"}
+        title={dark ? "Yorug' rejim" : "Qorong'i rejim"}
+        className={className}
+        {...props}
+      >
+        {dark ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
+    );
+  }
 
   return (
     <Button
@@ -38,6 +57,7 @@ export function ThemeToggle() {
       onClick={() => apply(!dark)}
       aria-label={dark ? "Yorug' rejimga o'tish" : "Qorong'i rejimga o'tish"}
       title={dark ? "Yorug' rejim" : "Qorong'i rejim"}
+      {...props}
     >
       {dark ? <Sun /> : <Moon />}
     </Button>

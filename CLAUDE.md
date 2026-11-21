@@ -33,7 +33,7 @@
 - Har o'zgartiruvchi amal audit.record() chaqiradi (mijoz tizimida — tenantAudit.record()).
 - Mijoz bazasiga faqat getTenantDb() orqali. Yangi jadvalda tenantId(), tenantPolicy() va migratsiyada FORCE ROW LEVEL SECURITY (ajratish testi tekshiradi).
 - Mijozga xos farq faqat bo'lim (hasFeature) yoki sozlama orqali. `if (tenant.slug === ...)` taqiqlangan.
-- UI faqat packages/ui komponentlaridan. Interfeys matnlari o'zbekcha, bitta faylda.
+- UI faqat packages/ui komponentlaridan. Interfeys matnlari o'zbekcha, bitta faylda (sawmill shablonida: uz va ru, ADR 0068).
 
 ## Test
 
@@ -49,7 +49,7 @@
 
 ## So'rab qil
 
-- Ma'lumot o'chirish, force push, migratsiyada ustun o'chirish, serverda buyruq ishga tushirish — avval Saidakbardan tasdiq so'ra.
+- Ma'lumot o'chirish, force push, migratsiyada ustun o'chirish, serverda buyruq ishga tushirish — avval Alsiherdan tasdiq so'ra.
 
 ## Dizayn
 

@@ -13,6 +13,7 @@
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-media: var(--media-surface);
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
@@ -36,6 +37,8 @@
   --color-destructive-hover: var(--destructive-hover);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-text: var(--destructive-text);
+  --color-rating-star: var(--rating-star);
+  --color-telegram: var(--telegram-bg);
   --color-table-head: var(--table-head);
   --color-table-row-hover: var(--table-row-hover);
 
@@ -58,6 +61,7 @@
 
   --shadow-card: var(--card-shadow);
   --shadow-card-hover: var(--card-shadow-hover);
+  --shadow-control: var(--control-shadow);
   --shadow-popover: var(--popover-shadow);
   --shadow-modal: var(--modal-shadow);
 

@@ -1,10 +1,13 @@
 import "server-only";
-import { and, asc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, isNull, lte } from "drizzle-orm";
 import type { TenantDb } from "@ventura/db";
 import {
   type StudentStatus,
   attendance,
+  groupHomeworks,
   groupMemberships,
+  type HomeworkAttachment,
+  homeworkSubmissions,
   lessonGrades,
   students,
   teachers,
@@ -183,7 +186,7 @@ export async function kabinetGroup(
     phone: m.phone,
     status: m.status,
   }));
-  const [balances, coinSettings] = await Promise.all([
+  const [balances, coinSettings, homeworks] = await Promise.all([
     coinsOn
       ? coinBalances(
           db,
@@ -191,6 +194,7 @@ export async function kabinetGroup(
         )
       : Promise.resolve(null),
     coinsOn ? getCoinSettings(db) : Promise.resolve(null),
+    kabinetHomeworks(db, teacherId, g.id),
   ]);
   return {
     group: {
@@ -208,6 +212,7 @@ export async function kabinetGroup(
     members: open,
     coins: balances,
     manualCoins: coinSettings?.manual.enabled ? { dailyLimit: coinSettings.manual.dailyLimit } : null,
+    homeworks,
     stats: groupStats({
       members: lessons.members.map((m) => ({ studentId: m.studentId, name: m.name })),
       attendance: lessons.marks,
@@ -217,6 +222,131 @@ export async function kabinetGroup(
 }
 
 export type KabinetGroupData = NonNullable<Awaited<ReturnType<typeof kabinetGroup>>>;
+
+/* ---------- Uy ishlari (ADR 0063) ---------- */
+
+export interface KabinetHomeworkItem {
+  id: string;
+  groupId: string;
+  groupName?: string;
+  courseName?: string;
+  lessonDate: string;
+  title: string;
+  description: string | null;
+  attachments: HomeworkAttachment[];
+  dueDate: string | null;
+  createdAt: Date;
+  submissionsCount: number;
+  checkedCount: number;
+}
+
+export interface HomeworkSubmissionItem {
+  id: string;
+  homeworkId: string;
+  studentId: string;
+  studentName: string;
+  studentPhone: string;
+  text: string | null;
+  attachments: HomeworkAttachment[];
+  status: "submitted" | "checked" | "rejected";
+  grade: number | null;
+  feedback: string | null;
+  submittedAt: string;
+  checkedAt: string | null;
+}
+
+/** O'qituvchining barcha yoki bitta guruhidagi uy vazifalari */
+export async function kabinetHomeworks(
+  db: TenantDb,
+  teacherId: string,
+  groupId?: string,
+): Promise<KabinetHomeworkItem[]> {
+  const teacherGroups = await kabinetGroups(db, teacherId);
+  const allowedGroupIds = new Set(teacherGroups.map((g) => g.id));
+  const groupMap = new Map(teacherGroups.map((g) => [g.id, g]));
+
+  const targetGroupIds = groupId ? (allowedGroupIds.has(groupId) ? [groupId] : []) : [...allowedGroupIds];
+
+  if (!targetGroupIds.length) return [];
+
+  const rows = await db
+    .select({
+      id: groupHomeworks.id,
+      groupId: groupHomeworks.groupId,
+      lessonDate: groupHomeworks.lessonDate,
+      title: groupHomeworks.title,
+      description: groupHomeworks.description,
+      attachments: groupHomeworks.attachments,
+      dueDate: groupHomeworks.dueDate,
+      createdAt: groupHomeworks.createdAt,
+    })
+    .from(groupHomeworks)
+    .where(inArray(groupHomeworks.groupId, targetGroupIds))
+    .orderBy(desc(groupHomeworks.lessonDate), desc(groupHomeworks.createdAt));
+
+  const hwIds = rows.map((r) => r.id);
+  const submissions = hwIds.length
+    ? await db
+        .select({
+          homeworkId: homeworkSubmissions.homeworkId,
+          status: homeworkSubmissions.status,
+        })
+        .from(homeworkSubmissions)
+        .where(inArray(homeworkSubmissions.homeworkId, hwIds))
+    : [];
+
+  const subCountMap = new Map<string, { total: number; checked: number }>();
+  for (const s of submissions) {
+    const cur = subCountMap.get(s.homeworkId) ?? { total: 0, checked: 0 };
+    cur.total++;
+    if (s.status === "checked") cur.checked++;
+    subCountMap.set(s.homeworkId, cur);
+  }
+
+  return rows.map((r) => {
+    const grp = groupMap.get(r.groupId);
+    const counts = subCountMap.get(r.id) ?? { total: 0, checked: 0 };
+    return {
+      ...r,
+      attachments: r.attachments ?? [],
+      groupName: grp?.name ?? "",
+      courseName: grp?.courseName ?? "",
+      submissionsCount: counts.total,
+      checkedCount: counts.checked,
+    };
+  });
+}
+
+/** Uy vazifasiga kelgan barcha o'quvchilar javoblari */
+export async function loadHomeworkSubmissions(db: TenantDb, homeworkId: string): Promise<HomeworkSubmissionItem[]> {
+  const rows = await db
+    .select({
+      id: homeworkSubmissions.id,
+      homeworkId: homeworkSubmissions.homeworkId,
+      studentId: homeworkSubmissions.studentId,
+      studentName: students.name,
+      studentPhone: students.phone,
+      text: homeworkSubmissions.text,
+      attachments: homeworkSubmissions.attachments,
+      status: homeworkSubmissions.status,
+      grade: homeworkSubmissions.grade,
+      feedback: homeworkSubmissions.feedback,
+      submittedAt: homeworkSubmissions.createdAt,
+      checkedAt: homeworkSubmissions.checkedAt,
+    })
+    .from(homeworkSubmissions)
+    .innerJoin(students, eq(students.id, homeworkSubmissions.studentId))
+    .where(eq(homeworkSubmissions.homeworkId, homeworkId))
+    .orderBy(desc(homeworkSubmissions.createdAt));
+
+  return rows.map((r) => ({
+    ...r,
+    status: r.status as "submitted" | "checked" | "rejected",
+    attachments: r.attachments ?? [],
+    submittedAt: r.submittedAt.toISOString(),
+    checkedAt: r.checkedAt?.toISOString() ?? null,
+  }));
+}
 
 /* ---------- O'quvchilar (3-bosqich) ---------- */
 
@@ -232,6 +362,9 @@ export interface KabinetStudent {
   /** Joriy oy: davomat va o'rtacha baho, % */
   attendance: number | null;
   average: number | null;
+  /** Portalga kirish hisobi (ADR 0063) */
+  userId: string | null;
+  hasLogin: boolean;
 }
 
 /** O'qituvchining guruhlaridagi o'quvchilar (ochiq a'zolik) — boshqa guruhlari ko'rinmaydi */
@@ -251,6 +384,7 @@ export async function kabinetStudents(
       name: students.name,
       phone: students.phone,
       status: students.status,
+      userId: students.userId,
       groupId: groupMemberships.groupId,
       membership: groupMemberships.status,
     })
@@ -269,6 +403,8 @@ export async function kabinetStudents(
       coins: null,
       attendance: null,
       average: null,
+      userId: r.userId ?? null,
+      hasLogin: !!r.userId,
     };
     s.groups.push({ id: r.groupId, name: names.get(r.groupId) ?? "—", status: r.membership });
     byId.set(r.id, s);

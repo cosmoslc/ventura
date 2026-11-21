@@ -89,6 +89,7 @@ Faqat `--primary` qo'lda beriladi. Qolganlari CSS `color-mix()` va `oklch(from �
 | `--background` | `#f4f6fb` | `#030712` | Sahifa foni |
 | `--foreground` | `#1c2333` | `#f8fafc` | Asosiy matn |
 | `--card`, `--popover` | `#ffffff` | `#0f172a` | Kartochka, menyu, modal |
+| `--media-surface` | `#ffffff` | `#ffffff` | Mahsulot rasmlari uchun doimiy oq sahna (`bg-media`) |
 | `--secondary` / `-hover` / `-foreground` | `#f1f5f9` / `#e2e8f0` / `#334155` | `#1e293b` / `#243048` / `#cbd5e1` | Ikkinchi darajali fon (ghost tugma, menyu hover) |
 | `--muted` / `--muted-foreground` | `#f8fafc` / `#607089` | `#1e293b` / `#94a3b8` | Yumshoq fon / yordamchi matn |
 | `--accent` | `#f5f7fb` | `#1e293b` | Hover foni (radio kartochka) |
@@ -112,6 +113,8 @@ Badge, toast, stat trendi va xato holatlarida ishlatiladi. Har biri uchun matn (
 | `danger` | Xato, yiqildi, xavfli | `#be123c` / `#fff1f2` | `#fb7185` / `rgb(136 19 55 / .5)` |
 | `info` | Jarayonda (build), ma'lumot | `#4338ca` / `#eef2ff` | `#818cf8` / `rgb(49 46 129 / .5)` |
 | `neutral` | Sinov, qoralama | `#475569` / `#f1f5f9` | `#cbd5e1` / `#1e293b` |
+
+Reyting yulduzlari holat rangidan alohida `--rating-star` tokenini (`text-rating-star`, `fill-rating-star`) ishlatadi. Telegram toʻlovi rangi `--telegram-bg` / `--telegram-hover` tokenlarida saqlanadi va `Button`ning `telegram` varianti orqali ishlatiladi.
 
 Pul: `--money-in` (`#047857` / `#34d399`), `--money-out` (`#d91a45` / `#fb7185`).
 
@@ -288,6 +291,7 @@ Radiusni o'zgartirish uchun faqat `--r-btn` ni almashtiring — tugma, input, si
 | --- | --- | --- |
 | `--card-shadow` | `0 10px 30px -18px rgb(17 17 19 / .22)` — yumshoq, pastga cho'zilgan | yo'q |
 | `--card-shadow-hover` | `0 18px 40px -16px` + primary 35% | `0 18px 50px` + primary 18% |
+| `--control-shadow` | `0 1px 2px rgb(15 23 42 / .08)` | yo'q |
 | `--card-hover-y` | stat-card hover'da 3px ko'tariladi | xuddi shu |
 | `--popover-shadow` | `0 24px 60px rgb(17 17 19 / .14)` + 1px halqa | `0 24px 60px rgb(0 0 0 / .6)` + 1px och halqa |
 | `--modal-shadow` | `0 24px 60px rgb(17 17 19 / .18)` | faqat 1px och halqa |
@@ -361,6 +365,8 @@ Hammasi `@ventura/ui/<nom>` dan import qilinadi.
 | `primary` (standart) | Brend gradienti, oq matn, rangli soya | Sahifadagi asosiy amal |
 | `ghost` | `--secondary` fon, 1px chegara | Ikkinchi darajali amal ("Bekor qilish", "Eksport", paginatsiya) |
 | `danger` | Qizil gradient, oq matn | Xavfli amal |
+| `success` | Holat ranglaridan olinadigan yashil fon, oq matn | Muvaffaqiyatni tasdiqlash amali |
+| `telegram` | Telegram brend ranglari tokeni | Telegram orqali toʻlov amali |
 | `icon` | Kvadrat, chegara, hover'da 1px ko'tariladi | Faqat ikonkali tugma (topbar, modal yopish) |
 | `subtle` | Fonsiz, hover'da `--secondary` | Jadval qatoridagi uch nuqta |
 
@@ -393,6 +399,7 @@ Qoidalar:
 - API: `Select` (`value` / `defaultValue` / `onValueChange`), `SelectTrigger`, `SelectValue` (`placeholder`), `SelectContent`, `SelectItem`.
 - Klaviatura: ↑ ↓ Home End Enter Space Escape. Harf bilan qidirish (typeahead) hozircha yo'q.
 - Modal ichida ishlaydi: tanlash modalni yopmaydi; birinchi Escape faqat select'ni yopadi.
+- `SelectField` (`select.tsx`) OS-native tanlov kerak bo'lgan joylarda ishlatiladi; balandlik, radius, chegara, fon va fokus `controlClass` tokenlaridan olinadi.
 
 ### 11.4 PhoneInput — `phone-input.tsx`
 

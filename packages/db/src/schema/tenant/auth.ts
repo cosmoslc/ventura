@@ -29,8 +29,8 @@ import { tenantId, tenantPolicy, timestamps } from "./columns";
 export const STAFF_ROLES = ["director", "staff", "manager", "cashier", "viewer"] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
-/** `staff` — admin CRM; `teacher` — faqat o'qituvchi kabineti (ADR 0062), `teachers.user_id` orqali bog'langan */
-export const USER_KINDS = ["staff", "teacher"] as const;
+/** `staff` — admin CRM; `teacher` — o'qituvchi kabineti (ADR 0062); `student` — o'quvchi portali (ADR 0063) */
+export const USER_KINDS = ["staff", "teacher", "student"] as const;
 export type UserKind = (typeof USER_KINDS)[number];
 
 export const GENDERS = ["male", "female"] as const;

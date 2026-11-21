@@ -189,6 +189,7 @@ export const SERVER_ACTIONS = [
   "db_drop",
   "project_purge",
   "db_move",
+  "db_move_supabase",
 ] as const;
 export type ServerActionKind = (typeof SERVER_ACTIONS)[number];
 

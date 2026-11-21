@@ -14,14 +14,14 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
   icon?: React.ReactNode;
 }
 
-export function Input({ className, icon, ...props }: InputProps) {
-  if (!icon) return <input data-slot="input" className={cn(controlClass, className)} {...props} />;
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input({ className, icon, ...props }, ref) {
+  if (!icon) return <input ref={ref} data-slot="input" className={cn(controlClass, className)} {...props} />;
   return (
     <div className="relative">
       <span className="pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-placeholder [&_svg]:size-4">
         {icon}
       </span>
-      <input data-slot="input" className={cn(controlClass, "pl-9", className)} {...props} />
+      <input ref={ref} data-slot="input" className={cn(controlClass, "pl-9", className)} {...props} />
     </div>
   );
-}
+});
