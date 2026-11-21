@@ -3,9 +3,10 @@ import { eq, sql } from "drizzle-orm";
 import { createSawmillDb } from "@ventura/db";
 import { expenseCategories, generalExpenses } from "@ventura/db/schema/sawmill";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("umumiy xarajatlar (general expenses) database operations (S5 - K14)", () => {
+describe.skipIf(!DB_URL)("umumiy xarajatlar (general expenses) database operations (S5 - K14)", () => {
   it("toifa yaratish, umumiy xarajat qo'shish, hisoblash va tozalash to'g'ri ishlaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     const uid = Date.now().toString().slice(-6);

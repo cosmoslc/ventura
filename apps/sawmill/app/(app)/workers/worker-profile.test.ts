@@ -12,9 +12,10 @@ import {
 import { calculateWorkerBalance } from "@/lib/calc/balance";
 import { resolveWorkerPrice } from "@/lib/calc/pay";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("worker profile, payments, wage accruals and balance operations", () => {
+describe.skipIf(!DB_URL)("worker profile, payments, wage accruals and balance operations", () => {
   it("to'lovlar, maosh hisoblash (K1), maxsus narxlar va balans hisob-kitobi to'liq ishlaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     try {

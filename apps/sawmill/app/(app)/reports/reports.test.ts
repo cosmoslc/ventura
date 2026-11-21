@@ -15,9 +15,10 @@ import {
 } from "@ventura/db/schema/sawmill";
 import { getDispatchReportData, getProfitReportData, getWagesReportData } from "./actions";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("hisobotlar va tahlil (reports) data aggregation (S5)", () => {
+describe.skipIf(!DB_URL)("hisobotlar va tahlil (reports) data aggregation (S5)", () => {
   it("getProfitReportData, getWagesReportData va getDispatchReportData to'g'ri hisoblaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     const uid = Date.now().toString().slice(-6);

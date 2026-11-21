@@ -4,9 +4,10 @@ import { createSawmillDb } from "@ventura/db";
 import { users } from "@ventura/db/schema/sawmill";
 import { createSawmillAuth } from "../server/auth";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("sawmill login flow verification", () => {
+describe.skipIf(!DB_URL)("sawmill login flow verification", () => {
   it("baza va Better Auth egasi bilan to'liq ishlaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     try {

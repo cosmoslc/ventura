@@ -15,9 +15,10 @@ import {
 import { calculateGroupWork, calculateSingleWork } from "@/lib/calc/pay";
 import { getRemainingRes } from "./actions";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("kunlik ishlar (work) database operations and business logic", () => {
+describe.skipIf(!DB_URL)("kunlik ishlar (work) database operations and business logic", () => {
   it("yakka va guruh ishlari, sartirofka/res nazorati va ombor o'zgarishi to'liq ishlaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     try {

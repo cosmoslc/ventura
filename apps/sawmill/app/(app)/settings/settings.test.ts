@@ -4,9 +4,10 @@ import { createSawmillDb } from "@ventura/db";
 import { workTypes } from "@ventura/db/schema/sawmill";
 import { getSawmillSettings, saveSawmillSettings } from "@/lib/settings/schema";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("settings and work types database operations", () => {
+describe.skipIf(!DB_URL)("settings and work types database operations", () => {
   it("sozlamalarni saqlash va o'qish to'g'ri ishlaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     try {

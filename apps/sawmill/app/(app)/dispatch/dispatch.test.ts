@@ -12,9 +12,10 @@ import {
 } from "@ventura/db/schema/sawmill";
 import { validateAndCalculateDispatch } from "@/lib/calc/dispatch";
 
-const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+// Haqiqiy PostgreSQL (sawmill sxemasi migratsiya qilingan); berilmasa test o'tkazib yuboriladi
+const DB_URL = process.env.SAWMILL_TEST_DATABASE_URL ?? "";
 
-describe("yuk chiqarish (dispatch) database operations and business logic (S4)", () => {
+describe.skipIf(!DB_URL)("yuk chiqarish (dispatch) database operations and business logic (S4)", () => {
   it("yuk chiqarish, ombor qoldig'i kamayishi, K5 yuk mashinasi xarajati va bekor qilish to'liq ishlaydi", async () => {
     const db = createSawmillDb(DB_URL, "pilorama");
     try {

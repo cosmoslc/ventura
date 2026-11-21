@@ -1,14 +1,11 @@
-// Muallif / Agent: Google Gemini
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import { beforeAll, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 
-beforeAll(() => {
-  const envPath = resolve(process.cwd(), "../../.env");
-  if (existsSync(envPath)) {
-    process.loadEnvFile(envPath);
-  }
-});
+const envPath = resolve(process.cwd(), "../../.env");
+if (existsSync(envPath)) process.loadEnvFile(envPath);
+// Panel bazasi kerak bo'lgan testlar (CI'da PANEL_DATABASE_URL yo'q — o'tkazib yuboriladi)
+const hasDb = Boolean(process.env.PANEL_DATABASE_URL);
 
 import { checkCrmSlugAvailability, checkTrialProvisionStatus } from "./actions";
 
@@ -40,13 +37,13 @@ describe("checkCrmSlugAvailability", () => {
     }
   });
 
-  it("mavjud band subdomenni (oxford) rad etadi", async () => {
+  it.skipIf(!hasDb)("mavjud band subdomenni (oxford) rad etadi", async () => {
     const res = await checkCrmSlugAvailability("oxford");
     expect(res.available).toBe(false);
     expect(res.error).toContain("band qilingan");
   });
 
-  it("yangi to'g'ri subdomenga ruxsat beradi", async () => {
+  it.skipIf(!hasDb)("yangi to'g'ri subdomenga ruxsat beradi", async () => {
     const uniqueSlug = `sinov-${Date.now()}`;
     const res = await checkCrmSlugAvailability(uniqueSlug);
     expect(res.available).toBe(true);
@@ -64,7 +61,7 @@ describe("checkTrialProvisionStatus", () => {
     expect(resInvalid.ok).toBe(false);
   });
 
-  it("mavjud bo'lmagan loyiha uchun loyiha topilmadi deb qaytaradi", async () => {
+  it.skipIf(!hasDb)("mavjud bo'lmagan loyiha uchun loyiha topilmadi deb qaytaradi", async () => {
     const res = await checkTrialProvisionStatus({ slug: "nonexistent-center-12345" });
     expect(res.ok).toBe(false);
     expect((res as { error: string }).error).toContain("topilmadi");
