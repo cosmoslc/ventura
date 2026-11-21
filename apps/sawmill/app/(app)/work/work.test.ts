@@ -15,8 +15,7 @@ import {
 import { calculateGroupWork, calculateSingleWork } from "@/lib/calc/pay";
 import { getRemainingRes } from "./actions";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("kunlik ishlar (work) database operations and business logic", () => {
   it("yakka va guruh ishlari, sartirofka/res nazorati va ombor o'zgarishi to'liq ishlaydi", async () => {
@@ -92,27 +91,21 @@ describe("kunlik ishlar (work) database operations and business logic", () => {
       expect(initRes).toBe(0);
 
       // Terakka 2 ta res xarajati qo'shamiz
-      await db
-        .insert(terakCosts)
-        .values({
-          terakId: trk.id,
-          kind: "res",
-          title: "2 ta reys olib kelindi",
-          trips: 2,
-          pricePerTrip: 300000,
-          amount: 600000,
-          date: "2026-10-24",
-        });
+      await db.insert(terakCosts).values({
+        terakId: trk.id,
+        kind: "res",
+        title: "2 ta reys olib kelindi",
+        trips: 2,
+        pricePerTrip: 300000,
+        amount: 600000,
+        date: "2026-10-24",
+      });
 
       const resAfterCost = await getRemainingRes(db, trk.id);
       expect(resAfterCost).toBe(2);
 
       // Sartirofka ish turini topamiz
-      let [sortingType] = await db
-        .select()
-        .from(workTypes)
-        .where(eq(workTypes.kind, "sorting"))
-        .limit(1);
+      let [sortingType] = await db.select().from(workTypes).where(eq(workTypes.kind, "sorting")).limit(1);
 
       if (!sortingType) {
         const [insertedSt] = await db

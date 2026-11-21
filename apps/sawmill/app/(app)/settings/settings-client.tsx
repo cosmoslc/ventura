@@ -10,11 +10,7 @@ import { Label } from "@ventura/ui/label";
 import { ConfirmModal, Modal } from "@ventura/ui/modal";
 import { type Locale, t } from "@/lib/i18n";
 import type { SawmillSettings } from "@/lib/settings/schema";
-import {
-  createWorkTypeAction,
-  deleteWorkTypeAction,
-  saveGeneralSettingsAction,
-} from "./actions";
+import { createWorkTypeAction, deleteWorkTypeAction, saveGeneralSettingsAction } from "./actions";
 
 interface WorkTypeItem {
   id: string;
@@ -30,12 +26,7 @@ interface SettingsClientProps {
   locale: Locale;
 }
 
-export function SettingsClient({
-  initialSettings,
-  workTypes,
-  canManage,
-  locale,
-}: SettingsClientProps) {
+export function SettingsClient({ initialSettings, workTypes, canManage, locale }: SettingsClientProps) {
   // General settings state
   const [profitMode, setProfitMode] = React.useState(initialSettings.profitMode);
   const [qtyDisplay, setQtyDisplay] = React.useState(initialSettings.qtyDisplay);
@@ -111,12 +102,8 @@ export function SettingsClient({
     <div className="space-y-8 max-w-4xl">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-          {t("settings_title", locale)}
-        </h1>
-        <p className="text-caption text-muted-foreground mt-0.5">
-          {t("settings_subtitle", locale)}
-        </p>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("settings_title", locale)}</h1>
+        <p className="text-caption text-muted-foreground mt-0.5">{t("settings_subtitle", locale)}</p>
       </div>
 
       {/* 1. Umumiy hisoblash sozlamalari */}
@@ -211,9 +198,7 @@ export function SettingsClient({
                 <option value="direct">{t("cube_direct", locale)}</option>
                 <option value="calculated">{t("cube_calculated", locale)}</option>
               </select>
-              <span className="text-2xs text-muted-foreground block">
-                Ish qo'shishda kub metr qanday kiritilishi.
-              </span>
+              <span className="text-2xs text-muted-foreground block">Ish qo'shishda kub metr qanday kiritilishi.</span>
             </div>
           </div>
 
@@ -316,12 +301,7 @@ export function SettingsClient({
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setWorkTypeModalOpen(false)}
-              disabled={savingWorkType}
-            >
+            <Button type="button" variant="ghost" onClick={() => setWorkTypeModalOpen(false)} disabled={savingWorkType}>
               {t("action_cancel", locale)}
             </Button>
             <Button type="submit" disabled={savingWorkType}>

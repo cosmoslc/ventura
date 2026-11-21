@@ -21,11 +21,7 @@ import { Input } from "@ventura/ui/input";
 import { Modal } from "@ventura/ui/modal";
 import { type OrderStatus } from "@/lib/calc/orders";
 import { type Locale, t } from "@/lib/i18n";
-import {
-  deleteOrderAction,
-  markOrderNotifiedAction,
-  toggleOrderCompletionAction,
-} from "./actions";
+import { deleteOrderAction, markOrderNotifiedAction, toggleOrderCompletionAction } from "./actions";
 import { OrderDialog } from "./order-dialog";
 
 export interface OrderItemView {
@@ -107,9 +103,7 @@ export function OrdersClient({
 
   // Diqqat talab zakazlar (bajarilmagan va (tayyor yoki muddati yaqin/o'tgan))
   const attentionOrders = React.useMemo(() => {
-    return initialOrders.filter(
-      (o) => o.status !== "completed" && (o.status === "ready" || o.isDueSoon),
-    );
+    return initialOrders.filter((o) => o.status !== "completed" && (o.status === "ready" || o.isDueSoon));
   }, [initialOrders]);
 
   // Filtrlash
@@ -159,12 +153,8 @@ export function OrdersClient({
       {/* 1. Sarlavha va yangi qo'shish */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-foreground">
-            {t("orders_title", locale)}
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {t("orders_subtitle", locale)}
-          </p>
+          <h1 className="text-xl font-bold text-foreground">{t("orders_title", locale)}</h1>
+          <p className="text-xs text-muted-foreground">{t("orders_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -187,7 +177,9 @@ export function OrdersClient({
         <Card className="p-4 border-amber-500/30 bg-amber-500/5 space-y-3">
           <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs uppercase tracking-wider">
             <AlertTriangle className="size-4" />
-            <span>{t("orders_attention_needed", locale)} ({attentionOrders.length})</span>
+            <span>
+              {t("orders_attention_needed", locale)} ({attentionOrders.length})
+            </span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -198,9 +190,7 @@ export function OrdersClient({
               >
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-foreground truncate">
-                      {ao.customerName}
-                    </span>
+                    <span className="font-bold text-foreground truncate">{ao.customerName}</span>
                     {ao.status === "ready" && (
                       <Badge tone="success" className="text-2xs py-0">
                         {t("orders_status_ready", locale)}
@@ -215,11 +205,7 @@ export function OrdersClient({
                   <div className="text-muted-foreground truncate">
                     {ao.materialName} — {ao.quantity} {ao.materialUnit} (omborda: {ao.stockQuantity})
                   </div>
-                  {ao.dueDate && (
-                    <div className="text-2xs text-muted-foreground font-mono">
-                      Muddat: {ao.dueDate}
-                    </div>
-                  )}
+                  {ao.dueDate && <div className="text-2xs text-muted-foreground font-mono">Muddat: {ao.dueDate}</div>}
                 </div>
 
                 <div className="flex items-center gap-1.5 shrink-0">
@@ -255,36 +241,28 @@ export function OrdersClient({
           <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
             {t("orders_filter_all", locale)}
           </span>
-          <div className="text-xl font-bold text-foreground font-mono">
-            {stats.total}
-          </div>
+          <div className="text-xl font-bold text-foreground font-mono">{stats.total}</div>
         </Card>
 
         <Card className="p-3.5 space-y-1">
           <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
             {t("orders_status_ready", locale)}
           </span>
-          <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-            {stats.readyCount}
-          </div>
+          <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono">{stats.readyCount}</div>
         </Card>
 
         <Card className="p-3.5 space-y-1">
           <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
             {t("orders_status_pending", locale)}
           </span>
-          <div className="text-xl font-bold text-amber-600 dark:text-amber-400 font-mono">
-            {stats.pendingCount}
-          </div>
+          <div className="text-xl font-bold text-amber-600 dark:text-amber-400 font-mono">{stats.pendingCount}</div>
         </Card>
 
         <Card className="p-3.5 space-y-1">
           <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
             {t("orders_status_completed", locale)}
           </span>
-          <div className="text-xl font-bold text-muted-foreground font-mono">
-            {stats.completedCount}
-          </div>
+          <div className="text-xl font-bold text-muted-foreground font-mono">{stats.completedCount}</div>
         </Card>
       </div>
 
@@ -383,9 +361,7 @@ export function OrdersClient({
                   return (
                     <tr
                       key={o.id}
-                      className={`hover:bg-muted/20 transition-colors ${
-                        isCompleted ? "opacity-60 bg-muted/10" : ""
-                      }`}
+                      className={`hover:bg-muted/20 transition-colors ${isCompleted ? "opacity-60 bg-muted/10" : ""}`}
                     >
                       {/* Holat tugmasi (Checkbox) */}
                       <td className="py-3 px-4 text-center">
@@ -406,7 +382,9 @@ export function OrdersClient({
                       {/* Mijoz */}
                       <td className="py-3 px-4">
                         <div className="space-y-0.5">
-                          <div className={`font-semibold text-foreground ${isCompleted ? "line-through text-muted-foreground" : ""}`}>
+                          <div
+                            className={`font-semibold text-foreground ${isCompleted ? "line-through text-muted-foreground" : ""}`}
+                          >
                             {o.customerName}
                           </div>
                           {o.phone && (
@@ -416,18 +394,14 @@ export function OrdersClient({
                             </div>
                           )}
                           {o.address && (
-                            <div className="text-2xs text-muted-foreground truncate max-w-xs">
-                              {o.address}
-                            </div>
+                            <div className="text-2xs text-muted-foreground truncate max-w-xs">{o.address}</div>
                           )}
                         </div>
                       </td>
 
                       {/* Material */}
                       <td className="py-3 px-4 whitespace-nowrap">
-                        <span className="font-semibold text-foreground">
-                          {o.materialName}
-                        </span>
+                        <span className="font-semibold text-foreground">{o.materialName}</span>
                       </td>
 
                       {/* Miqdor */}
@@ -443,8 +417,8 @@ export function OrdersClient({
                           <span className="font-mono text-xs">
                             {o.stockQuantity} {o.materialUnit}
                           </span>
-                          {!isCompleted && (
-                            o.status === "ready" ? (
+                          {!isCompleted &&
+                            (o.status === "ready" ? (
                               <Badge tone="success" className="text-2xs py-0">
                                 {t("orders_status_ready", locale)}
                               </Badge>
@@ -452,8 +426,7 @@ export function OrdersClient({
                               <Badge tone="neutral" className="text-2xs py-0">
                                 {t("orders_status_pending", locale)}
                               </Badge>
-                            )
-                          )}
+                            ))}
                         </div>
                       </td>
 
@@ -536,9 +509,7 @@ export function OrdersClient({
           title={t("orders_delete_confirm", locale)}
         >
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Ushbu zakazni ro'yxatdan o'chirmoqchimisiz?
-            </p>
+            <p className="text-sm text-muted-foreground">Ushbu zakazni ro'yxatdan o'chirmoqchimisiz?</p>
 
             <div className="p-3 bg-muted/40 rounded-control space-y-1 text-xs">
               <div className="flex justify-between">
@@ -548,25 +519,16 @@ export function OrdersClient({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Material:</span>
                 <span className="font-semibold">
-                  {deleteTarget.materialName} ({deleteTarget.quantity}{" "}
-                  {deleteTarget.materialUnit})
+                  {deleteTarget.materialName} ({deleteTarget.quantity} {deleteTarget.materialUnit})
                 </span>
               </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="ghost"
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-              >
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 {t("action_cancel", locale)}
               </Button>
-              <Button
-                variant="danger"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
+              <Button variant="danger" onClick={handleDelete} disabled={deleting}>
                 {deleting ? t("status_loading", locale) : t("action_delete", locale)}
               </Button>
             </div>

@@ -25,14 +25,7 @@ export interface MattingResult {
 }
 
 /** Ranglar orasidagi masofa (Evklid formulasi) */
-export function colorDistance(
-  r1: number,
-  g1: number,
-  b1: number,
-  r2: number,
-  g2: number,
-  b2: number
-): number {
+export function colorDistance(r1: number, g1: number, b1: number, r2: number, g2: number, b2: number): number {
   const dr = r1 - r2;
   const dg = g1 - g2;
   const db = b1 - b2;
@@ -46,15 +39,10 @@ export function loadImageSafely(src: string): Promise<HTMLImageElement> {
     img.crossOrigin = "anonymous";
 
     // Agar rasm tashqi domenda bo'lsa va dataURL bo'lmasa, proksi orqali yuklash
-    const isExternal =
-      src.startsWith("http://") || src.startsWith("https://");
-    const isCurrentOrigin =
-      typeof window !== "undefined" && src.startsWith(window.location.origin);
+    const isExternal = src.startsWith("http://") || src.startsWith("https://");
+    const isCurrentOrigin = typeof window !== "undefined" && src.startsWith(window.location.origin);
 
-    const finalSrc =
-      isExternal && !isCurrentOrigin
-        ? `/api/uploads/proxy?url=${encodeURIComponent(src)}`
-        : src;
+    const finalSrc = isExternal && !isCurrentOrigin ? `/api/uploads/proxy?url=${encodeURIComponent(src)}` : src;
 
     img.onload = () => resolve(img);
     img.onerror = (err) => reject(new Error(`Rasmni yuklab bo'lmadi: ${String(err)}`));
@@ -108,7 +96,7 @@ export function detectCornerBackgroundColor(imgData: ImageData): ColorRGB {
 export function applySmartMatting(
   sourceCanvas: HTMLCanvasElement,
   targetCanvas: HTMLCanvasElement,
-  options: SmartMattingOptions = {}
+  options: SmartMattingOptions = {},
 ): MattingResult {
   const width = sourceCanvas.width;
   const height = sourceCanvas.height;
@@ -129,14 +117,9 @@ export function applySmartMatting(
   // Dastlabki nusxa
   tgtData.data.set(srcData.data);
 
-  const {
-    tolerance = 35,
-    feather = 2,
-    mode = "flood-fill",
-  } = options;
+  const { tolerance = 35, feather = 2, mode = "flood-fill" } = options;
 
-  const targetColor =
-    options.targetColor ?? detectCornerBackgroundColor(srcData);
+  const targetColor = options.targetColor ?? detectCornerBackgroundColor(srcData);
 
   const data = tgtData.data;
   const totalPixels = width * height;
@@ -178,7 +161,7 @@ export function applySmartMatting(
           data[idx + 2]!,
           targetColor.r,
           targetColor.g,
-          targetColor.b
+          targetColor.b,
         );
         if (dist <= tolerance + feather) {
           visited[i] = 1;
@@ -199,7 +182,7 @@ export function applySmartMatting(
             data[idx + 2]!,
             targetColor.r,
             targetColor.g,
-            targetColor.b
+            targetColor.b,
           );
           if (dist <= tolerance + feather) {
             visited[i] = 1;
@@ -223,7 +206,7 @@ export function applySmartMatting(
         data[idx + 2]!,
         targetColor.r,
         targetColor.g,
-        targetColor.b
+        targetColor.b,
       );
 
       if (dist <= tolerance) {
@@ -253,7 +236,7 @@ export function applySmartMatting(
               data[nidx + 2]!,
               targetColor.r,
               targetColor.g,
-              targetColor.b
+              targetColor.b,
             );
             if (ndist <= tolerance + feather) {
               visited[ni] = 1;

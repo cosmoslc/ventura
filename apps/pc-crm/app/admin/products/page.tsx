@@ -1,16 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  AlertCircle,
-  Boxes,
-  Edit,
-  Plus,
-  Search,
-  Tag,
-  Trash2,
-  TrendingUp,
-} from "lucide-react";
+import { AlertCircle, Boxes, Edit, Plus, Search, Tag, Trash2, TrendingUp } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -32,29 +23,33 @@ export default function AdminProductsPage() {
       return;
     }
     setLoadError("");
-    setProductsList(result.products.map((product) => ({
-      id: product.id,
-      nameUz: product.name,
-      nameRu: product.nameRu,
-      categorySlug: product.categorySlug,
-      brandName: product.brandName ?? "",
-      sku: product.sku ?? "",
-      imageUrl: product.imageUrl,
-      costPrice: product.costPrice,
-      sellPrice: product.sellPrice,
-      marginPercent: product.marginPercent ?? 0,
-      discountPercent: product.discountPercent,
-      stock: product.stock,
-      minStock: product.minStock,
-      isNew: product.isNew,
-      isHit: product.isHit,
-      isActive: product.isActive,
-      variants: (product.variants ?? []).map(({ colorName, colorHex, stock }) => ({ colorName, colorHex, stock })),
-      specs: product.specs ?? [],
-    })));
+    setProductsList(
+      result.products.map((product) => ({
+        id: product.id,
+        nameUz: product.name,
+        nameRu: product.nameRu,
+        categorySlug: product.categorySlug,
+        brandName: product.brandName ?? "",
+        sku: product.sku ?? "",
+        imageUrl: product.imageUrl,
+        costPrice: product.costPrice,
+        sellPrice: product.sellPrice,
+        marginPercent: product.marginPercent ?? 0,
+        discountPercent: product.discountPercent,
+        stock: product.stock,
+        minStock: product.minStock,
+        isNew: product.isNew,
+        isHit: product.isHit,
+        isActive: product.isActive,
+        variants: (product.variants ?? []).map(({ colorName, colorHex, stock }) => ({ colorName, colorHex, stock })),
+        specs: product.specs ?? [],
+      })),
+    );
   }, []);
 
-  useEffect(() => { void loadProducts(); }, [loadProducts]);
+  useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState("all");
@@ -69,8 +64,7 @@ export default function AdminProductsPage() {
       item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.brandName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesCategory =
-      categoryFilter === "all" || item.categorySlug === categoryFilter;
+    const matchesCategory = categoryFilter === "all" || item.categorySlug === categoryFilter;
 
     const matchesStock =
       stockFilter === "all" ||
@@ -141,9 +135,7 @@ export default function AdminProductsPage() {
       {/* 1. Sarlavha va qo'shish tugmasi */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Mahsulotlar katalogi
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Mahsulotlar katalogi</h1>
         </div>
 
         <Button onClick={handleOpenNew}>
@@ -152,16 +144,18 @@ export default function AdminProductsPage() {
         </Button>
       </div>
 
-      {loadError && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{loadError}</div>}
+      {loadError && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {loadError}
+        </div>
+      )}
 
       {/* 2. Statistik kartalar */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={<Boxes />}
-          label="Mahsulot turlari"
-          value={`${productsList.length} xil`}
-          tone={1}
-        />
+        <StatCard icon={<Boxes />} label="Mahsulot turlari" value={`${productsList.length} xil`} tone={1} />
 
         {isFinancial ? (
           <>
@@ -201,12 +195,7 @@ export default function AdminProductsPage() {
           </>
         )}
 
-        <StatCard
-          icon={<AlertCircle />}
-          label="Kam qolganlar"
-          value={`${lowStockCount} ta`}
-          tone={4}
-        />
+        <StatCard icon={<AlertCircle />} label="Kam qolganlar" value={`${lowStockCount} ta`} tone={4} />
       </div>
 
       {/* 3. Qidiruv va Filtrlar */}
@@ -291,11 +280,7 @@ export default function AdminProductsPage() {
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control border border-border/80 bg-media p-1">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={p.imageUrl}
-                            alt={p.nameUz}
-                            className="h-full w-full object-contain"
-                          />
+                          <img src={p.imageUrl} alt={p.nameUz} className="h-full w-full object-contain" />
                         </div>
                         <div>
                           <p className="font-bold text-foreground line-clamp-1 max-w-xs" title={p.nameUz}>
@@ -308,14 +293,10 @@ export default function AdminProductsPage() {
                               </span>
                             )}
                             {p.isNew && (
-                              <span className="rounded bg-primary/10 px-1 text-2xs font-bold text-primary">
-                                YANGI
-                              </span>
+                              <span className="rounded bg-primary/10 px-1 text-2xs font-bold text-primary">YANGI</span>
                             )}
                             {p.variants.length > 0 && (
-                              <span className="text-2xs text-muted-foreground">
-                                {p.variants.length} ta rang
-                              </span>
+                              <span className="text-2xs text-muted-foreground">{p.variants.length} ta rang</span>
                             )}
                           </div>
                         </div>
@@ -333,11 +314,7 @@ export default function AdminProductsPage() {
                       <div className="inline-flex items-center gap-1.5 font-bold">
                         <span
                           className={
-                            isOut
-                              ? "text-(--danger-fg)"
-                              : isLow
-                                ? "text-(--warning-fg)"
-                                : "text-(--success-fg)"
+                            isOut ? "text-(--danger-fg)" : isLow ? "text-(--warning-fg)" : "text-(--success-fg)"
                           }
                         >
                           {p.stock} dona
@@ -363,9 +340,7 @@ export default function AdminProductsPage() {
                           <div>
                             {formatMoney(p.sellPrice)}
                             {p.discountPercent > 0 && (
-                              <span className="block text-2xs text-(--danger-fg)">
-                                -{p.discountPercent}% chegirma
-                              </span>
+                              <span className="block text-2xs text-(--danger-fg)">-{p.discountPercent}% chegirma</span>
                             )}
                           </div>
                         </td>

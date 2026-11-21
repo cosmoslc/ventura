@@ -23,13 +23,7 @@ interface SelectCtx {
 
 /** Native select uchun tokenli ko'rinish; OS select xulqi kerak bo'lgan oddiy forma maydonlari uchun. */
 export function SelectField({ className, ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {
-  return (
-    <select
-      data-slot="select-field"
-      className={cn(controlClass, "cursor-pointer pr-3", className)}
-      {...props}
-    />
-  );
+  return <select data-slot="select-field" className={cn(controlClass, "cursor-pointer pr-3", className)} {...props} />;
 }
 
 /** Shundan ko'p band bo'lsa ro'yxat tepasida qidiruv chiqadi (kurs, o'qituvchi, guruh ko'payganda) */
@@ -44,7 +38,10 @@ function nodeText(node: React.ReactNode): string {
 }
 
 function normalizeText(str: string): string {
-  return str.toLocaleLowerCase().replace(/[ʻʼ`'"]/g, "").trim();
+  return str
+    .toLocaleLowerCase()
+    .replace(/[ʻʼ`'"]/g, "")
+    .trim();
 }
 
 function matches(node: React.ReactNode, query: string): boolean {

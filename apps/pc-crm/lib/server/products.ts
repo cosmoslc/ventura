@@ -73,11 +73,7 @@ export async function getDbProducts(options?: {
   }
 
   if (options?.brandSlug) {
-    const br = await db
-      .select({ id: brands.id })
-      .from(brands)
-      .where(eq(brands.slug, options.brandSlug))
-      .limit(1);
+    const br = await db.select({ id: brands.id }).from(brands).where(eq(brands.slug, options.brandSlug)).limit(1);
     if (br[0]) {
       conditions.push(eq(products.brandId, br[0].id));
     }
@@ -111,23 +107,29 @@ export async function getDbProducts(options?: {
 
   // Rasmlar va variantlarni bir martalik so'rov bilan olish
   const productIds = rows.map((r) => r.product.id);
-  const images = productIds.length > 0
-    ? await db
-        .select()
-        .from(productImages)
-        .where(sql`${productImages.productId} IN ${productIds}`)
-        .orderBy(productImages.sort)
-    : [];
+  const images =
+    productIds.length > 0
+      ? await db
+          .select()
+          .from(productImages)
+          .where(sql`${productImages.productId} IN ${productIds}`)
+          .orderBy(productImages.sort)
+      : [];
 
-  const variants = productIds.length > 0
-    ? await db
-        .select()
-        .from(productVariants)
-        .where(sql`${productVariants.productId} IN ${productIds}`)
-    : [];
-  const specs = productIds.length > 0
-    ? await db.select().from(productSpecs).where(sql`${productSpecs.productId} IN ${productIds}`)
-    : [];
+  const variants =
+    productIds.length > 0
+      ? await db
+          .select()
+          .from(productVariants)
+          .where(sql`${productVariants.productId} IN ${productIds}`)
+      : [];
+  const specs =
+    productIds.length > 0
+      ? await db
+          .select()
+          .from(productSpecs)
+          .where(sql`${productSpecs.productId} IN ${productIds}`)
+      : [];
 
   const imageMap = new Map<string, string>();
   for (const img of images) {
@@ -174,9 +176,7 @@ export async function getDbProducts(options?: {
       categoryName: catName,
       brandName: brand?.name,
       sku: product.sku ?? undefined,
-      imageUrl:
-        imageMap.get(product.id) ??
-        "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&q=80",
+      imageUrl: imageMap.get(product.id) ?? "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&q=80",
       costPrice: product.costPrice,
       sellPrice: product.sellPrice,
       marginPercent: margin,
@@ -218,19 +218,9 @@ export async function getDbProductBySlug(slug: string) {
   if (!row) return null;
 
   const [images, specs, variants] = await Promise.all([
-    db
-      .select()
-      .from(productImages)
-      .where(eq(productImages.productId, row.product.id))
-      .orderBy(productImages.sort),
-    db
-      .select()
-      .from(productSpecs)
-      .where(eq(productSpecs.productId, row.product.id)),
-    db
-      .select()
-      .from(productVariants)
-      .where(eq(productVariants.productId, row.product.id)),
+    db.select().from(productImages).where(eq(productImages.productId, row.product.id)).orderBy(productImages.sort),
+    db.select().from(productSpecs).where(eq(productSpecs.productId, row.product.id)),
+    db.select().from(productVariants).where(eq(productVariants.productId, row.product.id)),
   ]);
 
   const { product, category, brand } = row;
@@ -315,11 +305,7 @@ export async function createDbProduct(input: {
   let brandId: string | undefined;
   if (input.brandName) {
     const brandSlug = input.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-");
-    const [br] = await db
-      .select({ id: brands.id })
-      .from(brands)
-      .where(eq(brands.slug, brandSlug))
-      .limit(1);
+    const [br] = await db.select({ id: brands.id }).from(brands).where(eq(brands.slug, brandSlug)).limit(1);
 
     if (br) {
       brandId = br.id;
@@ -370,7 +356,7 @@ export async function createDbProduct(input: {
         title: { uz: s.title },
         value: { uz: s.value },
         helpText: s.helpText ? { uz: s.helpText } : undefined,
-      }))
+      })),
     );
   }
 
@@ -396,14 +382,18 @@ export async function updateDbProduct(
     isActive: boolean;
     imageUrl: string;
     specs: { key: string; title: string; value: string; helpText?: string }[];
-  }>
+  }>,
 ) {
   const db = getDb();
   return db.transaction(async (tx) => {
     const updateData: Record<string, unknown> = {};
 
     if (input.stock !== undefined) {
-      const [current] = await tx.select({ reserved: products.reserved }).from(products).where(eq(products.id, id)).for("update");
+      const [current] = await tx
+        .select({ reserved: products.reserved })
+        .from(products)
+        .where(eq(products.id, id))
+        .for("update");
       if (!current) return undefined;
       if (input.stock < current.reserved) throw new Error("Yangi qoldiq mavjud zaxiradan kam bo'lishi mumkin emas");
     }
@@ -414,14 +404,27 @@ export async function updateDbProduct(
       const currentName = current.name as I18nText;
       updateData.name = {
         uz: input.nameUz ?? currentName.uz,
-        ...(input.nameRu !== undefined ? (input.nameRu ? { ru: input.nameRu } : {}) : currentName.ru ? { ru: currentName.ru } : {}),
+        ...(input.nameRu !== undefined
+          ? input.nameRu
+            ? { ru: input.nameRu }
+            : {}
+          : currentName.ru
+            ? { ru: currentName.ru }
+            : {}),
       };
     }
 
     if (input.categorySlug !== undefined) {
-      let [category] = await tx.select({ id: categories.id }).from(categories).where(eq(categories.slug, input.categorySlug)).limit(1);
+      let [category] = await tx
+        .select({ id: categories.id })
+        .from(categories)
+        .where(eq(categories.slug, input.categorySlug))
+        .limit(1);
       if (!category) {
-        [category] = await tx.insert(categories).values({ slug: input.categorySlug, name: { uz: input.categorySlug } }).returning({ id: categories.id });
+        [category] = await tx
+          .insert(categories)
+          .values({ slug: input.categorySlug, name: { uz: input.categorySlug } })
+          .returning({ id: categories.id });
       }
       if (!category) throw new Error("Mahsulot kategoriyasini saqlab bo'lmadi");
       updateData.categoryId = category.id;
@@ -431,10 +434,17 @@ export async function updateDbProduct(
       if (!input.brandName.trim()) {
         updateData.brandId = null;
       } else {
-        const brandSlug = input.brandName.toLowerCase().replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        const brandSlug = input.brandName
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "-")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
         let [brand] = await tx.select({ id: brands.id }).from(brands).where(eq(brands.slug, brandSlug)).limit(1);
         if (!brand) {
-          [brand] = await tx.insert(brands).values({ name: input.brandName.trim(), slug: brandSlug }).returning({ id: brands.id });
+          [brand] = await tx
+            .insert(brands)
+            .values({ name: input.brandName.trim(), slug: brandSlug })
+            .returning({ id: brands.id });
         }
         if (!brand) throw new Error("Mahsulot brendini saqlab bo'lmadi");
         updateData.brandId = brand.id;
@@ -473,13 +483,15 @@ export async function updateDbProduct(
     if (updated && input.specs !== undefined) {
       await tx.delete(productSpecs).where(eq(productSpecs.productId, id));
       if (input.specs.length) {
-        await tx.insert(productSpecs).values(input.specs.map((spec) => ({
-          productId: id,
-          key: spec.key,
-          title: { uz: spec.title },
-          value: { uz: spec.value },
-          helpText: spec.helpText ? { uz: spec.helpText } : undefined,
-        })));
+        await tx.insert(productSpecs).values(
+          input.specs.map((spec) => ({
+            productId: id,
+            key: spec.key,
+            title: { uz: spec.title },
+            value: { uz: spec.value },
+            helpText: spec.helpText ? { uz: spec.helpText } : undefined,
+          })),
+        );
       }
     }
 

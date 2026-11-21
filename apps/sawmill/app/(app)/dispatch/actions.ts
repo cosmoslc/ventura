@@ -14,10 +14,7 @@ import {
 } from "@ventura/db/schema/sawmill";
 import { tenantAudit } from "@ventura/security";
 import { can } from "@/lib/auth/roles";
-import {
-  type DispatchUnit,
-  validateAndCalculateDispatch,
-} from "@/lib/calc/dispatch";
+import { type DispatchUnit, validateAndCalculateDispatch } from "@/lib/calc/dispatch";
 import { pieceVolumeM3 } from "@/lib/calc/units";
 import { currentDeps, requireUser } from "@/lib/server/session";
 
@@ -40,9 +37,7 @@ const createDispatchSchema = z.object({
   truckId: z.string().uuid().optional().nullable(),
 });
 
-export async function createDispatchAction(
-  formData: FormData,
-): Promise<DispatchActionResult> {
+export async function createDispatchAction(formData: FormData): Promise<DispatchActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "dispatch.manage")) {
     return { ok: false, error: "Ruxsat etilmagan" };
@@ -71,18 +66,7 @@ export async function createDispatchAction(
     return { ok: false, error: "Ma'lumotlar to'liq yoki to'g'ri kiritilmadi" };
   }
 
-  const {
-    terakId,
-    materialId,
-    unit,
-    quantity,
-    price,
-    date,
-    recipientName,
-    phone,
-    address,
-    truckId,
-  } = parsed.data;
+  const { terakId, materialId, unit, quantity, price, date, recipientName, phone, address, truckId } = parsed.data;
 
   // 1. Ombordagi material holati va 1 dona hajmini olish
   const [tm] = await deps.db
@@ -96,12 +80,7 @@ export async function createDispatchAction(
     })
     .from(terakMaterials)
     .innerJoin(materials, eq(materials.id, terakMaterials.materialId))
-    .where(
-      and(
-        eq(terakMaterials.terakId, terakId),
-        eq(terakMaterials.materialId, materialId),
-      ),
-    )
+    .where(and(eq(terakMaterials.terakId, terakId), eq(terakMaterials.materialId, materialId)))
     .limit(1);
 
   if (!tm) {
@@ -234,9 +213,7 @@ export async function createDispatchAction(
   return { ok: true, id: createdDispatch.id };
 }
 
-export async function deleteDispatchAction(
-  dispatchId: string,
-): Promise<DispatchActionResult> {
+export async function deleteDispatchAction(dispatchId: string): Promise<DispatchActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "dispatch.delete")) {
     return { ok: false, error: "Yuk chiqarishni o'chirish uchun ruxsat yetarli emas" };
@@ -247,11 +224,7 @@ export async function deleteDispatchAction(
     return { ok: false, error: "Sessiya xatosi" };
   }
 
-  const [dispatch] = await deps.db
-    .select()
-    .from(dispatches)
-    .where(eq(dispatches.id, dispatchId))
-    .limit(1);
+  const [dispatch] = await deps.db.select().from(dispatches).where(eq(dispatches.id, dispatchId)).limit(1);
 
   if (!dispatch) {
     return { ok: false, error: "Yuk chiqarish topilmadi" };
@@ -261,12 +234,7 @@ export async function deleteDispatchAction(
   const [tm] = await deps.db
     .select({ id: terakMaterials.id, quantity: terakMaterials.quantity })
     .from(terakMaterials)
-    .where(
-      and(
-        eq(terakMaterials.terakId, dispatch.terakId),
-        eq(terakMaterials.materialId, dispatch.materialId),
-      ),
-    )
+    .where(and(eq(terakMaterials.terakId, dispatch.terakId), eq(terakMaterials.materialId, dispatch.materialId)))
     .limit(1);
 
   await deps.db.transaction(async (tx) => {
@@ -282,12 +250,7 @@ export async function deleteDispatchAction(
     // 3. Ombor harakatini o'chirish
     await tx
       .delete(stockMovements)
-      .where(
-        and(
-          eq(stockMovements.source, "dispatch"),
-          eq(stockMovements.sourceId, dispatch.id),
-        ),
-      );
+      .where(and(eq(stockMovements.source, "dispatch"), eq(stockMovements.sourceId, dispatch.id)));
 
     // 4. K5: Mashina xarajatini o'chirish (terak_costs cascade bor, lekin aniq tozalaymiz)
     await tx.delete(terakCosts).where(eq(terakCosts.dispatchId, dispatch.id));

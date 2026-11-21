@@ -113,11 +113,7 @@ export function generateSecureDbPassword(length = 24): string {
  * Supabase Management API: PATCH /projects/{ref}/database/password
  * Agar yangi parol berilmagan bo'lsa, avtomatik 24 belgili kuchli parol generatsiya qilinadi.
  */
-export async function resetSupabaseDatabasePassword(
-  token: string,
-  ref: string,
-  newPassword?: string,
-): Promise<string> {
+export async function resetSupabaseDatabasePassword(token: string, ref: string, newPassword?: string): Promise<string> {
   const password = newPassword?.trim() || generateSecureDbPassword(24);
   await supabaseFetch(token, `/projects/${ref}/database/password`, {
     method: "PATCH",

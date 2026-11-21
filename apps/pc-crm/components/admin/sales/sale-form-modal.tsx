@@ -36,7 +36,13 @@ interface SaleFormModalProps {
   isFinancial?: boolean;
 }
 
-export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancial: isFinancialProp }: SaleFormModalProps) {
+export function SaleFormModal({
+  open,
+  onOpenChange,
+  products,
+  onSave,
+  isFinancial: isFinancialProp,
+}: SaleFormModalProps) {
   const contextIsFinancial = useFinancialMode();
   const isFinancial = isFinancialProp ?? contextIsFinancial;
   const [selectedProductId, setSelectedProductId] = useState(products[0]?.id ?? "");
@@ -148,13 +154,7 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
 
           <div>
             <Label htmlFor="sale-date">Sotilgan sana *</Label>
-            <Input
-              id="sale-date"
-              type="date"
-              required
-              value={soldAt}
-              onChange={(e) => setSoldAt(e.target.value)}
-            />
+            <Input id="sale-date" type="date" required value={soldAt} onChange={(e) => setSoldAt(e.target.value)} />
           </div>
         </div>
 
@@ -241,7 +241,8 @@ export function SaleFormModal({ open, onOpenChange, products, onSave, isFinancia
             <div className="flex items-center justify-between border-t border-border pt-2">
               <div className="text-body font-semibold">Ushbu sotuvdan sof daromad:</div>
               <div className={`text-body font-bold ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
-                {profit >= 0n ? "+" : ""}{formatMoney(profit)} ({marginPercent}% marja)
+                {profit >= 0n ? "+" : ""}
+                {formatMoney(profit)} ({marginPercent}% marja)
               </div>
             </div>
           </div>

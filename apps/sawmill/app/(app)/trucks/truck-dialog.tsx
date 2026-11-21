@@ -89,12 +89,7 @@ function TruckDialogInner({ open, onOpenChange, truck, locale }: TruckDialogProp
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={submitting}>

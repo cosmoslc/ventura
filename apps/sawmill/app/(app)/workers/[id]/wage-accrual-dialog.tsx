@@ -105,11 +105,7 @@ function InnerWageAccrualDialog({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("wage_accrual_title", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("wage_accrual_title", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         {error && (
           <div className="p-3 text-caption text-destructive bg-destructive/10 rounded-control border border-destructive/20">
@@ -157,14 +153,7 @@ function InnerWageAccrualDialog({
 
           <div className="space-y-1.5">
             <Label htmlFor="wage-rate">{t("wage_accrual_rate", locale)}</Label>
-            <MoneyInput
-              id="wage-rate"
-              value={rate}
-              onValueChange={setRate}
-              suffix="so'm"
-              placeholder="0"
-              required
-            />
+            <MoneyInput id="wage-rate" value={rate} onValueChange={setRate} suffix="so'm" placeholder="0" required />
           </div>
         </div>
 
@@ -190,21 +179,12 @@ function InnerWageAccrualDialog({
 
         {/* Live Preview of Calculated Total */}
         <div className="p-3.5 bg-primary/5 rounded-card border border-primary/20 flex items-center justify-between">
-          <span className="text-caption font-medium text-muted-foreground">
-            {t("work_preview_amount", locale)}:
-          </span>
-          <span className="text-title font-bold text-primary font-mono">
-            {formatMoney(totalAmount)}
-          </span>
+          <span className="text-caption font-medium text-muted-foreground">{t("work_preview_amount", locale)}:</span>
+          <span className="text-title font-bold text-primary font-mono">{formatMoney(totalAmount)}</span>
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={loading}>

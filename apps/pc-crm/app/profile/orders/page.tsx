@@ -94,10 +94,10 @@ export default function ProfileOrdersPage() {
                 o.status === "delivered"
                   ? "Yetkazib berildi"
                   : o.status === "confirmed"
-                  ? "Tasdiqlandi"
-                  : o.status === "shipping"
-                  ? "Yetkazilmoqda (Kuryerda)"
-                  : "Qabul qilindi",
+                    ? "Tasdiqlandi"
+                    : o.status === "shipping"
+                      ? "Yetkazilmoqda (Kuryerda)"
+                      : "Qabul qilindi",
               statusTone: (isDelivered ? "success" : o.status === "new" ? "info" : "warning") as any,
               total: BigInt(o.total),
               address: o.address ? `${o.region ? `${o.region}, ` : ""}${o.address}` : "Toshkent shahri",
@@ -237,9 +237,7 @@ export default function ProfileOrdersPage() {
             <div className="rounded-card border border-dashed border-border bg-card p-10 text-center">
               <Package size={40} className="text-muted-foreground/40 mx-auto mb-2" />
               <h3 className="font-bold text-base">Hozirda faol buyurtmalaringiz yoʻq</h3>
-              <p className="text-xs text-muted-foreground mt-1">
-                Katalogdan oʻzingizga yoqqan mahsulotlarni tanlang.
-              </p>
+              <p className="text-xs text-muted-foreground mt-1">Katalogdan oʻzingizga yoqqan mahsulotlarni tanlang.</p>
               <Link href="/products" className="mt-4 inline-block">
                 <Button variant="primary" size="sm">
                   Mahsulotlar katalogi
@@ -248,27 +246,20 @@ export default function ProfileOrdersPage() {
             </div>
           ) : (
             inProgressOrders.map((ord) => (
-              <div
-                key={ord.id}
-                className="rounded-card border border-border bg-card p-5 space-y-4"
-              >
+              <div key={ord.id} className="rounded-card border border-border bg-card p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono font-bold text-sm">{ord.orderNumber}</span>
                       <Badge tone={ord.statusTone}>{ord.statusLabel}</Badge>
                     </div>
-                    <span className="text-xs text-muted-foreground font-mono mt-0.5 block">
-                      Sana: {ord.date}
-                    </span>
+                    <span className="text-xs text-muted-foreground font-mono mt-0.5 block">Sana: {ord.date}</span>
                   </div>
 
                   {isFinancial && (
                     <div className="text-left sm:text-right">
                       <span className="text-xs text-muted-foreground block">Umumiy summa:</span>
-                      <span className="font-mono font-bold text-base text-foreground">
-                        {formatMoney(ord.total)}
-                      </span>
+                      <span className="font-mono font-bold text-base text-foreground">{formatMoney(ord.total)}</span>
                     </div>
                   )}
                 </div>
@@ -325,10 +316,7 @@ export default function ProfileOrdersPage() {
             </div>
           ) : (
             deliveredOrders.map((ord) => (
-              <div
-                key={ord.id}
-                className="rounded-card border border-border bg-card p-5 space-y-4"
-              >
+              <div key={ord.id} className="rounded-card border border-border bg-card p-5 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border">
                   <div>
                     <div className="flex items-center gap-2">
@@ -343,9 +331,7 @@ export default function ProfileOrdersPage() {
                   {isFinancial && (
                     <div className="text-left sm:text-right">
                       <span className="text-xs text-muted-foreground block">Umumiy toʻlov:</span>
-                      <span className="font-mono font-bold text-base text-foreground">
-                        {formatMoney(ord.total)}
-                      </span>
+                      <span className="font-mono font-bold text-base text-foreground">{formatMoney(ord.total)}</span>
                     </div>
                   )}
                 </div>
@@ -405,10 +391,7 @@ export default function ProfileOrdersPage() {
             </div>
           ) : (
             customPcOrders.map((pco) => (
-              <div
-                key={pco.id}
-                className="rounded-card border border-primary/20 bg-card p-5 space-y-4 shadow-control"
-              >
+              <div key={pco.id} className="rounded-card border border-primary/20 bg-card p-5 space-y-4 shadow-control">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-border">
                   <div>
                     <div className="flex items-center gap-2">
@@ -423,9 +406,7 @@ export default function ProfileOrdersPage() {
                   {isFinancial && (
                     <div className="text-left sm:text-right">
                       <span className="text-xs text-muted-foreground block">Kelishilgan narx:</span>
-                      <span className="font-mono font-bold text-base text-foreground">
-                        {formatMoney(pco.total)}
-                      </span>
+                      <span className="font-mono font-bold text-base text-foreground">{formatMoney(pco.total)}</span>
                     </div>
                   )}
                 </div>
@@ -439,9 +420,7 @@ export default function ProfileOrdersPage() {
                   </div>
                   {pco.note && (
                     <div>
-                      <span className="font-bold text-primary text-2xs uppercase block">
-                        Sizning istaklaringiz:
-                      </span>
+                      <span className="font-bold text-primary text-2xs uppercase block">Sizning istaklaringiz:</span>
                       <p className="text-muted-foreground mt-0.5">{pco.note}</p>
                     </div>
                   )}
@@ -450,7 +429,7 @@ export default function ProfileOrdersPage() {
                 <div className="flex justify-end pt-2 border-t border-border">
                   <Link
                     href={`https://t.me/venturapc_operator?text=${encodeURIComponent(
-                      `Assalomu alaykum! Men shaxsiy PC zakazim (${pco.orderNumber}) boʻyicha maʼlumot olmoqchi edim.`
+                      `Assalomu alaykum! Men shaxsiy PC zakazim (${pco.orderNumber}) boʻyicha maʼlumot olmoqchi edim.`,
                     )}`}
                     target="_blank"
                   >
@@ -473,19 +452,12 @@ export default function ProfileOrdersPage() {
         title="Mahsulotga sharh qoldirish"
         footer={
           reviewSuccess ? (
-            <Button
-              variant="ghost"
-              onClick={() => setReviewingProduct(null)}
-            >
+            <Button variant="ghost" onClick={() => setReviewingProduct(null)}>
               Yopish
             </Button>
           ) : (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setReviewingProduct(null)}
-              >
+              <Button type="button" variant="ghost" onClick={() => setReviewingProduct(null)}>
                 Bekor qilish
               </Button>
               <Button type="submit" form="product-review-form" variant="primary" className="gap-2">
@@ -500,21 +472,19 @@ export default function ProfileOrdersPage() {
           <div className="py-6 text-center space-y-2">
             <CheckCircle2 size={40} className="text-(--success-fg) mx-auto" />
             <h3 className="font-bold text-base">Sharhingiz qabul qilindi!</h3>
-            <p className="text-xs text-muted-foreground">Katta rahmat! Fikringiz xaridorni toʻgʻri tanlov qilishiga yordam beradi.</p>
+            <p className="text-xs text-muted-foreground">
+              Katta rahmat! Fikringiz xaridorni toʻgʻri tanlov qilishiga yordam beradi.
+            </p>
           </div>
         ) : (
           <form id="product-review-form" onSubmit={handleSubmitReview} className="space-y-4 text-xs sm:text-sm">
             <div className="rounded-control bg-muted/60 p-3">
-              <span className="text-xs text-muted-foreground block font-medium">
-                Mahsulot:
-              </span>
+              <span className="text-xs text-muted-foreground block font-medium">Mahsulot:</span>
               <p className="font-bold text-foreground mt-0.5">{reviewingProduct}</p>
             </div>
 
             <div>
-              <Label>
-                Baholang (1 dan 5 gacha)
-              </Label>
+              <Label>Baholang (1 dan 5 gacha)</Label>
               <div className="flex items-center gap-1 mt-1">
                 {[1, 2, 3, 4, 5].map((s) => (
                   <button
@@ -533,9 +503,7 @@ export default function ProfileOrdersPage() {
             </div>
 
             <div>
-              <Label htmlFor="review-comment">
-                Fikringiz va taassurotlaringiz *
-              </Label>
+              <Label htmlFor="review-comment">Fikringiz va taassurotlaringiz *</Label>
               <Textarea
                 id="review-comment"
                 rows={3}

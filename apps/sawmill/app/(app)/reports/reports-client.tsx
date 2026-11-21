@@ -1,17 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  Coins,
-  Download,
-  Filter,
-  RotateCcw,
-  TrendingDown,
-  TrendingUp,
-  Truck,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { Coins, Download, Filter, RotateCcw, TrendingDown, TrendingUp, Truck, Users, Wallet } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -67,8 +57,10 @@ export function ReportsClient({
   const totalOverallCosts = totalTerakCosts + initialProfit.generalExpensesTotal;
   const totalRevenue = initialProfit.rows.reduce((acc, r) => acc + r.dispatchRevenue, 0);
   const totalStock = initialProfit.rows.reduce((acc, r) => acc + r.stockValue, 0);
-  const totalEstimatedProfit = initialProfit.rows.reduce((acc, r) => acc + r.profitEstimated, 0) - initialProfit.generalExpensesTotal;
-  const totalRealProfit = initialProfit.rows.reduce((acc, r) => acc + r.profitReal, 0) - initialProfit.generalExpensesTotal;
+  const totalEstimatedProfit =
+    initialProfit.rows.reduce((acc, r) => acc + r.profitEstimated, 0) - initialProfit.generalExpensesTotal;
+  const totalRealProfit =
+    initialProfit.rows.reduce((acc, r) => acc + r.profitReal, 0) - initialProfit.generalExpensesTotal;
 
   // Wages totals
   const totalWagesEarned = wagesRows.reduce((acc, r) => acc + r.totalEarned, 0);
@@ -159,12 +151,8 @@ export function ReportsClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("reports_title", locale)}
-          </h1>
-          <p className="text-body text-muted-foreground">
-            {t("reports_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("reports_title", locale)}</h1>
+          <p className="text-body text-muted-foreground">{t("reports_subtitle", locale)}</p>
         </div>
 
         <a
@@ -229,12 +217,8 @@ export function ReportsClient({
                 <span>{t("dashboard_revenue", locale)}</span>
                 <TrendingUp className="size-4 text-emerald-500" />
               </div>
-              <div className="mt-2 text-xl font-bold font-mono text-foreground">
-                {formatMoney(totalRevenue)}
-              </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Jami amalga oshirilgan sotuvlar
-              </p>
+              <div className="mt-2 text-xl font-bold font-mono text-foreground">{formatMoney(totalRevenue)}</div>
+              <p className="text-2xs text-muted-foreground mt-1">Jami amalga oshirilgan sotuvlar</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
@@ -242,12 +226,8 @@ export function ReportsClient({
                 <span>{t("dashboard_total_costs", locale)}</span>
                 <TrendingDown className="size-4 text-rose-500" />
               </div>
-              <div className="mt-2 text-xl font-bold font-mono text-foreground">
-                {formatMoney(totalOverallCosts)}
-              </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Teraklar + K14 umumiy xarajatlar
-              </p>
+              <div className="mt-2 text-xl font-bold font-mono text-foreground">{formatMoney(totalOverallCosts)}</div>
+              <p className="text-2xs text-muted-foreground mt-1">Teraklar + K14 umumiy xarajatlar</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
@@ -257,14 +237,14 @@ export function ReportsClient({
               </div>
               <div
                 className={`mt-2 text-xl font-bold font-mono ${
-                  totalEstimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                  totalEstimatedProfit >= 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-rose-600 dark:text-rose-400"
                 }`}
               >
                 {formatMoney(totalEstimatedProfit)}
               </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Ombor qoldig'i hisobga olingan holda
-              </p>
+              <p className="text-2xs text-muted-foreground mt-1">Ombor qoldig'i hisobga olingan holda</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
@@ -279,9 +259,7 @@ export function ReportsClient({
               >
                 {formatMoney(totalRealProfit)}
               </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Faqat kassa va tushum bo'yicha
-              </p>
+              <p className="text-2xs text-muted-foreground mt-1">Faqat kassa va tushum bo'yicha</p>
             </Card>
           </div>
 
@@ -317,31 +295,39 @@ export function ReportsClient({
                         <td className="p-3 font-medium text-foreground">{row.name}</td>
                         <td className="p-3 text-muted-foreground font-mono text-caption">{row.purchaseDate}</td>
                         <td className="p-3 text-right font-mono">{formatMoney(row.purchasePrice)}</td>
-                        <td className="p-3 text-right font-mono text-muted-foreground">{formatMoney(row.additionalCosts)}</td>
+                        <td className="p-3 text-right font-mono text-muted-foreground">
+                          {formatMoney(row.additionalCosts)}
+                        </td>
                         <td className="p-3 text-right font-mono text-muted-foreground">{formatMoney(row.workCosts)}</td>
-                        <td className="p-3 text-right font-mono font-medium text-foreground">{formatMoney(row.totalCosts)}</td>
+                        <td className="p-3 text-right font-mono font-medium text-foreground">
+                          {formatMoney(row.totalCosts)}
+                        </td>
                         <td className="p-3 text-right font-mono font-medium text-emerald-600 dark:text-emerald-400">
                           {formatMoney(row.dispatchRevenue)}
                         </td>
-                        <td className="p-3 text-right font-mono text-muted-foreground">{formatMoney(row.stockValue)}</td>
+                        <td className="p-3 text-right font-mono text-muted-foreground">
+                          {formatMoney(row.stockValue)}
+                        </td>
                         <td
                           className={`p-3 text-right font-mono font-bold ${
-                            row.profitEstimated >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                            row.profitEstimated >= 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-rose-600 dark:text-rose-400"
                           }`}
                         >
                           {formatMoney(row.profitEstimated)}
                         </td>
                         <td
                           className={`p-3 text-right font-mono font-bold ${
-                            row.profitReal >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
+                            row.profitReal >= 0
+                              ? "text-emerald-600 dark:text-emerald-400"
+                              : "text-rose-600 dark:text-rose-400"
                           }`}
                         >
                           {formatMoney(row.profitReal)}
                         </td>
                         <td className="p-3 text-center">
-                          <Badge tone={row.marginEstimated >= 0 ? "success" : "danger"}>
-                            {row.marginEstimated}%
-                          </Badge>
+                          <Badge tone={row.marginEstimated >= 0 ? "success" : "danger"}>{row.marginEstimated}%</Badge>
                         </td>
                       </tr>
                     ))
@@ -364,17 +350,25 @@ export function ReportsClient({
                 </tbody>
                 <tfoot className="border-t-2 border-border bg-muted/40 font-bold text-foreground">
                   <tr>
-                    <td colSpan={2} className="p-3">{t("reports_total", locale)}:</td>
+                    <td colSpan={2} className="p-3">
+                      {t("reports_total", locale)}:
+                    </td>
                     <td className="p-3 text-right font-mono">{formatMoney(totalPurchase)}</td>
                     <td className="p-3 text-right font-mono">{formatMoney(totalAdditional)}</td>
                     <td className="p-3 text-right font-mono">{formatMoney(totalWork)}</td>
                     <td className="p-3 text-right font-mono text-foreground">{formatMoney(totalOverallCosts)}</td>
-                    <td className="p-3 text-right font-mono text-emerald-600 dark:text-emerald-400">{formatMoney(totalRevenue)}</td>
+                    <td className="p-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
+                      {formatMoney(totalRevenue)}
+                    </td>
                     <td className="p-3 text-right font-mono">{formatMoney(totalStock)}</td>
-                    <td className={`p-3 text-right font-mono ${totalEstimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                    <td
+                      className={`p-3 text-right font-mono ${totalEstimatedProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+                    >
                       {formatMoney(totalEstimatedProfit)}
                     </td>
-                    <td className={`p-3 text-right font-mono ${totalRealProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                    <td
+                      className={`p-3 text-right font-mono ${totalRealProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}
+                    >
                       {formatMoney(totalRealProfit)}
                     </td>
                     <td className="p-3 text-center">-</td>
@@ -439,43 +433,31 @@ export function ReportsClient({
           {/* Wages KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="p-4 bg-card border-border">
-              <div className="text-caption text-muted-foreground font-medium">
-                {t("reports_wages_earned", locale)}
-              </div>
-              <div className="mt-2 text-xl font-bold font-mono text-foreground">
-                {formatMoney(totalWagesEarned)}
-              </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Davr bo'yicha hisoblangan jami ish haqi
-              </p>
+              <div className="text-caption text-muted-foreground font-medium">{t("reports_wages_earned", locale)}</div>
+              <div className="mt-2 text-xl font-bold font-mono text-foreground">{formatMoney(totalWagesEarned)}</div>
+              <p className="text-2xs text-muted-foreground mt-1">Davr bo'yicha hisoblangan jami ish haqi</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
-              <div className="text-caption text-muted-foreground font-medium">
-                {t("reports_wages_paid", locale)}
-              </div>
+              <div className="text-caption text-muted-foreground font-medium">{t("reports_wages_paid", locale)}</div>
               <div className="mt-2 text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 {formatMoney(totalWagesPaid)}
               </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Berilgan avans va ish haqi to'lovlari
-              </p>
+              <p className="text-2xs text-muted-foreground mt-1">Berilgan avans va ish haqi to'lovlari</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
-              <div className="text-caption text-muted-foreground font-medium">
-                {t("reports_wages_balance", locale)}
-              </div>
+              <div className="text-caption text-muted-foreground font-medium">{t("reports_wages_balance", locale)}</div>
               <div
                 className={`mt-2 text-xl font-bold font-mono ${
-                  totalWagesBalance <= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                  totalWagesBalance <= 0
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : "text-amber-600 dark:text-amber-400"
                 }`}
               >
                 {formatMoney(totalWagesBalance)}
               </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Ishchilarga to'lanishi kerak bo'lgan qoldiq
-              </p>
+              <p className="text-2xs text-muted-foreground mt-1">Ishchilarga to'lanishi kerak bo'lgan qoldiq</p>
             </Card>
           </div>
 
@@ -527,14 +509,18 @@ export function ReportsClient({
                 </tbody>
                 <tfoot className="border-t-2 border-border bg-muted/40 font-bold text-foreground">
                   <tr>
-                    <td colSpan={2} className="p-3">{t("reports_total", locale)}:</td>
+                    <td colSpan={2} className="p-3">
+                      {t("reports_total", locale)}:
+                    </td>
                     <td className="p-3 text-right font-mono">{formatMoney(totalWagesEarned)}</td>
                     <td className="p-3 text-right font-mono text-emerald-600 dark:text-emerald-400">
                       {formatMoney(totalWagesPaid)}
                     </td>
                     <td
                       className={`p-3 text-right font-mono ${
-                        totalWagesBalance <= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                        totalWagesBalance <= 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-amber-600 dark:text-amber-400"
                       }`}
                     >
                       {formatMoney(totalWagesBalance)}
@@ -618,27 +604,17 @@ export function ReportsClient({
           {/* Dispatch KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <Card className="p-4 bg-card border-border">
-              <div className="text-caption text-muted-foreground font-medium">
-                Yuk chiqarishlar soni
-              </div>
-              <div className="mt-2 text-xl font-bold font-mono text-foreground">
-                {dispatchRows.length} ta
-              </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Jami amalga oshirilgan partiyalar
-              </p>
+              <div className="text-caption text-muted-foreground font-medium">Yuk chiqarishlar soni</div>
+              <div className="mt-2 text-xl font-bold font-mono text-foreground">{dispatchRows.length} ta</div>
+              <p className="text-2xs text-muted-foreground mt-1">Jami amalga oshirilgan partiyalar</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
-              <div className="text-caption text-muted-foreground font-medium">
-                Jami miqdor va hajm
-              </div>
+              <div className="text-caption text-muted-foreground font-medium">Jami miqdor va hajm</div>
               <div className="mt-2 text-xl font-bold font-mono text-foreground">
                 {totalDispatchPieces} dona / {totalDispatchVolume.toFixed(2)} m³
               </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Chiqarilgan yog'och mahsulotlari hajmi
-              </p>
+              <p className="text-2xs text-muted-foreground mt-1">Chiqarilgan yog'och mahsulotlari hajmi</p>
             </Card>
 
             <Card className="p-4 bg-card border-border">
@@ -648,9 +624,7 @@ export function ReportsClient({
               <div className="mt-2 text-xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
                 {formatMoney(totalDispatchAmount)}
               </div>
-              <p className="text-2xs text-muted-foreground mt-1">
-                Davr bo'yicha umumiy savdo aylanmasi
-              </p>
+              <p className="text-2xs text-muted-foreground mt-1">Davr bo'yicha umumiy savdo aylanmasi</p>
             </Card>
           </div>
 
@@ -703,7 +677,9 @@ export function ReportsClient({
                 </tbody>
                 <tfoot className="border-t-2 border-border bg-muted/40 font-bold text-foreground">
                   <tr>
-                    <td colSpan={3} className="p-3">{t("reports_total", locale)}:</td>
+                    <td colSpan={3} className="p-3">
+                      {t("reports_total", locale)}:
+                    </td>
                     <td className="p-3 text-right font-mono">{totalDispatchPieces}</td>
                     <td className="p-3 text-right font-mono">{totalDispatchVolume.toFixed(2)} m³</td>
                     <td className="p-3 text-right font-mono text-emerald-600 dark:text-emerald-400">

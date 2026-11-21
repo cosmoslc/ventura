@@ -154,7 +154,10 @@ export function DashboardClient({
       return tr?.stock ?? [];
     }
     // "Barcha teraklar" bo'lsa materiallarni yig'ish
-    const map = new Map<string, { materialId: string; name: string; unit: string; quantity: number; stockValue: number }>();
+    const map = new Map<
+      string,
+      { materialId: string; name: string; unit: string; quantity: number; stockValue: number }
+    >();
     for (const tr of teraks) {
       for (const s of tr.stock) {
         const existing = map.get(s.materialId);
@@ -192,9 +195,7 @@ export function DashboardClient({
     <div className="space-y-6">
       {/* Sarlavha */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-          {t("nav_home", locale)}
-        </h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("nav_home", locale)}</h1>
         <p className="text-caption text-muted-foreground mt-0.5">
           Yog'och partiyalari, ombor qoldiqlari va sof foyda tahlili
         </p>
@@ -240,9 +241,7 @@ export function DashboardClient({
               type="button"
               onClick={() => setMethod("real")}
               className={`px-2.5 py-1 text-2xs font-semibold rounded-control transition-all cursor-pointer ${
-                method === "real"
-                  ? "bg-card text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
+                method === "real" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Haqiqiy
@@ -305,13 +304,9 @@ export function DashboardClient({
               </div>
             </div>
 
-            <div className="text-2xl font-bold font-mono text-foreground">
-              {formatMoney(currentMetrics.revenue)}
-            </div>
+            <div className="text-2xl font-bold font-mono text-foreground">{formatMoney(currentMetrics.revenue)}</div>
 
-            <div className="text-2xs text-muted-foreground">
-              Barcha yuk chiqarish tushumi
-            </div>
+            <div className="text-2xs text-muted-foreground">Barcha yuk chiqarish tushumi</div>
           </div>
         </Card>
 
@@ -327,13 +322,9 @@ export function DashboardClient({
               </div>
             </div>
 
-            <div className="text-2xl font-bold font-mono text-foreground">
-              {formatMoney(currentMetrics.totalCosts)}
-            </div>
+            <div className="text-2xl font-bold font-mono text-foreground">{formatMoney(currentMetrics.totalCosts)}</div>
 
-            <div className="text-2xs text-muted-foreground">
-              Xarid + Qo'shimcha + Ish haqi
-            </div>
+            <div className="text-2xs text-muted-foreground">Xarid + Qo'shimcha + Ish haqi</div>
           </div>
         </Card>
 
@@ -349,13 +340,9 @@ export function DashboardClient({
               </div>
             </div>
 
-            <div className="text-2xl font-bold font-mono text-foreground">
-              {formatMoney(currentMetrics.stockValue)}
-            </div>
+            <div className="text-2xl font-bold font-mono text-foreground">{formatMoney(currentMetrics.stockValue)}</div>
 
-            <div className="text-2xs text-muted-foreground">
-              Ombordagi qoldiq sotilsa
-            </div>
+            <div className="text-2xs text-muted-foreground">Ombordagi qoldiq sotilsa</div>
           </div>
         </Card>
       </div>
@@ -366,12 +353,8 @@ export function DashboardClient({
         <Card className="p-5 lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-foreground">
-                {t("dashboard_weekly_sales", locale)}
-              </h3>
-              <p className="text-2xs text-muted-foreground">
-                {t("dashboard_weekly_sales_desc", locale)}
-              </p>
+              <h3 className="text-sm font-bold text-foreground">{t("dashboard_weekly_sales", locale)}</h3>
+              <p className="text-2xs text-muted-foreground">{t("dashboard_weekly_sales_desc", locale)}</p>
             </div>
             <Link
               href="/dispatch"
@@ -386,15 +369,9 @@ export function DashboardClient({
           <div className="pt-4">
             <div className="h-44 flex items-end justify-between gap-2 border-b border-border pb-2">
               {weeklyBars.map((bar) => {
-                const heightPercent = Math.max(
-                  8,
-                  Math.round((bar.quantityPiece / maxBarQty) * 100),
-                );
+                const heightPercent = Math.max(8, Math.round((bar.quantityPiece / maxBarQty) * 100));
                 return (
-                  <div
-                    key={bar.date}
-                    className="flex-1 flex flex-col items-center justify-end h-full group relative"
-                  >
+                  <div key={bar.date} className="flex-1 flex flex-col items-center justify-end h-full group relative">
                     {/* Tooltip on hover */}
                     <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-12 z-20 bg-foreground text-background text-2xs px-2 py-1 rounded shadow-md pointer-events-none whitespace-nowrap font-mono">
                       <div>{bar.quantityPiece} dona</div>
@@ -408,9 +385,7 @@ export function DashboardClient({
                       <div
                         style={{ height: `${heightPercent}%` }}
                         className={`w-full rounded-t-md transition-all ${
-                          bar.isToday
-                            ? "bg-primary shadow-xs"
-                            : "bg-muted-foreground/25 hover:bg-muted-foreground/40"
+                          bar.isToday ? "bg-primary shadow-xs" : "bg-muted-foreground/25 hover:bg-muted-foreground/40"
                         }`}
                       />
                     </div>
@@ -424,16 +399,10 @@ export function DashboardClient({
               {weeklyBars.map((bar) => (
                 <div
                   key={bar.date}
-                  className={`flex-1 text-center truncate ${
-                    bar.isToday ? "text-primary font-bold" : ""
-                  }`}
+                  className={`flex-1 text-center truncate ${bar.isToday ? "text-primary font-bold" : ""}`}
                 >
                   {locale === "ru" ? bar.dayLabelRu : bar.dayLabelUz}
-                  {bar.isToday && (
-                    <span className="block text-3xs font-normal">
-                      ({t("dashboard_today", locale)})
-                    </span>
-                  )}
+                  {bar.isToday && <span className="block text-3xs font-normal">({t("dashboard_today", locale)})</span>}
                 </div>
               ))}
             </div>
@@ -469,9 +438,7 @@ export function DashboardClient({
                   className="p-2.5 bg-muted/30 border border-border rounded-control flex items-center justify-between gap-2 text-xs"
                 >
                   <div className="space-y-0.5 min-w-0">
-                    <div className="font-semibold text-foreground truncate">
-                      {ao.customerName}
-                    </div>
+                    <div className="font-semibold text-foreground truncate">{ao.customerName}</div>
                     <div className="text-2xs text-muted-foreground truncate">
                       {ao.materialName} • {ao.quantity} {ao.materialUnit}
                     </div>
@@ -517,9 +484,7 @@ export function DashboardClient({
       {/* 4. Ombor qoldig'i kartalari */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-foreground">
-            Ombordagi materiallar qoldig'i
-          </h3>
+          <h3 className="text-sm font-bold text-foreground">Ombordagi materiallar qoldig'i</h3>
           <Link
             href="/materials"
             className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
@@ -532,16 +497,12 @@ export function DashboardClient({
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {currentStockMaterials.map((mat) => (
             <Card key={mat.materialId} className="p-3.5 space-y-2">
-              <span className="text-xs font-semibold text-foreground truncate block">
-                {mat.name}
-              </span>
+              <span className="text-xs font-semibold text-foreground truncate block">{mat.name}</span>
               <div>
                 <div className="text-base font-bold font-mono text-primary">
                   {mat.quantity} <span className="text-2xs font-normal text-muted-foreground">{mat.unit}</span>
                 </div>
-                <div className="text-2xs font-mono text-muted-foreground">
-                  {formatMoney(mat.stockValue)}
-                </div>
+                <div className="text-2xs font-mono text-muted-foreground">{formatMoney(mat.stockValue)}</div>
               </div>
             </Card>
           ))}

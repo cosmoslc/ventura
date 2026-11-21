@@ -154,7 +154,9 @@ function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDi
 
         {/* Maqsad (Goal) */}
         <div className="space-y-1.5">
-          <Label htmlFor="stock-goal">{t("stock_goal", locale)} ({item?.unit})</Label>
+          <Label htmlFor="stock-goal">
+            {t("stock_goal", locale)} ({item?.unit})
+          </Label>
           <Input
             id="stock-goal"
             type="number"
@@ -169,12 +171,7 @@ function PriceDialogInner({ open, onOpenChange, terakId, item, locale }: PriceDi
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={submitting}>

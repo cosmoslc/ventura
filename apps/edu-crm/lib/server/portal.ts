@@ -163,13 +163,7 @@ export async function portalDashboardData(
     .leftJoin(courses, eq(courses.id, groups.courseId))
     .leftJoin(teachers, eq(teachers.id, groups.teacherId))
     .leftJoin(rooms, eq(rooms.id, groups.roomId))
-    .where(
-      and(
-        eq(groupMemberships.studentId, studentId),
-        isNull(groupMemberships.leftAt),
-        isNull(groups.archivedAt),
-      ),
-    );
+    .where(and(eq(groupMemberships.studentId, studentId), isNull(groupMemberships.leftAt), isNull(groups.archivedAt)));
 
   const todayLessons = myGroups
     .filter((g) => Array.isArray(g.days) && g.days.includes(weekday))
@@ -244,13 +238,7 @@ export async function portalStudentGroups(db: TenantDb, studentId: string): Prom
     .leftJoin(courses, eq(courses.id, groups.courseId))
     .leftJoin(teachers, eq(teachers.id, groups.teacherId))
     .leftJoin(rooms, eq(rooms.id, groups.roomId))
-    .where(
-      and(
-        eq(groupMemberships.studentId, studentId),
-        isNull(groupMemberships.leftAt),
-        isNull(groups.archivedAt),
-      ),
-    )
+    .where(and(eq(groupMemberships.studentId, studentId), isNull(groupMemberships.leftAt), isNull(groups.archivedAt)))
     .orderBy(desc(groups.createdAt));
 
   return rows.map((r) => ({
@@ -490,13 +478,7 @@ export async function portalStudentHomeworks(db: TenantDb, studentId: string): P
     .innerJoin(groups, eq(groups.id, groupMemberships.groupId))
     .leftJoin(courses, eq(courses.id, groups.courseId))
     .leftJoin(teachers, eq(teachers.id, groups.teacherId))
-    .where(
-      and(
-        eq(groupMemberships.studentId, studentId),
-        isNull(groupMemberships.leftAt),
-        isNull(groups.archivedAt),
-      ),
-    );
+    .where(and(eq(groupMemberships.studentId, studentId), isNull(groupMemberships.leftAt), isNull(groups.archivedAt)));
 
   if (!myGroups.length) return [];
   const groupIds = myGroups.map((g) => g.groupId);
@@ -525,12 +507,7 @@ export async function portalStudentHomeworks(db: TenantDb, studentId: string): P
     ? await db
         .select()
         .from(homeworkSubmissions)
-        .where(
-          and(
-            eq(homeworkSubmissions.studentId, studentId),
-            inArray(homeworkSubmissions.homeworkId, hwIds),
-          ),
-        )
+        .where(and(eq(homeworkSubmissions.studentId, studentId), inArray(homeworkSubmissions.homeworkId, hwIds)))
     : [];
 
   const submissionMap = new Map(mySubmissions.map((s) => [s.homeworkId, s]));

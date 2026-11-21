@@ -72,7 +72,7 @@ export function ProductDetailClient({ product }: { product: ProductDetailData })
         imageUrl: product.images[activeImageIndex] || product.images[0] || "",
         colorName: selectedVariant?.colorName,
       },
-      qty
+      qty,
     );
   };
 
@@ -142,16 +142,12 @@ export function ProductDetailClient({ product }: { product: ProductDetailData })
                 <span className="text-xs font-mono text-muted-foreground">SKU: {product.sku}</span>
               </div>
 
-              <h1 className="mt-2 text-2xl font-black text-foreground sm:text-3xl leading-snug">
-                {product.name}
-              </h1>
+              <h1 className="mt-2 text-2xl font-black text-foreground sm:text-3xl leading-snug">{product.name}</h1>
 
               <div className="mt-2.5 flex items-center gap-4 text-xs">
                 <RatingStars rating={product.ratingAvg} count={product.ratingCount} />
                 <span className="text-border">|</span>
-                <span className="font-bold text-(--success-fg)">
-                  Omborda mavjud ({product.stock} dona)
-                </span>
+                <span className="font-bold text-(--success-fg)">Omborda mavjud ({product.stock} dona)</span>
               </div>
             </div>
 
@@ -179,9 +175,7 @@ export function ProductDetailClient({ product }: { product: ProductDetailData })
                       onClick={() => setSelectedVariant(v)}
                       style={{ backgroundColor: v.colorHex }}
                       className={`h-7 w-7 rounded-full border border-black/10 transition-transform ${
-                        selectedVariant?.id === v.id
-                          ? "ring-2 ring-primary ring-offset-2 scale-110"
-                          : "hover:scale-105"
+                        selectedVariant?.id === v.id ? "ring-2 ring-primary ring-offset-2 scale-110" : "hover:scale-105"
                       }`}
                       title={v.colorName}
                     />
@@ -308,9 +302,7 @@ export function ProductDetailClient({ product }: { product: ProductDetailData })
         {/* 4. Tavsif */}
         <section className="mt-10 border-t border-border pt-8">
           <h2 className="mb-4 text-xl font-black text-foreground">Mahsulot tavsifi</h2>
-          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            {product.description}
-          </p>
+          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">{product.description}</p>
         </section>
       </main>
 

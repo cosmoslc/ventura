@@ -78,11 +78,7 @@ export async function getDbNotifications(userId?: string): Promise<{
   await ensureSeededNotifications();
   const db = getDb();
 
-  const allRows = await db
-    .select()
-    .from(notifications)
-    .orderBy(desc(notifications.createdAt))
-    .limit(20);
+  const allRows = await db.select().from(notifications).orderBy(desc(notifications.createdAt)).limit(20);
 
   let readMap = new Map<string, boolean>();
 
@@ -93,12 +89,7 @@ export async function getDbNotifications(userId?: string): Promise<{
         readAt: userNotifications.readAt,
       })
       .from(userNotifications)
-      .where(
-        and(
-          eq(userNotifications.userId, userId),
-          isNotNull(userNotifications.readAt)
-        )
-      );
+      .where(and(eq(userNotifications.userId, userId), isNotNull(userNotifications.readAt)));
 
     for (const r of userReads) {
       if (r.readAt) {
@@ -131,19 +122,11 @@ export async function markDbNotificationAsRead(notificationId: string, userId: s
   const [existing] = await db
     .select({ id: userNotifications.id })
     .from(userNotifications)
-    .where(
-      and(
-        eq(userNotifications.userId, userId),
-        eq(userNotifications.notificationId, notificationId)
-      )
-    )
+    .where(and(eq(userNotifications.userId, userId), eq(userNotifications.notificationId, notificationId)))
     .limit(1);
 
   if (existing) {
-    await db
-      .update(userNotifications)
-      .set({ readAt: new Date() })
-      .where(eq(userNotifications.id, existing.id));
+    await db.update(userNotifications).set({ readAt: new Date() }).where(eq(userNotifications.id, existing.id));
   } else {
     await db.insert(userNotifications).values({
       userId,
@@ -162,12 +145,7 @@ export async function markAllDbNotificationsAsRead(userId: string) {
   }
 }
 
-export async function createDbNotification(input: {
-  type: string;
-  title: string;
-  body: string;
-  link?: string;
-}) {
+export async function createDbNotification(input: { type: string; title: string; body: string; link?: string }) {
   const db = getDb();
   const [created] = await db
     .insert(notifications)

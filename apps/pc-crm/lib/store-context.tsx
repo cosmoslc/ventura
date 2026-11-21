@@ -63,10 +63,7 @@ export function StoreProvider({
 
   const isFinancial = branding.storeMode !== "inventory";
 
-  const value = useMemo(
-    () => ({ branding, isFinancial, setBranding, setStoreMode }),
-    [branding, isFinancial],
-  );
+  const value = useMemo(() => ({ branding, isFinancial, setBranding, setStoreMode }), [branding, isFinancial]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
 }

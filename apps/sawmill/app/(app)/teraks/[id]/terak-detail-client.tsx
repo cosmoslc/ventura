@@ -20,10 +20,7 @@ import { Card } from "@ventura/ui/card";
 import { ConfirmModal } from "@ventura/ui/modal";
 import { deleteDispatchAction } from "@/app/(app)/dispatch/actions";
 import { DispatchDialog } from "@/app/(app)/dispatch/dispatch-dialog";
-import {
-  deleteOrderAction,
-  toggleOrderCompletionAction,
-} from "@/app/(app)/orders/actions";
+import { deleteOrderAction, toggleOrderCompletionAction } from "@/app/(app)/orders/actions";
 import { OrderDialog } from "@/app/(app)/orders/order-dialog";
 import { type OrderStatus } from "@/lib/calc/orders";
 import { formatMoney } from "@/lib/calc/units";
@@ -228,16 +225,12 @@ export function TerakDetailClient({
           </Button>
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-                {terak.name}
-              </h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">{terak.name}</h1>
               <Badge tone="neutral" className="font-mono text-2xs">
                 {terak.purchaseDate}
               </Badge>
             </div>
-            {terak.note && (
-              <p className="text-caption text-muted-foreground mt-0.5">{terak.note}</p>
-            )}
+            {terak.note && <p className="text-caption text-muted-foreground mt-0.5">{terak.note}</p>}
           </div>
         </div>
       </div>
@@ -254,31 +247,23 @@ export function TerakDetailClient({
         </Card>
 
         <Card className="p-4">
-          <span className="text-2xs font-bold text-muted-foreground uppercase">
-            {t("terak_costs_title", locale)}
-          </span>
+          <span className="text-2xs font-bold text-muted-foreground uppercase">{t("terak_costs_title", locale)}</span>
           <p className="text-base sm:text-lg font-bold font-mono text-rose-600 dark:text-rose-400 mt-1">
             {formatMoney(totalCostsAmount)}
           </p>
         </Card>
 
         <Card className="p-4">
-          <span className="text-2xs font-bold text-muted-foreground uppercase">
-            {t("stock_total_value", locale)}
-          </span>
+          <span className="text-2xs font-bold text-muted-foreground uppercase">{t("stock_total_value", locale)}</span>
           <p className="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-1">
             {formatMoney(totalStockValue)}
           </p>
         </Card>
 
         <Card className="p-4">
-          <span className="text-2xs font-bold text-muted-foreground uppercase">
-            Reslar (Qolgan / Jami)
-          </span>
+          <span className="text-2xs font-bold text-muted-foreground uppercase">Reslar (Qolgan / Jami)</span>
           <div className="flex items-center gap-2 mt-1">
-            <span className="text-base sm:text-lg font-bold font-mono text-primary">
-              {remainingRes}
-            </span>
+            <span className="text-base sm:text-lg font-bold font-mono text-primary">{remainingRes}</span>
             <span className="text-caption text-muted-foreground font-mono">/ {totalRes} ta</span>
           </div>
         </Card>
@@ -296,7 +281,9 @@ export function TerakDetailClient({
           }`}
         >
           <Layers className="size-4" />
-          <span>{t("teraks_stock_tab", locale)} ({stock.length})</span>
+          <span>
+            {t("teraks_stock_tab", locale)} ({stock.length})
+          </span>
         </button>
 
         <button
@@ -309,7 +296,9 @@ export function TerakDetailClient({
           }`}
         >
           <Receipt className="size-4" />
-          <span>{t("teraks_costs_tab", locale)} ({costs.length})</span>
+          <span>
+            {t("teraks_costs_tab", locale)} ({costs.length})
+          </span>
         </button>
 
         <button
@@ -321,7 +310,9 @@ export function TerakDetailClient({
               : "border-transparent text-muted-foreground hover:text-foreground"
           }`}
         >
-          <span>{t("teraks_work_tab", locale)} ({works.length})</span>
+          <span>
+            {t("teraks_work_tab", locale)} ({works.length})
+          </span>
         </button>
 
         <button
@@ -334,7 +325,9 @@ export function TerakDetailClient({
           }`}
         >
           <Truck className="size-4" />
-          <span>{t("teraks_dispatch_tab", locale)} ({dispatches.length})</span>
+          <span>
+            {t("teraks_dispatch_tab", locale)} ({dispatches.length})
+          </span>
         </button>
 
         <button
@@ -347,7 +340,9 @@ export function TerakDetailClient({
           }`}
         >
           <ShoppingCart className="size-4" />
-          <span>{t("teraks_orders_tab", locale)} ({orders.length})</span>
+          <span>
+            {t("teraks_orders_tab", locale)} ({orders.length})
+          </span>
         </button>
       </div>
 
@@ -356,7 +351,10 @@ export function TerakDetailClient({
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stock.map((s) => (
-              <Card key={s.materialId} className="p-5 flex flex-col justify-between hover:border-border-soft transition-all">
+              <Card
+                key={s.materialId}
+                className="p-5 flex flex-col justify-between hover:border-border-soft transition-all"
+              >
                 <div className="space-y-3">
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -366,9 +364,7 @@ export function TerakDetailClient({
                           {s.pricingMode === "piece" ? t("pricing_piece", locale) : t("pricing_row", locale)}
                         </Badge>
                         {s.volumeM3 !== null && (
-                          <span className="text-2xs text-muted-foreground font-mono">
-                            {s.volumeM3} m³
-                          </span>
+                          <span className="text-2xs text-muted-foreground font-mono">{s.volumeM3} m³</span>
                         )}
                       </div>
                     </div>
@@ -386,7 +382,9 @@ export function TerakDetailClient({
                     <div className="space-y-1">
                       <div className="flex justify-between text-2xs text-muted-foreground font-mono">
                         <span>{t("stock_progress", locale)}:</span>
-                        <span>{Math.round(s.progress * 100)}% ({Number(s.quantity ?? 0)} / {Number(s.goal)})</span>
+                        <span>
+                          {Math.round(s.progress * 100)}% ({Number(s.quantity ?? 0)} / {Number(s.goal)})
+                        </span>
                       </div>
                       <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
                         <div
@@ -491,9 +489,7 @@ export function TerakDetailClient({
                             </span>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">
-                          {formatMoney(c.amount)}
-                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatMoney(c.amount)}</td>
                         {canManage && (
                           <td className="px-4 py-3 text-right font-sans">
                             <button
@@ -511,7 +507,9 @@ export function TerakDetailClient({
                   </tbody>
                   <tfoot className="bg-muted/50 font-bold border-t border-border">
                     <tr>
-                      <td colSpan={3} className="px-4 py-3 text-body text-foreground">Jami xarajatlar:</td>
+                      <td colSpan={3} className="px-4 py-3 text-body text-foreground">
+                        Jami xarajatlar:
+                      </td>
                       <td className="px-4 py-3 text-right font-mono text-base text-rose-600 dark:text-rose-400">
                         {formatMoney(totalCostsAmount)}
                       </td>
@@ -530,11 +528,10 @@ export function TerakDetailClient({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-body font-bold text-foreground">
-                Ushbu terakka tegishli ishlar
-              </h2>
+              <h2 className="text-body font-bold text-foreground">Ushbu terakka tegishli ishlar</h2>
               <p className="text-caption text-muted-foreground">
-                Jami hisoblangan ish haqi: <strong className="text-foreground font-mono">{formatMoney(totalWorkAmount)}</strong>
+                Jami hisoblangan ish haqi:{" "}
+                <strong className="text-foreground font-mono">{formatMoney(totalWorkAmount)}</strong>
               </p>
             </div>
 
@@ -575,7 +572,7 @@ export function TerakDetailClient({
                           </Link>
                         </td>
                         <td className="px-4 py-3 text-foreground font-sans">
-                          {w.kind === "material" ? w.materialName ?? "Material" : w.workTypeName ?? "Oddiy ish"}
+                          {w.kind === "material" ? (w.materialName ?? "Material") : (w.workTypeName ?? "Oddiy ish")}
                           {w.note && <span className="text-2xs text-muted-foreground block">{w.note}</span>}
                         </td>
                         <td className="px-4 py-3 text-muted-foreground">
@@ -589,9 +586,7 @@ export function TerakDetailClient({
                             "—"
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">
-                          {formatMoney(w.amount)}
-                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatMoney(w.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -600,9 +595,7 @@ export function TerakDetailClient({
                       <td colSpan={4} className="px-4 py-3 text-foreground font-sans">
                         Jami ish haqi xarajati:
                       </td>
-                      <td className="px-4 py-3 text-right text-foreground">
-                        {formatMoney(totalWorkAmount)}
-                      </td>
+                      <td className="px-4 py-3 text-right text-foreground">{formatMoney(totalWorkAmount)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -617,22 +610,14 @@ export function TerakDetailClient({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-control border border-border">
             <div>
-              <h3 className="font-bold text-base text-foreground">
-                {t("dispatch_title", locale)}
-              </h3>
+              <h3 className="font-bold text-base text-foreground">{t("dispatch_title", locale)}</h3>
               <p className="text-xs text-muted-foreground">
                 {t("dispatch_total_revenue", locale)}:{" "}
-                <span className="font-mono font-bold text-primary">
-                  {formatMoney(totalDispatchedAmount)}
-                </span>
+                <span className="font-mono font-bold text-primary">{formatMoney(totalDispatchedAmount)}</span>
               </p>
             </div>
             {canManageDispatch && (
-              <Button
-                variant="primary"
-                onClick={() => setDispatchDialogOpen(true)}
-                className="gap-1.5 cursor-pointer"
-              >
+              <Button variant="primary" onClick={() => setDispatchDialogOpen(true)} className="gap-1.5 cursor-pointer">
                 <Plus className="size-4" />
                 <span>{t("dispatch_add", locale)}</span>
               </Button>
@@ -662,18 +647,14 @@ export function TerakDetailClient({
                   <tbody className="divide-y divide-border">
                     {dispatches.map((d) => (
                       <tr key={d.id} className="hover:bg-muted/20 transition-colors">
-                        <td className="py-2.5 px-3 font-mono font-medium whitespace-nowrap">
-                          {d.date}
-                        </td>
-                        <td className="py-2.5 px-3 font-semibold whitespace-nowrap">
-                          {d.materialName}
-                        </td>
+                        <td className="py-2.5 px-3 font-mono font-medium whitespace-nowrap">{d.date}</td>
+                        <td className="py-2.5 px-3 font-semibold whitespace-nowrap">{d.materialName}</td>
                         <td className="py-2.5 px-3 whitespace-nowrap font-mono">
-                          <span className="font-bold">{d.quantity} {d.materialUnit}</span>
+                          <span className="font-bold">
+                            {d.quantity} {d.materialUnit}
+                          </span>
                           {d.volumeTotalM3 && (
-                            <span className="text-2xs text-muted-foreground ml-1">
-                              ({d.volumeTotalM3} m³)
-                            </span>
+                            <span className="text-2xs text-muted-foreground ml-1">({d.volumeTotalM3} m³)</span>
                           )}
                         </td>
                         <td className="py-2.5 px-3 whitespace-nowrap font-mono font-bold text-primary">
@@ -725,19 +706,11 @@ export function TerakDetailClient({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-control border border-border">
             <div>
-              <h3 className="font-bold text-base text-foreground">
-                {t("orders_title", locale)}
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Ushbu terakka biriktirilgan buyurtmalar nazorati
-              </p>
+              <h3 className="font-bold text-base text-foreground">{t("orders_title", locale)}</h3>
+              <p className="text-xs text-muted-foreground">Ushbu terakka biriktirilgan buyurtmalar nazorati</p>
             </div>
             {canManageOrders && (
-              <Button
-                variant="primary"
-                onClick={() => setOrderDialogOpen(true)}
-                className="gap-1.5 cursor-pointer"
-              >
+              <Button variant="primary" onClick={() => setOrderDialogOpen(true)} className="gap-1.5 cursor-pointer">
                 <Plus className="size-4" />
                 <span>{t("orders_add", locale)}</span>
               </Button>
@@ -796,17 +769,17 @@ export function TerakDetailClient({
                             </div>
                             {o.phone && <div className="text-2xs text-muted-foreground font-mono">{o.phone}</div>}
                           </td>
-                          <td className="py-2.5 px-3 font-semibold whitespace-nowrap">
-                            {o.materialName}
-                          </td>
+                          <td className="py-2.5 px-3 font-semibold whitespace-nowrap">{o.materialName}</td>
                           <td className="py-2.5 px-3 font-mono font-bold whitespace-nowrap">
                             {o.quantity} {o.materialUnit}
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
                             <div className="flex items-center gap-1.5 font-mono">
-                              <span>{o.stockQuantity} {o.materialUnit}</span>
-                              {!isCompleted && (
-                                o.status === "ready" ? (
+                              <span>
+                                {o.stockQuantity} {o.materialUnit}
+                              </span>
+                              {!isCompleted &&
+                                (o.status === "ready" ? (
                                   <Badge tone="success" className="text-2xs py-0">
                                     {t("orders_status_ready", locale)}
                                   </Badge>
@@ -814,8 +787,7 @@ export function TerakDetailClient({
                                   <Badge tone="neutral" className="text-2xs py-0">
                                     {t("orders_status_pending", locale)}
                                   </Badge>
-                                )
-                              )}
+                                ))}
                             </div>
                           </td>
                           <td className="py-2.5 px-3 whitespace-nowrap">
@@ -940,12 +912,7 @@ export function TerakDetailClient({
       />
 
       {/* Cost Dialog */}
-      <CostDialog
-        open={costDialogOpen}
-        onOpenChange={setCostDialogOpen}
-        terakId={terak.id}
-        locale={locale}
-      />
+      <CostDialog open={costDialogOpen} onOpenChange={setCostDialogOpen} terakId={terak.id} locale={locale} />
 
       {/* Confirm Delete Cost */}
       <ConfirmModal

@@ -45,16 +45,10 @@ function CategoryDialogInner({ open, onOpenChange, locale }: CategoryDialogProps
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("expenses_category_add", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("expenses_category_add", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">
-            {error}
-          </div>
+          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">{error}</div>
         )}
 
         <div className="space-y-1.5">
@@ -70,12 +64,7 @@ function CategoryDialogInner({ open, onOpenChange, locale }: CategoryDialogProps
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" variant="primary" disabled={submitting}>

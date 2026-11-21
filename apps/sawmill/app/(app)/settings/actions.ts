@@ -7,11 +7,7 @@ import { workTypes } from "@ventura/db/schema/sawmill";
 import { tenantAudit } from "@ventura/security";
 import { can } from "@/lib/auth/roles";
 import { currentDeps, requireUser } from "@/lib/server/session";
-import {
-  getSawmillSettings,
-  saveSawmillSettings,
-  sawmillSettingsSchema,
-} from "@/lib/settings/schema";
+import { getSawmillSettings, saveSawmillSettings, sawmillSettingsSchema } from "@/lib/settings/schema";
 
 export type SettingsActionResult = {
   ok: boolean;
@@ -106,11 +102,7 @@ export async function deleteWorkTypeAction(workTypeId: string): Promise<Settings
   if (!can(user.role, "settings.manage")) return { ok: false, error: "Ruxsat etilmagan amal" };
 
   try {
-    const [wt] = await deps.db
-      .select()
-      .from(workTypes)
-      .where(eq(workTypes.id, workTypeId))
-      .limit(1);
+    const [wt] = await deps.db.select().from(workTypes).where(eq(workTypes.id, workTypeId)).limit(1);
 
     if (!wt) return { ok: false, error: "Ish turi topilmadi" };
     if (wt.isSystem) return { ok: false, error: "Tizim standart ish turini o'chirib bo'lmaydi" };

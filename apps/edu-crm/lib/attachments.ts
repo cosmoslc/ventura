@@ -11,7 +11,11 @@ export const attachmentSchema = z.object({
   id: z.string().min(1).max(64),
   name: z.string().trim().min(1).max(255),
   url: z.string().max(512).regex(UPLOAD_URL_RE),
-  size: z.number().int().nonnegative().max(25 * 1024 * 1024),
+  size: z
+    .number()
+    .int()
+    .nonnegative()
+    .max(25 * 1024 * 1024),
   mimeType: z.string().max(128).optional(),
 });
 

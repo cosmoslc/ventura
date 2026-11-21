@@ -1,18 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import {
-  Check,
-  Eye,
-  ImageIcon,
-  Loader2,
-  Pipette,
-  RotateCcw,
-  Sparkles,
-  Trash2,
-  Upload,
-  Wand2,
-} from "lucide-react";
+import { Check, Eye, ImageIcon, Loader2, Pipette, RotateCcw, Sparkles, Trash2, Upload, Wand2 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
@@ -226,10 +215,7 @@ export function ImageUploadWithBgRemoval({
         onChange(data.file.url);
         setModalOpen(false);
       } else {
-        setAiError(
-          data.error ||
-            "AI API topilmadi. O'rnatilgan aqlli brauzer qirqish mexanizmidan foydalaning."
-        );
+        setAiError(data.error || "AI API topilmadi. O'rnatilgan aqlli brauzer qirqish mexanizmidan foydalaning.");
       }
     } catch {
       setAiError("AI servisi bilan ulanishda xatolik yuz berdi.");
@@ -379,19 +365,11 @@ export function ImageUploadWithBgRemoval({
             </div>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => setModalOpen(false)}
-                disabled={processing}
-              >
+              <Button variant="ghost" onClick={() => setModalOpen(false)} disabled={processing}>
                 Bekor qilish
               </Button>
 
-              <Button
-                variant="primary"
-                onClick={handleSaveProcessed}
-                disabled={loadingImage || processing}
-              >
+              <Button variant="primary" onClick={handleSaveProcessed} disabled={loadingImage || processing}>
                 {processing ? <Loader2 className="animate-spin" /> : <Check />}
                 Qabul qilish va saqlash
               </Button>
@@ -474,8 +452,8 @@ export function ImageUploadWithBgRemoval({
                 previewBg === "checker"
                   ? "bg-[repeating-conic-gradient(#f1f5f9_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] dark:bg-[repeating-conic-gradient(#1e293b_0%_25%,transparent_0%_50%)]"
                   : previewBg === "white"
-                  ? "bg-white"
-                  : "bg-[#030712]"
+                    ? "bg-white"
+                    : "bg-[#030712]"
               }`}
             >
               {loadingImage ? (
@@ -540,7 +518,7 @@ export function ImageUploadWithBgRemoval({
                           0,
                           0,
                           originalCanvasRef.current.width,
-                          originalCanvasRef.current.height
+                          originalCanvasRef.current.height,
                         );
                         setTargetColor(detectCornerBackgroundColor(imgData));
                       }
@@ -583,9 +561,7 @@ export function ImageUploadWithBgRemoval({
                   onChange={(e) => setTolerance(Number(e.target.value))}
                   className="w-full accent-primary h-1.5 cursor-pointer"
                 />
-                <p className="text-3xs text-muted-foreground">
-                  Oshirilsa, fonga yaqinroq tuslar ham tozalanadi
-                </p>
+                <p className="text-3xs text-muted-foreground">Oshirilsa, fonga yaqinroq tuslar ham tozalanadi</p>
               </div>
 
               {/* Qirralarni yumshatish */}
@@ -602,9 +578,7 @@ export function ImageUploadWithBgRemoval({
                   onChange={(e) => setFeather(Number(e.target.value))}
                   className="w-full accent-primary h-1.5 cursor-pointer"
                 />
-                <p className="text-3xs text-muted-foreground">
-                  Qirralar arra boʻlmasligi uchun yarim-shaffoflik
-                </p>
+                <p className="text-3xs text-muted-foreground">Qirralar arra boʻlmasligi uchun yarim-shaffoflik</p>
               </div>
 
               {/* Qirqish usuli */}

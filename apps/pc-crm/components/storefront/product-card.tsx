@@ -53,9 +53,7 @@ export function ProductCard({
   isLiked = false,
   className = "",
 }: ProductCardProps) {
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariantItem | undefined>(
-    product.variants?.[0]
-  );
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariantItem | undefined>(product.variants?.[0]);
 
   const activeImage = selectedVariant?.imageUrl || product.imageUrl;
   const inStock = product.stock > 0;
@@ -99,7 +97,9 @@ export function ProductCard({
         >
           <Heart
             size={16}
-            className={isLiked ? "fill-(--danger-fg) text-(--danger-fg)" : "text-muted-foreground hover:text-(--danger-fg)"}
+            className={
+              isLiked ? "fill-(--danger-fg) text-(--danger-fg)" : "text-muted-foreground hover:text-(--danger-fg)"
+            }
           />
         </Button>
 
@@ -151,9 +151,7 @@ export function ProductCard({
                   title={v.colorName}
                   style={{ backgroundColor: v.colorHex }}
                   className={`h-4 w-4 rounded-full border border-black/10 transition-transform ${
-                    selectedVariant?.id === v.id
-                      ? "ring-2 ring-primary ring-offset-1 scale-110"
-                      : "hover:scale-105"
+                    selectedVariant?.id === v.id ? "ring-2 ring-primary ring-offset-1 scale-110" : "hover:scale-105"
                   }`}
                 />
               ))}
@@ -174,9 +172,7 @@ export function ProductCard({
             <RatingStars rating={product.ratingAvg ?? 0} count={product.ratingCount} size="sm" />
             <span>
               {inStock ? (
-                <span className="font-medium text-(--success-fg)">
-                  Omborda: {product.stock} dona
-                </span>
+                <span className="font-medium text-(--success-fg)">Omborda: {product.stock} dona</span>
               ) : (
                 <span className="font-medium text-(--danger-fg)">Tugagan</span>
               )}

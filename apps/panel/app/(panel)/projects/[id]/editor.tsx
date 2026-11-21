@@ -524,7 +524,9 @@ export function ProjectEditor({
                   </div>
                   {director ? (
                     <Badge tone={director.locked ? "danger" : "success"} dot>
-                      {director.locked ? `Bloklangan (${director.failedAttempts} ta xato urinish)` : "Faol (Bloklanmagan)"}
+                      {director.locked
+                        ? `Bloklangan (${director.failedAttempts} ta xato urinish)`
+                        : "Faol (Bloklanmagan)"}
                     </Badge>
                   ) : (
                     <Badge tone="neutral">Mavjud emas</Badge>
@@ -534,23 +536,25 @@ export function ProjectEditor({
                 {director ? (
                   <div className="space-y-3">
                     <div className="text-body text-secondary-foreground space-y-1">
-                      <div><span className="text-muted-foreground">Ism:</span> {director.name}</div>
-                      <div><span className="text-muted-foreground">Telefon:</span> <span className="font-mono">{director.phone}</span></div>
+                      <div>
+                        <span className="text-muted-foreground">Ism:</span> {director.name}
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground">Telefon:</span>{" "}
+                        <span className="font-mono">{director.phone}</span>
+                      </div>
                     </div>
 
                     {director.locked ? (
                       <div className="rounded-control border border-red-500/30 bg-red-500/10 p-3 text-caption text-red-500">
-                        Parol ketma-ket 5 marta noto'g'ri kiritilgani sababli hisob xavfsizlik tizimi tomonidan vaqtincha bloklangan.
+                        Parol ketma-ket 5 marta noto'g'ri kiritilgani sababli hisob xavfsizlik tizimi tomonidan
+                        vaqtincha bloklangan.
                       </div>
                     ) : null}
 
                     <div className="flex flex-wrap items-center gap-2 pt-1">
                       {director.locked && canWrite ? (
-                        <Button
-                          size="sm"
-                          disabled={pendingAction}
-                          onClick={handleUnlockDirector}
-                        >
+                        <Button size="sm" disabled={pendingAction} onClick={handleUnlockDirector}>
                           <Unlock className="size-4" /> Blokdan chiqarish
                         </Button>
                       ) : null}
@@ -694,11 +698,7 @@ export function ProjectEditor({
             <Button variant="ghost" size="sm" onClick={() => setPasswordModalOpen(false)}>
               Bekor qilish
             </Button>
-            <Button
-              size="sm"
-              disabled={newPassword.length < 8 || pendingAction}
-              onClick={handleResetPassword}
-            >
+            <Button size="sm" disabled={newPassword.length < 8 || pendingAction} onClick={handleResetPassword}>
               Saqlash
             </Button>
           </div>

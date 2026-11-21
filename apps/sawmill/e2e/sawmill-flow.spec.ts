@@ -76,7 +76,9 @@ test.describe("Sawmill to'liq biznes oqimi va S6 yakuniy sinov", () => {
     const verifyBtn = page.getByRole("button", { name: /Zanjir butunligini|Проверить целостность/i });
     if (await verifyBtn.isVisible()) {
       await verifyBtn.click();
-      await expect(page.locator("text=Zanjir butun").or(page.locator("text=Цепочка цела")).first()).toBeVisible({ timeout: 10_000 });
+      await expect(page.locator("text=Zanjir butun").or(page.locator("text=Цепочка цела")).first()).toBeVisible({
+        timeout: 10_000,
+      });
     }
 
     // 12. Hisobotlar sahifasiga o'tish
@@ -99,14 +101,23 @@ test.describe("Sawmill to'liq biznes oqimi va S6 yakuniy sinov", () => {
     const ruBtn = page.locator("button", { hasText: "RU" }).first();
     if (await ruBtn.isVisible()) {
       await ruBtn.click();
-      await expect(page.locator("text=Настройки").or(page.locator("text=Отчеты")).or(page.locator("text=Партии")).or(page.locator("text=Склад")).first()).toBeVisible({ timeout: 10_000 });
+      await expect(
+        page
+          .locator("text=Настройки")
+          .or(page.locator("text=Отчеты"))
+          .or(page.locator("text=Партии"))
+          .or(page.locator("text=Склад"))
+          .first(),
+      ).toBeVisible({ timeout: 10_000 });
     }
 
     // Tilni qaytarib O'zbek tiliga o'tkazish
     const uzBtn = page.locator("button", { hasText: "UZ" }).first();
     if (await uzBtn.isVisible()) {
       await uzBtn.click();
-      await expect(page.locator("text=Sozlamalar").or(page.locator("text=Hisobotlar")).or(page.locator("text=Teraklar")).first()).toBeVisible({ timeout: 10_000 });
+      await expect(
+        page.locator("text=Sozlamalar").or(page.locator("text=Hisobotlar")).or(page.locator("text=Teraklar")).first(),
+      ).toBeVisible({ timeout: 10_000 });
     }
   });
 });

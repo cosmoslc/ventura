@@ -11,29 +11,18 @@ import {
 describe("orders calculation and reminders module (SAWMILL-TAHLIL 10-qism)", () => {
   describe("getOrderStatus", () => {
     it("bajarilgan zakaz har doim 'completed' qaytaradi", () => {
-      const status = getOrderStatus(
-        { quantity: 100, completedAt: new Date() },
-        50,
-      );
+      const status = getOrderStatus({ quantity: 100, completedAt: new Date() }, 50);
       expect(status).toBe("completed");
     });
 
     it("omborda zakaz miqdoridan yetarli yoki ko'p bo'lsa 'ready' qaytaradi", () => {
-      expect(
-        getOrderStatus({ quantity: 100, completedAt: null }, 100),
-      ).toBe("ready");
-      expect(
-        getOrderStatus({ quantity: 100, completedAt: null }, 150),
-      ).toBe("ready");
+      expect(getOrderStatus({ quantity: 100, completedAt: null }, 100)).toBe("ready");
+      expect(getOrderStatus({ quantity: 100, completedAt: null }, 150)).toBe("ready");
     });
 
     it("omborda zakaz miqdoridan kam bo'lsa 'pending' qaytaradi", () => {
-      expect(
-        getOrderStatus({ quantity: 100, completedAt: null }, 99),
-      ).toBe("pending");
-      expect(
-        getOrderStatus({ quantity: 100, completedAt: null }, 0),
-      ).toBe("pending");
+      expect(getOrderStatus({ quantity: 100, completedAt: null }, 99)).toBe("pending");
+      expect(getOrderStatus({ quantity: 100, completedAt: null }, 0)).toBe("pending");
     });
   });
 
@@ -140,12 +129,7 @@ describe("orders calculation and reminders module (SAWMILL-TAHLIL 10-qism)", () 
       const stockMap = { m1: 80 };
       const materialNames = { m1: "Vassa" };
 
-      const notifs = findPendingOrderNotifications(
-        orders,
-        stockMap,
-        materialNames,
-        today,
-      );
+      const notifs = findPendingOrderNotifications(orders, stockMap, materialNames, today);
 
       expect(notifs).toHaveLength(2);
       expect(notifs[0]).toMatchObject({

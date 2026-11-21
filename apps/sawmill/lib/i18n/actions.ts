@@ -12,9 +12,6 @@ export async function setLocaleAction(locale: Locale): Promise<void> {
 
   const session = await currentSession();
   if (session) {
-    await session.deps.db
-      .update(users)
-      .set({ locale, updatedAt: new Date() })
-      .where(eq(users.id, session.user.id));
+    await session.deps.db.update(users).set({ locale, updatedAt: new Date() }).where(eq(users.id, session.user.id));
   }
 }

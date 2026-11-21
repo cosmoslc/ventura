@@ -1,15 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  bigint,
-  boolean,
-  index,
-  integer,
-  jsonb,
-  numeric,
-  pgTable,
-  text,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, numeric, pgTable, text, uuid } from "drizzle-orm/pg-core";
 import { timestamps } from "./columns";
 
 export interface I18nText {
@@ -29,7 +19,7 @@ export const categories = pgTable(
     sort: integer("sort").notNull().default(0),
     ...timestamps,
   },
-  (t) => [index("categories_parent_id_idx").on(t.parentId), index("categories_sort_idx").on(t.sort)]
+  (t) => [index("categories_parent_id_idx").on(t.parentId), index("categories_sort_idx").on(t.sort)],
 );
 
 export const brands = pgTable(
@@ -42,7 +32,7 @@ export const brands = pgTable(
     sort: integer("sort").notNull().default(0),
     ...timestamps,
   },
-  (t) => [index("brands_sort_idx").on(t.sort)]
+  (t) => [index("brands_sort_idx").on(t.sort)],
 );
 
 export const products = pgTable(
@@ -58,9 +48,13 @@ export const products = pgTable(
     name: jsonb("name").$type<I18nText>().notNull(),
     desc: jsonb("desc").$type<I18nText>(),
     /** Tannarx so'mda (UZS) */
-    costPrice: bigint("cost_price", { mode: "bigint" }).notNull().default(sql`0`),
+    costPrice: bigint("cost_price", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
     /** Sotuv narxi so'mda (UZS) */
-    sellPrice: bigint("sell_price", { mode: "bigint" }).notNull().default(sql`0`),
+    sellPrice: bigint("sell_price", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
     discountPercent: integer("discount_percent").notNull().default(0),
     /** Haqiqiy jismoniy qoldiq */
     stock: integer("stock").notNull().default(0),
@@ -80,7 +74,7 @@ export const products = pgTable(
     index("products_brand_id_idx").on(t.brandId),
     index("products_is_active_idx").on(t.isActive),
     index("products_is_hit_idx").on(t.isHit),
-  ]
+  ],
 );
 
 export const productVariants = pgTable(
@@ -98,7 +92,7 @@ export const productVariants = pgTable(
     price: bigint("price", { mode: "bigint" }),
     ...timestamps,
   },
-  (t) => [index("product_variants_product_id_idx").on(t.productId)]
+  (t) => [index("product_variants_product_id_idx").on(t.productId)],
 );
 
 export const productImages = pgTable(
@@ -113,7 +107,7 @@ export const productImages = pgTable(
     sort: integer("sort").notNull().default(0),
     ...timestamps,
   },
-  (t) => [index("product_images_product_id_idx").on(t.productId)]
+  (t) => [index("product_images_product_id_idx").on(t.productId)],
 );
 
 export const productSpecs = pgTable(
@@ -131,5 +125,5 @@ export const productSpecs = pgTable(
     helpText: jsonb("help_text").$type<I18nText>(),
     ...timestamps,
   },
-  (t) => [index("product_specs_product_id_idx").on(t.productId)]
+  (t) => [index("product_specs_product_id_idx").on(t.productId)],
 );

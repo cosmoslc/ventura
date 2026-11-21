@@ -89,7 +89,8 @@ export default function AboutPage() {
                 Oʻzbekistonda professional kompyuter madaniyatini yaratmoqdamiz
               </h1>
               <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-                Biz shunchaki temir detallar sotmaymiz — geymerlar, dasturchilar, 3D animatorlar va biznes uchun eng yuqori unumdorlikdagi ishonchli ish qurollarini yigʻib beramiz.
+                Biz shunchaki temir detallar sotmaymiz — geymerlar, dasturchilar, 3D animatorlar va biznes uchun eng
+                yuqori unumdorlikdagi ishonchli ish qurollarini yigʻib beramiz.
               </p>
             </div>
           </div>
@@ -101,12 +102,8 @@ export default function AboutPage() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
               {STATS.map((stat, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center">
-                  <span className="font-mono text-3xl sm:text-4xl font-black text-primary">
-                    {stat.value}
-                  </span>
-                  <span className="text-xs sm:text-sm text-muted-foreground mt-1 font-medium">
-                    {stat.label}
-                  </span>
+                  <span className="font-mono text-3xl sm:text-4xl font-black text-primary">{stat.value}</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground mt-1 font-medium">{stat.label}</span>
                 </div>
               ))}
             </div>
@@ -123,7 +120,8 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-lg font-bold">100% Halol va Sifatli detallar</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Barcha videokarta, protsessor va xotiralar toʻgʻridan-toʻgʻri rasmiy distribyutorlardan keltiriladi. Ishlatilgan (refurbished / used) detallar qatʼiyan sotilmaydi.
+                  Barcha videokarta, protsessor va xotiralar toʻgʻridan-toʻgʻri rasmiy distribyutorlardan keltiriladi.
+                  Ishlatilgan (refurbished / used) detallar qatʼiyan sotilmaydi.
                 </p>
               </div>
 
@@ -133,7 +131,8 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-lg font-bold">Mukammal yigʻish madaniyati</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Kabel boshqaruvi (cable management), toʻgʻri havo aylanish oqimi (airflow) va termopastaning toʻgʻri qoʻllanilishi har bir kompyuterda ideal darajada bajariladi.
+                  Kabel boshqaruvi (cable management), toʻgʻri havo aylanish oqimi (airflow) va termopastaning toʻgʻri
+                  qoʻllanilishi har bir kompyuterda ideal darajada bajariladi.
                 </p>
               </div>
 
@@ -143,7 +142,8 @@ export default function AboutPage() {
                 </div>
                 <h3 className="text-lg font-bold">24 soatlik toʻliq stress-test</h3>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Mijozga topshirishdan oldin har bir tizim AIDA64 va FurMark orqali maksimal yuklamada sinaladi. Harorat meʼyorida ekanligiga toʻliq ishonch hosil qilinadi.
+                  Mijozga topshirishdan oldin har bir tizim AIDA64 va FurMark orqali maksimal yuklamada sinaladi.
+                  Harorat meʼyorida ekanligiga toʻliq ishonch hosil qilinadi.
                 </p>
               </div>
             </div>
@@ -197,17 +197,18 @@ export default function AboutPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {BRANCHES.map((b, idx) => (
-                <div
-                  key={idx}
-                  className="rounded-card border border-border bg-card p-6 space-y-3"
-                >
+                <div key={idx} className="rounded-card border border-border bg-card p-6 space-y-3">
                   <div className="flex items-center gap-2">
                     <MapPin size={20} className="text-primary" />
                     <h3 className="font-bold text-base">{b.city}</h3>
                   </div>
                   <div className="space-y-1 text-xs sm:text-sm text-muted-foreground">
-                    <p><strong>Manzil:</strong> {b.address}</p>
-                    <p><strong>Moʻljal:</strong> {b.landmark}</p>
+                    <p>
+                      <strong>Manzil:</strong> {b.address}
+                    </p>
+                    <p>
+                      <strong>Moʻljal:</strong> {b.landmark}
+                    </p>
                     <p className="flex items-center gap-1 pt-1 text-foreground">
                       <Clock size={13} className="text-primary" />
                       {b.hours}

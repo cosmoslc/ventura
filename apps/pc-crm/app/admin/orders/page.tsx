@@ -1,16 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  CheckCircle2,
-  Clock,
-  Eye,
-  MapPin,
-  Phone,
-  Search,
-  ShoppingCart,
-  Truck,
-} from "lucide-react";
+import { CheckCircle2, Clock, Eye, MapPin, Phone, Search, ShoppingCart, Truck } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -51,25 +42,32 @@ export default function AdminOrdersPage() {
 
   const loadOrders = useCallback(async () => {
     const result = await getAdminOrdersAction();
-    if (!result.success) { setError(result.error ?? "Buyurtmalarni yuklab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Buyurtmalarni yuklab bo'lmadi");
+      return;
+    }
     setError("");
-    setOrders(result.orders.map((o) => ({
-      id: o.id,
-      publicId: o.publicId,
-      customerName: o.name,
-      customerPhone: o.phone,
-      region: o.region ?? "",
-      address: o.address ?? "",
-      subtotal: o.subtotal,
-      shipping: o.shipping,
-      total: o.total,
-      paymentMethod: o.paymentMethod,
-      status: o.status,
-      createdAt: o.createdAt,
-      items: o.items.map(({ name, qty, price, cost }) => ({ name, qty, price, cost })),
-    })));
+    setOrders(
+      result.orders.map((o) => ({
+        id: o.id,
+        publicId: o.publicId,
+        customerName: o.name,
+        customerPhone: o.phone,
+        region: o.region ?? "",
+        address: o.address ?? "",
+        subtotal: o.subtotal,
+        shipping: o.shipping,
+        total: o.total,
+        paymentMethod: o.paymentMethod,
+        status: o.status,
+        createdAt: o.createdAt,
+        items: o.items.map(({ name, qty, price, cost }) => ({ name, qty, price, cost })),
+      })),
+    );
   }, []);
-  useEffect(() => { void loadOrders(); }, [loadOrders]);
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
@@ -87,12 +85,15 @@ export default function AdminOrdersPage() {
 
   const handleUpdateStatus = async (
     orderId: string,
-    newStatus: "new" | "confirmed" | "shipping" | "delivered" | "cancelled"
+    newStatus: "new" | "confirmed" | "shipping" | "delivered" | "cancelled",
   ) => {
     const result = await updateOrderStatusAction(orderId, newStatus);
-    if (!result.success) { setError(result.error ?? "Buyurtma holatini yangilab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Buyurtma holatini yangilab bo'lmadi");
+      return;
+    }
     await loadOrders();
-    setSelectedOrder((current) => current ? { ...current, status: newStatus } : current);
+    setSelectedOrder((current) => (current ? { ...current, status: newStatus } : current));
   };
 
   const getStatusBadge = (status: AdminOrder["status"]) => {
@@ -115,13 +116,18 @@ export default function AdminOrdersPage() {
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Sayt buyurtmalari
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Sayt buyurtmalari</h1>
         </div>
       </div>
 
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Statistika kartalari */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
@@ -155,12 +161,7 @@ export default function AdminOrdersPage() {
             valueClassName="whitespace-nowrap text-title"
           />
         ) : (
-          <StatCard
-            icon={<ShoppingCart />}
-            label="Jami buyurtmalar soni"
-            value={`${orders.length} ta`}
-            tone={4}
-          />
+          <StatCard icon={<ShoppingCart />} label="Jami buyurtmalar soni" value={`${orders.length} ta`} tone={4} />
         )}
       </div>
 
@@ -177,19 +178,19 @@ export default function AdminOrdersPage() {
         </div>
 
         <div className="flex items-center gap-2">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger aria-label="Buyurtma holati" className="w-auto min-w-44 text-xs">
-            <SelectValue placeholder="Barcha statuslar" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Barcha statuslar</SelectItem>
-            <SelectItem value="new">Yangi</SelectItem>
-            <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
-            <SelectItem value="shipping">Yetkazilmoqda</SelectItem>
-            <SelectItem value="delivered">Yetkazilgan</SelectItem>
-            <SelectItem value="cancelled">Bekor qilingan</SelectItem>
-          </SelectContent>
-        </Select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger aria-label="Buyurtma holati" className="w-auto min-w-44 text-xs">
+              <SelectValue placeholder="Barcha statuslar" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Barcha statuslar</SelectItem>
+              <SelectItem value="new">Yangi</SelectItem>
+              <SelectItem value="confirmed">Tasdiqlangan</SelectItem>
+              <SelectItem value="shipping">Yetkazilmoqda</SelectItem>
+              <SelectItem value="delivered">Yetkazilgan</SelectItem>
+              <SelectItem value="cancelled">Bekor qilingan</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -243,12 +244,8 @@ export default function AdminOrdersPage() {
 
                   {isFinancial ? (
                     <>
-                      <td className="p-3.5 text-right font-black text-foreground">
-                        {formatMoney(order.total)}
-                      </td>
-                      <td className="p-3.5 font-medium text-muted-foreground">
-                        {order.paymentMethod}
-                      </td>
+                      <td className="p-3.5 text-right font-black text-foreground">{formatMoney(order.total)}</td>
+                      <td className="p-3.5 font-medium text-muted-foreground">{order.paymentMethod}</td>
                     </>
                   ) : (
                     <td className="p-3.5 text-center font-bold text-foreground">
@@ -258,9 +255,7 @@ export default function AdminOrdersPage() {
                     </td>
                   )}
 
-                  <td className="p-3.5 text-center">
-                    {getStatusBadge(order.status)}
-                  </td>
+                  <td className="p-3.5 text-center">{getStatusBadge(order.status)}</td>
 
                   <td className="p-3.5 text-right">
                     <Button
@@ -295,37 +290,25 @@ export default function AdminOrdersPage() {
               </Button>
 
               {selectedOrder.status === "new" && (
-                <Button
-                  variant="success"
-                  onClick={() => handleUpdateStatus(selectedOrder.id, "confirmed")}
-                >
+                <Button variant="success" onClick={() => handleUpdateStatus(selectedOrder.id, "confirmed")}>
                   Tasdiqlash
                 </Button>
               )}
 
               {selectedOrder.status === "confirmed" && (
-                <Button
-                  variant="primary"
-                  onClick={() => handleUpdateStatus(selectedOrder.id, "shipping")}
-                >
+                <Button variant="primary" onClick={() => handleUpdateStatus(selectedOrder.id, "shipping")}>
                   Kuryerga berish
                 </Button>
               )}
 
               {selectedOrder.status === "shipping" && (
-                <Button
-                  variant="success"
-                  onClick={() => handleUpdateStatus(selectedOrder.id, "delivered")}
-                >
+                <Button variant="success" onClick={() => handleUpdateStatus(selectedOrder.id, "delivered")}>
                   Yetkazildi
                 </Button>
               )}
 
               {selectedOrder.status !== "delivered" && selectedOrder.status !== "cancelled" && (
-                <Button
-                  variant="danger"
-                  onClick={() => handleUpdateStatus(selectedOrder.id, "cancelled")}
-                >
+                <Button variant="danger" onClick={() => handleUpdateStatus(selectedOrder.id, "cancelled")}>
                   Bekor qilish
                 </Button>
               )}
@@ -363,17 +346,17 @@ export default function AdminOrdersPage() {
                       <div>
                         <p className="font-bold text-foreground text-body">{item.name}</p>
                         <p className="text-caption text-muted-foreground">
-                          {isFinancial ? (
-                            `${item.qty} dona × ${formatMoney(item.price)} (Tannarxi: ${formatMoney(item.cost)})`
-                          ) : (
-                            `${item.qty} dona`
-                          )}
+                          {isFinancial
+                            ? `${item.qty} dona × ${formatMoney(item.price)} (Tannarxi: ${formatMoney(item.cost)})`
+                            : `${item.qty} dona`}
                         </p>
                       </div>
 
                       {isFinancial && (
                         <div className="text-right">
-                          <p className="font-bold text-foreground text-body">{formatMoney(item.price * BigInt(item.qty))}</p>
+                          <p className="font-bold text-foreground text-body">
+                            {formatMoney(item.price * BigInt(item.qty))}
+                          </p>
                           <p className="text-caption text-(--success-fg) font-semibold">
                             +{formatMoney(itemProfit * BigInt(item.qty))} sof foyda
                           </p>

@@ -2,14 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  KeyRound,
-  Lock,
-  Plus,
-  Trash2,
-  Unlock,
-  UserCheck,
-} from "lucide-react";
+import { KeyRound, Lock, Plus, Trash2, Unlock, UserCheck } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -34,12 +27,7 @@ interface UsersClientProps {
   locale: Locale;
 }
 
-export function UsersClient({
-  initialUsers,
-  currentUserId,
-  canManage,
-  locale,
-}: UsersClientProps) {
+export function UsersClient({ initialUsers, currentUserId, canManage, locale }: UsersClientProps) {
   const router = useRouter();
   const [usersList] = React.useState<UserItem[]>(initialUsers);
   const [dialogOpen, setDialogOpen] = React.useState(false);
@@ -100,12 +88,8 @@ export function UsersClient({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("users_title", locale)}
-          </h1>
-          <p className="text-body text-muted-foreground">
-            {t("users_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("users_title", locale)}</h1>
+          <p className="text-body text-muted-foreground">{t("users_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -156,9 +140,7 @@ export function UsersClient({
                           )}
                         </div>
                       </td>
-                      <td className="p-3 font-mono text-caption text-muted-foreground">
-                        {u.phone}
-                      </td>
+                      <td className="p-3 font-mono text-caption text-muted-foreground">{u.phone}</td>
                       <td className="p-3">
                         {canManage && !isSelf ? (
                           <select
@@ -171,15 +153,7 @@ export function UsersClient({
                             <option value="viewer">{roleLabels.viewer}</option>
                           </select>
                         ) : (
-                          <Badge
-                            tone={
-                              u.role === "owner"
-                                ? "info"
-                                : u.role === "accountant"
-                                  ? "success"
-                                  : "neutral"
-                            }
-                          >
+                          <Badge tone={u.role === "owner" ? "info" : u.role === "accountant" ? "success" : "neutral"}>
                             {roleLabels[u.role]}
                           </Badge>
                         )}
@@ -281,12 +255,7 @@ export function UsersClient({
           </div>
 
           <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setPasswordTargetUser(null)}
-              disabled={savingPassword}
-            >
+            <Button type="button" variant="ghost" onClick={() => setPasswordTargetUser(null)} disabled={savingPassword}>
               {t("action_cancel", locale)}
             </Button>
             <Button type="submit" disabled={savingPassword}>

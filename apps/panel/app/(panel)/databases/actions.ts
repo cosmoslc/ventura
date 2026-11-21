@@ -218,7 +218,9 @@ export async function moveProjectDbAction(input: unknown, confirm: string): Prom
 const SYSTEM_OWNER = { type: "system", id: "00000000-0000-0000-0000-000000000000" };
 const SUPABASE_TOKEN_KEY = "supabase:token";
 
-export async function getSupabaseTokenAction(): Promise<{ ok: true; hasToken: boolean; preview: string | null } | { ok: false; error: string }> {
+export async function getSupabaseTokenAction(): Promise<
+  { ok: true; hasToken: boolean; preview: string | null } | { ok: false; error: string }
+> {
   const viewer = await requireViewer();
   if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
   const { db } = deps();
@@ -228,7 +230,9 @@ export async function getSupabaseTokenAction(): Promise<{ ok: true; hasToken: bo
   return { ok: true, hasToken: true, preview };
 }
 
-export async function saveSupabaseTokenAction(token: string): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+export async function saveSupabaseTokenAction(
+  token: string,
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
   const viewer = await requireViewer();
   if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
   const { db } = deps();
@@ -249,7 +253,9 @@ export async function saveSupabaseTokenAction(token: string): Promise<{ ok: true
   }
 }
 
-export async function listSupabaseProjectsAction(customToken?: string): Promise<{ ok: true; projects: SupabaseProject[] } | { ok: false; error: string }> {
+export async function listSupabaseProjectsAction(
+  customToken?: string,
+): Promise<{ ok: true; projects: SupabaseProject[] } | { ok: false; error: string }> {
   const viewer = await requireViewer();
   if (viewer.role !== "super_admin") return { ok: false, error: uz.common.noPermission };
   const { db } = deps();
@@ -388,7 +394,8 @@ export async function renameSupabaseProjectAction(
       .where(isNull(projects.deletedAt));
 
     for (const p of all) {
-      const s = p.settings as ({ supabase?: Record<string, unknown> & { projectRef?: string } } & Record<string, unknown>) | null;
+      const s = p.settings as
+        ({ supabase?: Record<string, unknown> & { projectRef?: string } } & Record<string, unknown>) | null;
       if (s?.supabase?.projectRef === projectRef) {
         const nextSettings = {
           ...s,

@@ -34,9 +34,7 @@ export interface TerakProfitReportRow {
   marginReal: number;
 }
 
-export async function getProfitReportData(
-  db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"],
-) {
+export async function getProfitReportData(db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"]) {
   const activeTeraks = await db
     .select({
       id: teraks.id,
@@ -276,10 +274,7 @@ export async function getDispatchReportData(
   });
 }
 
-export async function getFilteredWagesReportAction(filters: {
-  dateFrom?: string;
-  dateTo?: string;
-}) {
+export async function getFilteredWagesReportAction(filters: { dateFrom?: string; dateTo?: string }) {
   const { user, deps } = await requireUser();
   if (!can(user.role, "reports.view")) {
     throw new Error("Ruxsat berilmagan");

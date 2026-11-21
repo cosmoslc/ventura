@@ -13,14 +13,9 @@ import {
   workers,
   workEntries,
 } from "@ventura/db/schema/sawmill";
-import {
-  getDispatchReportData,
-  getProfitReportData,
-  getWagesReportData,
-} from "./actions";
+import { getDispatchReportData, getProfitReportData, getWagesReportData } from "./actions";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("hisobotlar va tahlil (reports) data aggregation (S5)", () => {
   it("getProfitReportData, getWagesReportData va getDispatchReportData to'g'ri hisoblaydi", async () => {
@@ -120,10 +115,7 @@ describe("hisobotlar va tahlil (reports) data aggregation (S5)", () => {
       dispatchId = disp!.id;
 
       // 6. K14 umumiy xarajat: 200 000
-      const [cat] = await db
-        .insert(expenseCategories)
-        .values({ name: "Elektr energiyasi" })
-        .returning();
+      const [cat] = await db.insert(expenseCategories).values({ name: "Elektr energiyasi" }).returning();
       expenseCatId = cat!.id;
 
       const [genExp] = await db
@@ -185,27 +177,60 @@ describe("hisobotlar va tahlil (reports) data aggregation (S5)", () => {
     } finally {
       // Tozalash
       if (dispatchId) {
-        await db.delete(dispatches).where(eq(dispatches.id, dispatchId)).catch(() => {});
+        await db
+          .delete(dispatches)
+          .where(eq(dispatches.id, dispatchId))
+          .catch(() => {});
       }
       if (generalExpId) {
-        await db.delete(generalExpenses).where(eq(generalExpenses.id, generalExpId)).catch(() => {});
+        await db
+          .delete(generalExpenses)
+          .where(eq(generalExpenses.id, generalExpId))
+          .catch(() => {});
       }
       if (expenseCatId) {
-        await db.delete(expenseCategories).where(eq(expenseCategories.id, expenseCatId)).catch(() => {});
+        await db
+          .delete(expenseCategories)
+          .where(eq(expenseCategories.id, expenseCatId))
+          .catch(() => {});
       }
       if (terakId) {
-        await db.delete(terakMaterials).where(eq(terakMaterials.terakId, terakId)).catch(() => {});
-        await db.delete(workEntries).where(eq(workEntries.terakId, terakId)).catch(() => {});
-        await db.delete(terakCosts).where(eq(terakCosts.terakId, terakId)).catch(() => {});
-        await db.delete(teraks).where(eq(teraks.id, terakId)).catch(() => {});
+        await db
+          .delete(terakMaterials)
+          .where(eq(terakMaterials.terakId, terakId))
+          .catch(() => {});
+        await db
+          .delete(workEntries)
+          .where(eq(workEntries.terakId, terakId))
+          .catch(() => {});
+        await db
+          .delete(terakCosts)
+          .where(eq(terakCosts.terakId, terakId))
+          .catch(() => {});
+        await db
+          .delete(teraks)
+          .where(eq(teraks.id, terakId))
+          .catch(() => {});
       }
       if (workerId) {
-        await db.delete(payments).where(eq(payments.workerId, workerId)).catch(() => {});
-        await db.delete(workEntries).where(eq(workEntries.workerId, workerId)).catch(() => {});
-        await db.delete(workers).where(eq(workers.id, workerId)).catch(() => {});
+        await db
+          .delete(payments)
+          .where(eq(payments.workerId, workerId))
+          .catch(() => {});
+        await db
+          .delete(workEntries)
+          .where(eq(workEntries.workerId, workerId))
+          .catch(() => {});
+        await db
+          .delete(workers)
+          .where(eq(workers.id, workerId))
+          .catch(() => {});
       }
       if (materialId) {
-        await db.delete(materials).where(eq(materials.id, materialId)).catch(() => {});
+        await db
+          .delete(materials)
+          .where(eq(materials.id, materialId))
+          .catch(() => {});
       }
     }
   });

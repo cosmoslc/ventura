@@ -75,18 +75,27 @@ try {
   const auth = betterAuth({
     secret: process.env.BETTER_AUTH_SECRET ?? "local-only-pc-crm-secret-change-before-deploy-1234567890",
     baseURL: process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004",
-    database: drizzleAdapter(db, { provider: "pg", schema: { user: users, session: schema.sessions, account: accounts, verification: schema.verifications } }),
+    database: drizzleAdapter(db, {
+      provider: "pg",
+      schema: { user: users, session: schema.sessions, account: accounts, verification: schema.verifications },
+    }),
     emailAndPassword: { enabled: true, disableSignUp: true, minPasswordLength: 12, maxPasswordLength: 128 },
-    plugins: [phoneNumber({
-      sendOTP: async () => { throw new Error("Telefon OTP sozlanmagan"); },
-      phoneNumberValidator: (value) => /^\+998\d{9}$/.test(value),
-      schema: { user: { fields: { phoneNumber: "phone", phoneNumberVerified: "phoneVerified" } } },
-    })],
-    user: { additionalFields: {
-      role: { type: "string", input: false, defaultValue: "customer" },
-      isActive: { type: "boolean", input: false, defaultValue: true },
-      locale: { type: "string", input: false, defaultValue: "uz" },
-    } },
+    plugins: [
+      phoneNumber({
+        sendOTP: async () => {
+          throw new Error("Telefon OTP sozlanmagan");
+        },
+        phoneNumberValidator: (value) => /^\+998\d{9}$/.test(value),
+        schema: { user: { fields: { phoneNumber: "phone", phoneNumberVerified: "phoneVerified" } } },
+      }),
+    ],
+    user: {
+      additionalFields: {
+        role: { type: "string", input: false, defaultValue: "customer" },
+        isActive: { type: "boolean", input: false, defaultValue: true },
+        locale: { type: "string", input: false, defaultValue: "uz" },
+      },
+    },
     advanced: { database: { generateId: "uuid" } },
   });
   const [existing] = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
@@ -101,16 +110,19 @@ try {
     await db.update(users).set({ name, phoneVerified: true }).where(eq(users.id, userId));
   } else {
     const email = `admin+${phone.replace(/\D/g, "")}@pc-crm.invalid`;
-    const user = await context.internalAdapter.createUser({
-      name,
-      email,
-      emailVerified: false,
-      phoneNumber: phone,
-      phoneNumberVerified: true,
-      role: "admin",
-      isActive: true,
-      locale: "uz",
-    }, { method: "admin" });
+    const user = await context.internalAdapter.createUser(
+      {
+        name,
+        email,
+        emailVerified: false,
+        phoneNumber: phone,
+        phoneNumberVerified: true,
+        role: "admin",
+        isActive: true,
+        locale: "uz",
+      },
+      { method: "admin" },
+    );
     userId = user.id;
   }
 

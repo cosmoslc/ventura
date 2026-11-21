@@ -146,17 +146,9 @@ export async function toggleArchiveTruckAction(truckId: string): Promise<TruckAc
 }
 
 export async function getTrucksList(db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"]) {
-  const active = await db
-    .select()
-    .from(trucks)
-    .where(isNull(trucks.archivedAt))
-    .orderBy(trucks.name);
+  const active = await db.select().from(trucks).where(isNull(trucks.archivedAt)).orderBy(trucks.name);
 
-  const archived = await db
-    .select()
-    .from(trucks)
-    .where(isNotNull(trucks.archivedAt))
-    .orderBy(trucks.name);
+  const archived = await db.select().from(trucks).where(isNotNull(trucks.archivedAt)).orderBy(trucks.name);
 
   return { active, archived };
 }

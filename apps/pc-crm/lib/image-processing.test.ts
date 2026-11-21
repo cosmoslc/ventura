@@ -18,8 +18,7 @@ describe("image-processing", () => {
   it("detectCornerBackgroundColor: accurately finds background color", () => {
     // Fake 2x2 ImageData: all corners are light gray (240, 240, 240, 255)
     const fakeData = new Uint8ClampedArray([
-      240, 240, 240, 255,  240, 240, 240, 255,
-      240, 240, 240, 255,  240, 240, 240, 255,
+      240, 240, 240, 255, 240, 240, 240, 255, 240, 240, 240, 255, 240, 240, 240, 255,
     ]);
 
     const imgData = {

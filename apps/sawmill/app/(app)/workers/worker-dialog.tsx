@@ -87,11 +87,7 @@ function WorkerDialogInner({ open, onOpenChange, worker, locale }: WorkerDialogP
 
         <div className="space-y-1.5">
           <Label htmlFor="worker-phone">{t("workers_phone", locale)}</Label>
-          <PhoneInput
-            id="worker-phone"
-            value={phone}
-            onValueChange={setPhone}
-          />
+          <PhoneInput id="worker-phone" value={phone} onValueChange={setPhone} />
         </div>
 
         <div className="space-y-1.5">
@@ -124,12 +120,7 @@ function WorkerDialogInner({ open, onOpenChange, worker, locale }: WorkerDialogP
         )}
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={submitting}>

@@ -3,19 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  Clock,
-  Cpu,
-  Flame,
-  HardDrive,
-  Layers,
-  Monitor,
-  Search,
-  Sparkles,
-  X,
-  Zap,
-} from "lucide-react";
+import { ArrowRight, Clock, Cpu, Flame, HardDrive, Layers, Monitor, Search, Sparkles, X, Zap } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 
 export interface SearchProductItem {
@@ -133,12 +121,7 @@ const SEARCH_CATEGORIES = [
   },
 ];
 
-const DEFAULT_RECENT = [
-  "RTX 4070 Ti",
-  "Intel Core i7 14-avlod",
-  "DDR5 32GB",
-  "Samsung 990 Pro",
-];
+const DEFAULT_RECENT = ["RTX 4070 Ti", "Intel Core i7 14-avlod", "DDR5 32GB", "Samsung 990 Pro"];
 
 const STORAGE_KEY = "ventura_recent_searches_v1";
 
@@ -253,8 +236,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
   const filteredProducts = query.trim()
     ? SEARCH_CATALOG.filter(
         (p) =>
-          p.name.toLowerCase().includes(query.toLowerCase()) ||
-          p.category.toLowerCase().includes(query.toLowerCase())
+          p.name.toLowerCase().includes(query.toLowerCase()) || p.category.toLowerCase().includes(query.toLowerCase()),
       )
     : [];
 
@@ -262,11 +244,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
     <div
       ref={containerRef}
       className={`relative transition-all duration-300 ease-out ${
-        isMobile
-          ? "w-full"
-          : isExpanded
-          ? "w-105 lg:w-120 xl:w-130 z-50"
-          : "w-60 lg:w-70 z-30"
+        isMobile ? "w-full" : isExpanded ? "w-105 lg:w-120 xl:w-130 z-50" : "w-60 lg:w-70 z-30"
       } ${className}`}
     >
       {/* Input container: ikki tomonga qarab kengayadi */}
@@ -280,9 +258,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
       >
         <Search
           size={18}
-          className={`shrink-0 transition-colors ${
-            isExpanded ? "text-primary" : "text-muted-foreground"
-          }`}
+          className={`shrink-0 transition-colors ${isExpanded ? "text-primary" : "text-muted-foreground"}`}
         />
 
         <input
@@ -382,9 +358,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                         >
                           <IconComponent size={14} />
                         </div>
-                        <span className="text-xs font-semibold text-foreground truncate">
-                          {cat.name}
-                        </span>
+                        <span className="text-xs font-semibold text-foreground truncate">{cat.name}</span>
                       </Link>
                     ) : (
                       <button
@@ -398,9 +372,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                         >
                           <IconComponent size={14} />
                         </div>
-                        <span className="text-xs font-semibold text-foreground truncate">
-                          {cat.name}
-                        </span>
+                        <span className="text-xs font-semibold text-foreground truncate">{cat.name}</span>
                       </button>
                     );
                   })}
@@ -411,12 +383,8 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
             /* 2. AGAR QUERY YOZILAYOTGAN BO'LSA: Jonli natijalar */
             <div>
               <div className="flex items-center justify-between pb-2 border-b border-border">
-                <span className="text-xs font-bold text-foreground">
-                  Natijalar ({filteredProducts.length})
-                </span>
-                <span className="text-caption text-muted-foreground">
-                  Enter bosib toʻliq qidiring
-                </span>
+                <span className="text-xs font-bold text-foreground">Natijalar ({filteredProducts.length})</span>
+                <span className="text-caption text-muted-foreground">Enter bosib toʻliq qidiring</span>
               </div>
 
               {filteredProducts.length === 0 ? (
@@ -440,11 +408,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                     >
                       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-border/80 bg-media p-1">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.imageUrl}
-                          alt={p.name}
-                          className="h-full w-full object-contain"
-                        />
+                        <img src={p.imageUrl} alt={p.name} className="h-full w-full object-contain" />
                       </div>
 
                       <div className="flex-1 min-w-0">
@@ -455,9 +419,7 @@ export function NavbarSearch({ className = "", isMobile = false, onCloseMobile }
                           <span className="rounded bg-muted px-1.5 py-0.2 text-2xs font-semibold text-muted-foreground">
                             {p.category}
                           </span>
-                          <span className="text-xs font-black text-primary">
-                            {formatMoney(p.price)}
-                          </span>
+                          <span className="text-xs font-black text-primary">{formatMoney(p.price)}</span>
                         </div>
                       </div>
 

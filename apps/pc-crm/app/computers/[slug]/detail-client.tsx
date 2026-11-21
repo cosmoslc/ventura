@@ -46,7 +46,6 @@ interface PageProps {
 }
 
 export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
-
   const { addItem } = useCart();
   const { isLiked: checkIsLiked, toggleLike } = useLiked();
   const isLiked = checkIsLiked(pc.id);
@@ -70,24 +69,23 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
       name: "Bobur Mirzayev",
       rating: 5,
       date: "2026-10-24",
-      comment: "Kompyuter ajoyib yig'ilgan! Kabel boshqaruvi (cable management) ideal, CS2 da barqaror 450 FPS ko'rsatmoqda. Judayam mamnunman.",
+      comment:
+        "Kompyuter ajoyib yig'ilgan! Kabel boshqaruvi (cable management) ideal, CS2 da barqaror 450 FPS ko'rsatmoqda. Judayam mamnunman.",
     },
     {
       id: "rev-2",
       name: "Javohir To'rayev",
       rating: 5,
       date: "2026-10-18",
-      comment: "DeepCool 360mm sovutgich juda tinch ishlayapti, hatto render vaqtida ham harorat 68 darajadan oshmadi. Ventura jamoasiga rahmat!",
+      comment:
+        "DeepCool 360mm sovutgich juda tinch ishlayapti, hatto render vaqtida ham harorat 68 darajadan oshmadi. Ventura jamoasiga rahmat!",
     },
   ]);
 
   const activeImage = pc.images[activeImageIndex] ?? pc.images[0] ?? "";
   const isAvailable = pc.status === "available";
 
-  const originalPrice =
-    pc.discountPercent > 0
-      ? (pc.sellPrice * 100n) / BigInt(100 - pc.discountPercent)
-      : undefined;
+  const originalPrice = pc.discountPercent > 0 ? (pc.sellPrice * 100n) / BigInt(100 - pc.discountPercent) : undefined;
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -262,14 +260,10 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
                 </div>
 
                 {/* Sarlavha (Kichikroq va toza) */}
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                  {pc.name}
-                </h1>
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{pc.name}</h1>
 
                 {pc.description && (
-                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">
-                    {pc.description}
-                  </p>
+                  <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed">{pc.description}</p>
                 )}
               </div>
 
@@ -304,7 +298,7 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
 
                     <Link
                       href={`https://t.me/venturapc_operator?text=Assalomu alaykum, men "${encodeURIComponent(
-                        pc.name
+                        pc.name,
                       )}" kompyuteri boʻyicha maʼlumot olmoqchiman.`}
                       target="_blank"
                     >
@@ -342,9 +336,7 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
                         </span>
                         <span className="font-semibold text-foreground truncate">{c.productName}</span>
                       </div>
-                      <span className="font-mono text-caption text-muted-foreground shrink-0 ml-1">
-                        {c.qty} dona
-                      </span>
+                      <span className="font-mono text-caption text-muted-foreground shrink-0 ml-1">{c.qty} dona</span>
                     </div>
                   ))}
                 </div>
@@ -403,9 +395,7 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
                 {reviewSubmitted ? (
                   <div className="rounded-control bg-(--success-bg) border border-(--success-border) p-4 text-center">
                     <CheckCircle2 size={32} className="text-(--success-fg) mx-auto mb-2" />
-                    <p className="text-sm font-bold text-(--success-fg)">
-                      Sharhingiz qabul qilindi!
-                    </p>
+                    <p className="text-sm font-bold text-(--success-fg)">Sharhingiz qabul qilindi!</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       Fikringiz boshqa xaridorlar uchun juda muhim. Rahmat!
                     </p>
@@ -441,9 +431,7 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
                             <Star
                               size={20}
                               className={
-                                star <= reviewRating
-                                  ? "fill-rating-star text-rating-star"
-                                  : "text-muted-foreground/40"
+                                star <= reviewRating ? "fill-rating-star text-rating-star" : "text-muted-foreground/40"
                               }
                             />
                           </button>
@@ -491,9 +479,7 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
                       <RatingStars rating={rev.rating} count={0} size="sm" />
                     </div>
 
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                      {rev.comment}
-                    </p>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{rev.comment}</p>
                   </div>
                 ))}
               </div>
@@ -528,9 +514,7 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
                     storage: b.storage,
                     price: b.sellPrice,
                     originalPrice:
-                      b.discountPercent > 0
-                        ? (b.sellPrice * 100n) / BigInt(100 - b.discountPercent)
-                        : undefined,
+                      b.discountPercent > 0 ? (b.sellPrice * 100n) / BigInt(100 - b.discountPercent) : undefined,
                     discountPercent: b.discountPercent,
                     ratingAvg: b.ratingAvg,
                     ratingCount: b.ratingCount,
@@ -561,7 +545,8 @@ export default function ComputerDetailClient({ pc, similarBuilds }: PageProps) {
             <p className="text-sm font-bold text-foreground mt-0.5">{activeHelpSpec?.value}</p>
           </div>
           <p className="leading-relaxed text-foreground">
-            {activeHelpSpec?.helpText ?? "Ushbu xususiyat kompyuterning yuqori unumdorligi va barqaror ishlashini taʼminlaydi."}
+            {activeHelpSpec?.helpText ??
+              "Ushbu xususiyat kompyuterning yuqori unumdorligi va barqaror ishlashini taʼminlaydi."}
           </p>
         </div>
       </Modal>

@@ -51,27 +51,34 @@ export async function getStoreBranding(): Promise<StoreBranding> {
 
   try {
     const settings = await getDbSettings();
-    const branding = settings.store_branding as {
-      storeName?: string;
-      slug?: string;
-      logoUrl?: string;
-      primary?: string;
-      primaryColor?: string;
-      appearance?: "light" | "dark" | "system";
-      storeMode?: "financial" | "inventory";
-    } | undefined;
-    const contacts = settings.store_contacts as {
-      storeName?: string;
-      phone?: string;
-      storePhone?: string;
-      telegram?: string;
-      storeTelegram?: string;
-      address?: string;
-      storeAddress?: string;
-      email?: string;
-    } | undefined;
+    const branding = settings.store_branding as
+      | {
+          storeName?: string;
+          slug?: string;
+          logoUrl?: string;
+          primary?: string;
+          primaryColor?: string;
+          appearance?: "light" | "dark" | "system";
+          storeMode?: "financial" | "inventory";
+        }
+      | undefined;
+    const contacts = settings.store_contacts as
+      | {
+          storeName?: string;
+          phone?: string;
+          storePhone?: string;
+          telegram?: string;
+          storeTelegram?: string;
+          address?: string;
+          storeAddress?: string;
+          email?: string;
+        }
+      | undefined;
 
-    if ((settings as Record<string, unknown>).store_mode === "financial" || (settings as Record<string, unknown>).store_mode === "inventory") {
+    if (
+      (settings as Record<string, unknown>).store_mode === "financial" ||
+      (settings as Record<string, unknown>).store_mode === "inventory"
+    ) {
       storeMode = (settings as Record<string, unknown>).store_mode as "financial" | "inventory";
     } else if (branding?.storeMode === "financial" || branding?.storeMode === "inventory") {
       storeMode = branding.storeMode;

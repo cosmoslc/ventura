@@ -55,7 +55,7 @@ test.describe("Foydalanuvchi profili va CMS sahifalari", () => {
   test("4. Saralanganlar (/profile/liked)", async ({ page }) => {
     // 1. Avval bosh sahifada biror mahsulotga like bosish
     await page.goto("/");
-    const likeBtn = page.locator("button[aria-label=\"Sevimlilarga qo'shish\"]").first();
+    const likeBtn = page.locator('button[aria-label="Sevimlilarga qo\'shish"]').first();
     await expect(likeBtn).toBeVisible();
     await likeBtn.click();
 
@@ -75,7 +75,10 @@ test.describe("Foydalanuvchi profili va CMS sahifalari", () => {
     await expect(page.getByRole("button", { name: /Kafolat va Servis/i }).first()).toBeVisible();
 
     // Kafolat kategoriyasiga o'tish
-    await page.getByRole("button", { name: /Kafolat va Servis/i }).first().click();
+    await page
+      .getByRole("button", { name: /Kafolat va Servis/i })
+      .first()
+      .click();
     await expect(page.getByText(/Tayyor kompyuterlarga qancha muddat kafolat beriladi/i)).toBeVisible();
 
     // Savolni bosib ochish

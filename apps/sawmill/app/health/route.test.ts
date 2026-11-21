@@ -15,4 +15,3 @@ describe("sawmill health endpoint", () => {
     expect(data).toHaveProperty("tenantSlug");
   });
 });
-

@@ -1,16 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  bigint,
-  boolean,
-  index,
-  integer,
-  jsonb,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { bigint, boolean, index, integer, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { type I18nText, products, productVariants } from "./catalog";
 import { timestamps } from "./columns";
@@ -53,9 +42,13 @@ export const pcBuilds = pgTable(
     name: jsonb("name").$type<I18nText>().notNull(),
     images: jsonb("images").$type<string[]>().notNull().default([]),
     /** Komponentlar tannarxlari yig'indisi (UZS) */
-    costPrice: bigint("cost_price", { mode: "bigint" }).notNull().default(sql`0`),
+    costPrice: bigint("cost_price", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
     /** Sotuv narxi (UZS) */
-    sellPrice: bigint("sell_price", { mode: "bigint" }).notNull().default(sql`0`),
+    sellPrice: bigint("sell_price", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
     discountPercent: integer("discount_percent").notNull().default(0),
     status: text("status", { enum: PC_BUILD_STATUSES }).notNull().default("available"),
     buyerName: text("buyer_name"),
@@ -65,7 +58,7 @@ export const pcBuilds = pgTable(
     ratingCount: integer("rating_count").notNull().default(0),
     ...timestamps,
   },
-  (t) => [index("pc_builds_status_idx").on(t.status)]
+  (t) => [index("pc_builds_status_idx").on(t.status)],
 );
 
 export const pcComponents = pgTable(
@@ -85,7 +78,7 @@ export const pcComponents = pgTable(
     costSnapshot: bigint("cost_snapshot", { mode: "bigint" }).notNull(),
     ...timestamps,
   },
-  (t) => [index("pc_components_pc_id_idx").on(t.pcId)]
+  (t) => [index("pc_components_pc_id_idx").on(t.pcId)],
 );
 
 export const pcSpecs = pgTable(
@@ -103,7 +96,7 @@ export const pcSpecs = pgTable(
     helpText: jsonb("help_text").$type<I18nText>(),
     ...timestamps,
   },
-  (t) => [index("pc_specs_pc_id_idx").on(t.pcId)]
+  (t) => [index("pc_specs_pc_id_idx").on(t.pcId)],
 );
 
 export const pcOrders = pgTable(
@@ -121,7 +114,7 @@ export const pcOrders = pgTable(
     convertedPcId: uuid("converted_pc_id").references(() => pcBuilds.id),
     ...timestamps,
   },
-  (t) => [index("pc_orders_user_id_idx").on(t.userId), index("pc_orders_status_idx").on(t.status)]
+  (t) => [index("pc_orders_user_id_idx").on(t.userId), index("pc_orders_status_idx").on(t.status)],
 );
 
 export const pcOrderItems = pgTable(
@@ -138,5 +131,5 @@ export const pcOrderItems = pgTable(
     qty: integer("qty").notNull().default(1),
     ...timestamps,
   },
-  (t) => [index("pc_order_items_pc_order_id_idx").on(t.pcOrderId)]
+  (t) => [index("pc_order_items_pc_order_id_idx").on(t.pcOrderId)],
 );

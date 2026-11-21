@@ -17,12 +17,7 @@ export interface ExpenseDialogProps {
   locale: Locale;
 }
 
-function ExpenseDialogInner({
-  open,
-  onOpenChange,
-  categories,
-  locale,
-}: ExpenseDialogProps) {
+function ExpenseDialogInner({ open, onOpenChange, categories, locale }: ExpenseDialogProps) {
   const router = useRouter();
 
   const [categoryId, setCategoryId] = React.useState(categories[0]?.id || "");
@@ -68,16 +63,10 @@ function ExpenseDialogInner({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("expenses_add", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("expenses_add", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">
-            {error}
-          </div>
+          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">{error}</div>
         )}
 
         {/* 1. Toifa tanlash */}
@@ -118,13 +107,7 @@ function ExpenseDialogInner({
         {/* 3. Sana */}
         <div className="space-y-1.5">
           <Label htmlFor="expense-date">{t("expenses_date", locale)}</Label>
-          <Input
-            id="expense-date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
+          <Input id="expense-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
         </div>
 
         {/* 4. Izoh */}
@@ -139,19 +122,10 @@ function ExpenseDialogInner({
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting || !amount || amount <= 0}
-          >
+          <Button type="submit" variant="primary" disabled={submitting || !amount || amount <= 0}>
             {submitting ? t("status_loading", locale) : t("action_add", locale)}
           </Button>
         </div>

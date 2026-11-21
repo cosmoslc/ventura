@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  calculateOverallProfit,
-  calculateTerakProfit,
-  calculateWeeklyChart,
-} from "./profit";
+import { calculateOverallProfit, calculateTerakProfit, calculateWeeklyChart } from "./profit";
 
 describe("profit calculation and dashboard metrics (SAWMILL-TAHLIL 8-qism, K11, K14)", () => {
   describe("calculateTerakProfit", () => {

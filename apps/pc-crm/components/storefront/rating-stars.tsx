@@ -10,13 +10,7 @@ interface RatingStarsProps {
   className?: string;
 }
 
-export function RatingStars({
-  rating,
-  count,
-  showText = true,
-  size = "sm",
-  className = "",
-}: RatingStarsProps) {
+export function RatingStars({ rating, count, showText = true, size = "sm", className = "" }: RatingStarsProps) {
   const starSize = size === "sm" ? 14 : 16;
   const rounded = Math.round(rating * 10) / 10;
 

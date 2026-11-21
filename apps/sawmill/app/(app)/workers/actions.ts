@@ -168,17 +168,9 @@ export async function toggleArchiveWorkerAction(workerId: string): Promise<Worke
 }
 
 export async function getWorkersList(db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"]) {
-  const active = await db
-    .select()
-    .from(workers)
-    .where(isNull(workers.archivedAt))
-    .orderBy(workers.name);
+  const active = await db.select().from(workers).where(isNull(workers.archivedAt)).orderBy(workers.name);
 
-  const archived = await db
-    .select()
-    .from(workers)
-    .where(isNotNull(workers.archivedAt))
-    .orderBy(workers.name);
+  const archived = await db.select().from(workers).where(isNotNull(workers.archivedAt)).orderBy(workers.name);
 
   return { active, archived };
 }

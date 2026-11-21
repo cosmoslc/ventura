@@ -185,11 +185,7 @@ export function Navbar({
         <Link href="/" className="flex items-center gap-2.5 text-foreground font-black text-xl tracking-tight">
           {branding.logoUrl ? (
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn border border-border/80 bg-card p-1 shadow-control overflow-hidden">
-              <img
-                src={branding.logoUrl}
-                alt={activeStoreName}
-                className="h-full w-full object-contain"
-              />
+              <img src={branding.logoUrl} alt={activeStoreName} className="h-full w-full object-contain" />
             </div>
           ) : (
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
@@ -308,12 +304,8 @@ export function Navbar({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-60">
                   <DropdownMenuLabel>
-                    <p className="font-bold text-xs text-foreground truncate">
-                      {session.user.name}
-                    </p>
-                    <p className="text-caption text-muted-foreground truncate">
-                      {session.user.email}
-                    </p>
+                    <p className="font-bold text-xs text-foreground truncate">{session.user.name}</p>
+                    <p className="text-caption text-muted-foreground truncate">{session.user.email}</p>
                     <span className="mt-1.5 inline-block rounded-control bg-primary/10 px-1.5 py-0.5 text-2xs font-bold text-primary capitalize">
                       {(session.user as any).role || "Mijoz"}
                     </span>

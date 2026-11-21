@@ -190,10 +190,7 @@ export const stockMovements = pgTable(
     note: text("note"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [
-    index("stock_movements_terak_material_idx").on(t.terakId, t.materialId),
-    tenantPolicy("stock_movements"),
-  ],
+  (t) => [index("stock_movements_terak_material_idx").on(t.terakId, t.materialId), tenantPolicy("stock_movements")],
 );
 
 /* Ishchiga maxsus material narxi (barcha teraklar uchun) */
@@ -210,10 +207,7 @@ export const workerMaterialPrices = pgTable(
     price: bigint("price", { mode: "number" }).notNull(),
     ...timestamps,
   },
-  (t) => [
-    primaryKey({ columns: [t.tenantId, t.workerId, t.materialId] }),
-    tenantPolicy("worker_material_prices"),
-  ],
+  (t) => [primaryKey({ columns: [t.tenantId, t.workerId, t.materialId] }), tenantPolicy("worker_material_prices")],
 );
 
 /* =========================================================================
@@ -361,7 +355,9 @@ export const dispatches = pgTable(
       .notNull()
       .references(() => materials.id, { onDelete: "cascade" }),
     quantity: numeric("quantity", { precision: 14, scale: 4 }).notNull(),
-    enteredUnit: text("entered_unit", { enum: ["piece", "cube"] }).notNull().default("piece"),
+    enteredUnit: text("entered_unit", { enum: ["piece", "cube"] })
+      .notNull()
+      .default("piece"),
     enteredQty: numeric("entered_qty", { precision: 14, scale: 4 }).notNull(),
     totalAmount: bigint("total_amount", { mode: "number" }).notNull().default(0),
     date: date("date", { mode: "string" }).notNull(),
@@ -452,10 +448,7 @@ export const expenseCategories = pgTable(
     archivedAt: timestamp("archived_at", { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [
-    unique("expense_categories_tenant_name_uq").on(t.tenantId, t.name),
-    tenantPolicy("expense_categories"),
-  ],
+  (t) => [unique("expense_categories_tenant_name_uq").on(t.tenantId, t.name), tenantPolicy("expense_categories")],
 );
 
 export const generalExpenses = pgTable(

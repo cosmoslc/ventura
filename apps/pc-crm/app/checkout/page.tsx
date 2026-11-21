@@ -31,10 +31,13 @@ import { z } from "zod";
 
 const checkoutSchema = z.object({
   firstName: z.string().trim().min(2, "Ism kamida 2 belgi bo'lishi kerak").max(60, "Ism juda uzun"),
-  lastName:  z.string().trim().max(60, "Familiya juda uzun").optional(),
-  phone:     z.string().trim().regex(/^\+998\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/, "Telefon formati: +998 90 123 45 67"),
-  region:    z.string().trim().min(2, "Viloyatni tanlang"),
-  address:   z.string().trim().min(5, "Manzil kamida 5 belgi bo'lishi kerak").max(500),
+  lastName: z.string().trim().max(60, "Familiya juda uzun").optional(),
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+998\s?\d{2}\s?\d{3}\s?\d{2}\s?\d{2}$/, "Telefon formati: +998 90 123 45 67"),
+  region: z.string().trim().min(2, "Viloyatni tanlang"),
+  address: z.string().trim().min(5, "Manzil kamida 5 belgi bo'lishi kerak").max(500),
   orderNote: z.string().trim().max(1000).optional(),
 });
 
@@ -121,22 +124,15 @@ export default function CheckoutPage() {
             Buyurtma raqami: {confirmedOrderId}
           </span>
 
-          <h1 className="text-2xl font-black text-foreground sm:text-3xl">
-            Buyurtmangiz qabul qilindi!
-          </h1>
+          <h1 className="text-2xl font-black text-foreground sm:text-3xl">Buyurtmangiz qabul qilindi!</h1>
 
           <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-            Rahmat, {firstName}! Buyurtmangiz muvaffaqiyatli tizimga yozildi. Tez orada operatorimiz siz bilan
-            bogʻlanib yetkazib berish vaqtini aniqlashtiradi.
+            Rahmat, {firstName}! Buyurtmangiz muvaffaqiyatli tizimga yozildi. Tez orada operatorimiz siz bilan bogʻlanib
+            yetkazib berish vaqtini aniqlashtiradi.
           </p>
 
           <div className="mt-6 flex w-full flex-col gap-3">
-            <a
-              href="https://t.me/venturapc_admin"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full"
-            >
+            <a href="https://t.me/venturapc_admin" target="_blank" rel="noopener noreferrer" className="w-full">
               <Button variant="telegram" size="default" className="w-full gap-2 font-bold">
                 <MessageCircle size={16} />
                 Telegram orqali operatorga yozish
@@ -163,7 +159,9 @@ export default function CheckoutPage() {
         <Navbar />
         <main className="mx-auto flex flex-1 flex-col items-center justify-center p-6 text-center">
           <h2 className="text-xl font-bold">Savatchangiz boʻsh</h2>
-          <p className="text-xs text-muted-foreground mt-1 mb-4">Buyurtma berish uchun avval tovarlarni savatga qoʻshing</p>
+          <p className="text-xs text-muted-foreground mt-1 mb-4">
+            Buyurtma berish uchun avval tovarlarni savatga qoʻshing
+          </p>
           <Link href="/products">
             <Button variant="primary">Mahsulotlarga oʻtish</Button>
           </Link>
@@ -180,7 +178,10 @@ export default function CheckoutPage() {
 
       <main className="mx-auto w-full max-w-[var(--storefront-max-w,1320px)] flex-1 px-4 py-8 sm:px-6">
         <div className="mb-6">
-          <Link href="/cart" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary mb-2">
+          <Link
+            href="/cart"
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary mb-2"
+          >
             <ArrowLeft size={13} /> Savatchaga qaytish
           </Link>
           <h1 className="text-2xl font-black text-foreground sm:text-3xl">Buyurtmani rasmiylashtirish</h1>
@@ -198,7 +199,9 @@ export default function CheckoutPage() {
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-1">
-                  <Label htmlFor="fn" className="text-xs font-semibold">Ism *</Label>
+                  <Label htmlFor="fn" className="text-xs font-semibold">
+                    Ism *
+                  </Label>
                   <Input
                     id="fn"
                     required
@@ -209,7 +212,9 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="ln" className="text-xs font-semibold">Familiya</Label>
+                  <Label htmlFor="ln" className="text-xs font-semibold">
+                    Familiya
+                  </Label>
                   <Input
                     id="ln"
                     value={lastName}
@@ -219,7 +224,9 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-1 sm:col-span-2">
-                  <Label htmlFor="phone" className="text-xs font-semibold">Telefon raqam *</Label>
+                  <Label htmlFor="phone" className="text-xs font-semibold">
+                    Telefon raqam *
+                  </Label>
                   <Input
                     id="phone"
                     required
@@ -276,7 +283,9 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="addr" className="text-xs font-semibold">Aniq koʻcha va xonadon manzili *</Label>
+                  <Label htmlFor="addr" className="text-xs font-semibold">
+                    Aniq koʻcha va xonadon manzili *
+                  </Label>
                   <Textarea
                     id="addr"
                     required
@@ -289,7 +298,9 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <Label htmlFor="note" className="text-xs font-semibold">Kuryer uchun izoh (ixtiyoriy)</Label>
+                  <Label htmlFor="note" className="text-xs font-semibold">
+                    Kuryer uchun izoh (ixtiyoriy)
+                  </Label>
                   <Input
                     id="note"
                     value={orderNote}
@@ -316,7 +327,9 @@ export default function CheckoutPage() {
                       </RadioGroup>
                       <div>
                         <p className="font-bold text-xs text-foreground">Operator orqali toʻlash (Telegram / Naqd)</p>
-                        <p className="text-caption text-muted-foreground">Buyurtma qabul qilingach operator bogʻlanadi</p>
+                        <p className="text-caption text-muted-foreground">
+                          Buyurtma qabul qilingach operator bogʻlanadi
+                        </p>
                       </div>
                     </div>
                     <span className="text-xs font-bold text-primary">Tavsiya etiladi</span>
@@ -367,11 +380,7 @@ export default function CheckoutPage() {
                     <div className="flex justify-between">
                       <span>Yetkazib berish ({region}):</span>
                       <span className="font-bold text-foreground">
-                        {shipping === 0n ? (
-                          <span className="text-(--success-fg)">Bepul</span>
-                        ) : (
-                          formatMoney(shipping)
-                        )}
+                        {shipping === 0n ? <span className="text-(--success-fg)">Bepul</span> : formatMoney(shipping)}
                       </span>
                     </div>
 
@@ -384,7 +393,11 @@ export default function CheckoutPage() {
               </div>
 
               {/* Tasdiqlash tugmasi */}
-              {submitError && <p role="alert" className="rounded-control bg-(--danger-bg) p-3 text-xs text-(--danger-fg)">{submitError}</p>}
+              {submitError && (
+                <p role="alert" className="rounded-control bg-(--danger-bg) p-3 text-xs text-(--danger-fg)">
+                  {submitError}
+                </p>
+              )}
               <Button
                 type="submit"
                 variant="primary"
@@ -392,7 +405,7 @@ export default function CheckoutPage() {
                 disabled={isSubmitting}
                 className="w-full font-bold shadow-card-hover"
               >
-                {isSubmitting ? "Buyurtma yuborilmoqda..." : (isFinancial ? "Buyurtmani tasdiqlash" : "Buyurtma berish")}
+                {isSubmitting ? "Buyurtma yuborilmoqda..." : isFinancial ? "Buyurtmani tasdiqlash" : "Buyurtma berish"}
               </Button>
 
               <div className="flex items-center justify-center gap-2 text-caption text-muted-foreground pt-1">

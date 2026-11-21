@@ -1624,7 +1624,11 @@ function FreeTrialModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div role="dialog" aria-modal="true" className="relative w-full max-w-lg rounded-modal border border-border bg-card p-6 sm:p-7 text-card-foreground shadow-modal max-h-[92vh] overflow-y-auto">
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="relative w-full max-w-lg rounded-modal border border-border bg-card p-6 sm:p-7 text-card-foreground shadow-modal max-h-[92vh] overflow-y-auto"
+      >
         <Button
           variant="ghost"
           size="icon-sm"
@@ -1848,7 +1852,8 @@ function FreeTrialModal({
                     </div>
                     {isLowContrast && (
                       <p className="mt-2 flex items-center gap-1.5 text-caption font-semibold text-(--warning-fg)">
-                        <TriangleAlert className="size-3.5" /> Oq matn bilan kontrast past (och ranglarda matn qiyin o'qilishi mumkin)
+                        <TriangleAlert className="size-3.5" /> Oq matn bilan kontrast past (och ranglarda matn qiyin
+                        o'qilishi mumkin)
                       </p>
                     )}
                   </div>
@@ -1901,11 +1906,17 @@ function FreeTrialModal({
                         </div>
                         <div className="text-center">
                           <span className="text-xs font-semibold text-primary hover:underline">Logotip yuklash</span>
-                          <p className="text-caption text-muted-foreground mt-0.5">PNG, JPG, WebP yoki SVG (maks. 2 MB)</p>
+                          <p className="text-caption text-muted-foreground mt-0.5">
+                            PNG, JPG, WebP yoki SVG (maks. 2 MB)
+                          </p>
                         </div>
                       </label>
                     )}
-                    {logoError && <FieldHint error className="mt-1.5">{logoError}</FieldHint>}
+                    {logoError && (
+                      <FieldHint error className="mt-1.5">
+                        {logoError}
+                      </FieldHint>
+                    )}
                   </div>
 
                   {/* Jonli ko'rinish (Live preview) */}
@@ -1917,7 +1928,9 @@ function FreeTrialModal({
                         "mt-1.5 rounded-card border border-border p-4 bg-background transition-colors",
                         isDark && "dark",
                       )}
-                      style={{ "--primary": primaryColor, colorScheme: isDark ? "dark" : "light" } as React.CSSProperties}
+                      style={
+                        { "--primary": primaryColor, colorScheme: isDark ? "dark" : "light" } as React.CSSProperties
+                      }
                     >
                       <div className="flex items-center justify-between pb-3 border-b border-border">
                         <div className="flex items-center gap-2.5 min-w-0">
@@ -1977,12 +1990,7 @@ function FreeTrialModal({
                     style={{ "--primary": primaryColor } as React.CSSProperties}
                     className="flex items-center gap-3 pt-3"
                   >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setStep(1)}
-                      className="gap-2 cursor-pointer"
-                    >
+                    <Button type="button" variant="ghost" onClick={() => setStep(1)} className="gap-2 cursor-pointer">
                       <ArrowLeft className="size-4" />
                       <span>Orqaga</span>
                     </Button>

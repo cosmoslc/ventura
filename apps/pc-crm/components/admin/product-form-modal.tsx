@@ -164,7 +164,15 @@ export function ProductFormModal({
 
   // Xususiyat qo'shish
   const addSpec = () => {
-    setSpecs([...specs, { key: `spec_${Date.now()}`, title: "Yadro soni", value: "8 yadro", helpText: "Protsessorning parallel ishlash qobiliyati" }]);
+    setSpecs([
+      ...specs,
+      {
+        key: `spec_${Date.now()}`,
+        title: "Yadro soni",
+        value: "8 yadro",
+        helpText: "Protsessorning parallel ishlash qobiliyati",
+      },
+    ]);
   };
 
   return (
@@ -323,7 +331,8 @@ export function ProductFormModal({
               <div className="text-right">
                 <FieldHint className="mt-0">Kutilayotgan sof foyda (dona):</FieldHint>
                 <div className={`text-body font-bold ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
-                  {profit >= 0n ? "+" : ""}{formatMoney(profit)}
+                  {profit >= 0n ? "+" : ""}
+                  {formatMoney(profit)}
                 </div>
               </div>
             </div>
@@ -416,7 +425,7 @@ export function ProductFormModal({
                     id={`spec-title-${i}`}
                     value={s.title}
                     onChange={(e) => {
-                      setSpecs(specs.map((item, idx) => idx === i ? { ...item, title: e.target.value } : item));
+                      setSpecs(specs.map((item, idx) => (idx === i ? { ...item, title: e.target.value } : item)));
                     }}
                     placeholder="Masalan: Chastota"
                   />
@@ -427,7 +436,7 @@ export function ProductFormModal({
                     id={`spec-value-${i}`}
                     value={s.value}
                     onChange={(e) => {
-                      setSpecs(specs.map((item, idx) => idx === i ? { ...item, value: e.target.value } : item));
+                      setSpecs(specs.map((item, idx) => (idx === i ? { ...item, value: e.target.value } : item)));
                     }}
                     placeholder="Masalan: 5.4 GHz"
                   />
@@ -438,7 +447,7 @@ export function ProductFormModal({
                   <Input
                     value={s.helpText ?? ""}
                     onChange={(e) => {
-                      setSpecs(specs.map((item, idx) => idx === i ? { ...item, helpText: e.target.value } : item));
+                      setSpecs(specs.map((item, idx) => (idx === i ? { ...item, helpText: e.target.value } : item)));
                     }}
                     placeholder="? tushuntirish matni (masalan: Protsessor takt chastotasi nima?)"
                   />

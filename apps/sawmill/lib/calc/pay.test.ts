@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  calculateGroupWork,
-  calculateSingleWork,
-  resolveWorkerCubePrice,
-  resolveWorkerPrice,
-} from "./pay";
+import { calculateGroupWork, calculateSingleWork, resolveWorkerCubePrice, resolveWorkerPrice } from "./pay";
 
 describe("pay calculation module", () => {
   describe("resolveWorkerPrice", () => {

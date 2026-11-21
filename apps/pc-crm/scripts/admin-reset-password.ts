@@ -57,17 +57,10 @@ async function main() {
     const hashedPassword = await context.password.hash(newPassword);
 
     // 3. Accounts jadvalidagi parolni yangilash
-    const [existingAccount] = await db
-      .select()
-      .from(accounts)
-      .where(eq(accounts.userId, user.id))
-      .limit(1);
+    const [existingAccount] = await db.select().from(accounts).where(eq(accounts.userId, user.id)).limit(1);
 
     if (existingAccount) {
-      await db
-        .update(accounts)
-        .set({ password: hashedPassword })
-        .where(eq(accounts.id, existingAccount.id));
+      await db.update(accounts).set({ password: hashedPassword }).where(eq(accounts.id, existingAccount.id));
       console.log(`Mavjud akkount paroli yangilandi!`);
     } else {
       await db.insert(accounts).values({
@@ -80,10 +73,7 @@ async function main() {
     }
 
     // Role admin bo'lishini ta'minlash
-    await db
-      .update(users)
-      .set({ role: "admin", isActive: true, phoneVerified: true })
-      .where(eq(users.id, user.id));
+    await db.update(users).set({ role: "admin", isActive: true, phoneVerified: true }).where(eq(users.id, user.id));
 
     console.log(`\n✅ MUVAFFAQIYATLI YAKUNLANDI!`);
     console.log(`Admin telefon raqami: ${user.phone}`);

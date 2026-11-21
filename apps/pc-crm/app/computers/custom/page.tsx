@@ -39,9 +39,7 @@ import { Navbar } from "@/components/storefront/navbar";
 import { formatMoney } from "@/lib/format";
 import { useFinancialMode } from "@/lib/store-context";
 import { getStorefrontConfiguratorPartsAction, savePcOrderAction } from "@/lib/server/actions";
-import {
-  type ConfiguratorPart,
-} from "@/lib/pc-data";
+import { type ConfiguratorPart } from "@/lib/pc-data";
 
 type ComponentRole = "cpu" | "motherboard" | "gpu" | "ram" | "ssd" | "psu" | "cooler" | "case";
 type StorefrontConfiguratorPart = Omit<ConfiguratorPart, "costPrice">;
@@ -55,10 +53,25 @@ interface CategoryMeta {
 
 const CATEGORIES: CategoryMeta[] = [
   { role: "cpu", title: "Protsessor (CPU)", icon: Cpu, description: "Tizimning yuragi va hisoblash kuchi" },
-  { role: "motherboard", title: "Ona plata", icon: Layers, description: "Barcha komponentlarni birlashtiruvchi poydevor" },
+  {
+    role: "motherboard",
+    title: "Ona plata",
+    icon: Layers,
+    description: "Barcha komponentlarni birlashtiruvchi poydevor",
+  },
   { role: "gpu", title: "Videokarta (GPU)", icon: Monitor, description: "Grafika, oʻyinlar va 3D render unumdorligi" },
-  { role: "ram", title: "Operativ xotira (RAM)", icon: MemoryStick, description: "Koʻp vazifalilik va tezkor maʼlumot oqimi" },
-  { role: "ssd", title: "Doimiy xotira (SSD)", icon: HardDrive, description: "Operatsion tizim va oʻyinlar yuklanish tezligi" },
+  {
+    role: "ram",
+    title: "Operativ xotira (RAM)",
+    icon: MemoryStick,
+    description: "Koʻp vazifalilik va tezkor maʼlumot oqimi",
+  },
+  {
+    role: "ssd",
+    title: "Doimiy xotira (SSD)",
+    icon: HardDrive,
+    description: "Operatsion tizim va oʻyinlar yuklanish tezligi",
+  },
   { role: "psu", title: "Quvvat bloki (PSU)", icon: Zap, description: "Komponentlarga barqaror elektr taʼminoti" },
   { role: "cooler", title: "Sovutish tizimi", icon: Sparkles, description: "Protsessor haroratini optimal saqlash" },
   { role: "case", title: "Korpus (Case)", icon: Wrench, description: "Dizayn, shamollatish va kabel boshqaruvi" },
@@ -75,25 +88,29 @@ export default function CustomPcConfiguratorPage() {
 
   useEffect(() => {
     let active = true;
-    void getStorefrontConfiguratorPartsAction().then((result) => {
-      if (!active) return;
-      if (result.success) {
-        setParts(result.parts);
-        setSelectedParts((prev) => {
-          if (Object.keys(prev).length > 0) return prev;
-          const initial: Partial<Record<ComponentRole, StorefrontConfiguratorPart>> = {};
-          for (const cat of CATEGORIES) {
-            const part = result.parts.find((p) => p.role === cat.role);
-            if (part) initial[cat.role] = part;
-          }
-          return initial;
-        });
-      }
-      else setError(result.error ?? "Konfigurator qismlarini yuklab bo'lmadi");
-    }).catch(() => { if (active) setError("Konfigurator qismlarini yuklab bo'lmadi"); });
-    return () => { active = false; };
+    void getStorefrontConfiguratorPartsAction()
+      .then((result) => {
+        if (!active) return;
+        if (result.success) {
+          setParts(result.parts);
+          setSelectedParts((prev) => {
+            if (Object.keys(prev).length > 0) return prev;
+            const initial: Partial<Record<ComponentRole, StorefrontConfiguratorPart>> = {};
+            for (const cat of CATEGORIES) {
+              const part = result.parts.find((p) => p.role === cat.role);
+              if (part) initial[cat.role] = part;
+            }
+            return initial;
+          });
+        } else setError(result.error ?? "Konfigurator qismlarini yuklab bo'lmadi");
+      })
+      .catch(() => {
+        if (active) setError("Konfigurator qismlarini yuklab bo'lmadi");
+      });
+    return () => {
+      active = false;
+    };
   }, []);
-
 
   // Buyurtma formasi holati
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
@@ -163,7 +180,9 @@ export default function CustomPcConfiguratorPage() {
       customerPhone,
       deliveryAddress: customerAddress,
       customerNote,
-      componentIds: Object.values(selectedParts).filter((part): part is StorefrontConfiguratorPart => Boolean(part)).map(({ role, id }) => ({ role, productId: id })),
+      componentIds: Object.values(selectedParts)
+        .filter((part): part is StorefrontConfiguratorPart => Boolean(part))
+        .map(({ role, id }) => ({ role, productId: id })),
     });
     if (!result.success) {
       if (result.error?.toLowerCase().includes("tizimga") || result.error?.toLowerCase().includes("kirish")) {
@@ -228,7 +247,14 @@ export default function CustomPcConfiguratorPage() {
 
         {/* Asosiy Konfigurator ish maydoni */}
         <div className="mx-auto max-w-[var(--storefront-max-w,1320px)] px-4 py-8 sm:px-6">
-          {error && <div role="alert" className="mb-4 rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+          {error && (
+            <div
+              role="alert"
+              className="mb-4 rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+            >
+              {error}
+            </div>
+          )}
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
             {/* Chap tomon: Bosqichlar va Komponentlar katalogi (8 ustun) */}
             <div className="lg:col-span-8 space-y-6">
@@ -251,8 +277,8 @@ export default function CustomPcConfiguratorPage() {
                         isActive
                           ? "border-primary bg-primary text-primary-foreground shadow-card"
                           : isSelected
-                          ? "border-(--success-border) bg-(--success-bg) text-foreground"
-                          : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                            ? "border-(--success-border) bg-(--success-bg) text-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
                       }`}
                     >
                       <Icon size={14} />
@@ -332,9 +358,7 @@ export default function CustomPcConfiguratorPage() {
                               <h3 className="font-bold text-sm sm:text-base text-foreground group-hover:text-primary transition-colors">
                                 {part.name}
                               </h3>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {part.specsSummary}
-                              </p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{part.specsSummary}</p>
                             </div>
                           </div>
 
@@ -384,9 +408,7 @@ export default function CustomPcConfiguratorPage() {
                       <PackageCheck size={18} className="text-primary" />
                       Konfiguratsiya xulosasi
                     </h3>
-                    <span className="text-xs font-bold text-primary">
-                      {selectedCount} / 8 tanlandi
-                    </span>
+                    <span className="text-xs font-bold text-primary">{selectedCount} / 8 tanlandi</span>
                   </div>
 
                   {/* Tanlangan qismlar ro'yxati */}
@@ -405,9 +427,7 @@ export default function CustomPcConfiguratorPage() {
                               <cat.icon size={13} />
                               {cat.title.split(" ")[0]}
                             </span>
-                            <span className="text-caption text-primary hover:underline font-semibold">
-                              + Tanlash
-                            </span>
+                            <span className="text-caption text-primary hover:underline font-semibold">+ Tanlash</span>
                           </div>
                         );
                       }
@@ -421,13 +441,9 @@ export default function CustomPcConfiguratorPage() {
                             <span className="block text-2xs font-bold uppercase tracking-wider text-muted-foreground">
                               {cat.title.split(" ")[0]}
                             </span>
-                            <span className="block font-semibold text-foreground truncate">
-                              {part.name}
-                            </span>
+                            <span className="block font-semibold text-foreground truncate">{part.name}</span>
                             {isFinancial && (
-                              <span className="font-mono text-caption text-primary">
-                                {formatMoney(part.price)}
-                              </span>
+                              <span className="font-mono text-caption text-primary">{formatMoney(part.price)}</span>
                             )}
                           </div>
 
@@ -480,9 +496,7 @@ export default function CustomPcConfiguratorPage() {
                       <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
                         Jami qiymat:
                       </span>
-                      <span className="font-mono text-2xl font-black text-foreground">
-                        {formatMoney(totalPrice)}
-                      </span>
+                      <span className="font-mono text-2xl font-black text-foreground">{formatMoney(totalPrice)}</span>
                     </div>
                   )}
 
@@ -528,11 +542,7 @@ export default function CustomPcConfiguratorPage() {
             </Button>
           ) : (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsOrderModalOpen(false)}
-              >
+              <Button type="button" variant="ghost" onClick={() => setIsOrderModalOpen(false)}>
                 Bekor qilish
               </Button>
               <Button type="submit" form="custom-pc-order-form" variant="primary" className="gap-2">
@@ -555,7 +565,8 @@ export default function CustomPcConfiguratorPage() {
               </Badge>
               <h3 className="mt-2 text-lg font-bold">Rahmat, {customerName}!</h3>
               <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-                Sizning yigʻma kompyuter buyurtmangiz muvaffaqiyatli saqlandi. Muhandislarimiz komponentlarni tekshirib, tez orada siz bilan bogʻlanishadi.
+                Sizning yigʻma kompyuter buyurtmangiz muvaffaqiyatli saqlandi. Muhandislarimiz komponentlarni tekshirib,
+                tez orada siz bilan bogʻlanishadi.
               </p>
             </div>
 
@@ -596,9 +607,7 @@ export default function CustomPcConfiguratorPage() {
             </div>
 
             <div>
-              <Label htmlFor="custom-customer-name">
-                Ism va familiyangiz *
-              </Label>
+              <Label htmlFor="custom-customer-name">Ism va familiyangiz *</Label>
               <Input
                 id="custom-customer-name"
                 type="text"
@@ -610,9 +619,7 @@ export default function CustomPcConfiguratorPage() {
             </div>
 
             <div>
-              <Label htmlFor="custom-customer-phone">
-                Telefon raqamingiz *
-              </Label>
+              <Label htmlFor="custom-customer-phone">Telefon raqamingiz *</Label>
               <Input
                 id="custom-customer-phone"
                 type="tel"
@@ -624,9 +631,7 @@ export default function CustomPcConfiguratorPage() {
             </div>
 
             <div>
-              <Label htmlFor="custom-customer-address">
-                Yetkazib berish manzili *
-              </Label>
+              <Label htmlFor="custom-customer-address">Yetkazib berish manzili *</Label>
               <Input
                 id="custom-customer-address"
                 type="text"
@@ -638,9 +643,7 @@ export default function CustomPcConfiguratorPage() {
             </div>
 
             <div>
-              <Label htmlFor="custom-customer-note">
-                Qoʻshimcha istaklar yoki izoh
-              </Label>
+              <Label htmlFor="custom-customer-note">Qoʻshimcha istaklar yoki izoh</Label>
               <Textarea
                 id="custom-customer-note"
                 rows={2}

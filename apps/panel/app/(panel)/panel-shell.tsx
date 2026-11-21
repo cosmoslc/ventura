@@ -62,7 +62,13 @@ function sections(role: Role): NavSection[] {
       title: uz.nav.main,
       items: [
         { id: "home", label: uz.nav.home, icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
-        { id: "projects", label: uz.nav.projects, icon: FolderKanban, color: "var(--nav-hue-violet)", children: projectChildren },
+        {
+          id: "projects",
+          label: uz.nav.projects,
+          icon: FolderKanban,
+          color: "var(--nav-hue-violet)",
+          children: projectChildren,
+        },
         { id: "clients", label: uz.nav.clients, icon: Users, color: "var(--nav-hue-amber)" },
         { id: "templates", label: uz.nav.templates, icon: Blocks, color: "var(--nav-hue-green)" },
       ],
@@ -78,7 +84,15 @@ function sections(role: Role): NavSection[] {
     },
     {
       title: uz.nav.system,
-      items: [{ id: "settings", label: uz.nav.settings, icon: Settings, color: "var(--nav-hue-slate)", children: settingsChildren }],
+      items: [
+        {
+          id: "settings",
+          label: uz.nav.settings,
+          icon: Settings,
+          color: "var(--nav-hue-slate)",
+          children: settingsChildren,
+        },
+      ],
     },
   ];
 }

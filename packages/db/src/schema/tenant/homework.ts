@@ -59,7 +59,9 @@ export const homeworkSubmissions = pgTable(
     studentId: uuid("student_id").notNull(),
     text: text("text"),
     attachments: jsonb("attachments").$type<HomeworkAttachment[]>().notNull().default([]),
-    status: text("status", { enum: ["submitted", "checked", "rejected"] }).notNull().default("submitted"),
+    status: text("status", { enum: ["submitted", "checked", "rejected"] })
+      .notNull()
+      .default("submitted"),
     grade: integer("grade"),
     feedback: text("feedback"),
     checkedAt: timestamp("checked_at", { withTimezone: true }),

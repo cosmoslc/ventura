@@ -284,12 +284,7 @@ export async function setWorkerSpecialPriceAction(formData: FormData): Promise<W
       // Narx 0 bo'lsa maxsus narx o'chiriladi
       await deps.db
         .delete(workerMaterialPrices)
-        .where(
-          and(
-            eq(workerMaterialPrices.workerId, workerId),
-            eq(workerMaterialPrices.materialId, materialId),
-          ),
-        );
+        .where(and(eq(workerMaterialPrices.workerId, workerId), eq(workerMaterialPrices.materialId, materialId)));
     } else {
       await deps.db
         .insert(workerMaterialPrices)
@@ -299,11 +294,7 @@ export async function setWorkerSpecialPriceAction(formData: FormData): Promise<W
           price: Math.round(price),
         })
         .onConflictDoUpdate({
-          target: [
-            workerMaterialPrices.tenantId,
-            workerMaterialPrices.workerId,
-            workerMaterialPrices.materialId,
-          ],
+          target: [workerMaterialPrices.tenantId, workerMaterialPrices.workerId, workerMaterialPrices.materialId],
           set: {
             price: Math.round(price),
             updatedAt: new Date(),
@@ -337,12 +328,7 @@ export async function deleteWorkerSpecialPriceAction(
   try {
     await deps.db
       .delete(workerMaterialPrices)
-      .where(
-        and(
-          eq(workerMaterialPrices.workerId, workerId),
-          eq(workerMaterialPrices.materialId, materialId),
-        ),
-      );
+      .where(and(eq(workerMaterialPrices.workerId, workerId), eq(workerMaterialPrices.materialId, materialId)));
 
     revalidatePath(`/workers/${workerId}`);
     return { ok: true };
@@ -356,11 +342,7 @@ export async function getWorkerProfileData(
   db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"],
   workerId: string,
 ) {
-  const [worker] = await db
-    .select()
-    .from(workers)
-    .where(eq(workers.id, workerId))
-    .limit(1);
+  const [worker] = await db.select().from(workers).where(eq(workers.id, workerId)).limit(1);
 
   if (!worker) return null;
 

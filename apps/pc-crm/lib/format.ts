@@ -2,11 +2,7 @@
  * Raqamlarni so'm formati bo'yicha chiroyli ko'rsatish (masalan: 1 250 000 so'm).
  * SSR va Client hydration bir xil bo'lishi uchun deterministik formatlash ishlatiladi.
  */
-export function formatMoney(
-  amount: bigint | number,
-  currency: "UZS" | "USD" = "UZS",
-  usdRate = 12800
-): string {
+export function formatMoney(amount: bigint | number, currency: "UZS" | "USD" = "UZS", usdRate = 12800): string {
   const value = typeof amount === "bigint" ? Number(amount) : amount;
   if (currency === "USD") {
     const inUsd = value / usdRate;

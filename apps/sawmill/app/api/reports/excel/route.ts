@@ -2,11 +2,7 @@ import ExcelJS from "exceljs";
 import { type NextRequest, NextResponse } from "next/server";
 import { can } from "@/lib/auth/roles";
 import { currentDeps, requireUser } from "@/lib/server/session";
-import {
-  getDispatchReportData,
-  getProfitReportData,
-  getWagesReportData,
-} from "@/app/(app)/reports/actions";
+import { getDispatchReportData, getProfitReportData, getWagesReportData } from "@/app/(app)/reports/actions";
 
 export async function GET(req: NextRequest) {
   const { user } = await requireUser();
@@ -150,8 +146,7 @@ export async function GET(req: NextRequest) {
   return new NextResponse(buffer, {
     status: 200,
     headers: {
-      "Content-Type":
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       "Content-Disposition": `attachment; filename="${fileName}"`,
     },
   });

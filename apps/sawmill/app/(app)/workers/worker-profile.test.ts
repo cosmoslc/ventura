@@ -12,8 +12,7 @@ import {
 import { calculateWorkerBalance } from "@/lib/calc/balance";
 import { resolveWorkerPrice } from "@/lib/calc/pay";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("worker profile, payments, wage accruals and balance operations", () => {
   it("to'lovlar, maosh hisoblash (K1), maxsus narxlar va balans hisob-kitobi to'liq ishlaydi", async () => {
@@ -57,14 +56,12 @@ describe("worker profile, payments, wage accruals and balance operations", () =>
       expect(pay1.amount).toBe(1000000);
       expect(pay1.date).toBe("2026-10-15");
 
-      await db
-        .insert(payments)
-        .values({
-          workerId: w.id,
-          amount: 500000,
-          date: "2026-10-20",
-          note: "Qo'shimcha to'lov",
-        });
+      await db.insert(payments).values({
+        workerId: w.id,
+        amount: 500000,
+        date: "2026-10-20",
+        note: "Qo'shimcha to'lov",
+      });
 
       // 3. Maosh hisoblash (K1)
       const periodStart = "2026-10-01";
@@ -132,12 +129,7 @@ describe("worker profile, payments, wage accruals and balance operations", () =>
       const [sp] = await db
         .select()
         .from(workerMaterialPrices)
-        .where(
-          and(
-            eq(workerMaterialPrices.workerId, w.id),
-            eq(workerMaterialPrices.materialId, mat.id),
-          ),
-        )
+        .where(and(eq(workerMaterialPrices.workerId, w.id), eq(workerMaterialPrices.materialId, mat.id)))
         .limit(1);
 
       expect(sp).toBeDefined();

@@ -16,11 +16,7 @@ export interface CalculateDispatchParams {
 }
 
 export type DispatchValidationError =
-  | "INVALID_QUANTITY"
-  | "INVALID_PRICE"
-  | "MISSING_VOLUME"
-  | "OUT_OF_STOCK"
-  | "INSUFFICIENT_STOCK";
+  "INVALID_QUANTITY" | "INVALID_PRICE" | "MISSING_VOLUME" | "OUT_OF_STOCK" | "INSUFFICIENT_STOCK";
 
 export interface DispatchCalculationResult {
   valid: boolean;
@@ -33,9 +29,7 @@ export interface DispatchCalculationResult {
 /**
  * Yuk chiqarish parametrlarini tekshiradi va saqlanadigan qiymatlarni hisoblaydi.
  */
-export function validateAndCalculateDispatch(
-  params: CalculateDispatchParams,
-): DispatchCalculationResult {
+export function validateAndCalculateDispatch(params: CalculateDispatchParams): DispatchCalculationResult {
   const { unit, quantityInput, priceInput, volumeM3, currentStock } = params;
 
   if (!Number.isFinite(quantityInput) || quantityInput <= 0) {
@@ -103,8 +97,7 @@ export function validateAndCalculateDispatch(
   }
 
   // 1 dona ekvivalent narxi: unitPrice = jami / dona
-  const unitPricePiece =
-    quantityPiece > 0 ? Math.round(totalAmount / quantityPiece) : 0;
+  const unitPricePiece = quantityPiece > 0 ? Math.round(totalAmount / quantityPiece) : 0;
 
   return {
     valid: true,
@@ -127,14 +120,7 @@ export function convertDispatchPrice(params: {
   materialSellingPrice?: number | null;
   materialCubePrice?: number | null;
 }): number {
-  const {
-    fromUnit,
-    toUnit,
-    currentPrice,
-    volumeM3,
-    materialSellingPrice,
-    materialCubePrice,
-  } = params;
+  const { fromUnit, toUnit, currentPrice, volumeM3, materialSellingPrice, materialCubePrice } = params;
 
   if (fromUnit === toUnit) return currentPrice;
   if (!volumeM3 || volumeM3 <= 0) return currentPrice;

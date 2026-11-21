@@ -184,11 +184,7 @@ export async function startFreeTrialAction(
   const server =
     vpsServer ??
     (
-      await db
-        .select({ id: servers.id, name: servers.name })
-        .from(servers)
-        .where(eq(servers.status, "ready"))
-        .limit(1)
+      await db.select({ id: servers.id, name: servers.name }).from(servers).where(eq(servers.status, "ready")).limit(1)
     )[0];
 
   if (!server) {

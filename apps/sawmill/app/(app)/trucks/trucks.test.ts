@@ -3,8 +3,7 @@ import { eq } from "drizzle-orm";
 import { createSawmillDb } from "@ventura/db";
 import { trucks } from "@ventura/db/schema/sawmill";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("trucks database operations", () => {
   it("mashina yaratish, tahrirlash va arxivlash to'liq ishlaydi", async () => {
@@ -25,11 +24,7 @@ describe("trucks database operations", () => {
       expect(tr.amount).toBe(250000);
 
       // 2. Tahrirlash
-      const [updated] = await db
-        .update(trucks)
-        .set({ amount: 300000 })
-        .where(eq(trucks.id, tr.id))
-        .returning();
+      const [updated] = await db.update(trucks).set({ amount: 300000 }).where(eq(trucks.id, tr.id)).returning();
 
       expect(updated).toBeDefined();
       if (!updated) throw new Error("Truck yangilanmadi");

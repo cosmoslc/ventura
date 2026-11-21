@@ -38,13 +38,9 @@ export async function createDbOrder(input: CreateOrderInput) {
       qtyByProduct.set(item.productId, (qtyByProduct.get(item.productId) ?? 0) + item.qty);
     }
 
-    const productRows = new Map<string, (typeof products.$inferSelect)>();
+    const productRows = new Map<string, typeof products.$inferSelect>();
     for (const productId of [...qtyByProduct.keys()].sort()) {
-      const [product] = await tx
-        .select()
-        .from(products)
-        .where(eq(products.id, productId))
-        .for("update");
+      const [product] = await tx.select().from(products).where(eq(products.id, productId)).for("update");
       if (!product || !product.isActive) throw new Error("Mahsulot mavjud emas yoki sotuvda emas");
       const requestedQty = qtyByProduct.get(productId) ?? 0;
       if (product.stock - product.reserved < requestedQty) throw new Error("Mahsulot qoldig'i yetarli emas");
@@ -76,18 +72,23 @@ export async function createDbOrder(input: CreateOrderInput) {
       .limit(1);
     if (!shippingRate) throw new Error("Tanlangan hududga yetkazib berish sozlanmagan");
 
-    const settingRows = await tx.select().from(settings).where(inArray(settings.key, ["free_shipping_from", "tax_percent"]));
+    const settingRows = await tx
+      .select()
+      .from(settings)
+      .where(inArray(settings.key, ["free_shipping_from", "tax_percent"]));
     const settingMap = new Map(settingRows.map((row) => [row.key, row.value as Record<string, unknown>]));
     const freeFromValue = settingMap.get("free_shipping_from")?.amount;
     const taxPercentValue = settingMap.get("tax_percent")?.percent;
-    const freeFrom = typeof freeFromValue === "string" && /^\d+$/.test(freeFromValue)
-      ? BigInt(freeFromValue)
-      : typeof freeFromValue === "number" && Number.isSafeInteger(freeFromValue) && freeFromValue >= 0
+    const freeFrom =
+      typeof freeFromValue === "string" && /^\d+$/.test(freeFromValue)
         ? BigInt(freeFromValue)
-        : 1_000_000n;
-    const taxPercent = typeof taxPercentValue === "number" && Number.isFinite(taxPercentValue)
-      ? Math.min(100, Math.max(0, taxPercentValue))
-      : 0;
+        : typeof freeFromValue === "number" && Number.isSafeInteger(freeFromValue) && freeFromValue >= 0
+          ? BigInt(freeFromValue)
+          : 1_000_000n;
+    const taxPercent =
+      typeof taxPercentValue === "number" && Number.isFinite(taxPercentValue)
+        ? Math.min(100, Math.max(0, taxPercentValue))
+        : 0;
     const goodsAfterDiscount = subtotal - discount;
     const tax = (goodsAfterDiscount * BigInt(Math.round(taxPercent * 100))) / 10_000n;
     const shipping = goodsAfterDiscount >= freeFrom ? 0n : shippingRate.price;
@@ -115,14 +116,16 @@ export async function createDbOrder(input: CreateOrderInput) {
       .returning();
     if (!newOrder) throw new Error("Buyurtmani yaratishda xatolik yuz berdi");
 
-    await tx.insert(orderItems).values(snapshots.map((item) => ({
-      orderId: newOrder.id,
-      productId: item.productId,
-      nameSnapshot: item.name,
-      priceSnapshot: item.price,
-      costSnapshot: item.cost,
-      qty: item.qty,
-    })));
+    await tx.insert(orderItems).values(
+      snapshots.map((item) => ({
+        orderId: newOrder.id,
+        productId: item.productId,
+        nameSnapshot: item.name,
+        priceSnapshot: item.price,
+        costSnapshot: item.cost,
+        qty: item.qty,
+      })),
+    );
 
     return { success: true as const, orderId: newOrder.publicId, id: newOrder.id };
   });
@@ -131,11 +134,7 @@ export async function createDbOrder(input: CreateOrderInput) {
 export async function getDbOrders(limit = 50) {
   const db = getDb();
 
-  const orderRows = await db
-    .select()
-    .from(orders)
-    .orderBy(desc(orders.createdAt))
-    .limit(limit);
+  const orderRows = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(limit);
 
   if (orderRows.length === 0) return [];
 
@@ -183,11 +182,7 @@ export async function getDbOrders(limit = 50) {
 export async function getDbUserOrders(userId: string) {
   const db = getDb();
 
-  const orderRows = await db
-    .select()
-    .from(orders)
-    .where(eq(orders.userId, userId))
-    .orderBy(desc(orders.createdAt));
+  const orderRows = await db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
 
   if (orderRows.length === 0) return [];
 
@@ -259,29 +254,42 @@ export async function updateDbOrderStatus(id: string, status: OrderStatus) {
 
     if (status === "confirmed") {
       for (const [productId, qty] of [...qtyByProduct.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        const [reserved] = await tx.update(products)
+        const [reserved] = await tx
+          .update(products)
           .set({ reserved: sql`${products.reserved} + ${qty}` })
-          .where(and(eq(products.id, productId), eq(products.isActive, true), sql`${products.stock} - ${products.reserved} >= ${qty}`))
+          .where(
+            and(
+              eq(products.id, productId),
+              eq(products.isActive, true),
+              sql`${products.stock} - ${products.reserved} >= ${qty}`,
+            ),
+          )
           .returning({ id: products.id });
         if (!reserved) throw new Error("Tasdiqlash uchun mahsulot qoldig'i yetarli emas");
-        await tx.insert(stockMovements).values({ productId, reason: "reserve", delta: -qty, refType: "order", refId: id });
+        await tx
+          .insert(stockMovements)
+          .values({ productId, reason: "reserve", delta: -qty, refType: "order", refId: id });
       }
     }
 
     if (status === "cancelled" && order.status !== "new") {
       for (const [productId, qty] of [...qtyByProduct.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        const [updated] = await tx.update(products)
+        const [updated] = await tx
+          .update(products)
           .set({ reserved: sql`GREATEST(0, ${products.reserved} - ${qty})` })
           .where(and(eq(products.id, productId), sql`${products.reserved} >= ${qty}`))
           .returning({ id: products.id });
         if (!updated) throw new Error("Buyurtma zaxirasini bo'shatib bo'lmadi");
-        await tx.insert(stockMovements).values({ productId, reason: "release", delta: qty, refType: "order", refId: id });
+        await tx
+          .insert(stockMovements)
+          .values({ productId, reason: "release", delta: qty, refType: "order", refId: id });
       }
     }
 
     if (status === "delivered") {
       for (const [productId, qty] of [...qtyByProduct.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-        const [updated] = await tx.update(products)
+        const [updated] = await tx
+          .update(products)
           .set({
             stock: sql`${products.stock} - ${qty}`,
             reserved: sql`${products.reserved} - ${qty}`,
@@ -295,27 +303,32 @@ export async function updateDbOrderStatus(id: string, status: OrderStatus) {
 
       const costTotal = items.reduce((sum, item) => sum + item.costSnapshot * BigInt(item.qty), 0n);
       const revenue = items.reduce((sum, item) => sum + item.priceSnapshot * BigInt(item.qty), 0n);
-      const [sale] = await tx.insert(sales).values({
-        source: "site",
-        type: "product",
-        orderId: id,
-        buyerName: order.name,
-        buyerPhone: order.phone,
-        total: revenue,
-        costTotal,
-        profit: revenue - costTotal,
-      }).returning();
+      const [sale] = await tx
+        .insert(sales)
+        .values({
+          source: "site",
+          type: "product",
+          orderId: id,
+          buyerName: order.name,
+          buyerPhone: order.phone,
+          total: revenue,
+          costTotal,
+          profit: revenue - costTotal,
+        })
+        .returning();
       if (!sale) throw new Error("Buyurtma sotuvini yaratib bo'lmadi");
-      await tx.insert(saleItems).values(items.map((item) => ({
-        saleId: sale.id,
-        productId: item.productId,
-        nameSnapshot: item.nameSnapshot,
-        qty: item.qty,
-        listPrice: item.priceSnapshot,
-        soldPrice: item.priceSnapshot,
-        costSnapshot: item.costSnapshot,
-        profit: (item.priceSnapshot - item.costSnapshot) * BigInt(item.qty),
-      })));
+      await tx.insert(saleItems).values(
+        items.map((item) => ({
+          saleId: sale.id,
+          productId: item.productId,
+          nameSnapshot: item.nameSnapshot,
+          qty: item.qty,
+          listPrice: item.priceSnapshot,
+          soldPrice: item.priceSnapshot,
+          costSnapshot: item.costSnapshot,
+          profit: (item.priceSnapshot - item.costSnapshot) * BigInt(item.qty),
+        })),
+      );
     }
 
     const [updatedOrder] = await tx.update(orders).set({ status }).where(eq(orders.id, id)).returning();

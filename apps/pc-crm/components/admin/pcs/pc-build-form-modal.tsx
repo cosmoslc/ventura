@@ -79,7 +79,7 @@ export function PcBuildFormModal({
       components.map((c) => ({
         costSnapshot: c.costSnapshot,
         qty: c.qty,
-      }))
+      })),
     );
   }, [components]);
 
@@ -139,8 +139,8 @@ export function PcBuildFormModal({
               sellPrice: part.price,
               inStock: part.stock >= c.qty,
             }
-          : c
-      )
+          : c,
+      ),
     );
   };
 
@@ -154,7 +154,7 @@ export function PcBuildFormModal({
           qty: isNaN(parsed) ? 0 : parsed,
           qtyStr: valStr,
         };
-      })
+      }),
     );
   };
 
@@ -168,23 +168,29 @@ export function PcBuildFormModal({
           qty: validQty,
           qtyStr: String(validQty),
         };
-      })
+      }),
     );
   };
 
   const handleComponentRoleChange = (index: number, role: ConfiguratorPart["role"]) => {
     const part = parts.find((candidate) => candidate.role === role);
     if (!part) return;
-    setComponents((prev) => prev.map((component, i) => i === index ? {
-      ...component,
-      role: part.role,
-      roleNameUz: part.roleLabel,
-      productId: part.id,
-      productName: part.name,
-      costSnapshot: part.costPrice,
-      sellPrice: part.price,
-      inStock: part.stock >= component.qty,
-    } : component));
+    setComponents((prev) =>
+      prev.map((component, i) =>
+        i === index
+          ? {
+              ...component,
+              role: part.role,
+              roleNameUz: part.roleLabel,
+              productId: part.id,
+              productName: part.name,
+              costSnapshot: part.costPrice,
+              sellPrice: part.price,
+              inStock: part.stock >= component.qty,
+            }
+          : component,
+      ),
+    );
   };
 
   const handleRemoveComponent = (index: number) => {
@@ -370,19 +376,18 @@ export function PcBuildFormModal({
                 </div>
 
                 <div className={isFinancial ? "col-span-4" : "col-span-7"}>
-                  <Select
-                    value={comp.productId}
-                    onValueChange={(val) => handleSelectProductForComponent(idx, val)}
-                  >
+                  <Select value={comp.productId} onValueChange={(val) => handleSelectProductForComponent(idx, val)}>
                     <SelectTrigger className="w-full h-8 font-medium">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {parts.filter((item) => item.role === comp.role).map((item) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name} {isFinancial ? `· ${formatMoney(item.costPrice)}` : ""} · mavjud: {item.stock}
-                        </SelectItem>
-                      ))}
+                      {parts
+                        .filter((item) => item.role === comp.role)
+                        .map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.name} {isFinancial ? `· ${formatMoney(item.costPrice)}` : ""} · mavjud: {item.stock}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -429,9 +434,7 @@ export function PcBuildFormModal({
           {isFinancial && (
             <div className="flex items-center justify-between rounded-control bg-primary/10 border border-primary/20 p-3">
               <span className="font-semibold text-primary">PC Jami Tannarxi:</span>
-              <span className="text-base font-bold text-foreground">
-                {formatMoney(totalCostPrice)}
-              </span>
+              <span className="text-base font-bold text-foreground">{formatMoney(totalCostPrice)}</span>
             </div>
           )}
         </div>

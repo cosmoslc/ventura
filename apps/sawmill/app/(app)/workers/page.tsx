@@ -12,12 +12,5 @@ export default async function WorkersPage() {
   const canManage = can(user.role, "workers.manage");
   const locale = user.locale ?? "uz";
 
-  return (
-    <WorkersClient
-      activeWorkers={active}
-      archivedWorkers={archived}
-      canManage={canManage}
-      locale={locale}
-    />
-  );
+  return <WorkersClient activeWorkers={active} archivedWorkers={archived} canManage={canManage} locale={locale} />;
 }

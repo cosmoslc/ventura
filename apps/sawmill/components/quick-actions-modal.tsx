@@ -1,15 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import {
-  Briefcase,
-  DollarSign,
-  Plus,
-  TreePine,
-  Truck,
-  UserPlus,
-  X,
-} from "lucide-react";
+import { Briefcase, DollarSign, Plus, TreePine, Truck, UserPlus, X } from "lucide-react";
 import { type Locale, t } from "@/lib/i18n";
 
 interface QuickActionsModalProps {
@@ -56,17 +48,13 @@ export function QuickActionsModal({ isOpen, onClose, locale }: QuickActionsModal
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div
-        className="w-full sm:max-w-md rounded-t-3xl sm:rounded-modal bg-card border border-border p-6 shadow-modal animate-in slide-in-from-bottom sm:zoom-in-95 duration-200"
-      >
+      <div className="w-full sm:max-w-md rounded-t-3xl sm:rounded-modal bg-card border border-border p-6 shadow-modal animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
         <div className="flex items-center justify-between pb-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="size-8 rounded-btn bg-primary/10 text-primary flex items-center justify-center">
               <Plus className="size-4" />
             </div>
-            <h2 className="text-title font-bold text-foreground">
-              {t("quick_actions", locale)}
-            </h2>
+            <h2 className="text-title font-bold text-foreground">{t("quick_actions", locale)}</h2>
           </div>
           <button
             type="button"
@@ -90,9 +78,7 @@ export function QuickActionsModal({ isOpen, onClose, locale }: QuickActionsModal
                 <div className={`size-10 rounded-btn flex items-center justify-center ${act.color}`}>
                   <Icon className="size-5" />
                 </div>
-                <span className="text-caption font-semibold text-foreground group-hover:text-primary">
-                  {act.label}
-                </span>
+                <span className="text-caption font-semibold text-foreground group-hover:text-primary">{act.label}</span>
               </Link>
             );
           })}

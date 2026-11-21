@@ -19,12 +19,5 @@ export default async function ExpensesPage() {
 
   const { expenses, categories } = await getGeneralExpensesData(deps.db);
 
-  return (
-    <ExpensesClient
-      initialExpenses={expenses}
-      categories={categories}
-      canManage={canManage}
-      locale={locale}
-    />
-  );
+  return <ExpensesClient initialExpenses={expenses} categories={categories} canManage={canManage} locale={locale} />;
 }

@@ -203,11 +203,7 @@ function InnerSingleWorkDialog({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("work_add_single", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("work_add_single", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         {error && (
           <div className="p-3 text-caption text-destructive bg-destructive/10 rounded-control border border-destructive/20">
@@ -400,9 +396,7 @@ function InnerSingleWorkDialog({
 
             {payUnit === "cube" && cubeInputMode === "calculated" && (
               <div className="space-y-1.5">
-                <Label htmlFor="single-calc-qty">
-                  {t("work_quantity", locale)} (kub o'lchamidan hisoblanadi)
-                </Label>
+                <Label htmlFor="single-calc-qty">{t("work_quantity", locale)} (kub o'lchamidan hisoblanadi)</Label>
                 <Input
                   id="single-calc-qty"
                   type="number"
@@ -500,12 +494,8 @@ function InnerSingleWorkDialog({
         {/* Live Preview Card */}
         <div className="p-3.5 bg-primary/5 rounded-card border border-primary/20 space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-caption font-medium text-muted-foreground">
-              {t("work_preview_amount", locale)}:
-            </span>
-            <span className="text-title font-bold text-primary font-mono">
-              {formatMoney(preview.amount)}
-            </span>
+            <span className="text-caption font-medium text-muted-foreground">{t("work_preview_amount", locale)}:</span>
+            <span className="text-title font-bold text-primary font-mono">{formatMoney(preview.amount)}</span>
           </div>
 
           {kind === "material" && (
@@ -519,18 +509,10 @@ function InnerSingleWorkDialog({
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             {t("action_cancel", locale)}
           </Button>
-          <Button
-            type="submit"
-            disabled={loading || (kind === "regular" && isSorting && remainingRes <= 0)}
-          >
+          <Button type="submit" disabled={loading || (kind === "regular" && isSorting && remainingRes <= 0)}>
             {loading ? t("action_save", locale) + "..." : t("action_save", locale)}
           </Button>
         </div>

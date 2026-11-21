@@ -9,13 +9,7 @@ import { toast } from "@ventura/ui/toast";
 import type { CrmContacts } from "@/lib/server/crm-contacts";
 import { saveCrmContactsAction } from "../actions";
 
-export function ContactsForm({
-  contacts,
-  canEdit,
-}: {
-  contacts: CrmContacts;
-  canEdit: boolean;
-}) {
+export function ContactsForm({ contacts, canEdit }: { contacts: CrmContacts; canEdit: boolean }) {
   const [formData, setFormData] = React.useState(contacts);
   const [saving, setSaving] = React.useState(false);
 

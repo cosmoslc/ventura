@@ -44,7 +44,10 @@ export interface PcBuildItem {
 }
 
 /** Public PC detail payload. Internal cost snapshots must never cross the server boundary. */
-export type PcBuildPublicItem = Omit<PcBuildItem, "costPrice" | "components" | "buyerName" | "buyerPhone" | "soldAt"> & {
+export type PcBuildPublicItem = Omit<
+  PcBuildItem,
+  "costPrice" | "components" | "buyerName" | "buyerPhone" | "soldAt"
+> & {
   components: Omit<PcComponentItem, "costSnapshot" | "sellPrice">[];
 };
 
@@ -107,7 +110,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     ram: "32GB Kingston FURY DDR5 6000MHz",
     storage: "1TB Samsung 990 PRO NVMe",
     warrantyMonths: 12,
-    description: "Ventura Gaming Titan — 2K va 4K formatdagi eng og'ir o'yinlar, 3D modellashtirish va video montaj uchun maxsus yig'ilgan ultra quvvatli stansiya. Har bir komponent to'liq sinovdan o'tkazilgan.",
+    description:
+      "Ventura Gaming Titan — 2K va 4K formatdagi eng og'ir o'yinlar, 3D modellashtirish va video montaj uchun maxsus yig'ilgan ultra quvvatli stansiya. Har bir komponent to'liq sinovdan o'tkazilgan.",
     components: [
       {
         role: "cpu",
@@ -197,7 +201,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
         value: "Intel Core i7-14700K (20 yadro, 28 oqim, 5.6 GHz turbo)",
         filterable: true,
         helpTitle: "Protsessor yadrolari va oqimlari nima?",
-        helpText: "20 yadro bir vaqtda ham og'ir o'yin o'ynash, ham fon rejimida video render qilish va strim uzatish imkonini to'liq qotishlarsiz beradi.",
+        helpText:
+          "20 yadro bir vaqtda ham og'ir o'yin o'ynash, ham fon rejimida video render qilish va strim uzatish imkonini to'liq qotishlarsiz beradi.",
       },
       {
         key: "gpu_model",
@@ -205,35 +210,40 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
         value: "NVIDIA GeForce RTX 4070 Ti Super 16GB GDDR6X",
         filterable: true,
         helpTitle: "DLSS 3.0 va 16GB VRAM nimaga kerak?",
-        helpText: "DLSS 3 kadrlar generatori sun'iy intellekt orqali FPS ko'rsatkichini 2-3 barobar oshiradi. 16GB video xotira esa 4K teksturalar uchun zaxira kafolati.",
+        helpText:
+          "DLSS 3 kadrlar generatori sun'iy intellekt orqali FPS ko'rsatkichini 2-3 barobar oshiradi. 16GB video xotira esa 4K teksturalar uchun zaxira kafolati.",
       },
       {
         key: "ram_spec",
         title: "Tezkor xotira (RAM)",
         value: "32GB (2x16GB) DDR5 6000MHz CL30 Kingston FURY Beast RGB",
         helpTitle: "DDR5 6000MHz va Dual-channel nima?",
-        helpText: "Ikki kanalli rejim xotira o'tkazuvchanligini 2 barobarga oshiradi, bu o'yinlarda 1% low FPS tushib ketishining oldini oladi.",
+        helpText:
+          "Ikki kanalli rejim xotira o'tkazuvchanligini 2 barobarga oshiradi, bu o'yinlarda 1% low FPS tushib ketishining oldini oladi.",
       },
       {
         key: "storage_spec",
         title: "Doimiy xotira (SSD)",
         value: "1TB Samsung 990 PRO NVMe M.2 (7450 MB/s o'qish)",
         helpTitle: "PCIe 4.0 NVMe SSD nima beradi?",
-        helpText: "O'yinlar va Windows 11 operatsion tizimi soniyaning ulushlarida ochiladi, render va fayl ko'chirish tezligi maksimal bo'ladi.",
+        helpText:
+          "O'yinlar va Windows 11 operatsion tizimi soniyaning ulushlarida ochiladi, render va fayl ko'chirish tezligi maksimal bo'ladi.",
       },
       {
         key: "cooling_spec",
         title: "Sovutish tizimi",
         value: "DeepCool LT720 360mm AIO Liquid Cooler",
         helpTitle: "360mm Suyuqlik sovutish tizimi nima uchun kerak?",
-        helpText: "Yuqori quvvatli Core i7 protsessorini hatto soatlab davom etuvchi maksimal yuklamalarda ham 70 darajadan oshirmaydi.",
+        helpText:
+          "Yuqori quvvatli Core i7 protsessorini hatto soatlab davom etuvchi maksimal yuklamalarda ham 70 darajadan oshirmaydi.",
       },
       {
         key: "psu_spec",
         title: "Quvvat bloki",
         value: "Corsair RM850e 850W 80 PLUS Gold Full-Modular",
         helpTitle: "80 PLUS Gold sertifikati nimani anglatadi?",
-        helpText: "Elektr energiyasini kamida 90% samaradorlik bilan konvertatsiya qiladi, kam qiziydi va uzoq yillar xavfsiz ishlaydi.",
+        helpText:
+          "Elektr energiyasini kamida 90% samaradorlik bilan konvertatsiya qiladi, kam qiziydi va uzoq yillar xavfsiz ishlaydi.",
       },
     ],
   },
@@ -256,7 +266,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     ram: "32GB Corsair DDR5 6000MHz",
     storage: "1TB Kingston KC3000 Gen4",
     warrantyMonths: 12,
-    description: "Dunyoning eng yaxshi o'yin protsessori AMD Ryzen 7 7800X3D (3D V-Cache) asosida yig'ilgan kompyuter. CS2, Dota 2, Valorant va Warzone strimerlari uchun ideal tanlov.",
+    description:
+      "Dunyoning eng yaxshi o'yin protsessori AMD Ryzen 7 7800X3D (3D V-Cache) asosida yig'ilgan kompyuter. CS2, Dota 2, Valorant va Warzone strimerlari uchun ideal tanlov.",
     components: [
       {
         role: "cpu",
@@ -286,7 +297,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
         value: "AMD Ryzen 7 7800X3D (8 yadro, 16 oqim, 96MB 3D V-Cache)",
         filterable: true,
         helpTitle: "3D V-Cache texnologiyasi nima?",
-        helpText: "Katta kesh xotira protsessorga o'yin buyruqlarini zudlik bilan bajarish imkonini beradi va e-sport o'yinlarida eng yuqori FPS ko'rsatadi.",
+        helpText:
+          "Katta kesh xotira protsessorga o'yin buyruqlarini zudlik bilan bajarish imkonini beradi va e-sport o'yinlarida eng yuqori FPS ko'rsatadi.",
       },
       {
         key: "gpu_model",
@@ -315,7 +327,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     ram: "64GB DDR5 6400MHz G.Skill",
     storage: "2TB Samsung 990 PRO NVMe",
     warrantyMonths: 24,
-    description: "Murosasiz kuch: eng yuqori pog'onadagi komponentlar, Lian Li akvarium korpusi, to'liq ARGB sinxronizatsiya va 4K Ultra o'yinlarda 120+ FPS.",
+    description:
+      "Murosasiz kuch: eng yuqori pog'onadagi komponentlar, Lian Li akvarium korpusi, to'liq ARGB sinxronizatsiya va 4K Ultra o'yinlarda 120+ FPS.",
     components: [],
     specs: [
       {
@@ -336,9 +349,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     id: "pc-4",
     slug: "ventura-creator-amd-rx7800xt",
     name: "Creator Pro",
-    images: [
-      "https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=900&auto=format&fit=crop&q=80",
-    ],
+    images: ["https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=900&auto=format&fit=crop&q=80"],
     costPrice: 14_100_000n,
     sellPrice: 16_800_000n,
     discountPercent: 0,
@@ -350,7 +361,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     ram: "32GB Kingston DDR5 6000MHz",
     storage: "1TB M.2 NVMe SSD",
     warrantyMonths: 12,
-    description: "Narx va unumdorlik bo'yicha eng maqbul muvozanat. 16GB katta video xotira 1440p o'yinlar va videoni 4K formatda eksport qilish uchun qulay.",
+    description:
+      "Narx va unumdorlik bo'yicha eng maqbul muvozanat. 16GB katta video xotira 1440p o'yinlar va videoni 4K formatda eksport qilish uchun qulay.",
     components: [],
     specs: [
       {
@@ -371,9 +383,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     id: "pc-5",
     slug: "ventura-entry-gaming-i5-4060",
     name: "Ventura Starter",
-    images: [
-      "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=900&auto=format&fit=crop&q=80",
-    ],
+    images: ["https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=900&auto=format&fit=crop&q=80"],
     costPrice: 9_300_000n,
     sellPrice: 11_500_000n,
     discountPercent: 4,
@@ -385,7 +395,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     ram: "16GB DDR5 5200MHz",
     storage: "512GB Kingston NV2 SSD",
     warrantyMonths: 12,
-    description: "Zamonaviy o'yinlar va dasturlash uchun qulay va byudjetli kirish stansiyasi. 1080p Full HD formatida barcha o'yinlarni yuqori sifatda o'ynash imkoni.",
+    description:
+      "Zamonaviy o'yinlar va dasturlash uchun qulay va byudjetli kirish stansiyasi. 1080p Full HD formatida barcha o'yinlarni yuqori sifatda o'ynash imkoni.",
     components: [],
     specs: [
       {
@@ -406,9 +417,7 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     id: "pc-6",
     slug: "ventura-pro-workstation-threadripper",
     name: "Pro Render",
-    images: [
-      "https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80",
-    ],
+    images: ["https://images.unsplash.com/photo-1587202372634-32705e3bf49c?w=900&auto=format&fit=crop&q=80"],
     costPrice: 28_400_000n,
     sellPrice: 34_000_000n,
     discountPercent: 0,
@@ -420,7 +429,8 @@ export const SAMPLE_PC_BUILDS: PcBuildItem[] = [
     ram: "64GB DDR5 6000MHz",
     storage: "2TB Kingston KC3000",
     warrantyMonths: 24,
-    description: "Arxitektura, SAPR, Blender va Unreal Engine 5 loyihalarini professional render qilish uchun yig'ilgan ishchi stansiya. (Sotilgan)",
+    description:
+      "Arxitektura, SAPR, Blender va Unreal Engine 5 loyihalarini professional render qilish uchun yig'ilgan ishchi stansiya. (Sotilgan)",
     components: [],
     specs: [
       {
@@ -792,12 +802,48 @@ export const SAMPLE_PC_ORDERS: PcOrderItem[] = [
     createdAt: "2026-10-29T14:30:00Z",
     components: [
       { role: "cpu", roleNameUz: "Protsessor", productName: "Intel Core i7-14700K", price: 5_200_000n, inStock: true },
-      { role: "motherboard", roleNameUz: "Ona plata", productName: "MSI MAG Z790 TOMAHAWK WIFI", price: 3_400_000n, inStock: true },
-      { role: "gpu", roleNameUz: "Videokarta", productName: "ASUS Dual GeForce RTX 4070 SUPER 12GB", price: 8_900_000n, inStock: true },
-      { role: "ram", roleNameUz: "RAM", productName: "Kingston FURY Beast RGB 32GB DDR5", price: 1_750_000n, inStock: true },
-      { role: "ssd", roleNameUz: "SSD", productName: "Samsung 990 PRO 1TB PCIe 4.0 NVMe", price: 1_850_000n, inStock: true },
-      { role: "psu", roleNameUz: "PSU", productName: "Corsair RM850e 850W Gold Modulli", price: 1_650_000n, inStock: true },
-      { role: "cooler", roleNameUz: "Cooler", productName: "DeepCool LT720 360mm AIO", price: 1_450_000n, inStock: true },
+      {
+        role: "motherboard",
+        roleNameUz: "Ona plata",
+        productName: "MSI MAG Z790 TOMAHAWK WIFI",
+        price: 3_400_000n,
+        inStock: true,
+      },
+      {
+        role: "gpu",
+        roleNameUz: "Videokarta",
+        productName: "ASUS Dual GeForce RTX 4070 SUPER 12GB",
+        price: 8_900_000n,
+        inStock: true,
+      },
+      {
+        role: "ram",
+        roleNameUz: "RAM",
+        productName: "Kingston FURY Beast RGB 32GB DDR5",
+        price: 1_750_000n,
+        inStock: true,
+      },
+      {
+        role: "ssd",
+        roleNameUz: "SSD",
+        productName: "Samsung 990 PRO 1TB PCIe 4.0 NVMe",
+        price: 1_850_000n,
+        inStock: true,
+      },
+      {
+        role: "psu",
+        roleNameUz: "PSU",
+        productName: "Corsair RM850e 850W Gold Modulli",
+        price: 1_650_000n,
+        inStock: true,
+      },
+      {
+        role: "cooler",
+        roleNameUz: "Cooler",
+        productName: "DeepCool LT720 360mm AIO",
+        price: 1_450_000n,
+        inStock: true,
+      },
       { role: "case", roleNameUz: "Korpus", productName: "NZXT H7 Flow RGB Black", price: 1_550_000n, inStock: true },
     ],
     operatorNote: "Mijoz bilan bog'lanish kerak, korpus rangi oq yoki qora bo'yicha so'ralgan.",
@@ -815,12 +861,36 @@ export const SAMPLE_PC_ORDERS: PcOrderItem[] = [
     createdAt: "2026-10-28T18:15:00Z",
     components: [
       { role: "cpu", roleNameUz: "Protsessor", productName: "AMD Ryzen 7 7800X3D", price: 5_500_000n, inStock: true },
-      { role: "motherboard", roleNameUz: "Ona plata", productName: "ASUS ROG STRIX B650E-F", price: 3_800_000n, inStock: true },
-      { role: "gpu", roleNameUz: "Videokarta", productName: "Palit GeForce RTX 4060 Dual 8GB", price: 4_350_000n, inStock: true },
-      { role: "ram", roleNameUz: "RAM", productName: "Kingston FURY Beast 32GB DDR5", price: 1_750_000n, inStock: true },
+      {
+        role: "motherboard",
+        roleNameUz: "Ona plata",
+        productName: "ASUS ROG STRIX B650E-F",
+        price: 3_800_000n,
+        inStock: true,
+      },
+      {
+        role: "gpu",
+        roleNameUz: "Videokarta",
+        productName: "Palit GeForce RTX 4060 Dual 8GB",
+        price: 4_350_000n,
+        inStock: true,
+      },
+      {
+        role: "ram",
+        roleNameUz: "RAM",
+        productName: "Kingston FURY Beast 32GB DDR5",
+        price: 1_750_000n,
+        inStock: true,
+      },
       { role: "ssd", roleNameUz: "SSD", productName: "Kingston NV2 1TB NVMe", price: 880_000n, inStock: true },
       { role: "psu", roleNameUz: "PSU", productName: "DeepCool PK650D 650W Bronze", price: 750_000n, inStock: true },
-      { role: "cooler", roleNameUz: "Cooler", productName: "Thermalright Peerless Assassin 120", price: 590_000n, inStock: true },
+      {
+        role: "cooler",
+        roleNameUz: "Cooler",
+        productName: "Thermalright Peerless Assassin 120",
+        price: 590_000n,
+        inStock: true,
+      },
       { role: "case", roleNameUz: "Korpus", productName: "Montech AIR 903 MAX Black", price: 980_000n, inStock: true },
     ],
     operatorNote: "Oldindan 30% zaklad olindi. Yig'ish sexiga uzatildi.",
@@ -838,13 +908,55 @@ export const SAMPLE_PC_ORDERS: PcOrderItem[] = [
     createdAt: "2026-10-27T10:00:00Z",
     components: [
       { role: "cpu", roleNameUz: "Protsessor", productName: "Intel Core i9-14900K", price: 7_800_000n, inStock: true },
-      { role: "motherboard", roleNameUz: "Ona plata", productName: "MSI MAG Z790 TOMAHAWK WIFI", price: 3_400_000n, inStock: true },
-      { role: "gpu", roleNameUz: "Videokarta", productName: "MSI GeForce RTX 4090 SUPRIM X 24GB", price: 26_500_000n, inStock: true },
-      { role: "ram", roleNameUz: "RAM", productName: "Corsair Vengeance RGB 64GB DDR5", price: 3_200_000n, inStock: true },
-      { role: "ssd", roleNameUz: "SSD", productName: "Samsung 990 PRO 2TB PCIe 4.0 NVMe", price: 2_950_000n, inStock: true },
-      { role: "psu", roleNameUz: "PSU", productName: "Seasonic Focus GX-1000 1000W Gold", price: 2_600_000n, inStock: true },
-      { role: "cooler", roleNameUz: "Cooler", productName: "DeepCool LT720 360mm AIO", price: 1_450_000n, inStock: true },
-      { role: "case", roleNameUz: "Korpus", productName: "Lian Li O11 Dynamic EVO Black", price: 2_100_000n, inStock: true },
+      {
+        role: "motherboard",
+        roleNameUz: "Ona plata",
+        productName: "MSI MAG Z790 TOMAHAWK WIFI",
+        price: 3_400_000n,
+        inStock: true,
+      },
+      {
+        role: "gpu",
+        roleNameUz: "Videokarta",
+        productName: "MSI GeForce RTX 4090 SUPRIM X 24GB",
+        price: 26_500_000n,
+        inStock: true,
+      },
+      {
+        role: "ram",
+        roleNameUz: "RAM",
+        productName: "Corsair Vengeance RGB 64GB DDR5",
+        price: 3_200_000n,
+        inStock: true,
+      },
+      {
+        role: "ssd",
+        roleNameUz: "SSD",
+        productName: "Samsung 990 PRO 2TB PCIe 4.0 NVMe",
+        price: 2_950_000n,
+        inStock: true,
+      },
+      {
+        role: "psu",
+        roleNameUz: "PSU",
+        productName: "Seasonic Focus GX-1000 1000W Gold",
+        price: 2_600_000n,
+        inStock: true,
+      },
+      {
+        role: "cooler",
+        roleNameUz: "Cooler",
+        productName: "DeepCool LT720 360mm AIO",
+        price: 1_450_000n,
+        inStock: true,
+      },
+      {
+        role: "case",
+        roleNameUz: "Korpus",
+        productName: "Lian Li O11 Dynamic EVO Black",
+        price: 2_100_000n,
+        inStock: true,
+      },
     ],
     operatorNote: "Stress testdan 100% o'tdi. Kuryer yetkazishga tayyor.",
   },

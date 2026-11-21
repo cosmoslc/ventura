@@ -5,11 +5,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { user, tenant } = await requireUser();
 
   return (
-    <Shell
-      tenantName={tenant.name}
-      user={user}
-      enabledFeatures={tenant.features}
-    >
+    <Shell tenantName={tenant.name} user={user} enabledFeatures={tenant.features}>
       {children}
     </Shell>
   );

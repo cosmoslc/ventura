@@ -31,7 +31,12 @@ import { calcFinalPrice, calcMarginPercent } from "@/lib/calc/formulas";
 import { formatMoney } from "@/lib/format";
 import { useFinancialMode } from "@/lib/store-context";
 import { type PcBuildItem, type ConfiguratorPart } from "@/lib/pc-data";
-import { getAdminPcBuildsAction, getAdminConfiguratorPartsAction, savePcBuildAction, sellPcBuildAction } from "@/lib/server/actions";
+import {
+  getAdminPcBuildsAction,
+  getAdminConfiguratorPartsAction,
+  savePcBuildAction,
+  sellPcBuildAction,
+} from "@/lib/server/actions";
 
 export default function AdminPcsPage() {
   const isFinancial = useFinancialMode();
@@ -46,7 +51,9 @@ export default function AdminPcsPage() {
     if (!partsResult.success) setError(partsResult.error ?? "Komponentlarni yuklab bo'lmadi");
     else setParts(partsResult.parts);
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "available" | "sold" | "hidden">("all");
 
@@ -89,7 +96,10 @@ export default function AdminPcsPage() {
       return sum + profit;
     }, 0n);
 
-    const totalAvailableRevenue = available.reduce((sum, b) => sum + calcFinalPrice(b.sellPrice, b.discountPercent), 0n);
+    const totalAvailableRevenue = available.reduce(
+      (sum, b) => sum + calcFinalPrice(b.sellPrice, b.discountPercent),
+      0n,
+    );
     const avgMargin = calcMarginPercent(totalExpectedProfit, totalAvailableRevenue);
 
     return {
@@ -110,9 +120,19 @@ export default function AdminPcsPage() {
       discountPercent: savedBuild.discountPercent,
       status: savedBuild.status === "hidden" ? "hidden" : "available",
       components: savedBuild.components.map(({ role, productId, qty }) => ({ role, productId, qty })),
-      specs: savedBuild.specs.map(({ key, title, value, filterable, helpTitle, helpText }) => ({ key, title, value, filterable, helpTitle, helpText })),
+      specs: savedBuild.specs.map(({ key, title, value, filterable, helpTitle, helpText }) => ({
+        key,
+        title,
+        value,
+        filterable,
+        helpTitle,
+        helpText,
+      })),
     });
-    if (!result.success) { setError(result.error ?? "PC buildni saqlab bo'lmadi"); return false; }
+    if (!result.success) {
+      setError(result.error ?? "PC buildni saqlab bo'lmadi");
+      return false;
+    }
     setEditingBuild(null);
     setIsFormOpen(false);
     await loadData();
@@ -123,12 +143,15 @@ export default function AdminPcsPage() {
     e.preventDefault();
     if (!sellingBuild || !buyerName.trim()) return;
     const result = await sellPcBuildAction({ id: sellingBuild.id, buyerName, buyerPhone, soldAt: saleDate });
-    if (!result.success) { setError(result.error ?? "PC sotuvini saqlab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "PC sotuvini saqlab bo'lmadi");
+      return;
+    }
     const profit = calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice;
     setSaleSuccessMessage(
       isFinancial
         ? `"${sellingBuild.name}" sotildi. Sof daromad: ${formatMoney(profit)}.`
-        : `"${sellingBuild.name}" muvaffaqiyatli topshirildi.`
+        : `"${sellingBuild.name}" muvaffaqiyatli topshirildi.`,
     );
     setSellingBuild(null);
     setBuyerName("");
@@ -166,7 +189,14 @@ export default function AdminPcsPage() {
         </Button>
       </div>
 
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Muvaffaqiyat xabari */}
       {saleSuccessMessage && (
@@ -175,11 +205,7 @@ export default function AdminPcsPage() {
             <CheckCircle2 size={18} />
             <span>{saleSuccessMessage}</span>
           </div>
-          <button
-            type="button"
-            onClick={() => setSaleSuccessMessage(null)}
-            className="hover:opacity-75"
-          >
+          <button type="button" onClick={() => setSaleSuccessMessage(null)} className="hover:opacity-75">
             <X size={16} />
           </button>
         </div>
@@ -191,7 +217,13 @@ export default function AdminPcsPage() {
         <StatCard icon={<PackageCheck />} label="Sotilgan PClar" value={`${stats.soldCount} ta`} tone={2} />
         {isFinancial && (
           <>
-            <StatCard icon={<TrendingUp />} label="Kutilayotgan sof foyda" value={`+${formatMoney(stats.totalExpectedProfit)}`} tone={3} valueClassName="whitespace-nowrap text-title" />
+            <StatCard
+              icon={<TrendingUp />}
+              label="Kutilayotgan sof foyda"
+              value={`+${formatMoney(stats.totalExpectedProfit)}`}
+              tone={3}
+              valueClassName="whitespace-nowrap text-title"
+            />
             <StatCard icon={<DollarSign />} label="Oʻrtacha marja" value={`${stats.avgMargin}%`} tone={4} />
           </>
         )}
@@ -291,9 +323,7 @@ export default function AdminPcsPage() {
                               {build.name}
                               <ExternalLink size={12} className="text-muted-foreground" />
                             </Link>
-                            <span className="font-mono text-caption text-muted-foreground block">
-                              /{build.slug}
-                            </span>
+                            <span className="font-mono text-caption text-muted-foreground block">/{build.slug}</span>
                           </div>
                         </div>
                       </td>
@@ -329,20 +359,14 @@ export default function AdminPcsPage() {
                           </td>
 
                           <td className="py-3.5 px-4 text-right font-mono">
-                            <span className="font-bold text-(--success-fg) block">
-                              +{formatMoney(profit)}
-                            </span>
-                            <span className="text-caption text-muted-foreground">
-                              {margin}% marja
-                            </span>
+                            <span className="font-bold text-(--success-fg) block">+{formatMoney(profit)}</span>
+                            <span className="text-caption text-muted-foreground">{margin}% marja</span>
                           </td>
                         </>
                       )}
 
                       {/* Holat */}
-                      <td className="py-3.5 px-4 text-center">
-                        {getStatusBadge(build.status)}
-                      </td>
+                      <td className="py-3.5 px-4 text-center">{getStatusBadge(build.status)}</td>
 
                       {/* Amallar */}
                       <td className="py-3.5 px-4 text-right">
@@ -400,7 +424,11 @@ export default function AdminPcsPage() {
         open={Boolean(sellingBuild)}
         onOpenChange={(open) => !open && setSellingBuild(null)}
         title={isFinancial ? "Kompyuterni oflayn sotish" : "Kompyuterni mijozga topshirish"}
-        description={isFinancial ? "Doʻkondan toʻgʻridan-toʻgʻri sotilgan kompyuter hisobi" : "Kompyuterni mijozga topshirish va ombor qoldigʻidan chiqarish"}
+        description={
+          isFinancial
+            ? "Doʻkondan toʻgʻridan-toʻgʻri sotilgan kompyuter hisobi"
+            : "Kompyuterni mijozga topshirish va ombor qoldigʻidan chiqarish"
+        }
         footer={
           <>
             <Button variant="ghost" onClick={() => setSellingBuild(null)}>
@@ -431,7 +459,12 @@ export default function AdminPcsPage() {
                   </div>
                   <div className="flex justify-between text-body font-bold text-(--success-fg)">
                     <span>Kutilayotgan sof daromad:</span>
-                    <span>+{formatMoney(calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice)}</span>
+                    <span>
+                      +
+                      {formatMoney(
+                        calcFinalPrice(sellingBuild.sellPrice, sellingBuild.discountPercent) - sellingBuild.costPrice,
+                      )}
+                    </span>
                   </div>
                 </div>
               )}

@@ -4,11 +4,7 @@ import { teraks } from "@ventura/db/schema/sawmill";
 import { hasFeature } from "@ventura/tenants";
 import { can } from "@/lib/auth/roles";
 import { requireUser } from "@/lib/server/session";
-import {
-  getDispatchReportData,
-  getProfitReportData,
-  getWagesReportData,
-} from "./actions";
+import { getDispatchReportData, getProfitReportData, getWagesReportData } from "./actions";
 import { ReportsClient } from "./reports-client";
 
 export default async function ReportsPage() {

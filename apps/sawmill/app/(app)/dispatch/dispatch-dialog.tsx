@@ -7,11 +7,7 @@ import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
 import { Modal } from "@ventura/ui/modal";
 import { MoneyInput } from "@ventura/ui/money-input";
-import {
-  convertDispatchPrice,
-  type DispatchUnit,
-  validateAndCalculateDispatch,
-} from "@/lib/calc/dispatch";
+import { convertDispatchPrice, type DispatchUnit, validateAndCalculateDispatch } from "@/lib/calc/dispatch";
 import { formatMoney, pieceVolumeM3 } from "@/lib/calc/units";
 import { type Locale, t } from "@/lib/i18n";
 import { createDispatchAction } from "./actions";
@@ -85,23 +81,16 @@ function DispatchDialogInner({
   );
 
   const [terakId, setTerakId] = React.useState(initialTerakId);
-  const availableMaterials = React.useMemo(
-    () => getMaterialsForTerak(terakId),
-    [getMaterialsForTerak, terakId],
-  );
+  const availableMaterials = React.useMemo(() => getMaterialsForTerak(terakId), [getMaterialsForTerak, terakId]);
 
-  const [materialId, setMaterialId] = React.useState(
-    () => getMaterialsForTerak(initialTerakId)[0]?.materialId || "",
-  );
+  const [materialId, setMaterialId] = React.useState(() => getMaterialsForTerak(initialTerakId)[0]?.materialId || "");
   const [unit, setUnit] = React.useState<DispatchUnit>("piece");
   const [quantityStr, setQuantityStr] = React.useState("");
   const [price, setPrice] = React.useState<number | null>(() => {
     const first = getMaterialsForTerak(initialTerakId)[0];
     return first && first.sellingPrice > 0 ? first.sellingPrice : null;
   });
-  const [date, setDate] = React.useState(
-    () => new Date().toISOString().slice(0, 10),
-  );
+  const [date, setDate] = React.useState(() => new Date().toISOString().slice(0, 10));
   const [recipientName, setRecipientName] = React.useState("");
   const [phone, setPhone] = React.useState("");
   const [address, setAddress] = React.useState("");
@@ -220,16 +209,10 @@ function DispatchDialogInner({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("dispatch_add", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("dispatch_add", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">
-            {error}
-          </div>
+          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">{error}</div>
         )}
 
         {/* 1. Terak tanlash (agar preselected bo'lmasa) */}
@@ -266,9 +249,7 @@ function DispatchDialogInner({
               <option value="">{t("work_empty", locale)}</option>
             ) : (
               availableMaterials.map((m) => {
-                const volText = m.volumeM3
-                  ? ` / ${(m.quantity * m.volumeM3).toFixed(2)} m³`
-                  : "";
+                const volText = m.volumeM3 ? ` / ${(m.quantity * m.volumeM3).toFixed(2)} m³` : "";
                 return (
                   <option key={m.materialId} value={m.materialId}>
                     {m.name} ({t("dispatch_stock_available", locale)}: {m.quantity} {m.unit}
@@ -289,9 +270,7 @@ function DispatchDialogInner({
                 type="button"
                 onClick={() => handleUnitChange("piece")}
                 className={`flex-1 py-1.5 text-xs font-semibold rounded-control transition-all cursor-pointer ${
-                  unit === "piece"
-                    ? "bg-card text-foreground shadow-xs"
-                    : "text-muted-foreground hover:text-foreground"
+                  unit === "piece" ? "bg-card text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {t("dispatch_unit_piece", locale)}
@@ -355,17 +334,13 @@ function DispatchDialogInner({
           >
             <div className="flex justify-between items-center font-semibold">
               <span>{t("dispatch_total", locale)}:</span>
-              <span className="text-sm font-bold text-primary font-mono">
-                {formatMoney(calcResult.totalAmount)}
-              </span>
+              <span className="text-sm font-bold text-primary font-mono">{formatMoney(calcResult.totalAmount)}</span>
             </div>
 
             {unit === "cube" && (
               <div className="flex justify-between text-muted-foreground">
                 <span>Bazadagi dona miqdori:</span>
-                <span className="font-mono font-medium">
-                  {calcResult.quantityPiece} dona
-                </span>
+                <span className="font-mono font-medium">{calcResult.quantityPiece} dona</span>
               </div>
             )}
 
@@ -396,13 +371,7 @@ function DispatchDialogInner({
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="dispatch-date">{t("dispatch_date", locale)}</Label>
-            <Input
-              id="dispatch-date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              required
-            />
+            <Input id="dispatch-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
           </div>
 
           <div className="space-y-1.5">
@@ -463,19 +432,10 @@ function DispatchDialogInner({
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting || !calcResult?.valid}
-          >
+          <Button type="submit" variant="primary" disabled={submitting || !calcResult?.valid}>
             {submitting ? t("status_loading", locale) : t("dispatch_add", locale)}
           </Button>
         </div>

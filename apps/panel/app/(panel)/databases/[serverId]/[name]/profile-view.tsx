@@ -177,7 +177,12 @@ export function DatabaseProfile({
                               <Button size="sm" variant="ghost" onClick={() => setMoving(p)}>
                                 <ArrowRightLeft /> {p.dbStrategy === "shared_db" ? t.moveToOwn : t.moveToShared}
                               </Button>
-                              <Button size="sm" variant="ghost" asChild className="text-emerald-600 hover:text-emerald-700">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                asChild
+                                className="text-emerald-600 hover:text-emerald-700"
+                              >
                                 <Link href="/databases">
                                   <Cloud className="size-4" /> {t.moveToSupabase}
                                 </Link>

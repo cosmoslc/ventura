@@ -176,11 +176,7 @@ export function DatabasesView({
           icon={<Cloud />}
           tone={2}
           label={t.supabaseTitle}
-          value={
-            supabase.hasToken
-              ? `${supabase.projects.length} ta loyiha`
-              : "Ulanmagan"
-          }
+          value={supabase.hasToken ? `${supabase.projects.length} ta loyiha` : "Ulanmagan"}
           hint={
             supabase.hasToken
               ? `${connectedToSupabase.length} ta markaz · ${totalSupabaseBytes > 0 ? formatBytes(totalSupabaseBytes) + " xotira" : "Bulutda"}`
@@ -273,10 +269,7 @@ export function DatabasesView({
             hasStoredToken={supabase.hasToken}
           />
 
-          <RenameSupabaseModal
-            target={renameTarget}
-            onClose={() => setRenameTarget(null)}
-          />
+          <RenameSupabaseModal target={renameTarget} onClose={() => setRenameTarget(null)} />
 
           <SupabaseTokenModal
             open={tokenModalOpen}
@@ -569,9 +562,7 @@ function SupabaseSection({
                     <Td className="text-right whitespace-nowrap">
                       {proj.sizeBytes != null ? (
                         <div>
-                          <span className="font-mono font-semibold text-foreground">
-                            {formatBytes(proj.sizeBytes)}
-                          </span>
+                          <span className="font-mono font-semibold text-foreground">{formatBytes(proj.sizeBytes)}</span>
                           {proj.tableCount != null ? (
                             <div className="text-caption text-muted-foreground">{proj.tableCount} ta jadval</div>
                           ) : null}
@@ -597,12 +588,7 @@ function SupabaseSection({
                     {canManage ? (
                       <Td className="text-right">
                         <div className="flex justify-end gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            title="Nomini o'zgartirish"
-                            onClick={() => onRename(proj)}
-                          >
+                          <Button size="sm" variant="ghost" title="Nomini o'zgartirish" onClick={() => onRename(proj)}>
                             <Pencil className="size-4" /> Nomini o'zgartirish
                           </Button>
                           <Button
@@ -626,7 +612,8 @@ function SupabaseSection({
         </TableWrap>
       ) : (
         <Card className="p-6 text-center text-muted-foreground">
-          Supabase hisobingizda loyihalar topilmadi. Supabase dashboardida yangi loyiha oching yoki boshqa token kiriting.
+          Supabase hisobingizda loyihalar topilmadi. Supabase dashboardida yangi loyiha oching yoki boshqa token
+          kiriting.
         </Card>
       )}
     </div>
@@ -688,7 +675,10 @@ function MoveToSupabaseModal({
         customToken: customToken.trim() || undefined,
       });
       if (res.ok) {
-        setTestResult({ ok: true, message: `Muvaffaqiyatli ulandi! PostgreSQL versiyasi: ${res.version.split(" ")[1] ?? "15+"}` });
+        setTestResult({
+          ok: true,
+          message: `Muvaffaqiyatli ulandi! PostgreSQL versiyasi: ${res.version.split(" ")[1] ?? "15+"}`,
+        });
       } else {
         setTestResult({ ok: false, message: res.error });
       }
@@ -843,7 +833,9 @@ function MoveToSupabaseModal({
             >
               <div className="font-medium text-foreground text-caption flex items-center justify-between">
                 <span>Avtomatik o'rnatish</span>
-                <Badge tone="success" className="text-[10px]">Tavsiya etiladi</Badge>
+                <Badge tone="success" className="text-[10px]">
+                  Tavsiya etiladi
+                </Badge>
               </div>
               <p className="mt-1 text-caption text-muted-foreground text-xs">
                 Parolni bilish shart emas. Token orqali yangi kuchli parol o'rnatiladi.
@@ -868,7 +860,8 @@ function MoveToSupabaseModal({
 
           {autoPassword ? (
             <Notice tone="info">
-              Parolni eslab qolish shart emas. Supabase boshqaruv tokeni (sbp_...) orqali yangi 24 belgili xavfsiz parol generatsiya qilinadi va Supabase bazasiga avtomatik o'rnatiladi.
+              Parolni eslab qolish shart emas. Supabase boshqaruv tokeni (sbp_...) orqali yangi 24 belgili xavfsiz parol
+              generatsiya qilinadi va Supabase bazasiga avtomatik o'rnatiladi.
             </Notice>
           ) : (
             <div>
@@ -1032,7 +1025,8 @@ function SupabaseTokenModal({
             onChange={(e) => setToken(e.target.value)}
           />
           <FieldHint>
-            Tokenni olish: Supabase sayti -&gt; Profilingiz (Account) -&gt; Access Tokens bo'limidan "Generate new token".
+            Tokenni olish: Supabase sayti -&gt; Profilingiz (Account) -&gt; Access Tokens bo'limidan "Generate new
+            token".
           </FieldHint>
         </div>
       </form>

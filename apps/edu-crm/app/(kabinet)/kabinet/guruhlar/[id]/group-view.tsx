@@ -136,9 +136,7 @@ export function GroupView({
             manual={perms.giveCoins ? data.manualCoins : null}
           />
         ) : null}
-        {tab === "homework" ? (
-          <HomeworkTab groupId={g.id} today={today} homeworks={data.homeworks} />
-        ) : null}
+        {tab === "homework" ? <HomeworkTab groupId={g.id} today={today} homeworks={data.homeworks} /> : null}
         {tab === "stats" ? <StatsTab stats={data.stats} month={month} grades={!!data.grades} /> : null}
       </Card>
     </div>

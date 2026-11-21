@@ -3,15 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
-import {
-  Bell,
-  CheckCheck,
-  ExternalLink,
-  PackageCheck,
-  Sparkles,
-  Tag,
-  X,
-} from "lucide-react";
+import { Bell, CheckCheck, ExternalLink, PackageCheck, Sparkles, Tag, X } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { useNotifications } from "@/lib/notification-context";
 import type { DbNotificationItem } from "@/lib/server/notifications";
@@ -118,9 +110,7 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
         {/* Bildirishnomalar ro'yxati */}
         <div className="flex-1 overflow-y-auto divide-y divide-border/60">
           {loading && notifications.length === 0 ? (
-            <div className="py-16 text-center text-xs text-muted-foreground">
-              Yuklanmoqda...
-            </div>
+            <div className="py-16 text-center text-xs text-muted-foreground">Yuklanmoqda...</div>
           ) : notifications.length === 0 ? (
             <div className="py-16 text-center text-xs text-muted-foreground">
               <Bell size={36} className="text-muted-foreground/30 mx-auto mb-2" />
@@ -145,21 +135,13 @@ export function NotificationsDrawer({ isOpen, onClose }: NotificationsDrawerProp
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2">
                       <div className="flex items-center gap-1.5 truncate">
-                        {!n.isRead && (
-                          <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />
-                        )}
-                        <h3 className="font-bold text-xs sm:text-sm text-foreground truncate">
-                          {n.title}
-                        </h3>
+                        {!n.isRead && <span className="h-2 w-2 shrink-0 rounded-full bg-primary" />}
+                        <h3 className="font-bold text-xs sm:text-sm text-foreground truncate">{n.title}</h3>
                       </div>
-                      <span className="font-mono text-2xs text-muted-foreground shrink-0">
-                        {n.createdAt}
-                      </span>
+                      <span className="font-mono text-2xs text-muted-foreground shrink-0">{n.createdAt}</span>
                     </div>
 
-                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-                      {n.message}
-                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{n.message}</p>
 
                     {n.link && (
                       <Link

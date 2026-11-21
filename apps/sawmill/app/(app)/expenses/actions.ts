@@ -3,10 +3,7 @@
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import {
-  expenseCategories,
-  generalExpenses,
-} from "@ventura/db/schema/sawmill";
+import { expenseCategories, generalExpenses } from "@ventura/db/schema/sawmill";
 import { tenantAudit } from "@ventura/security";
 import { can } from "@/lib/auth/roles";
 import { currentDeps, requireUser } from "@/lib/server/session";
@@ -21,9 +18,7 @@ const createCategorySchema = z.object({
   name: z.string().trim().min(1, "Toifa nomi bo'sh bo'lishi mumkin emas").max(100),
 });
 
-export async function createExpenseCategoryAction(
-  formData: FormData,
-): Promise<ExpenseActionResult> {
+export async function createExpenseCategoryAction(formData: FormData): Promise<ExpenseActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "expenses.manage")) {
     return { ok: false, error: "Ruxsat etilmagan" };
@@ -43,10 +38,7 @@ export async function createExpenseCategoryAction(
   const { name } = parsed.data;
 
   try {
-    const [cat] = await deps.db
-      .insert(expenseCategories)
-      .values({ name })
-      .returning();
+    const [cat] = await deps.db.insert(expenseCategories).values({ name }).returning();
 
     if (!cat) return { ok: false, error: "Toifa saqlanmadi" };
 
@@ -64,9 +56,7 @@ export async function createExpenseCategoryAction(
   }
 }
 
-export async function archiveExpenseCategoryAction(
-  categoryId: string,
-): Promise<ExpenseActionResult> {
+export async function archiveExpenseCategoryAction(categoryId: string): Promise<ExpenseActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "expenses.manage")) {
     return { ok: false, error: "Ruxsat etilmagan" };
@@ -76,10 +66,7 @@ export async function archiveExpenseCategoryAction(
   if (!deps) return { ok: false, error: "Sessiya xatosi" };
 
   try {
-    await deps.db
-      .update(expenseCategories)
-      .set({ archivedAt: new Date() })
-      .where(eq(expenseCategories.id, categoryId));
+    await deps.db.update(expenseCategories).set({ archivedAt: new Date() }).where(eq(expenseCategories.id, categoryId));
 
     await tenantAudit.record(deps.db, {
       actor: { type: "user", id: user.id, name: user.name },
@@ -101,9 +88,7 @@ const createExpenseSchema = z.object({
   note: z.string().trim().optional().nullable(),
 });
 
-export async function createGeneralExpenseAction(
-  formData: FormData,
-): Promise<ExpenseActionResult> {
+export async function createGeneralExpenseAction(formData: FormData): Promise<ExpenseActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "expenses.manage")) {
     return { ok: false, error: "Ruxsat etilmagan" };
@@ -153,9 +138,7 @@ export async function createGeneralExpenseAction(
   }
 }
 
-export async function deleteGeneralExpenseAction(
-  expenseId: string,
-): Promise<ExpenseActionResult> {
+export async function deleteGeneralExpenseAction(expenseId: string): Promise<ExpenseActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "expenses.manage")) {
     return { ok: false, error: "Ruxsat etilmagan" };

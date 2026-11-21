@@ -142,9 +142,7 @@ export function AdminAccessGate({ signedIn, adminExists }: { signedIn: boolean; 
             </div>
           )}
 
-          <p className="text-xs text-muted-foreground">
-            Admin telefon raqami (yoki email) va parolingizni kiriting:
-          </p>
+          <p className="text-xs text-muted-foreground">Admin telefon raqami (yoki email) va parolingizni kiriting:</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
@@ -177,14 +175,13 @@ export function AdminAccessGate({ signedIn, adminExists }: { signedIn: boolean; 
               />
             </div>
 
-            {error && <FieldHint role="alert" error>{error}</FieldHint>}
+            {error && (
+              <FieldHint role="alert" error>
+                {error}
+              </FieldHint>
+            )}
 
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={busy}
-              className="w-full gap-2 font-bold mt-2"
-            >
+            <Button type="submit" variant="primary" disabled={busy} className="w-full gap-2 font-bold mt-2">
               {busy ? <LoaderCircle className="animate-spin" size={16} /> : <KeyRound size={16} />}
               <span>{busy ? "Tekshirilmoqda…" : "Admin sifatida kirish"}</span>
             </Button>

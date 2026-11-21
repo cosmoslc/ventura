@@ -12,12 +12,5 @@ export default async function TrucksPage() {
   const canManage = can(user.role, "trucks.manage");
   const locale = user.locale ?? "uz";
 
-  return (
-    <TrucksClient
-      activeTrucks={active}
-      archivedTrucks={archived}
-      canManage={canManage}
-      locale={locale}
-    />
-  );
+  return <TrucksClient activeTrucks={active} archivedTrucks={archived} canManage={canManage} locale={locale} />;
 }

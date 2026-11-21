@@ -1,16 +1,6 @@
 import { describe, expect, it } from "vitest";
-import {
-  calcFinalPrice,
-  calcItemProfit,
-  calcMarginPercent,
-  calcOrderTotal,
-  calcPcCostPrice,
-} from "./calc/formulas";
-import {
-  CONFIGURATOR_CATALOG,
-  SAMPLE_PC_BUILDS,
-  SAMPLE_PC_ORDERS,
-} from "./pc-data";
+import { calcFinalPrice, calcItemProfit, calcMarginPercent, calcOrderTotal, calcPcCostPrice } from "./calc/formulas";
+import { CONFIGURATOR_CATALOG, SAMPLE_PC_BUILDS, SAMPLE_PC_ORDERS } from "./pc-data";
 
 describe("PC-CRM Core Business Flow & Calculations", () => {
   describe("1. Kompyuterlar katalogi va filtrlash qoidalari", () => {
@@ -25,14 +15,12 @@ describe("PC-CRM Core Business Flow & Calculations", () => {
     });
 
     it("CPU va GPU teglari bo'yicha to'g'ri filtrlanadi", () => {
-      const i7Builds = SAMPLE_PC_BUILDS.filter(
-        (b) => b.status === "available" && b.cpu.toLowerCase().includes("i7")
-      );
+      const i7Builds = SAMPLE_PC_BUILDS.filter((b) => b.status === "available" && b.cpu.toLowerCase().includes("i7"));
       expect(i7Builds.length).toBeGreaterThan(0);
       expect(i7Builds[0]!.cpu).toContain("Core i7");
 
       const rtx4070Builds = SAMPLE_PC_BUILDS.filter(
-        (b) => b.status === "available" && b.gpu.toLowerCase().includes("4070")
+        (b) => b.status === "available" && b.gpu.toLowerCase().includes("4070"),
       );
       expect(rtx4070Builds.length).toBeGreaterThan(0);
       expect(rtx4070Builds[0]!.gpu).toContain("RTX 4070");
@@ -85,7 +73,7 @@ describe("PC-CRM Core Business Flow & Calculations", () => {
         titan!.components.map((c) => ({
           costSnapshot: c.costSnapshot,
           qty: c.qty,
-        }))
+        })),
       );
 
       expect(calculatedCost).toBe(24_100_000n);

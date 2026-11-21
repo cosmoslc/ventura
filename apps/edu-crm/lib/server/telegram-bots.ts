@@ -37,9 +37,7 @@ export function getBotWebhookSecret(bot: SingleBotSettings, secretKey: string, r
   if (bot.webhookSecret && bot.webhookSecret.trim().length > 0) {
     return bot.webhookSecret.trim();
   }
-  return createHmac("sha256", secretKey)
-    .update(`tg-webhook:${role}:${bot.token}`)
-    .digest("hex");
+  return createHmac("sha256", secretKey).update(`tg-webhook:${role}:${bot.token}`).digest("hex");
 }
 
 /** Har bir bot bo'yicha "Ishlatyapti" va "Hali ishlatmayapti" statistikasini hisoblaydi */
@@ -69,12 +67,7 @@ export async function getTelegramBotsStats(db: TenantDb): Promise<TelegramBotsSt
     })
     .from(students)
     .leftJoin(users, eq(students.userId, users.id))
-    .where(
-      and(
-        isNull(students.archivedAt),
-        sql`${students.status} in ('trial', 'active', 'paused', 'returned')`,
-      ),
-    );
+    .where(and(isNull(students.archivedAt), sql`${students.status} in ('trial', 'active', 'paused', 'returned')`));
 
   const studentTotal = allStudents.length;
   const studentActive = allStudents.filter((s) => !!s.userChatId).length;
@@ -131,11 +124,7 @@ export async function handleTelegramWebhook(
 ): Promise<{ ok: boolean; message?: string }> {
   const config = await getTelegramBotsConfig(db);
   const botSettings: SingleBotSettings =
-    role === "teacher"
-      ? config.teacherBot
-      : role === "student"
-        ? config.studentBot
-        : config.parentBot;
+    role === "teacher" ? config.teacherBot : role === "student" ? config.studentBot : config.parentBot;
 
   if (!botSettings.token) {
     return { ok: false, message: "Bot tokeni sozlanmagan" };
@@ -377,10 +366,19 @@ export async function handleTelegramWebhook(
   if (rawText === "/logout" || rawText === "/chiqish") {
     await db.delete(verifications).where(eq(verifications.identifier, `tg_login:${chatId}`));
     if (role === "teacher") {
-      await db.update(teachers).set({ telegramChatId: null }).where(eq(teachers.telegramChatId, String(chatId)));
-      await db.update(users).set({ telegramChatId: null }).where(eq(users.telegramChatId, String(chatId)));
+      await db
+        .update(teachers)
+        .set({ telegramChatId: null })
+        .where(eq(teachers.telegramChatId, String(chatId)));
+      await db
+        .update(users)
+        .set({ telegramChatId: null })
+        .where(eq(users.telegramChatId, String(chatId)));
     } else if (role === "student") {
-      await db.update(users).set({ telegramChatId: null }).where(eq(users.telegramChatId, String(chatId)));
+      await db
+        .update(users)
+        .set({ telegramChatId: null })
+        .where(eq(users.telegramChatId, String(chatId)));
     } else {
       await db
         .update(students)
@@ -459,9 +457,7 @@ export async function handleTelegramWebhook(
         .from(students)
         .where(and(isNull(students.archivedAt), isNotNull(students.parentPhone)));
 
-      const matchedChildren = studentRows.filter(
-        (s) => s.parentPhone && last9Digits(s.parentPhone) === phone9,
-      );
+      const matchedChildren = studentRows.filter((s) => s.parentPhone && last9Digits(s.parentPhone) === phone9);
 
       if (!matchedChildren.length) {
         await tg.sendMessage(
@@ -483,12 +479,7 @@ export async function handleTelegramWebhook(
   const [pending] = await db
     .select()
     .from(verifications)
-    .where(
-      and(
-        eq(verifications.identifier, `tg_login:${chatId}`),
-        gt(verifications.expiresAt, new Date()),
-      ),
-    )
+    .where(and(eq(verifications.identifier, `tg_login:${chatId}`), gt(verifications.expiresAt, new Date())))
     .limit(1);
 
   if (pending && rawText) {
@@ -742,9 +733,7 @@ export async function handleTelegramWebhook(
         .from(students)
         .where(and(isNull(students.archivedAt), isNotNull(students.parentPhone)));
 
-      const matchedChildren = studentRows.filter(
-        (s) => s.parentPhone && last9Digits(s.parentPhone) === phone9,
-      );
+      const matchedChildren = studentRows.filter((s) => s.parentPhone && last9Digits(s.parentPhone) === phone9);
 
       if (!matchedChildren.length) {
         await tg.sendMessage(

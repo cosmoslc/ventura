@@ -12,8 +12,7 @@ import {
 } from "@ventura/db/schema/sawmill";
 import { validateAndCalculateDispatch } from "@/lib/calc/dispatch";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("yuk chiqarish (dispatch) database operations and business logic (S4)", () => {
   it("yuk chiqarish, ombor qoldig'i kamayishi, K5 yuk mashinasi xarajati va bekor qilish to'liq ishlaydi", async () => {
@@ -132,10 +131,7 @@ describe("yuk chiqarish (dispatch) database operations and business logic (S4)",
 
       // 6. Tekshiruvlar:
       // 6.1. Ombor qoldig'i 60 bo'ldi
-      const [checkTm] = await db
-        .select()
-        .from(terakMaterials)
-        .where(eq(terakMaterials.id, tm.id));
+      const [checkTm] = await db.select().from(terakMaterials).where(eq(terakMaterials.id, tm.id));
       expect(Number(checkTm?.quantity)).toBe(60);
 
       // 6.2. K5 xarajati mavjud
@@ -153,27 +149,16 @@ describe("yuk chiqarish (dispatch) database operations and business logic (S4)",
       // 7.2. Movement, Cost va Dispatch o'chirish
       await db
         .delete(stockMovements)
-        .where(
-          and(
-            eq(stockMovements.source, "dispatch"),
-            eq(stockMovements.sourceId, disp.id),
-          ),
-        );
+        .where(and(eq(stockMovements.source, "dispatch"), eq(stockMovements.sourceId, disp.id)));
       await db.delete(terakCosts).where(eq(terakCosts.dispatchId, disp.id));
       await db.delete(dispatches).where(eq(dispatches.id, disp.id));
 
       // 8. Qayta tiklangan qoldiqni tekshirish
-      const [restoredTm] = await db
-        .select()
-        .from(terakMaterials)
-        .where(eq(terakMaterials.id, tm.id));
+      const [restoredTm] = await db.select().from(terakMaterials).where(eq(terakMaterials.id, tm.id));
       expect(Number(restoredTm?.quantity)).toBe(100);
 
       // Cost ham o'chganini tekshirish
-      const remainingCosts = await db
-        .select()
-        .from(terakCosts)
-        .where(eq(terakCosts.dispatchId, disp.id));
+      const remainingCosts = await db.select().from(terakCosts).where(eq(terakCosts.dispatchId, disp.id));
       expect(remainingCosts).toHaveLength(0);
 
       // 9. Tozalash (Cleanup)

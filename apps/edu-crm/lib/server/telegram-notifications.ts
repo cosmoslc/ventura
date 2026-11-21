@@ -151,7 +151,9 @@ export async function notifyStudent(
         `💳 <b>To'lov qabul qilindi</b>\n\n` +
         `Salom, <b>${name}</b>!\n` +
         `Hisobingizga <b>${formatMoney(payload.amount ?? 0)} so'm</b> to'lov kiritildi.` +
-        (payload.balance !== undefined ? `\nJoriy hisob balansingiz: <b>${formatMoney(payload.balance)} so'm</b>.` : "");
+        (payload.balance !== undefined
+          ? `\nJoriy hisob balansingiz: <b>${formatMoney(payload.balance)} so'm</b>.`
+          : "");
       break;
     case "homework":
       text =

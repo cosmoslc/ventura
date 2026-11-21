@@ -56,12 +56,15 @@ export async function saveDbPcBuild(input: PcBuildMutationInput) {
       const [product] = await tx.select().from(products).where(eq(products.id, productId)).for("update");
       if (!product || !product.isActive) throw new Error("PC komponenti topilmadi yoki faol emas");
       const delta = (newQty.get(productId) ?? 0) - (oldQty.get(productId) ?? 0);
-      if (delta > 0 && product.stock - product.reserved < delta) throw new Error("PC yig'ish uchun komponent qoldig'i yetarli emas");
+      if (delta > 0 && product.stock - product.reserved < delta)
+        throw new Error("PC yig'ish uchun komponent qoldig'i yetarli emas");
       productRows.set(productId, product);
     }
 
-    const costPrice = input.components.reduce((total, item) =>
-      total + (productRows.get(item.productId)?.costPrice ?? 0n) * BigInt(item.qty), 0n);
+    const costPrice = input.components.reduce(
+      (total, item) => total + (productRows.get(item.productId)?.costPrice ?? 0n) * BigInt(item.qty),
+      0n,
+    );
     const values = {
       slug: input.slug,
       name: { uz: input.name },
@@ -79,7 +82,10 @@ export async function saveDbPcBuild(input: PcBuildMutationInput) {
     for (const productId of productIds) {
       const delta = (newQty.get(productId) ?? 0) - (oldQty.get(productId) ?? 0);
       if (!delta) continue;
-      await tx.update(products).set({ reserved: sql`${products.reserved} + ${delta}` }).where(eq(products.id, productId));
+      await tx
+        .update(products)
+        .set({ reserved: sql`${products.reserved} + ${delta}` })
+        .where(eq(products.id, productId));
       await tx.insert(stockMovements).values({
         productId,
         reason: delta > 0 ? "reserve" : "release",
@@ -90,23 +96,29 @@ export async function saveDbPcBuild(input: PcBuildMutationInput) {
     }
 
     await tx.delete(pcComponents).where(eq(pcComponents.pcId, build.id));
-    if (input.components.length) await tx.insert(pcComponents).values(input.components.map((item) => ({
-      pcId: build.id,
-      role: item.role,
-      productId: item.productId,
-      qty: item.qty,
-      costSnapshot: productRows.get(item.productId)!.costPrice,
-    })));
+    if (input.components.length)
+      await tx.insert(pcComponents).values(
+        input.components.map((item) => ({
+          pcId: build.id,
+          role: item.role,
+          productId: item.productId,
+          qty: item.qty,
+          costSnapshot: productRows.get(item.productId)!.costPrice,
+        })),
+      );
     await tx.delete(pcSpecs).where(eq(pcSpecs.pcId, build.id));
-    if (input.specs.length) await tx.insert(pcSpecs).values(input.specs.map((spec) => ({
-      pcId: build.id,
-      key: spec.key,
-      title: { uz: spec.title },
-      value: { uz: spec.value },
-      filterable: spec.filterable ?? false,
-      helpTitle: spec.helpTitle ? { uz: spec.helpTitle } : undefined,
-      helpText: spec.helpText ? { uz: spec.helpText } : undefined,
-    })));
+    if (input.specs.length)
+      await tx.insert(pcSpecs).values(
+        input.specs.map((spec) => ({
+          pcId: build.id,
+          key: spec.key,
+          title: { uz: spec.title },
+          value: { uz: spec.value },
+          filterable: spec.filterable ?? false,
+          helpTitle: spec.helpTitle ? { uz: spec.helpTitle } : undefined,
+          helpText: spec.helpText ? { uz: spec.helpText } : undefined,
+        })),
+      );
     return build;
   });
 }
@@ -123,27 +135,63 @@ export async function sellDbPcBuild(input: { id: string; buyerName: string; buye
       if (!product) throw new Error("PC komponenti topilmadi");
     }
     for (const component of components) {
-      const [updated] = await tx.update(products).set({
-        stock: sql`${products.stock} - ${component.qty}`,
-        reserved: sql`${products.reserved} - ${component.qty}`,
-        soldCount: sql`${products.soldCount} + ${component.qty}`,
-      }).where(and(eq(products.id, component.productId), sql`${products.stock} >= ${component.qty}`, sql`${products.reserved} >= ${component.qty}`)).returning({ id: products.id });
+      const [updated] = await tx
+        .update(products)
+        .set({
+          stock: sql`${products.stock} - ${component.qty}`,
+          reserved: sql`${products.reserved} - ${component.qty}`,
+          soldCount: sql`${products.soldCount} + ${component.qty}`,
+        })
+        .where(
+          and(
+            eq(products.id, component.productId),
+            sql`${products.stock} >= ${component.qty}`,
+            sql`${products.reserved} >= ${component.qty}`,
+          ),
+        )
+        .returning({ id: products.id });
       if (!updated) throw new Error("PC komponentlari uchun zaxira yetarli emas");
-      await tx.insert(stockMovements).values({ productId: component.productId, reason: "sale", delta: -component.qty, refType: "pc_build", refId: build.id });
+      await tx
+        .insert(stockMovements)
+        .values({
+          productId: component.productId,
+          reason: "sale",
+          delta: -component.qty,
+          refType: "pc_build",
+          refId: build.id,
+        });
     }
     const soldPrice = calcFinalPrice(build.sellPrice, build.discountPercent);
     const costTotal = components.reduce((sum, component) => sum + component.costSnapshot * BigInt(component.qty), 0n);
     const profit = soldPrice - costTotal;
-    const [sale] = await tx.insert(sales).values({
-      source: "offline", type: "pc", buyerName: input.buyerName, buyerPhone: input.buyerPhone,
-      soldAt: new Date(input.soldAt), total: soldPrice, costTotal, profit,
-    }).returning();
+    const [sale] = await tx
+      .insert(sales)
+      .values({
+        source: "offline",
+        type: "pc",
+        buyerName: input.buyerName,
+        buyerPhone: input.buyerPhone,
+        soldAt: new Date(input.soldAt),
+        total: soldPrice,
+        costTotal,
+        profit,
+      })
+      .returning();
     if (!sale) throw new Error("PC sotuv yozuvi saqlanmadi");
     await tx.insert(saleItems).values({
-      saleId: sale.id, pcId: build.id, nameSnapshot: (build.name as I18nText)?.uz ?? build.slug,
-      qty: 1, listPrice: build.sellPrice, soldPrice, costSnapshot: costTotal, profit,
+      saleId: sale.id,
+      pcId: build.id,
+      nameSnapshot: (build.name as I18nText)?.uz ?? build.slug,
+      qty: 1,
+      listPrice: build.sellPrice,
+      soldPrice,
+      costSnapshot: costTotal,
+      profit,
     });
-    await tx.update(pcBuilds).set({ status: "sold", buyerName: input.buyerName, buyerPhone: input.buyerPhone, soldAt: new Date(input.soldAt) }).where(eq(pcBuilds.id, build.id));
+    await tx
+      .update(pcBuilds)
+      .set({ status: "sold", buyerName: input.buyerName, buyerPhone: input.buyerPhone, soldAt: new Date(input.soldAt) })
+      .where(eq(pcBuilds.id, build.id));
     return { saleId: sale.id };
   });
 }
@@ -236,7 +284,8 @@ export async function getDbPcBuilds(options?: { status?: PcBuildStatus }): Promi
       storage: ssdComp,
       components: bComps,
       specs: bSpecs,
-      description: "Ventura muhandislari tomonidan 24 soatlik stress-testdan oʻtkazilgan professional oʻyin kompyuteri.",
+      description:
+        "Ventura muhandislari tomonidan 24 soatlik stress-testdan oʻtkazilgan professional oʻyin kompyuteri.",
       warrantyMonths: 12,
     };
   });
@@ -261,10 +310,7 @@ export async function getDbConfiguratorParts(): Promise<ConfiguratorPart[]> {
     .leftJoin(brands, eq(products.brandId, brands.id))
     .where(eq(products.isActive, true));
 
-  const images = await db
-    .select()
-    .from(productImages)
-    .orderBy(productImages.sort);
+  const images = await db.select().from(productImages).orderBy(productImages.sort);
 
   const imgMap = new Map<string, string>();
   for (const img of images) {
@@ -299,9 +345,7 @@ export async function getDbConfiguratorParts(): Promise<ConfiguratorPart[]> {
       price: prod.sellPrice,
       costPrice: prod.costPrice,
       stock: prod.stock - prod.reserved,
-      imageUrl:
-        imgMap.get(prod.id) ??
-        "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&q=80",
+      imageUrl: imgMap.get(prod.id) ?? "https://images.unsplash.com/photo-1591799264318-7e6ef8ddb7ea?w=500&q=80",
       specsSummary: (prod.desc as I18nText)?.uz ?? "",
     });
   }
@@ -412,28 +456,35 @@ export async function createDbPcOrder(input: {
   const db = getDb();
   return db.transaction(async (tx) => {
     const qtyByProduct = new Map<string, number>();
-    for (const item of input.componentIds) qtyByProduct.set(item.productId, (qtyByProduct.get(item.productId) ?? 0) + 1);
+    for (const item of input.componentIds)
+      qtyByProduct.set(item.productId, (qtyByProduct.get(item.productId) ?? 0) + 1);
     for (const productId of [...qtyByProduct.keys()].sort()) {
       const [product] = await tx.select().from(products).where(eq(products.id, productId)).for("update");
       if (!product || !product.isActive || product.stock - product.reserved < (qtyByProduct.get(productId) ?? 0)) {
         throw new Error("Tanlangan komponentlardan biri sotuvda yoki yetarli qoldiqda emas");
       }
     }
-    const [order] = await tx.insert(pcOrders).values({
-      name: input.customerName,
-      phone: input.customerPhone,
-      address: input.deliveryAddress,
-      note: input.customerNote,
-      userId: input.userId,
-      status: "new",
-    }).returning();
+    const [order] = await tx
+      .insert(pcOrders)
+      .values({
+        name: input.customerName,
+        phone: input.customerPhone,
+        address: input.deliveryAddress,
+        note: input.customerNote,
+        userId: input.userId,
+        status: "new",
+      })
+      .returning();
     if (!order) throw new Error("PC buyurtmasi yozilmadi");
-    if (input.componentIds.length) await tx.insert(pcOrderItems).values(input.componentIds.map((component) => ({
-      pcOrderId: order.id,
-      role: component.role as PcComponentRole,
-      productId: component.productId,
-      qty: 1,
-    })));
+    if (input.componentIds.length)
+      await tx.insert(pcOrderItems).values(
+        input.componentIds.map((component) => ({
+          pcOrderId: order.id,
+          role: component.role as PcComponentRole,
+          productId: component.productId,
+          qty: 1,
+        })),
+      );
     return order;
   });
 }
@@ -442,7 +493,7 @@ export async function updateDbPcOrderStatus(
   id: string,
   status: PcOrderStatus,
   quotedPrice?: bigint,
-  operatorNote?: string
+  operatorNote?: string,
 ) {
   const db = getDb();
   return db.transaction(async (tx) => {
@@ -475,17 +526,26 @@ export async function updateDbPcOrderStatus(
         if (!product.isActive || product.stock - product.reserved < qty) {
           throw new Error("Komponentlardan birining mavjud qoldig'i yetarli emas");
         }
-        await tx.update(products).set({ reserved: sql`${products.reserved} + ${qty}` }).where(eq(products.id, productId));
-        await tx.insert(stockMovements).values({ productId, reason: "reserve", delta: -qty, refType: "pc_order", refId: id });
+        await tx
+          .update(products)
+          .set({ reserved: sql`${products.reserved} + ${qty}` })
+          .where(eq(products.id, productId));
+        await tx
+          .insert(stockMovements)
+          .values({ productId, reason: "reserve", delta: -qty, refType: "pc_order", refId: id });
       }
     }
 
     // 2. Zaxirani bekor qilish / bo'shatish
     if (statusChanged && wasReserved && !willBeReserved && status !== "delivered") {
       for (const [productId, qty] of qtyByProduct) {
-        await tx.update(products).set({ reserved: sql`GREATEST(0, ${products.reserved} - ${qty})` })
+        await tx
+          .update(products)
+          .set({ reserved: sql`GREATEST(0, ${products.reserved} - ${qty})` })
           .where(eq(products.id, productId));
-        await tx.insert(stockMovements).values({ productId, reason: "release", delta: qty, refType: "pc_order", refId: id });
+        await tx
+          .insert(stockMovements)
+          .values({ productId, reason: "release", delta: qty, refType: "pc_order", refId: id });
       }
     }
 
@@ -499,24 +559,30 @@ export async function updateDbPcOrderStatus(
         listTotal += product.sellPrice * BigInt(qty);
       }
       const finalQuote = quotedPrice ?? order.quotedPrice ?? (listTotal > 0n ? listTotal : costTotal);
-      const [sale] = await tx.insert(sales).values({
-        source: "site",
-        type: "pc",
-        buyerName: order.name,
-        buyerPhone: order.phone,
-        total: finalQuote,
-        costTotal,
-        profit: finalQuote - costTotal,
-      }).returning();
+      const [sale] = await tx
+        .insert(sales)
+        .values({
+          source: "site",
+          type: "pc",
+          buyerName: order.name,
+          buyerPhone: order.phone,
+          total: finalQuote,
+          costTotal,
+          profit: finalQuote - costTotal,
+        })
+        .returning();
       if (!sale) throw new Error("PC savdosi jurnalga yozilmadi");
 
       let allocated = 0n;
       for (const [index, item] of items.entries()) {
         const product = productRows.get(item.productId)!;
         const listPrice = product.sellPrice * BigInt(item.qty);
-        const soldPrice = index === items.length - 1
-          ? finalQuote - allocated
-          : listTotal > 0n ? (finalQuote * listPrice) / listTotal : finalQuote / BigInt(items.length);
+        const soldPrice =
+          index === items.length - 1
+            ? finalQuote - allocated
+            : listTotal > 0n
+              ? (finalQuote * listPrice) / listTotal
+              : finalQuote / BigInt(items.length);
         allocated += soldPrice;
         const costSnapshot = product.costPrice * BigInt(item.qty);
         await tx.insert(saleItems).values({
@@ -533,26 +599,37 @@ export async function updateDbPcOrderStatus(
 
       for (const [productId, qty] of qtyByProduct) {
         if (wasReserved) {
-          await tx.update(products).set({
-            stock: sql`GREATEST(0, ${products.stock} - ${qty})`,
-            reserved: sql`GREATEST(0, ${products.reserved} - ${qty})`,
-            soldCount: sql`${products.soldCount} + ${qty}`,
-          }).where(eq(products.id, productId));
+          await tx
+            .update(products)
+            .set({
+              stock: sql`GREATEST(0, ${products.stock} - ${qty})`,
+              reserved: sql`GREATEST(0, ${products.reserved} - ${qty})`,
+              soldCount: sql`${products.soldCount} + ${qty}`,
+            })
+            .where(eq(products.id, productId));
         } else {
-          await tx.update(products).set({
-            stock: sql`GREATEST(0, ${products.stock} - ${qty})`,
-            soldCount: sql`${products.soldCount} + ${qty}`,
-          }).where(eq(products.id, productId));
+          await tx
+            .update(products)
+            .set({
+              stock: sql`GREATEST(0, ${products.stock} - ${qty})`,
+              soldCount: sql`${products.soldCount} + ${qty}`,
+            })
+            .where(eq(products.id, productId));
         }
-        await tx.insert(stockMovements).values({ productId, reason: "sale", delta: -qty, refType: "pc_order", refId: id });
+        await tx
+          .insert(stockMovements)
+          .values({ productId, reason: "sale", delta: -qty, refType: "pc_order", refId: id });
       }
     }
 
-    await tx.update(pcOrders).set({
-      status,
-      quotedPrice: quotedPrice ?? undefined,
-      note: operatorNote ?? undefined,
-    }).where(eq(pcOrders.id, id));
+    await tx
+      .update(pcOrders)
+      .set({
+        status,
+        quotedPrice: quotedPrice ?? undefined,
+        note: operatorNote ?? undefined,
+      })
+      .where(eq(pcOrders.id, id));
     return { unchanged: !statusChanged };
   });
 }

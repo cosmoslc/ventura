@@ -85,10 +85,7 @@ export function LikedProvider({ children }: { children: React.ReactNode }) {
       const serialized = items.map((i) => ({
         ...i,
         price: typeof i.price === "bigint" ? i.price.toString() : i.price,
-        originalPrice:
-          typeof i.originalPrice === "bigint"
-            ? i.originalPrice.toString()
-            : i.originalPrice,
+        originalPrice: typeof i.originalPrice === "bigint" ? i.originalPrice.toString() : i.originalPrice,
       }));
       localStorage.setItem(storageKey, JSON.stringify(serialized));
     } catch {

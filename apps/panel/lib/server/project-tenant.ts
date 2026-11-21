@@ -45,10 +45,7 @@ export interface ProjectTenantTarget {
   settings?: ProjectSettings | Record<string, unknown> | null;
 }
 
-export async function getProjectTenantDb(
-  panelDb: PanelDb,
-  project: ProjectTenantTarget,
-): Promise<TenantDb | null> {
+export async function getProjectTenantDb(panelDb: PanelDb, project: ProjectTenantTarget): Promise<TenantDb | null> {
   try {
     // 1. Agar loyiha Supabase'ga ko'chirilgan bo'lsa (settings.supabase)
     const supa = (project.settings as ProjectSettings | undefined)?.supabase;

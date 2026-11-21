@@ -7,38 +7,25 @@
         "type": "radial-gradient",
         "position": "top-left",
         "size": "620px 520px",
-        "colors": [
-          "rgba(74, 123, 255, 0.14)",
-          "rgba(74, 123, 255, 0)"
-        ]
+        "colors": ["rgba(74, 123, 255, 0.14)", "rgba(74, 123, 255, 0)"]
       },
       {
         "type": "radial-gradient",
         "position": "bottom-right",
         "size": "700px 600px",
-        "colors": [
-          "rgba(111, 83, 255, 0.12)",
-          "rgba(111, 83, 255, 0)"
-        ]
+        "colors": ["rgba(111, 83, 255, 0.12)", "rgba(111, 83, 255, 0)"]
       },
       {
         "type": "linear-gradient",
         "angle": "135deg",
-        "colors": [
-          "#FFFFFF",
-          "#F5F7FF",
-          "#EEF3FF"
-        ]
+        "colors": ["#FFFFFF", "#F5F7FF", "#EEF3FF"]
       }
     ],
     "decoration": {
       "style": "soft-abstract-corner-shapes",
       "opacity": 0.45,
       "blur": "24px",
-      "colors": [
-        "#DCE7FF",
-        "#E9E2FF"
-      ],
+      "colors": ["#DCE7FF", "#E9E2FF"],
       "avoidBehindContent": true
     },
     "repeat": "no-repeat",

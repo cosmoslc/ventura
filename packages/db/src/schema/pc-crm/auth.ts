@@ -44,7 +44,7 @@ export const sessions = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     ...timestamps,
   },
-  (t) => [index("sessions_user_id_idx").on(t.userId)]
+  (t) => [index("sessions_user_id_idx").on(t.userId)],
 );
 
 export const accounts = pgTable(
@@ -65,7 +65,7 @@ export const accounts = pgTable(
     password: text("password"),
     ...timestamps,
   },
-  (t) => [index("accounts_user_id_idx").on(t.userId)]
+  (t) => [index("accounts_user_id_idx").on(t.userId)],
 );
 
 export const verifications = pgTable(
@@ -77,5 +77,5 @@ export const verifications = pgTable(
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     ...timestamps,
   },
-  (t) => [index("verifications_identifier_idx").on(t.identifier)]
+  (t) => [index("verifications_identifier_idx").on(t.identifier)],
 );

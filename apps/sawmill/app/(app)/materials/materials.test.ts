@@ -4,8 +4,7 @@ import { createSawmillDb } from "@ventura/db";
 import { materialSizes, materials } from "@ventura/db/schema/sawmill";
 import { pieceVolumeM3 } from "@/lib/calc/units";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("materials catalog database operations", () => {
   it("material yaratish, hajm hisoblash, o'lcham varianti qo'shish va tozalash ishlaydi", async () => {

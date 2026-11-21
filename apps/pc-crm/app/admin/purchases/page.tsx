@@ -1,24 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  DollarSign,
-  PackagePlus,
-  Plus,
-  Search,
-  Truck,
-  Undo2,
-} from "lucide-react";
+import { DollarSign, PackagePlus, Plus, Search, Truck, Undo2 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { StatCard } from "@ventura/ui/stat-card";
-import {
-  type PurchaseItemData,
-  PurchaseFormModal,
-} from "@/components/admin/purchases/purchase-form-modal";
+import { type PurchaseItemData, PurchaseFormModal } from "@/components/admin/purchases/purchase-form-modal";
 import { formatDate, formatMoney } from "@/lib/format";
-import { getAdminProductsAction, getAdminPurchasesAction, savePurchaseAction, voidPurchaseAction } from "@/lib/server/actions";
+import {
+  getAdminProductsAction,
+  getAdminPurchasesAction,
+  savePurchaseAction,
+  voidPurchaseAction,
+} from "@/lib/server/actions";
 import { useFinancialMode } from "@/lib/store-context";
 
 export default function AdminPurchasesPage() {
@@ -32,24 +27,28 @@ export default function AdminPurchasesPage() {
     if (!purchaseResult.success) setError(purchaseResult.error ?? "Kirimlarni yuklab bo'lmadi");
     else setPurchases(purchaseResult.purchases);
     if (!productResult.success) setError(productResult.error ?? "Mahsulotlarni yuklab bo'lmadi");
-    else setProducts(productResult.products.filter((p) => p.isActive).map((p) => ({ id: p.id, name: p.name, costPrice: p.costPrice })));
+    else
+      setProducts(
+        productResult.products
+          .filter((p) => p.isActive)
+          .map((p) => ({ id: p.id, name: p.name, costPrice: p.costPrice })),
+      );
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
 
-  const filtered = purchases.filter((item) =>
-    item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.supplier && item.supplier.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filtered = purchases.filter(
+    (item) =>
+      item.productName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.supplier && item.supplier.toLowerCase().includes(searchQuery.toLowerCase())),
   );
 
-  const totalSpent = purchases
-    .filter((p) => !p.voidedAt)
-    .reduce((sum, p) => sum + p.totalCost, 0n);
+  const totalSpent = purchases.filter((p) => !p.voidedAt).reduce((sum, p) => sum + p.totalCost, 0n);
 
-  const totalUnits = purchases
-    .filter((p) => !p.voidedAt)
-    .reduce((sum, p) => sum + p.qty, 0);
+  const totalUnits = purchases.filter((p) => !p.voidedAt).reduce((sum, p) => sum + p.qty, 0);
 
   const handleSavePurchase = async (newPur: PurchaseItemData) => {
     const result = await savePurchaseAction({
@@ -62,7 +61,10 @@ export default function AdminPurchasesPage() {
       purchasedAt: newPur.purchasedAt,
       note: newPur.note,
     });
-    if (!result.success) { setError(result.error ?? "Kirimni saqlab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Kirimni saqlab bo'lmadi");
+      return;
+    }
     setModalOpen(false);
     await loadData();
   };
@@ -70,7 +72,10 @@ export default function AdminPurchasesPage() {
   const handleVoidPurchase = async (id: string) => {
     if (!confirm("Ushbu kirimni bekor qilmoqchimisiz? (Ombordan mos dona kamayadi)")) return;
     const result = await voidPurchaseAction(id);
-    if (!result.success) { setError(result.error ?? "Kirimni bekor qilib bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Kirimni bekor qilib bo'lmadi");
+      return;
+    }
     await loadData();
   };
 
@@ -79,9 +84,7 @@ export default function AdminPurchasesPage() {
       {/* Sarlavha va qo'shish */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Omborga kirimlar hisobi
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Omborga kirimlar hisobi</h1>
         </div>
 
         <Button onClick={() => setModalOpen(true)}>
@@ -90,7 +93,14 @@ export default function AdminPurchasesPage() {
         </Button>
       </div>
 
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Statistika kartalari */}
       <div className={`grid grid-cols-1 gap-4 ${isFinancial ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
@@ -179,22 +189,16 @@ export default function AdminPurchasesPage() {
                         {item.type === "bulk" ? "Optom" : "Dona"}
                       </span>
                     </td>
-                    <td className="p-3.5 text-center font-bold text-foreground">
-                      +{item.qty} dona
-                    </td>
+                    <td className="p-3.5 text-center font-bold text-foreground">+{item.qty} dona</td>
                     {isFinancial && (
                       <>
                         <td className="p-3.5 text-right font-medium text-muted-foreground">
                           {formatMoney(item.unitCost)}
                         </td>
-                        <td className="p-3.5 text-right font-black text-foreground">
-                          {formatMoney(item.totalCost)}
-                        </td>
+                        <td className="p-3.5 text-right font-black text-foreground">{formatMoney(item.totalCost)}</td>
                       </>
                     )}
-                    <td className="p-3.5 font-medium text-muted-foreground">
-                      {item.supplier ?? "—"}
-                    </td>
+                    <td className="p-3.5 font-medium text-muted-foreground">{item.supplier ?? "—"}</td>
                     <td className="p-3.5 text-center">
                       <Badge tone={isVoided ? "danger" : "success"} className="text-2xs">
                         {isVoided ? "Bekor qilingan" : "Kirim boʻlgan"}

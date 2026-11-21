@@ -1,16 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { createSawmillDb } from "@ventura/db";
-import {
-  materials,
-  orders,
-  terakMaterials,
-  teraks,
-} from "@ventura/db/schema/sawmill";
+import { materials, orders, terakMaterials, teraks } from "@ventura/db/schema/sawmill";
 import { getOrderStatus, isOrderDueSoon } from "@/lib/calc/orders";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("zakazlar (orders) database operations and business logic (S4)", () => {
   it("zakaz yaratish, holatlar (tayyor/kutilmoqda/bajarildi), K20 bayroqlari saqlanishi va o'chirish to'liq ishlaydi", async () => {
@@ -111,10 +105,7 @@ describe("zakazlar (orders) database operations and business logic (S4)", () => 
 
       // 5. K20: Eslatma bayrog'i (readyNotifiedAt) qo'yilganidan keyin tahrirlashda o'chib ketmasligi
       const readyDate = new Date();
-      await db
-        .update(orders)
-        .set({ readyNotifiedAt: readyDate })
-        .where(eq(orders.id, order1.id));
+      await db.update(orders).set({ readyNotifiedAt: readyDate }).where(eq(orders.id, order1.id));
 
       // Zakazni tahrirlash
       const [updatedOrder] = await db
@@ -136,10 +127,7 @@ describe("zakazlar (orders) database operations and business logic (S4)", () => 
       await db.delete(orders).where(eq(orders.id, order1.id));
       await db.delete(orders).where(eq(orders.id, order2.id));
 
-      const remainingOrders = await db
-        .select()
-        .from(orders)
-        .where(eq(orders.terakId, terak.id));
+      const remainingOrders = await db.select().from(orders).where(eq(orders.terakId, terak.id));
       expect(remainingOrders).toHaveLength(0);
 
       // 7. Tozalash (Cleanup)

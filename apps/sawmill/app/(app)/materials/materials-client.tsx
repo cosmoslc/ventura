@@ -103,12 +103,8 @@ export function MaterialsClient({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("materials_title", locale)}
-          </h1>
-          <p className="text-caption text-muted-foreground mt-0.5">
-            {t("materials_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("materials_title", locale)}</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">{t("materials_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -184,14 +180,18 @@ export function MaterialsClient({
                 {m.thicknessCm && m.widthCm && m.lengthCm && (
                   <div className="p-2.5 rounded-btn bg-muted/60 text-caption font-mono text-foreground flex items-center justify-between">
                     <span className="text-muted-foreground font-sans text-2xs">Asosiy o'lcham:</span>
-                    <span>{m.thicknessCm} × {m.widthCm} × {m.lengthCm} sm</span>
+                    <span>
+                      {m.thicknessCm} × {m.widthCm} × {m.lengthCm} sm
+                    </span>
                   </div>
                 )}
 
                 {/* Variant o'lchamlar ro'yxati */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between text-2xs font-bold text-muted-foreground uppercase">
-                    <span>{t("materials_sizes", locale)} ({m.sizes.length})</span>
+                    <span>
+                      {t("materials_sizes", locale)} ({m.sizes.length})
+                    </span>
                     {canManage && (
                       <button
                         type="button"
@@ -217,7 +217,9 @@ export function MaterialsClient({
                             key={s.id}
                             className="flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-control bg-card border border-border text-caption font-mono"
                           >
-                            <span>{s.thicknessCm}×{s.widthCm}×{s.lengthCm} sm</span>
+                            <span>
+                              {s.thicknessCm}×{s.widthCm}×{s.lengthCm} sm
+                            </span>
                             {sVol !== null && (
                               <span className="text-2xs text-muted-foreground font-sans">({sVol} m³)</span>
                             )}
@@ -242,11 +244,7 @@ export function MaterialsClient({
 
               {canManage && (
                 <div className="flex items-center justify-end gap-1.5 pt-3 mt-4 border-t border-border">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleEdit(m)}
-                    className="h-8 px-2.5 text-caption"
-                  >
+                  <Button variant="ghost" onClick={() => handleEdit(m)} className="h-8 px-2.5 text-caption">
                     <Edit2 className="size-3.5 mr-1" />
                     {t("action_edit", locale)}
                   </Button>

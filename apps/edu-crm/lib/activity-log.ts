@@ -194,7 +194,10 @@ const REGISTRY: Record<string, Def> = {
   "group.homework.create": simple("group", "guruhga yangi uy vazifasi berdi", (i) => str(i.m.title)),
   "group.homework.delete": simple("group", "guruh uy vazifasini o'chirdi"),
   "homework.submission.check": simple("group", "o'quvchi uy vazifasi javobini tekshirdi", (i) =>
-    parts(str(i.m.status) === "accepted" ? "qabul qilindi" : "qaytarildi", num(i.m.grade) !== null ? `${num(i.m.grade)} ball` : null),
+    parts(
+      str(i.m.status) === "accepted" ? "qabul qilindi" : "qaytarildi",
+      num(i.m.grade) !== null ? `${num(i.m.grade)} ball` : null,
+    ),
   ),
   "student.homework.submit": simple("student", "uy vazifasiga javob topshirdi", undefined, () => null),
   "group.archive": simple("group", "guruhni arxivga oldi"),
@@ -401,7 +404,12 @@ const REGISTRY: Record<string, Def> = {
       ),
     () => null,
   ),
-  "storage.file_delete": simple("settings", "faylni o'chirdi", (i) => str(i.m.fileUrl), () => null),
+  "storage.file_delete": simple(
+    "settings",
+    "faylni o'chirdi",
+    (i) => str(i.m.fileUrl),
+    () => null,
+  ),
   // SMS (docs/EDU-CRM-SMS.md): kalit jurnalga yozilmaydi — faqat email, soatlar va test raqami
   "sms.connect": simple(
     "settings",
@@ -532,7 +540,12 @@ const REGISTRY: Record<string, Def> = {
   "user.create": simple("auth", "hisob yaratildi", undefined, () => null),
   "user.telegram_linked": simple("auth", "Telegramni ulab oldi", undefined, () => null),
   "user.telegram_unlinked": simple("auth", "Telegram hisobini uzdi", undefined, () => null),
-  "user.2fa_toggled": simple("auth", "2FA sozlamasini o'zgartirdi", (i) => (i.m.enabled ? "yoqdi" : "o'chirdi"), () => null),
+  "user.2fa_toggled": simple(
+    "auth",
+    "2FA sozlamasini o'zgartirdi",
+    (i) => (i.m.enabled ? "yoqdi" : "o'chirdi"),
+    () => null,
+  ),
   "user.password_change": simple("auth", "parolini almashtirdi", undefined, () => null),
 };
 

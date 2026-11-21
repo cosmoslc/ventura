@@ -2,15 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Banknote,
-  CalendarCheck,
-  Coins,
-  Plus,
-  Tag,
-  Trash2,
-} from "lucide-react";
+import { ArrowLeft, Banknote, CalendarCheck, Coins, Plus, Tag, Trash2 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -18,11 +10,7 @@ import { ConfirmModal } from "@ventura/ui/modal";
 import { t } from "@/lib/i18n";
 import { formatMoney } from "@/lib/calc/units";
 import { deleteWorkAction } from "@/app/(app)/work/actions";
-import {
-  deletePaymentAction,
-  deleteWageAccrualAction,
-  deleteWorkerSpecialPriceAction,
-} from "./actions";
+import { deletePaymentAction, deleteWageAccrualAction, deleteWorkerSpecialPriceAction } from "./actions";
 import { PaymentDialog } from "./payment-dialog";
 import { WageAccrualDialog } from "./wage-accrual-dialog";
 import { SpecialPriceDialog } from "./special-price-dialog";
@@ -111,12 +99,9 @@ const salaryTones: Record<string, "info" | "success" | "warning" | "neutral"> = 
 };
 
 export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileClientProps) {
-  const { worker, works, payments, accruals, specialPrices, allMaterials, activeTeraks, balance } =
-    data;
+  const { worker, works, payments, accruals, specialPrices, allMaterials, activeTeraks, balance } = data;
 
-  const [activeTab, setActiveTab] = React.useState<"works" | "payments" | "accruals" | "specialPrices">(
-    "works",
-  );
+  const [activeTab, setActiveTab] = React.useState<"works" | "payments" | "accruals" | "specialPrices">("works");
 
   // Dialog states
   const [paymentDialogOpen, setPaymentDialogOpen] = React.useState(false);
@@ -209,11 +194,7 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
               </Button>
 
               {worker.salaryType !== "piecework" && (
-                <Button
-                  onClick={() => setAccrualDialogOpen(true)}
-                  variant="subtle"
-                  className="gap-2"
-                >
+                <Button onClick={() => setAccrualDialogOpen(true)} variant="subtle" className="gap-2">
                   <CalendarCheck className="size-4" />
                   <span>{t("worker_accrue_wage", locale)}</span>
                 </Button>
@@ -253,16 +234,10 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
           >
             <div className="flex items-center justify-between">
               <span className="text-caption font-medium">{t("worker_current_balance", locale)}</span>
-              {balance.balance > 0 && (
-                <Badge tone="success">{t("worker_balance_payable", locale)}</Badge>
-              )}
-              {balance.balance < 0 && (
-                <Badge tone="warning">{t("worker_balance_overpaid", locale)}</Badge>
-              )}
+              {balance.balance > 0 && <Badge tone="success">{t("worker_balance_payable", locale)}</Badge>}
+              {balance.balance < 0 && <Badge tone="warning">{t("worker_balance_overpaid", locale)}</Badge>}
             </div>
-            <span className="text-title font-bold font-mono mt-1 block">
-              {formatMoney(Math.abs(balance.balance))}
-            </span>
+            <span className="text-title font-bold font-mono mt-1 block">{formatMoney(Math.abs(balance.balance))}</span>
           </div>
         </div>
       </Card>
@@ -349,38 +324,26 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
                         <td className="px-4 py-3 text-foreground font-sans">
                           <div className="flex items-center gap-1.5">
                             <span className="font-semibold">
-                              {w.kind === "material"
-                                ? w.materialName ?? "Material"
-                                : w.workTypeName ?? "Oddiy ish"}
+                              {w.kind === "material" ? (w.materialName ?? "Material") : (w.workTypeName ?? "Oddiy ish")}
                             </span>
                             {w.groupId && <Badge tone="info">{t("work_group_badge", locale)}</Badge>}
                           </div>
-                          {w.note && (
-                            <span className="text-2xs text-muted-foreground block">{w.note}</span>
-                          )}
+                          {w.note && <span className="text-2xs text-muted-foreground block">{w.note}</span>}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground font-sans">
-                          {w.terakName ?? "—"}
-                        </td>
+                        <td className="px-4 py-3 text-muted-foreground font-sans">{w.terakName ?? "—"}</td>
                         <td className="px-4 py-3 text-muted-foreground">
                           {w.kind === "material" ? (
                             <>
                               {w.payUnit === "row" && w.rows && `${w.rows} qator`}
                               {w.payUnit === "piece" && w.quantity && `${w.quantity} dona`}
                               {w.payUnit === "cube" && w.quantity && `${w.quantity} dona`}
-                              {w.sizeName && (
-                                <span className="block text-2xs text-muted-foreground">
-                                  {w.sizeName}
-                                </span>
-                              )}
+                              {w.sizeName && <span className="block text-2xs text-muted-foreground">{w.sizeName}</span>}
                             </>
                           ) : (
                             "—"
                           )}
                         </td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">
-                          {formatMoney(w.amount)}
-                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatMoney(w.amount)}</td>
                         {canManage && (
                           <td className="px-4 py-3 text-right">
                             <Button
@@ -429,9 +392,7 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
                         <td className="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400">
                           {formatMoney(p.amount)}
                         </td>
-                        <td className="px-4 py-3 text-muted-foreground font-sans">
-                          {p.note ?? "—"}
-                        </td>
+                        <td className="px-4 py-3 text-muted-foreground font-sans">{p.note ?? "—"}</td>
                         {canManage && (
                           <td className="px-4 py-3 text-right">
                             <Button
@@ -483,12 +444,8 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
                         </td>
                         <td className="px-4 py-3 text-foreground">{a.units}</td>
                         <td className="px-4 py-3 text-muted-foreground">{formatMoney(a.rate)}</td>
-                        <td className="px-4 py-3 text-muted-foreground font-sans">
-                          {a.terakName ?? "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">
-                          {formatMoney(a.amount)}
-                        </td>
+                        <td className="px-4 py-3 text-muted-foreground font-sans">{a.terakName ?? "—"}</td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatMoney(a.amount)}</td>
                         {canManage && (
                           <td className="px-4 py-3 text-right">
                             <Button
@@ -514,9 +471,7 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
       {activeTab === "specialPrices" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-caption text-muted-foreground">
-              {t("special_price_hint", locale)}
-            </p>
+            <p className="text-caption text-muted-foreground">{t("special_price_hint", locale)}</p>
             {canManage && (
               <Button
                 onClick={() => {
@@ -551,15 +506,11 @@ export function WorkerProfileClient({ data, canManage, locale }: WorkerProfileCl
                   <tbody className="divide-y divide-border font-mono text-caption">
                     {specialPrices.map((sp) => (
                       <tr key={sp.materialId} className="hover:bg-muted/20">
-                        <td className="px-4 py-3 text-foreground font-sans font-semibold">
-                          {sp.materialName}
-                        </td>
+                        <td className="px-4 py-3 text-foreground font-sans font-semibold">{sp.materialName}</td>
                         <td className="px-4 py-3 text-muted-foreground font-sans">
                           {sp.pricingMode === "row" ? "Qator bo'yicha" : "Dona bo'yicha"}
                         </td>
-                        <td className="px-4 py-3 text-right font-bold text-foreground">
-                          {formatMoney(sp.price)}
-                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-foreground">{formatMoney(sp.price)}</td>
                         {canManage && (
                           <td className="px-4 py-3 text-right">
                             <div className="flex items-center justify-end gap-1">

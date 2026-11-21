@@ -14,11 +14,7 @@ import { getOrderStatus, isOrderDueSoon } from "@/lib/calc/orders";
 import { pieceVolumeM3 } from "@/lib/calc/units";
 import { getSettings } from "@/lib/settings/schema";
 import { currentDeps, requireUser } from "@/lib/server/session";
-import {
-  type AttentionOrderData,
-  DashboardClient,
-  type TerakDashboardData,
-} from "./dashboard-client";
+import { type AttentionOrderData, DashboardClient, type TerakDashboardData } from "./dashboard-client";
 
 export default async function DashboardPage() {
   const { user } = await requireUser();
@@ -171,10 +167,7 @@ export default async function DashboardPage() {
     .innerJoin(materials, eq(materials.id, orders.materialId))
     .leftJoin(
       terakMaterials,
-      and(
-        eq(terakMaterials.terakId, orders.terakId),
-        eq(terakMaterials.materialId, orders.materialId),
-      ),
+      and(eq(terakMaterials.terakId, orders.terakId), eq(terakMaterials.materialId, orders.materialId)),
     )
     .where(isNull(orders.completedAt))
     .orderBy(desc(orders.createdAt));

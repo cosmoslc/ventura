@@ -597,10 +597,7 @@ export async function toggleProjectFreezeAction(id: string): Promise<Result<{ st
 
   const nextStatus: "active" | "paused" = before.status === "active" ? "paused" : "active";
 
-  await db
-    .update(projects)
-    .set({ status: nextStatus })
-    .where(eq(projects.id, id));
+  await db.update(projects).set({ status: nextStatus }).where(eq(projects.id, id));
 
   await audit.record(db, {
     actor,
@@ -619,5 +616,3 @@ export async function toggleProjectFreezeAction(id: string): Promise<Result<{ st
   revalidatePath("/projects");
   return { ok: true, status: nextStatus };
 }
-
-

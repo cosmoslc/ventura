@@ -1,14 +1,5 @@
 import Link from "next/link";
-import {
-  Boxes,
-  Cpu,
-  DollarSign,
-  PackagePlus,
-  Plus,
-  Receipt,
-  ShoppingCart,
-  TrendingUp,
-} from "lucide-react";
+import { Boxes, Cpu, DollarSign, PackagePlus, Plus, Receipt, ShoppingCart, TrendingUp } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { StatCard } from "@ventura/ui/stat-card";
@@ -50,9 +41,7 @@ export default async function AdminDashboardPage() {
       {/* 1. Sarlavha va tezkor harakatlar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Boshqaruv paneli
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Boshqaruv paneli</h1>
         </div>
 
         {/* Tezkor amallar tugmalari */}
@@ -143,12 +132,7 @@ export default async function AdminDashboardPage() {
           </>
         )}
 
-        <StatCard
-          icon={<ShoppingCart />}
-          label="Yangi buyurtmalar"
-          value={`${pendingOrders} ta`}
-          tone={4}
-        />
+        <StatCard icon={<ShoppingCart />} label="Yangi buyurtmalar" value={`${pendingOrders} ta`} tone={4} />
       </div>
 
       {/* 3. So'nggi buyurtmalar va so'nggi sotuvlar / kirimlar bloki */}
@@ -167,42 +151,51 @@ export default async function AdminDashboardPage() {
 
           <div className="space-y-3">
             {recentOrders.map((order) => {
-              const statusLabel = order.status === "new" ? "Yangi" : order.status === "confirmed" ? "Tasdiqlangan" : order.status === "shipping" ? "Yetkazilmoqda" : order.status === "delivered" ? "Yetkazildi" : "Bekor qilingan";
-              const itemLabel = order.items.slice(0, 2).map((item) => item.name).join(", ") || "—";
+              const statusLabel =
+                order.status === "new"
+                  ? "Yangi"
+                  : order.status === "confirmed"
+                    ? "Tasdiqlangan"
+                    : order.status === "shipping"
+                      ? "Yetkazilmoqda"
+                      : order.status === "delivered"
+                        ? "Yetkazildi"
+                        : "Bekor qilingan";
+              const itemLabel =
+                order.items
+                  .slice(0, 2)
+                  .map((item) => item.name)
+                  .join(", ") || "—";
               return (
-              <div
-                key={order.id}
-                className="flex items-center justify-between rounded-control border border-border/60 bg-muted/20 p-3 text-xs"
-              >
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-foreground">{order.publicId}</span>
-                    <Badge
-                      tone={
-                        order.status === "new"
-                          ? "warning"
-                          : order.status === "confirmed"
-                            ? "info"
-                            : "success"
-                      }
-                      className="text-2xs"
-                    >
-                      {statusLabel}
-                    </Badge>
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between rounded-control border border-border/60 bg-muted/20 p-3 text-xs"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-foreground">{order.publicId}</span>
+                      <Badge
+                        tone={order.status === "new" ? "warning" : order.status === "confirmed" ? "info" : "success"}
+                        className="text-2xs"
+                      >
+                        {statusLabel}
+                      </Badge>
+                    </div>
+                    <p className="mt-0.5 font-medium text-foreground">{order.name}</p>
+                    <p className="text-caption text-muted-foreground">{itemLabel}</p>
                   </div>
-                  <p className="mt-0.5 font-medium text-foreground">{order.name}</p>
-                  <p className="text-caption text-muted-foreground">{itemLabel}</p>
-                </div>
 
-                <div className="text-right">
-                  {isFinancial ? (
-                    <p className="font-bold text-foreground">{formatMoney(order.total)}</p>
-                  ) : (
-                    <p className="font-bold text-foreground">{order.items?.reduce((s, i) => s + i.qty, 0) || 0} dona</p>
-                  )}
-                  <p className="text-2xs text-muted-foreground">{formatDate(order.createdAt)}</p>
+                  <div className="text-right">
+                    {isFinancial ? (
+                      <p className="font-bold text-foreground">{formatMoney(order.total)}</p>
+                    ) : (
+                      <p className="font-bold text-foreground">
+                        {order.items?.reduce((s, i) => s + i.qty, 0) || 0} dona
+                      </p>
+                    )}
+                    <p className="text-2xs text-muted-foreground">{formatDate(order.createdAt)}</p>
+                  </div>
                 </div>
-              </div>
               );
             })}
           </div>
@@ -239,9 +232,7 @@ export default async function AdminDashboardPage() {
 
                   <div className="text-right">
                     <p className="font-bold text-foreground">{formatMoney(sale.soldPrice)}</p>
-                    <p className="text-caption font-semibold text-(--success-fg)">
-                      +{formatMoney(sale.profit)} foyda
-                    </p>
+                    <p className="text-caption font-semibold text-(--success-fg)">+{formatMoney(sale.profit)} foyda</p>
                   </div>
                 </div>
               ))}

@@ -39,30 +39,36 @@ export default function StorefrontHomePage() {
 
   useEffect(() => {
     let active = true;
-    void Promise.all([getStorefrontProductsAction(), getStorefrontPcBuildsAction()]).then(([productResult, pcResult]) => {
-      if (!active) return;
-      if (productResult.success) {
-        setProducts(productResult.products);
-      }
-      if (pcResult.success) {
-        setPcs(pcResult.builds.map((pc) => ({
-          id: pc.id,
-          slug: pc.slug,
-          name: pc.name,
-          imageUrl: pc.images?.[0] ?? "/placeholder-product.svg",
-          cpu: pc.cpu ?? undefined,
-          gpu: pc.gpu ?? undefined,
-          ram: pc.ram ?? undefined,
-          storage: pc.storage ?? undefined,
-          price: pc.sellPrice,
-          discountPercent: pc.discountPercent,
-          ratingAvg: pc.ratingAvg,
-          ratingCount: pc.ratingCount,
-          isAvailable: pc.status === "available",
-        })));
-      }
-    }).catch((error) => console.error("Storefront home load failed", error));
-    return () => { active = false; };
+    void Promise.all([getStorefrontProductsAction(), getStorefrontPcBuildsAction()])
+      .then(([productResult, pcResult]) => {
+        if (!active) return;
+        if (productResult.success) {
+          setProducts(productResult.products);
+        }
+        if (pcResult.success) {
+          setPcs(
+            pcResult.builds.map((pc) => ({
+              id: pc.id,
+              slug: pc.slug,
+              name: pc.name,
+              imageUrl: pc.images?.[0] ?? "/placeholder-product.svg",
+              cpu: pc.cpu ?? undefined,
+              gpu: pc.gpu ?? undefined,
+              ram: pc.ram ?? undefined,
+              storage: pc.storage ?? undefined,
+              price: pc.sellPrice,
+              discountPercent: pc.discountPercent,
+              ratingAvg: pc.ratingAvg,
+              ratingCount: pc.ratingCount,
+              isAvailable: pc.status === "available",
+            })),
+          );
+        }
+      })
+      .catch((error) => console.error("Storefront home load failed", error));
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -203,7 +209,9 @@ export default function StorefrontHomePage() {
                   <span>Optimal yigʻilgan</span>
                 </div>
                 <h2 className="text-xl font-bold text-foreground sm:text-2xl">Tayyor Kompyuterlar (PC Builds)</h2>
-                <p className="text-xs text-muted-foreground">Sinovdan oʻtgan, drayverlari oʻrnatilgan tayyor tizimlar</p>
+                <p className="text-xs text-muted-foreground">
+                  Sinovdan oʻtgan, drayverlari oʻrnatilgan tayyor tizimlar
+                </p>
               </div>
 
               <Link href="/computers" className="text-xs font-bold text-primary hover:underline">
@@ -238,8 +246,8 @@ export default function StorefrontHomePage() {
                     Oʻzingizga mos kompyuterni <span className="text-primary">0 dan yigʻing</span>
                   </h2>
                   <p className="mt-3 text-sm text-muted-foreground leading-relaxed max-w-md">
-                    Protsessordan tortib korpusgacha boʻlgan 8 ta asosiy komponentni tanlang. 
-                    Real vaqtda narx, elektr quvvati (TDP) va komponentlar zaxirasini nazorat qiling.
+                    Protsessordan tortib korpusgacha boʻlgan 8 ta asosiy komponentni tanlang. Real vaqtda narx, elektr
+                    quvvati (TDP) va komponentlar zaxirasini nazorat qiling.
                   </p>
 
                   <div className="mt-6 flex flex-wrap gap-4 text-xs font-semibold text-foreground">
@@ -271,7 +279,9 @@ export default function StorefrontHomePage() {
                   <div className="relative w-full max-w-md rounded-card border border-border bg-card/90 p-6 shadow-popover backdrop-blur-md">
                     <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                       <span className="text-xs font-bold text-muted-foreground">Jonli Konfigurator namoyishi</span>
-                      <span className="rounded-full bg-(--success-bg) px-2 py-0.5 text-2xs font-bold text-(--success-fg)">Mavjud</span>
+                      <span className="rounded-full bg-(--success-bg) px-2 py-0.5 text-2xs font-bold text-(--success-fg)">
+                        Mavjud
+                      </span>
                     </div>
                     <div className="space-y-2.5 text-xs">
                       <div className="flex items-center justify-between rounded-control bg-secondary/50 p-2">
@@ -310,7 +320,19 @@ export default function StorefrontHomePage() {
               </h3>
             </div>
             <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 opacity-75 hover:opacity-100 transition-opacity">
-              {["Intel", "AMD", "NVIDIA", "ASUS", "MSI", "Gigabyte", "Kingston", "Samsung", "DeepCool", "NZXT", "Corsair"].map((brand) => (
+              {[
+                "Intel",
+                "AMD",
+                "NVIDIA",
+                "ASUS",
+                "MSI",
+                "Gigabyte",
+                "Kingston",
+                "Samsung",
+                "DeepCool",
+                "NZXT",
+                "Corsair",
+              ].map((brand) => (
                 <Link
                   key={brand}
                   href={`/products?brand=${brand}`}

@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Clock,
-  Heart,
-  MapPin,
-  Package,
-  ShieldCheck,
-  Wrench,
-} from "lucide-react";
+import { ArrowRight, Clock, Heart, MapPin, Package, ShieldCheck, Wrench } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { formatMoney } from "@/lib/format";
@@ -110,7 +102,8 @@ export default function ProfileOverviewPage() {
           <>
             <h1 className="text-2xl font-black tracking-tight">Xush kelibsiz, {displayName}!</h1>
             <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-              Bu yerda siz barcha buyurtmalaringiz holatini kuzatishingiz, sevimli mahsulotlaringizni koʻrishingiz va hisob sozlamalarini boshqarishingiz mumkin.
+              Bu yerda siz barcha buyurtmalaringiz holatini kuzatishingiz, sevimli mahsulotlaringizni koʻrishingiz va
+              hisob sozlamalarini boshqarishingiz mumkin.
             </p>
           </>
         )}
@@ -144,9 +137,7 @@ export default function ProfileOverviewPage() {
           href="/profile/orders?tab=custom_pc"
           className="rounded-card border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-control"
         >
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            PC Zakazlari
-          </span>
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">PC Zakazlari</span>
           <div className="mt-2 flex items-baseline justify-between">
             {isPageLoading ? (
               <div className="h-8 w-16 bg-muted rounded animate-pulse" />
@@ -165,16 +156,12 @@ export default function ProfileOverviewPage() {
           href="/profile/liked"
           className="rounded-card border border-border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-control"
         >
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-            Saralanganlar
-          </span>
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">Saralanganlar</span>
           <div className="mt-2 flex items-baseline justify-between">
             <span className="text-2xl font-black">{likedCount} ta</span>
             <Heart size={20} className="text-(--danger-fg)" />
           </div>
-          <span className="text-caption text-muted-foreground mt-1 block">
-            Yoqtirilgan texnikalar
-          </span>
+          <span className="text-caption text-muted-foreground mt-1 block">Yoqtirilgan texnikalar</span>
         </Link>
 
         {/* Xaridlar summasi (faqat moliyaviy rejimda) */}
@@ -230,20 +217,16 @@ export default function ProfileOverviewPage() {
                   <span className="font-mono font-bold text-sm">{latestOrder.publicId}</span>
                   <Badge
                     tone={
-                      latestOrder.status === "delivered"
-                        ? "success"
-                        : latestOrder.status === "new"
-                        ? "info"
-                        : "warning"
+                      latestOrder.status === "delivered" ? "success" : latestOrder.status === "new" ? "info" : "warning"
                     }
                   >
                     {latestOrder.status === "delivered"
                       ? "Yetkazib berildi"
                       : latestOrder.status === "confirmed"
-                      ? "Tasdiqlandi"
-                      : latestOrder.status === "shipping"
-                      ? "Yetkazilmoqda (Kuryerda)"
-                      : "Qabul qilindi"}
+                        ? "Tasdiqlandi"
+                        : latestOrder.status === "shipping"
+                          ? "Yetkazilmoqda (Kuryerda)"
+                          : "Qabul qilindi"}
                   </Badge>
                 </div>
                 <span className="text-xs text-muted-foreground mt-0.5 block">
@@ -267,7 +250,8 @@ export default function ProfileOverviewPage() {
               </p>
               <p className="text-muted-foreground flex items-center gap-1">
                 <MapPin size={13} />
-                Manzil: {latestOrder.region ? `${latestOrder.region}, ` : ""}{latestOrder.address || "Koʻrsatilmagan"}
+                Manzil: {latestOrder.region ? `${latestOrder.region}, ` : ""}
+                {latestOrder.address || "Koʻrsatilmagan"}
               </p>
             </div>
           </div>
@@ -276,7 +260,8 @@ export default function ProfileOverviewPage() {
             <Package size={36} className="text-muted-foreground/30 mx-auto mb-2" />
             <h3 className="font-bold text-sm text-foreground">Hozircha faol buyurtmalaringiz mavjud emas</h3>
             <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
-              Mahsulotlar yoki tayyor kompyuterlar katalogidan oʻzingizga mos texnikalarni tanlab xarid qilishingiz mumkin.
+              Mahsulotlar yoki tayyor kompyuterlar katalogidan oʻzingizga mos texnikalarni tanlab xarid qilishingiz
+              mumkin.
             </p>
             <div className="mt-4 flex justify-center gap-3">
               <Link href="/products">

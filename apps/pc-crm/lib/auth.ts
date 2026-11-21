@@ -6,10 +6,7 @@ import { accounts, sessions, users, verifications } from "@ventura/db/schema/pc-
 import { getDb } from "./db";
 import { allTenants, defaultTenantSecret } from "./server/tenant";
 
-const baseURL =
-  process.env.BETTER_AUTH_URL ??
-  process.env.NEXT_PUBLIC_APP_URL ??
-  "http://localhost:3004";
+const baseURL = process.env.BETTER_AUTH_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3004";
 
 const secret =
   process.env.BETTER_AUTH_SECRET ??
@@ -65,20 +62,23 @@ export const auth = betterAuth({
     maxPasswordLength: 128,
     autoSignIn: true,
   },
-  plugins: [phoneNumber({
-    sendOTP: async () => {
-      throw new Error("Telefon OTP hozir sozlanmagan; admin parol bilan kiradi");
-    },
-    phoneNumberValidator: (phone) => /^\+998\d{9}$/.test(phone),
-    schema: {
-      user: {
-        fields: {
-          phoneNumber: "phone",
-          phoneNumberVerified: "phoneVerified",
+  plugins: [
+    phoneNumber({
+      sendOTP: async () => {
+        throw new Error("Telefon OTP hozir sozlanmagan; admin parol bilan kiradi");
+      },
+      phoneNumberValidator: (phone) => /^\+998\d{9}$/.test(phone),
+      schema: {
+        user: {
+          fields: {
+            phoneNumber: "phone",
+            phoneNumberVerified: "phoneVerified",
+          },
         },
       },
-    },
-  }), nextCookies()],
+    }),
+    nextCookies(),
+  ],
   socialProviders,
   user: {
     additionalFields: {

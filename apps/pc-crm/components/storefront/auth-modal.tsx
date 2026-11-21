@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  AlertCircle,
-  CheckCircle2,
-  KeyRound,
-  Loader2,
-  Lock,
-  Mail,
-  User,
-  X,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, Lock, Mail, User, X } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { authClient, signIn, signUp } from "@/lib/auth-client";
@@ -63,14 +54,14 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
       if (res?.error) {
         setErrorMsg(
           res.error.message ||
-            "Google OAuth sozlanmagan. Iltimos, .env faylida GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET parametrlarini kiriting."
+            "Google OAuth sozlanmagan. Iltimos, .env faylida GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET parametrlarini kiriting.",
         );
         setIsLoading(false);
       }
     } catch (err: any) {
       setErrorMsg(
         err?.message ||
-          "Google OAuth xatosi. Iltimos, GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET sozlanganligini tekshiring."
+          "Google OAuth xatosi. Iltimos, GOOGLE_CLIENT_ID va GOOGLE_CLIENT_SECRET sozlanganligini tekshiring.",
       );
       setIsLoading(false);
     }
@@ -244,9 +235,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
         <form onSubmit={handleSubmit} className="space-y-3">
           {mode === "register" && (
             <div>
-              <label className="mb-1 block text-xs font-semibold text-foreground">
-                Toʻliq ismingiz
-              </label>
+              <label className="mb-1 block text-xs font-semibold text-foreground">Toʻliq ismingiz</label>
               <Input
                 icon={<User />}
                 type="text"
@@ -260,9 +249,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
           )}
 
           <div>
-            <label className="mb-1 block text-xs font-semibold text-foreground">
-              Email
-            </label>
+            <label className="mb-1 block text-xs font-semibold text-foreground">Email</label>
             <Input
               icon={<Mail />}
               type="email"
@@ -275,9 +262,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = "login" }: AuthModalP
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-semibold text-foreground">
-              Parol
-            </label>
+            <label className="mb-1 block text-xs font-semibold text-foreground">Parol</label>
             <Input
               icon={<Lock />}
               type="password"

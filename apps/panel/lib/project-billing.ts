@@ -33,10 +33,7 @@ export interface ProjectBillingSummary {
   isPaused: boolean;
 }
 
-export function parseProjectBilling(
-  settings: unknown,
-  status: string,
-): ProjectBillingSummary {
+export function parseProjectBilling(settings: unknown, status: string): ProjectBillingSummary {
   const s = (settings && typeof settings === "object" ? settings : {}) as Record<string, unknown>;
   const sub = s.subscription as ProjectSubscriptionData | undefined;
   const trial = s.trial as ProjectTrialData | undefined;
@@ -48,9 +45,7 @@ export function parseProjectBilling(
     const isValid = !isNaN(expDate.getTime());
     const now = Date.now();
     const expired = isValid && expDate.getTime() <= now;
-    const daysLeft = isValid
-      ? Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000))
-      : null;
+    const daysLeft = isValid ? Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000)) : null;
 
     return {
       kind: "subscription",
@@ -70,9 +65,7 @@ export function parseProjectBilling(
     const isValid = !isNaN(expDate.getTime());
     const now = Date.now();
     const expired = isValid && expDate.getTime() <= now;
-    const daysLeft = isValid
-      ? Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000))
-      : null;
+    const daysLeft = isValid ? Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000)) : null;
 
     return {
       kind: "trial",

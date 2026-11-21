@@ -1,14 +1,4 @@
-import {
-  boolean,
-  index,
-  integer,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  unique,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { type I18nText, products } from "./catalog";
 import { timestamps } from "./columns";
@@ -33,7 +23,7 @@ export const reviews = pgTable(
     index("reviews_product_id_idx").on(t.productId),
     index("reviews_pc_id_idx").on(t.pcId),
     index("reviews_user_id_idx").on(t.userId),
-  ]
+  ],
 );
 
 export const favorites = pgTable(
@@ -51,7 +41,7 @@ export const favorites = pgTable(
     index("favorites_user_id_idx").on(t.userId),
     unique("favorites_user_product_uq").on(t.userId, t.productId),
     unique("favorites_user_pc_uq").on(t.userId, t.pcId),
-  ]
+  ],
 );
 
 export const notifications = pgTable("notifications", {
@@ -76,7 +66,7 @@ export const userNotifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("user_notifications_user_id_idx").on(t.userId)]
+  (t) => [index("user_notifications_user_id_idx").on(t.userId)],
 );
 
 export const faqCategories = pgTable("faq_categories", {
@@ -98,7 +88,7 @@ export const faqs = pgTable(
     sort: integer("sort").notNull().default(0),
     ...timestamps,
   },
-  (t) => [index("faqs_category_id_idx").on(t.categoryId)]
+  (t) => [index("faqs_category_id_idx").on(t.categoryId)],
 );
 
 export const heroSlides = pgTable("hero_slides", {

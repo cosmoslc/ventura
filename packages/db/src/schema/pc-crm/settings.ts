@@ -1,14 +1,5 @@
 import { sql } from "drizzle-orm";
-import {
-  bigint,
-  boolean,
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { bigint, boolean, index, jsonb, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 
 export const settings = pgTable("settings", {
@@ -26,7 +17,9 @@ export const settings = pgTable("settings", {
 
 export const shippingRates = pgTable("shipping_rates", {
   region: text("region").primaryKey(), // Masalan: 'Toshkent shahri', 'Samarqand', etc.
-  price: bigint("price", { mode: "bigint" }).notNull().default(sql`0`),
+  price: bigint("price", { mode: "bigint" })
+    .notNull()
+    .default(sql`0`),
   estimatedDays: text("estimated_days").default("1-3 kun"),
   enabled: boolean("enabled").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true })
@@ -50,5 +43,5 @@ export const adminAuditLogs = pgTable(
     index("admin_audit_logs_user_id_idx").on(t.userId),
     index("admin_audit_logs_entity_idx").on(t.entity),
     index("admin_audit_logs_created_at_idx").on(t.createdAt),
-  ]
+  ],
 );

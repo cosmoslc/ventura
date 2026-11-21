@@ -191,10 +191,7 @@ export function ProjectsTable({
                         </div>
                       ) : r.billing.kind === "trial" ? (
                         <div className="space-y-0.5">
-                          <Badge
-                            tone={r.status === "paused" || r.billing.expired ? "danger" : "warning"}
-                            dot
-                          >
+                          <Badge tone={r.status === "paused" || r.billing.expired ? "danger" : "warning"} dot>
                             {r.status === "paused"
                               ? "Muzlatilgan"
                               : r.billing.expired
@@ -210,7 +207,9 @@ export function ProjectsTable({
                       ) : (
                         <div className="text-caption text-muted-foreground">
                           {r.status === "paused" ? (
-                            <Badge tone="danger" dot>Muzlatilgan</Badge>
+                            <Badge tone="danger" dot>
+                              Muzlatilgan
+                            </Badge>
                           ) : (
                             <Badge tone="neutral">Doimiy</Badge>
                           )}

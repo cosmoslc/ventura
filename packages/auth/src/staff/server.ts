@@ -27,7 +27,13 @@ export interface StaffAuthDeps {
 }
 
 export function createStaffAuth({ db, telegram, appName, secret, baseURL }: StaffAuthDeps) {
-  const schema = { user: users, session: sessions, account: accounts, verification: verifications, twoFactor: twoFactors };
+  const schema = {
+    user: users,
+    session: sessions,
+    account: accounts,
+    verification: verifications,
+    twoFactor: twoFactors,
+  };
   const baseAdapter = drizzleAdapter(db as unknown as Parameters<typeof drizzleAdapter>[0], {
     provider: "pg",
     schema,
@@ -55,7 +61,10 @@ export function createStaffAuth({ db, telegram, appName, secret, baseURL }: Staf
       if (typeof (raw as Record<string, unknown>)[m] === "function") {
         wrapped[m] = async (...args: unknown[]) => {
           return db.run(async (tx) => {
-            const txAdapter = drizzleAdapter(tx as unknown as Parameters<typeof drizzleAdapter>[0], { provider: "pg", schema })(options) as unknown as Record<string, ((...a: unknown[]) => unknown) | undefined>;
+            const txAdapter = drizzleAdapter(tx as unknown as Parameters<typeof drizzleAdapter>[0], {
+              provider: "pg",
+              schema,
+            })(options) as unknown as Record<string, ((...a: unknown[]) => unknown) | undefined>;
             const fn = txAdapter[m];
             if (typeof fn === "function") {
               return fn(...args);

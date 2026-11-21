@@ -29,11 +29,7 @@ export async function getAuditEventsAction(limit = 100) {
     throw new Error("Ruxsat yo'q");
   }
 
-  const rows = await deps.db
-    .select()
-    .from(auditEvents)
-    .orderBy(desc(auditEvents.seq))
-    .limit(limit);
+  const rows = await deps.db.select().from(auditEvents).orderBy(desc(auditEvents.seq)).limit(limit);
 
   return rows as AuditItem[];
 }

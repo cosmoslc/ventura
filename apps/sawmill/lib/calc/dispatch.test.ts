@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  convertDispatchPrice,
-  EPSILON,
-  validateAndCalculateDispatch,
-} from "./dispatch";
+import { convertDispatchPrice, EPSILON, validateAndCalculateDispatch } from "./dispatch";
 
 describe("dispatch calculation module (SAWMILL-TAHLIL 9-qism)", () => {
   describe("validateAndCalculateDispatch - dona (piece)", () => {
@@ -100,7 +96,7 @@ describe("dispatch calculation module (SAWMILL-TAHLIL 9-qism)", () => {
       const currentStock = 100;
       const res = validateAndCalculateDispatch({
         unit: "cube",
-        quantityInput: 1.6 + EPSILON / 2 * volumeM3,
+        quantityInput: 1.6 + (EPSILON / 2) * volumeM3,
         priceInput: 1000000,
         volumeM3,
         currentStock,

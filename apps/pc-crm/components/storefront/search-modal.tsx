@@ -81,9 +81,7 @@ export function SearchModal() {
     router.push(`/products?q=${encodeURIComponent(query.trim())}`);
   };
 
-  const filtered = query.trim()
-    ? SUGGESTIONS.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()))
-    : [];
+  const filtered = query.trim() ? SUGGESTIONS.filter((s) => s.name.toLowerCase().includes(query.toLowerCase())) : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-24 px-4">
@@ -201,9 +199,7 @@ export function SearchModal() {
 
                     <div className="flex items-center gap-2">
                       {"price" in item && (
-                        <span className="font-bold text-foreground">
-                          {formatMoney(item.price as bigint)}
-                        </span>
+                        <span className="font-bold text-foreground">{formatMoney(item.price as bigint)}</span>
                       )}
                       <ArrowRight size={13} className="text-muted-foreground" />
                     </div>

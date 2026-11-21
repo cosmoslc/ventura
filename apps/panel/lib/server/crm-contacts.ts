@@ -51,11 +51,7 @@ export async function getCrmContacts(db: PanelDb): Promise<CrmContacts> {
   };
 }
 
-export async function setCrmContacts(
-  db: PanelDb,
-  data: CrmContacts,
-  updatedByUserId?: string,
-): Promise<void> {
+export async function setCrmContacts(db: PanelDb, data: CrmContacts, updatedByUserId?: string): Promise<void> {
   await db
     .insert(settings)
     .values({

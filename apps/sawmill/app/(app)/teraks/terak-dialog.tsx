@@ -29,12 +29,8 @@ function TerakDialogInner({ open, onOpenChange, terak, locale }: TerakDialogProp
   const router = useRouter();
   const isEdit = !!terak?.id;
   const [name, setName] = React.useState(terak?.name ?? "");
-  const [purchaseDate, setPurchaseDate] = React.useState(
-    terak?.purchaseDate ?? new Date().toISOString().slice(0, 10),
-  );
-  const [purchasePrice, setPurchasePrice] = React.useState<number | null>(
-    terak?.purchasePrice ?? 0,
-  );
+  const [purchaseDate, setPurchaseDate] = React.useState(terak?.purchaseDate ?? new Date().toISOString().slice(0, 10));
+  const [purchasePrice, setPurchasePrice] = React.useState<number | null>(terak?.purchasePrice ?? 0);
   const [note, setNote] = React.useState(terak?.note ?? "");
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -129,12 +125,7 @@ function TerakDialogInner({ open, onOpenChange, terak, locale }: TerakDialogProp
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={submitting}>

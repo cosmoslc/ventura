@@ -122,9 +122,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
               <span className="text-sm font-bold text-foreground leading-tight truncate max-w-[140px]">
                 {tenantName}
               </span>
-              <span className="text-caption text-muted-foreground font-medium">
-                {t("app_name", locale)}
-              </span>
+              <span className="text-caption text-muted-foreground font-medium">{t("app_name", locale)}</span>
             </div>
           </Link>
         </div>
@@ -185,9 +183,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
             >
               <Menu className="size-5" />
             </button>
-            <span className="text-sm font-bold text-foreground lg:hidden truncate max-w-[180px]">
-              {tenantName}
-            </span>
+            <span className="text-sm font-bold text-foreground lg:hidden truncate max-w-[180px]">{tenantName}</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -221,9 +217,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
                 <span className="text-caption font-bold text-foreground">{user.name}</span>
                 <span className="text-2xs text-muted-foreground">{user.phone}</span>
               </div>
-              <Badge tone={roleTones[user.role] ?? "neutral"}>
-                {roleLabels[user.role] ?? user.role}
-              </Badge>
+              <Badge tone={roleTones[user.role] ?? "neutral"}>{roleLabels[user.role] ?? user.role}</Badge>
             </div>
 
             {/* Logout button */}
@@ -243,9 +237,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
         </header>
 
         {/* Page body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">
-          {children}
-        </main>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-7xl w-full mx-auto">{children}</main>
 
         {/* Mobile Bottom Navigation Bar */}
         <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 h-16 bg-[var(--topbar-bg)] backdrop-blur-[14px] border-t border-border flex items-center justify-around px-2">
@@ -371,11 +363,7 @@ export function Shell({ tenantName, user, enabledFeatures, children }: ShellProp
       )}
 
       {/* Quick Actions Modal */}
-      <QuickActionsModal
-        isOpen={quickActionOpen}
-        onClose={() => setQuickActionOpen(false)}
-        locale={locale}
-      />
+      <QuickActionsModal isOpen={quickActionOpen} onClose={() => setQuickActionOpen(false)} locale={locale} />
     </div>
   );
 }

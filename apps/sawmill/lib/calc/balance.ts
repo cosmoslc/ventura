@@ -42,9 +42,7 @@ export interface TerakProportionalBalanceInput {
  * shuTerakdaIshlagan * (umumiyBalans / umumiyIshlagan)
  * (SAWMILL-TAHLIL 7-qism, 167-169-qatorlar)
  */
-export function calculateTerakProportionalBalance(
-  input: TerakProportionalBalanceInput,
-): number {
+export function calculateTerakProportionalBalance(input: TerakProportionalBalanceInput): number {
   const { workerTotalBalance, workerTotalEarned, workerEarnedInThisTerak } = input;
   if (workerTotalEarned <= 0 || workerEarnedInThisTerak <= 0) return 0;
   const ratio = workerEarnedInThisTerak / workerTotalEarned;

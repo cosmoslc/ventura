@@ -30,14 +30,19 @@ export async function getDbShippingRates(includeDisabled = false) {
   return includeDisabled ? query : query.where(eq(shippingRates.enabled, true));
 }
 
-export async function saveDbShippingRates(rates: { region: string; price: bigint; enabled: boolean; estimatedDays?: string }[]) {
+export async function saveDbShippingRates(
+  rates: { region: string; price: bigint; enabled: boolean; estimatedDays?: string }[],
+) {
   const db = getDb();
   return db.transaction(async (tx) => {
     for (const rate of rates) {
-      await tx.insert(shippingRates).values(rate).onConflictDoUpdate({
-        target: shippingRates.region,
-        set: { price: rate.price, enabled: rate.enabled, estimatedDays: rate.estimatedDays, updatedAt: new Date() },
-      });
+      await tx
+        .insert(shippingRates)
+        .values(rate)
+        .onConflictDoUpdate({
+          target: shippingRates.region,
+          set: { price: rate.price, enabled: rate.enabled, estimatedDays: rate.estimatedDays, updatedAt: new Date() },
+        });
     }
   });
 }

@@ -88,11 +88,7 @@ export function Footer() {
             <Link href="/" className="mb-4 inline-flex items-center gap-2.5 text-foreground font-black text-xl">
               {branding.logoUrl ? (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-btn border border-border/80 bg-card p-1 shadow-control overflow-hidden">
-                  <img
-                    src={branding.logoUrl}
-                    alt={storeName}
-                    className="h-full w-full object-contain"
-                  />
+                  <img src={branding.logoUrl} alt={storeName} className="h-full w-full object-contain" />
                 </div>
               ) : (
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-btn bg-primary text-primary-foreground shadow-card">
@@ -107,7 +103,8 @@ export function Footer() {
             </p>
             <div className="flex flex-col gap-2 text-xs text-muted-foreground">
               <span className="flex items-center gap-2">
-                <MapPin size={14} className="text-primary" /> {branding.contacts?.address || "Toshkent shahri, Yunusobod tumani"}
+                <MapPin size={14} className="text-primary" />{" "}
+                {branding.contacts?.address || "Toshkent shahri, Yunusobod tumani"}
               </span>
               <span className="flex items-center gap-2">
                 <Phone size={14} className="text-primary" /> {branding.contacts?.phone || "+998 71 200 00 00"}

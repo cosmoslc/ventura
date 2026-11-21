@@ -11,7 +11,16 @@ import { tenantForHost } from "@/lib/server/tenant";
  */
 
 // /api/sms/eskiz, /api/telegram — webhooklar (sessiyasiz), /api/uploads — fayllar
-const PUBLIC = ["/login", "/health", "/bolim-yopiq", "/muzlatilgan", "/ariza", "/api/sms/eskiz", "/api/telegram", "/api/uploads"];
+const PUBLIC = [
+  "/login",
+  "/health",
+  "/bolim-yopiq",
+  "/muzlatilgan",
+  "/ariza",
+  "/api/sms/eskiz",
+  "/api/telegram",
+  "/api/uploads",
+];
 /** Boshqa saytga iframe qilib qo'yiladigan yoki Telegram Mini App sahifalari (ADR 0026) */
 const EMBEDDABLE = ["/ariza", "/kabinet", "/portal"];
 

@@ -25,10 +25,7 @@ export interface OrderItem {
  * - Tayyor: omborda yetarli qoldiq bo'lsa (terak qoldig'i >= zakaz miqdori)
  * - Kutilmoqda: omborda qoldiq yetarli bo'lmasa
  */
-export function getOrderStatus(
-  order: Pick<OrderItem, "quantity" | "completedAt">,
-  currentStock: number,
-): OrderStatus {
+export function getOrderStatus(order: Pick<OrderItem, "quantity" | "completedAt">, currentStock: number): OrderStatus {
   if (order.completedAt) {
     return "completed";
   }
@@ -68,11 +65,7 @@ export function isOrderDueSoon(dueDateStr: string | null | undefined, today: Dat
  * Bosh sahifadagi "Diqqat talab zakazlar":
  * Bajarilmagan va (omborda tayyor yoki muddati yaqin/o'tgan).
  */
-export function isOrderNeedsAttention(
-  order: OrderItem,
-  currentStock: number,
-  today: Date = new Date(),
-): boolean {
+export function isOrderNeedsAttention(order: OrderItem, currentStock: number, today: Date = new Date()): boolean {
   if (order.completedAt) return false;
   const status = getOrderStatus(order, currentStock);
   const dueSoon = isOrderDueSoon(order.dueDate, today);

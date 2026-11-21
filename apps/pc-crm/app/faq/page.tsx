@@ -38,17 +38,20 @@ const FAQ_DATA: FaqCategory[] = [
       {
         id: "del-1",
         question: "Yetkazib berish qancha vaqt oladi?",
-        answer: "Toshkent shahri boʻylab buyurtma berilgan kuni yoki ertasi kuni kuryer orqali yetkaziladi. Viloyatlarga BTS yoki EMU xizmatlari orqali 1-3 ish kunida xavfsiz qadoqlangan holda yetkazib beriladi.",
+        answer:
+          "Toshkent shahri boʻylab buyurtma berilgan kuni yoki ertasi kuni kuryer orqali yetkaziladi. Viloyatlarga BTS yoki EMU xizmatlari orqali 1-3 ish kunida xavfsiz qadoqlangan holda yetkazib beriladi.",
       },
       {
         id: "del-2",
         question: "Yetkazib berish narxi qancha?",
-        answer: "1 000 000 soʻmdan yuqori boʻlgan barcha buyurtmalar butun Oʻzbekiston boʻylab bepul yetkaziladi. Undan kam summadagi buyurtmalar uchun Toshkent shahrida 35 000 soʻm, viloyatlarga esa 50 000 soʻm tarif qoʻllanadi.",
+        answer:
+          "1 000 000 soʻmdan yuqori boʻlgan barcha buyurtmalar butun Oʻzbekiston boʻylab bepul yetkaziladi. Undan kam summadagi buyurtmalar uchun Toshkent shahrida 35 000 soʻm, viloyatlarga esa 50 000 soʻm tarif qoʻllanadi.",
       },
       {
         id: "del-3",
         question: "Yetkazib berish vaqtida tovar buzilib qolmasligiga kafolat bormi?",
-        answer: "Barcha kompyuterlar va nozik texnikalar koʻp qavatli pufakchali plyonka, mustahkam karton quti va yogʻoch karkas (viloyatlar uchun) bilan xavfsiz qadoqlanadi. Shuningdek, yuk kuryerlik sugʻurtasiga ega.",
+        answer:
+          "Barcha kompyuterlar va nozik texnikalar koʻp qavatli pufakchali plyonka, mustahkam karton quti va yogʻoch karkas (viloyatlar uchun) bilan xavfsiz qadoqlanadi. Shuningdek, yuk kuryerlik sugʻurtasiga ega.",
       },
     ],
   },
@@ -60,17 +63,20 @@ const FAQ_DATA: FaqCategory[] = [
       {
         id: "war-1",
         question: "Tayyor kompyuterlarga qancha muddat kafolat beriladi?",
-        answer: "Ventura PC tomonidan yigʻilgan barcha kompyuterlarga 12 oydan 24 oygacha toʻliq rasmiy kafolat va bepul servis xizmati beriladi. Har bir komponent oʻz ishlab chiqaruvchisining xalqaro kafolatiga ega.",
+        answer:
+          "Ventura PC tomonidan yigʻilgan barcha kompyuterlarga 12 oydan 24 oygacha toʻliq rasmiy kafolat va bepul servis xizmati beriladi. Har bir komponent oʻz ishlab chiqaruvchisining xalqaro kafolatiga ega.",
       },
       {
         id: "war-2",
         question: "Kafolat muddati davomida kompyuter buzilsa nima qilish kerak?",
-        answer: "Servis markazimizga qoʻngʻiroq qilasiz yoki Telegram operatorimizga yozasiz. Muhandislarimiz kompyuterni bepul diagnostika qilib, nuqsonli qismni zudlik bilan yangisiga almashtirib berishadi.",
+        answer:
+          "Servis markazimizga qoʻngʻiroq qilasiz yoki Telegram operatorimizga yozasiz. Muhandislarimiz kompyuterni bepul diagnostika qilib, nuqsonli qismni zudlik bilan yangisiga almashtirib berishadi.",
       },
       {
         id: "war-3",
         question: "Kompyuter korpusini ochib tozalash kafolatni bekor qiladimi?",
-        answer: "Yoʻq, oddiy changdan tozalash kafolatni bekor qilmaydi. Biroq sovutish tizimini yechish yoki komponentlarni jiddiy oʻzgartirishdan oldin operatorimiz bilan maslahatlashishni tavsiya qilamiz.",
+        answer:
+          "Yoʻq, oddiy changdan tozalash kafolatni bekor qilmaydi. Biroq sovutish tizimini yechish yoki komponentlarni jiddiy oʻzgartirishdan oldin operatorimiz bilan maslahatlashishni tavsiya qilamiz.",
       },
     ],
   },
@@ -82,12 +88,14 @@ const FAQ_DATA: FaqCategory[] = [
       {
         id: "as-1",
         question: "Konfigurator orqali buyurtma qilingan PC qancha vaqtda yigʻiladi?",
-        answer: "Komponentlar tasdiqlangach, professional muhandislarimiz kompyuterni 24 soat ichida toʻliq yigʻadi, kabel boshqaruvini (cable management) ideal qiladi va 24 soatlik stress-testdan (AIDA64 + FurMark) oʻtkazadi.",
+        answer:
+          "Komponentlar tasdiqlangach, professional muhandislarimiz kompyuterni 24 soat ichida toʻliq yigʻadi, kabel boshqaruvini (cable management) ideal qiladi va 24 soatlik stress-testdan (AIDA64 + FurMark) oʻtkazadi.",
       },
       {
         id: "as-2",
         question: "Windows va drayverlar oʻrnatib beriladimi?",
-        answer: "Ha! Barcha yigʻilgan kompyuterlarga litsenziyalangan Windows 11 operatsion tizimi, eng soʻnggi BIOS versiyasi va barcha kerakli drayverlar bepul oʻrnatiladi.",
+        answer:
+          "Ha! Barcha yigʻilgan kompyuterlarga litsenziyalangan Windows 11 operatsion tizimi, eng soʻnggi BIOS versiyasi va barcha kerakli drayverlar bepul oʻrnatiladi.",
       },
     ],
   },
@@ -99,12 +107,14 @@ const FAQ_DATA: FaqCategory[] = [
       {
         id: "pay-1",
         question: "Qanday toʻlov turlari mavjud?",
-        answer: "Naqd pul, Uzcard / Humo / Visa bank kartalari orqali toʻlov qilish mumkin. Shuningdek, yuridik shaxslar uchun pul oʻtkazish (perchisleniye / shartnoma) orqali QQS bilan toʻlash imkoniyati bor.",
+        answer:
+          "Naqd pul, Uzcard / Humo / Visa bank kartalari orqali toʻlov qilish mumkin. Shuningdek, yuridik shaxslar uchun pul oʻtkazish (perchisleniye / shartnoma) orqali QQS bilan toʻlash imkoniyati bor.",
       },
       {
         id: "pay-2",
         question: "Boʻlib toʻlash (muddatli toʻlov / rassrochka) bormi?",
-        answer: "Ha, Uzum Nasiya, Anorbank va Alif orqali 3 oydan 24 oygacha boshlangʻich toʻlovsiz muddatli toʻlovga xarid qilishingiz mumkin.",
+        answer:
+          "Ha, Uzum Nasiya, Anorbank va Alif orqali 3 oydan 24 oygacha boshlangʻich toʻlovsiz muddatli toʻlovga xarid qilishingiz mumkin.",
       },
     ],
   },
@@ -137,9 +147,7 @@ export default function FaqPage() {
               <HelpCircle size={13} />
               <span>Tez-tez beriladigan savollar</span>
             </div>
-            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-              Savollaringiz bormi? Javoblarimiz tayyor
-            </h1>
+            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Savollaringiz bormi? Javoblarimiz tayyor</h1>
             <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
               Yetkazib berish, kafolat muddatlari, kompyuter yigʻish va toʻlovlar boʻyicha eng muhim maʼlumotlar
             </p>

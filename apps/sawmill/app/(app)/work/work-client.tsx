@@ -2,13 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  Coins,
-  Filter,
-  Plus,
-  Trash2,
-  Users,
-} from "lucide-react";
+import { Coins, Filter, Plus, Trash2, Users } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -70,18 +64,9 @@ export function WorkClient({
   }, [initialWorks, filterWorkerId, filterTerakId, filterDate]);
 
   // Stats
-  const todayWorks = React.useMemo(
-    () => initialWorks.filter((w) => w.date === today),
-    [initialWorks, today],
-  );
-  const todayTotal = React.useMemo(
-    () => todayWorks.reduce((acc, w) => acc + w.amount, 0),
-    [todayWorks],
-  );
-  const filteredTotal = React.useMemo(
-    () => filteredWorks.reduce((acc, w) => acc + w.amount, 0),
-    [filteredWorks],
-  );
+  const todayWorks = React.useMemo(() => initialWorks.filter((w) => w.date === today), [initialWorks, today]);
+  const todayTotal = React.useMemo(() => todayWorks.reduce((acc, w) => acc + w.amount, 0), [todayWorks]);
+  const filteredTotal = React.useMemo(() => filteredWorks.reduce((acc, w) => acc + w.amount, 0), [filteredWorks]);
 
   async function handleConfirmDelete() {
     if (!deleteId) return;
@@ -102,12 +87,8 @@ export function WorkClient({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("work_title", locale)}
-          </h1>
-          <p className="text-caption text-muted-foreground mt-0.5">
-            {t("work_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("work_title", locale)}</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">{t("work_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -119,11 +100,7 @@ export function WorkClient({
               <Plus className="size-4" />
               <span>{t("work_add_single", locale)}</span>
             </Button>
-            <Button
-              onClick={() => setGroupDialogOpen(true)}
-              variant="subtle"
-              className="gap-2 shrink-0"
-            >
+            <Button onClick={() => setGroupDialogOpen(true)} variant="subtle" className="gap-2 shrink-0">
               <Users className="size-4" />
               <span>{t("work_add_group", locale)}</span>
             </Button>
@@ -134,18 +111,14 @@ export function WorkClient({
       {/* Stats Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="p-4">
-          <span className="text-caption text-muted-foreground block font-medium">
-            {t("work_today_count", locale)}
-          </span>
+          <span className="text-caption text-muted-foreground block font-medium">{t("work_today_count", locale)}</span>
           <span className="text-title font-bold text-foreground font-mono mt-1 block">
             {todayWorks.length} ta yozuv
           </span>
         </Card>
 
         <Card className="p-4">
-          <span className="text-caption text-muted-foreground block font-medium">
-            {t("work_today_total", locale)}
-          </span>
+          <span className="text-caption text-muted-foreground block font-medium">{t("work_today_total", locale)}</span>
           <span className="text-title font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-1 block">
             {formatMoney(todayTotal)}
           </span>
@@ -155,9 +128,7 @@ export function WorkClient({
           <span className="text-caption text-muted-foreground block font-medium">
             {t("work_filtered_total", locale)}
           </span>
-          <span className="text-title font-bold text-primary font-mono mt-1 block">
-            {formatMoney(filteredTotal)}
-          </span>
+          <span className="text-title font-bold text-primary font-mono mt-1 block">{formatMoney(filteredTotal)}</span>
         </Card>
       </div>
 
@@ -254,32 +225,22 @@ export function WorkClient({
                   <tr key={w.id} className="hover:bg-muted/20">
                     <td className="px-4 py-3 text-foreground whitespace-nowrap">{w.date}</td>
                     <td className="px-4 py-3 text-foreground font-sans font-semibold">
-                      <Link
-                        href={`/workers/${w.workerId}`}
-                        className="hover:text-primary transition-colors block"
-                      >
+                      <Link href={`/workers/${w.workerId}`} className="hover:text-primary transition-colors block">
                         {w.workerName}
                       </Link>
                     </td>
                     <td className="px-4 py-3 text-foreground font-sans">
                       <div className="flex items-center gap-1.5">
                         <span>
-                          {w.kind === "material"
-                            ? w.materialName ?? "Material"
-                            : w.workTypeName ?? "Oddiy ish"}
+                          {w.kind === "material" ? (w.materialName ?? "Material") : (w.workTypeName ?? "Oddiy ish")}
                         </span>
                         {w.groupId && <Badge tone="info">{t("work_group_badge", locale)}</Badge>}
                       </div>
-                      {w.note && (
-                        <span className="text-2xs text-muted-foreground block">{w.note}</span>
-                      )}
+                      {w.note && <span className="text-2xs text-muted-foreground block">{w.note}</span>}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground font-sans">
                       {w.terakId ? (
-                        <Link
-                          href={`/teraks/${w.terakId}`}
-                          className="hover:text-primary transition-colors"
-                        >
+                        <Link href={`/teraks/${w.terakId}`} className="hover:text-primary transition-colors">
                           {w.terakName}
                         </Link>
                       ) : (
@@ -292,19 +253,13 @@ export function WorkClient({
                           {w.payUnit === "row" && w.rows && `${w.rows} qator`}
                           {w.payUnit === "piece" && w.quantity && `${w.quantity} dona`}
                           {w.payUnit === "cube" && w.quantity && `${w.quantity} dona`}
-                          {w.sizeName && (
-                            <span className="block text-2xs text-muted-foreground">
-                              {w.sizeName}
-                            </span>
-                          )}
+                          {w.sizeName && <span className="block text-2xs text-muted-foreground">{w.sizeName}</span>}
                         </>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-foreground">
-                      {formatMoney(w.amount)}
-                    </td>
+                    <td className="px-4 py-3 text-right font-bold text-foreground">{formatMoney(w.amount)}</td>
                     {canManage && (
                       <td className="px-4 py-3 text-right">
                         <Button

@@ -20,9 +20,14 @@ export interface UserView {
 export async function getDbUsers(): Promise<UserView[]> {
   const db = getDb();
   const rows = await db.select().from(users).where(eq(users.role, "customer")).orderBy(desc(users.createdAt));
-  const orderRows = await db.select({ userId: orders.userId, total: orders.total, status: orders.status })
-    .from(orders).where(isNotNull(orders.userId));
-  const googleAccounts = await db.select({ userId: accounts.userId }).from(accounts).where(eq(accounts.providerId, "google"));
+  const orderRows = await db
+    .select({ userId: orders.userId, total: orders.total, status: orders.status })
+    .from(orders)
+    .where(isNotNull(orders.userId));
+  const googleAccounts = await db
+    .select({ userId: accounts.userId })
+    .from(accounts)
+    .where(eq(accounts.providerId, "google"));
   const googleUserIds = new Set(googleAccounts.map((a) => a.userId));
   const ordersByUser = new Map<string, { count: number; spent: bigint }>();
   for (const order of orderRows) {
@@ -54,11 +59,7 @@ export async function toggleDbUserActive(id: string) {
     if (!user || user.role !== "customer") return null;
 
     const isActive = !user.isActive;
-    const [updated] = await tx
-      .update(users)
-      .set({ isActive })
-      .where(eq(users.id, id))
-      .returning();
+    const [updated] = await tx.update(users).set({ isActive }).where(eq(users.id, id)).returning();
     if (!isActive) await tx.delete(sessions).where(eq(sessions.userId, id));
     return updated;
   });

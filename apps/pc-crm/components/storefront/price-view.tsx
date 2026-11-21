@@ -27,9 +27,7 @@ export function PriceView({
   if (!isFinancial) {
     return (
       <div className={`flex items-baseline gap-2 ${className}`}>
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-          Sotuvda mavjud
-        </span>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">Sotuvda mavjud</span>
       </div>
     );
   }
@@ -44,9 +42,7 @@ export function PriceView({
 
   return (
     <div className={`flex items-baseline gap-2 ${className}`}>
-      <span className={`text-foreground ${sizeClasses[size]}`}>
-        {formatMoney(price, currency, usdRate)}
-      </span>
+      <span className={`text-foreground ${sizeClasses[size]}`}>{formatMoney(price, currency, usdRate)}</span>
 
       {hasDiscount && originalPrice && (
         <span className="text-xs text-muted-foreground line-through">

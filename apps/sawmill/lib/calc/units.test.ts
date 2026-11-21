@@ -1,13 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  cubeToPiece,
-  formatMoney,
-  fromCm,
-  parseMoney,
-  pieceToCube,
-  pieceVolumeM3,
-  toCm,
-} from "./units";
+import { cubeToPiece, formatMoney, fromCm, parseMoney, pieceToCube, pieceVolumeM3, toCm } from "./units";
 
 describe("units calculation module", () => {
   describe("toCm & fromCm (birlik aylantirish)", () => {

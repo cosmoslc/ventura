@@ -2,15 +2,7 @@
 import { Input } from "@ventura/ui/input";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Ban,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  Unlock,
-  UserCheck,
-  Users,
-} from "lucide-react";
+import { Ban, Search, ShieldCheck, ShoppingBag, Unlock, UserCheck, Users } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { StatCard } from "@ventura/ui/stat-card";
@@ -36,22 +28,29 @@ export default function AdminUsersPage() {
 
   const loadUsers = useCallback(async () => {
     const result = await getAdminUsersAction();
-    if (!result.success) { setError(result.error ?? "Foydalanuvchilarni yuklab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Foydalanuvchilarni yuklab bo'lmadi");
+      return;
+    }
     setError("");
-    setUsers(result.users.map((u) => ({
-      id: u.id,
-      name: u.name,
-      phone: u.phone ?? "—",
-      email: u.email,
-      provider: u.provider,
-      ordersCount: u.ordersCount,
-      totalSpent: u.totalSpent,
-      registeredAt: u.createdAt,
-      lastLoginAt: u.lastLoginAt ?? "—",
-      status: u.isActive ? "active" : "blocked",
-    })));
+    setUsers(
+      result.users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        phone: u.phone ?? "—",
+        email: u.email,
+        provider: u.provider,
+        ordersCount: u.ordersCount,
+        totalSpent: u.totalSpent,
+        registeredAt: u.createdAt,
+        lastLoginAt: u.lastLoginAt ?? "—",
+        status: u.isActive ? "active" : "blocked",
+      })),
+    );
   }, []);
-  useEffect(() => { void loadUsers(); }, [loadUsers]);
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "blocked">("all");
 
@@ -61,9 +60,7 @@ export default function AdminUsersPage() {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return (
-          u.name.toLowerCase().includes(q) ||
-          u.phone.includes(q) ||
-          (u.email && u.email.toLowerCase().includes(q))
+          u.name.toLowerCase().includes(q) || u.phone.includes(q) || (u.email && u.email.toLowerCase().includes(q))
         );
       }
       return true;
@@ -86,13 +83,23 @@ export default function AdminUsersPage() {
 
   const toggleUserStatus = async (id: string) => {
     const result = await toggleUserActiveAction(id);
-    if (!result.success) { setError(result.error ?? "Foydalanuvchi holatini o'zgartirib bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Foydalanuvchi holatini o'zgartirib bo'lmadi");
+      return;
+    }
     await loadUsers();
   };
 
   return (
     <div className="space-y-6">
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -106,7 +113,13 @@ export default function AdminUsersPage() {
         <StatCard icon={<Users />} label="Jami foydalanuvchilar" value={`${stats.totalUsers} ta`} tone={1} />
         <StatCard icon={<UserCheck />} label="Faol mijozlar" value={`${stats.activeUsers} ta`} tone={2} />
         <StatCard icon={<ShoppingBag />} label="Xaridorlar soni" value={`${stats.payingUsers} ta`} tone={3} />
-        <StatCard icon={<ShieldCheck />} label="Jami xaridlar summasi" value={formatMoney(stats.totalSpentAll)} tone={4} valueClassName="whitespace-nowrap text-title" />
+        <StatCard
+          icon={<ShieldCheck />}
+          label="Jami xaridlar summasi"
+          value={formatMoney(stats.totalSpentAll)}
+          tone={4}
+          valueClassName="whitespace-nowrap text-title"
+        />
       </div>
 
       {/* Filterlar qatori */}
@@ -182,9 +195,7 @@ export default function AdminUsersPage() {
                         </div>
                         <div>
                           <span className="font-bold text-foreground block">{user.name}</span>
-                          <span className="font-mono text-caption text-muted-foreground block">
-                            {user.phone}
-                          </span>
+                          <span className="font-mono text-caption text-muted-foreground block">{user.phone}</span>
                         </div>
                       </div>
                     </td>
@@ -197,9 +208,7 @@ export default function AdminUsersPage() {
                     </td>
 
                     {/* Buyurtmalar soni */}
-                    <td className="py-3.5 px-4 text-center font-bold font-mono">
-                      {user.ordersCount} ta
-                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold font-mono">{user.ordersCount} ta</td>
 
                     {/* Jami xarid */}
                     <td className="py-3.5 px-4 text-right font-mono font-bold text-foreground">
@@ -207,14 +216,10 @@ export default function AdminUsersPage() {
                     </td>
 
                     {/* Sana */}
-                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-caption">
-                      {user.registeredAt}
-                    </td>
+                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-caption">{user.registeredAt}</td>
 
                     {/* Oxirgi kirish */}
-                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-caption">
-                      {user.lastLoginAt}
-                    </td>
+                    <td className="py-3.5 px-4 text-muted-foreground font-mono text-caption">{user.lastLoginAt}</td>
 
                     {/* Holat */}
                     <td className="py-3.5 px-4 text-center">

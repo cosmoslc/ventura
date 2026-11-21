@@ -72,9 +72,7 @@ export default function CartPage() {
                         </span>
                       )}
                       <h3 className="font-bold text-sm text-foreground line-clamp-1">{item.name}</h3>
-                      {item.colorName && (
-                        <p className="text-xs text-muted-foreground">Rang: {item.colorName}</p>
-                      )}
+                      {item.colorName && <p className="text-xs text-muted-foreground">Rang: {item.colorName}</p>}
                       <p className="mt-1 font-bold text-foreground text-sm">{formatMoney(item.price)}</p>
                     </div>
                   </div>
@@ -141,11 +139,7 @@ export default function CartPage() {
                       <div className="flex justify-between">
                         <span>Yetkazib berish:</span>
                         <span className="font-bold text-foreground">
-                          {shipping === 0n ? (
-                            <span className="text-(--success-fg)">Bepul</span>
-                          ) : (
-                            formatMoney(shipping)
-                          )}
+                          {shipping === 0n ? <span className="text-(--success-fg)">Bepul</span> : formatMoney(shipping)}
                         </span>
                       </div>
 

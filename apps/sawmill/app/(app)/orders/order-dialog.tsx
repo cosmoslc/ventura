@@ -42,18 +42,10 @@ function OrderDialogInner({
   const router = useRouter();
   const isEditing = Boolean(initialOrder);
 
-  const [terakId, setTerakId] = React.useState(
-    initialOrder?.terakId || preselectedTerakId || teraks[0]?.id || "",
-  );
-  const [materialId, setMaterialId] = React.useState(
-    initialOrder?.materialId || materials[0]?.id || "",
-  );
-  const [quantityStr, setQuantityStr] = React.useState(
-    initialOrder ? String(initialOrder.quantity) : "",
-  );
-  const [customerName, setCustomerName] = React.useState(
-    initialOrder?.customerName || "",
-  );
+  const [terakId, setTerakId] = React.useState(initialOrder?.terakId || preselectedTerakId || teraks[0]?.id || "");
+  const [materialId, setMaterialId] = React.useState(initialOrder?.materialId || materials[0]?.id || "");
+  const [quantityStr, setQuantityStr] = React.useState(initialOrder ? String(initialOrder.quantity) : "");
+  const [customerName, setCustomerName] = React.useState(initialOrder?.customerName || "");
   const [phone, setPhone] = React.useState(initialOrder?.phone || "");
   const [address, setAddress] = React.useState(initialOrder?.address || "");
   const [dueDate, setDueDate] = React.useState(initialOrder?.dueDate || "");
@@ -64,9 +56,7 @@ function OrderDialogInner({
   // Ombordagi mavjud qoldiqni topish
   const stockQty = React.useMemo(() => {
     if (!terakId || !materialId) return 0;
-    const found = terakMaterials.find(
-      (tm) => tm.terakId === terakId && tm.materialId === materialId,
-    );
+    const found = terakMaterials.find((tm) => tm.terakId === terakId && tm.materialId === materialId);
     return found ? Number(found.quantity) : 0;
   }, [terakId, materialId, terakMaterials]);
 
@@ -103,9 +93,10 @@ function OrderDialogInner({
     if (address.trim()) formData.append("address", address.trim());
     if (dueDate.trim()) formData.append("dueDate", dueDate.trim());
 
-    const res = isEditing && initialOrder
-      ? await updateOrderAction(initialOrder.id, formData)
-      : await createOrderAction(formData);
+    const res =
+      isEditing && initialOrder
+        ? await updateOrderAction(initialOrder.id, formData)
+        : await createOrderAction(formData);
 
     setSubmitting(false);
 
@@ -126,9 +117,7 @@ function OrderDialogInner({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">
-            {error}
-          </div>
+          <div className="p-3 text-xs text-red-600 bg-red-500/10 rounded-md border border-red-500/20">{error}</div>
         )}
 
         {/* 1. Terak tanlash (yangi qo'shilayotganda va preselected bo'lmasa) */}
@@ -172,9 +161,7 @@ function OrderDialogInner({
         ) : (
           <div className="p-3 bg-muted/40 rounded-control text-xs space-y-1">
             <span className="text-muted-foreground">{t("work_material", locale)}:</span>
-            <div className="font-semibold text-foreground">
-              {selectedMaterial?.name ?? "Material"}
-            </div>
+            <div className="font-semibold text-foreground">{selectedMaterial?.name ?? "Material"}</div>
           </div>
         )}
 
@@ -231,12 +218,7 @@ function OrderDialogInner({
 
           <div className="space-y-1.5">
             <Label htmlFor="order-duedate">{t("orders_due_date", locale)}</Label>
-            <Input
-              id="order-duedate"
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-            />
+            <Input id="order-duedate" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
         </div>
 
@@ -251,24 +233,11 @@ function OrderDialogInner({
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={submitting}
-          >
-            {submitting
-              ? t("status_loading", locale)
-              : isEditing
-                ? t("action_save", locale)
-                : t("orders_add", locale)}
+          <Button type="submit" variant="primary" disabled={submitting}>
+            {submitting ? t("status_loading", locale) : isEditing ? t("action_save", locale) : t("orders_add", locale)}
           </Button>
         </div>
       </form>

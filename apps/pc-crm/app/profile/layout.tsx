@@ -2,14 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Heart,
-  LogOut,
-  Package,
-  Settings,
-  User,
-  Wrench,
-} from "lucide-react";
+import { Heart, LogOut, Package, Settings, User, Wrench } from "lucide-react";
 import { Footer } from "@/components/storefront/footer";
 import { Navbar } from "@/components/storefront/navbar";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -69,11 +62,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-black text-lg overflow-hidden border border-primary/20">
                       {user?.image ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={user.image}
-                          alt={displayName}
-                          className="h-full w-full object-cover"
-                        />
+                        <img src={user.image} alt={displayName} className="h-full w-full object-cover" />
                       ) : (
                         initials
                       )}
@@ -82,9 +71,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-bold text-sm text-foreground truncate">
-                        {displayName}
-                      </h3>
+                      <h3 className="font-bold text-sm text-foreground truncate">{displayName}</h3>
                       <span className="font-mono text-xs text-muted-foreground block truncate">
                         {displayEmailOrPhone}
                       </span>
@@ -127,9 +114,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             </aside>
 
             {/* O'ng tomon: Asosiy profil sahifasi */}
-            <div className="lg:col-span-9">
-              {children}
-            </div>
+            <div className="lg:col-span-9">{children}</div>
           </div>
         </div>
       </main>

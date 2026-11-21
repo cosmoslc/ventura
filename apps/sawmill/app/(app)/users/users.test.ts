@@ -3,8 +3,7 @@ import { eq } from "drizzle-orm";
 import { createSawmillDb } from "@ventura/db";
 import { users } from "@ventura/db/schema/sawmill";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("xodimlar va rollar (users) database operations (S6)", () => {
   it("foydalanuvchi yaratish, rol o'zgartirish, bloklash va arxivlash to'g'ri ishlaydi", async () => {
@@ -32,31 +31,25 @@ describe("xodimlar va rollar (users) database operations (S6)", () => {
 
       // 2. Rolni o'zgartirish (accountant -> viewer)
       await db.update(users).set({ role: "viewer" }).where(eq(users.id, u!.id));
-      const [updatedRole] = await db
-        .select({ role: users.role })
-        .from(users)
-        .where(eq(users.id, u!.id));
+      const [updatedRole] = await db.select({ role: users.role }).from(users).where(eq(users.id, u!.id));
       expect(updatedRole?.role).toBe("viewer");
 
       // 3. Bloklash (lock)
       const lockDate = new Date();
       await db.update(users).set({ lockedAt: lockDate }).where(eq(users.id, u!.id));
-      const [locked] = await db
-        .select({ lockedAt: users.lockedAt })
-        .from(users)
-        .where(eq(users.id, u!.id));
+      const [locked] = await db.select({ lockedAt: users.lockedAt }).from(users).where(eq(users.id, u!.id));
       expect(locked?.lockedAt).toBeDefined();
 
       // 4. Arxivlash (soft delete)
       await db.update(users).set({ archivedAt: new Date() }).where(eq(users.id, u!.id));
-      const [archived] = await db
-        .select({ archivedAt: users.archivedAt })
-        .from(users)
-        .where(eq(users.id, u!.id));
+      const [archived] = await db.select({ archivedAt: users.archivedAt }).from(users).where(eq(users.id, u!.id));
       expect(archived?.archivedAt).not.toBeNull();
     } finally {
       if (createdUserId) {
-        await db.delete(users).where(eq(users.id, createdUserId)).catch(() => {});
+        await db
+          .delete(users)
+          .where(eq(users.id, createdUserId))
+          .catch(() => {});
       }
     }
   });

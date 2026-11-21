@@ -14,7 +14,17 @@ export interface StatCardProps extends React.HTMLAttributes<HTMLDivElement> {
   valueClassName?: string;
 }
 
-export function StatCard({ icon, label, value, tone, trend, hint, valueClassName, className, ...props }: StatCardProps) {
+export function StatCard({
+  icon,
+  label,
+  value,
+  tone,
+  trend,
+  hint,
+  valueClassName,
+  className,
+  ...props
+}: StatCardProps) {
   return (
     <div
       className={cn(

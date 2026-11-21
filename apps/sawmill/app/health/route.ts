@@ -21,4 +21,3 @@ export function GET(request: Request) {
     hasDbUrl: !!secret?.databaseUrl,
   });
 }
-

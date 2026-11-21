@@ -112,10 +112,7 @@ export async function createUserAction(formData: FormData): Promise<{ ok: boolea
     password: hash,
   });
 
-  await deps.db
-    .update(users)
-    .set({ phoneNumber: phone, role })
-    .where(eq(users.id, createdUser.id));
+  await deps.db.update(users).set({ phoneNumber: phone, role }).where(eq(users.id, createdUser.id));
 
   await tenantAudit.record(deps.db, {
     actor: { type: "user", id: user.id, name: user.name },
@@ -149,10 +146,7 @@ export async function toggleLockUserAction(targetUserId: string): Promise<{ ok: 
   const isLocked = !!target.lockedAt;
   const newLockedAt = isLocked ? null : new Date();
 
-  await deps.db
-    .update(users)
-    .set({ lockedAt: newLockedAt, failedAttempts: 0 })
-    .where(eq(users.id, targetUserId));
+  await deps.db.update(users).set({ lockedAt: newLockedAt, failedAttempts: 0 }).where(eq(users.id, targetUserId));
 
   await tenantAudit.record(deps.db, {
     actor: { type: "user", id: user.id, name: user.name },
@@ -178,10 +172,7 @@ export async function updateUserRoleAction(
     return { ok: false, error: "Noto'g'ri rol" };
   }
 
-  await deps.db
-    .update(users)
-    .set({ role: newRole })
-    .where(eq(users.id, targetUserId));
+  await deps.db.update(users).set({ role: newRole }).where(eq(users.id, targetUserId));
 
   await tenantAudit.record(deps.db, {
     actor: { type: "user", id: user.id, name: user.name },
@@ -204,16 +195,9 @@ export async function archiveUserAction(targetUserId: string): Promise<{ ok: boo
     return { ok: false, error: "O'z hisobingizni arxivlay olmaysiz" };
   }
 
-  const [target] = await deps.db
-    .select({ name: users.name })
-    .from(users)
-    .where(eq(users.id, targetUserId))
-    .limit(1);
+  const [target] = await deps.db.select({ name: users.name }).from(users).where(eq(users.id, targetUserId)).limit(1);
 
-  await deps.db
-    .update(users)
-    .set({ archivedAt: new Date() })
-    .where(eq(users.id, targetUserId));
+  await deps.db.update(users).set({ archivedAt: new Date() }).where(eq(users.id, targetUserId));
 
   await tenantAudit.record(deps.db, {
     actor: { type: "user", id: user.id, name: user.name },

@@ -2,17 +2,7 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import {
-  Calendar,
-  Layers,
-  Phone,
-  Plus,
-  Search,
-  Trash2,
-  TreePine,
-  Truck,
-  User,
-} from "lucide-react";
+import { Calendar, Layers, Phone, Plus, Search, Trash2, TreePine, Truck, User } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -82,9 +72,7 @@ export function DispatchClient({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [dialogOpen, setDialogOpen] = React.useState(
-    () => searchParams.get("action") === "new" && canManage,
-  );
+  const [dialogOpen, setDialogOpen] = React.useState(() => searchParams.get("action") === "new" && canManage);
   const [selectedTerakId, setSelectedTerakId] = React.useState<string>("all");
   const [selectedMaterialId, setSelectedMaterialId] = React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -144,20 +132,12 @@ export function DispatchClient({
       {/* 1. Yuqori qism: sarlavha va yangi qo'shish tugmasi */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-foreground">
-            {t("dispatch_title", locale)}
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {t("dispatch_subtitle", locale)}
-          </p>
+          <h1 className="text-xl font-bold text-foreground">{t("dispatch_title", locale)}</h1>
+          <p className="text-xs text-muted-foreground">{t("dispatch_subtitle", locale)}</p>
         </div>
 
         {canManage && (
-          <Button
-            variant="primary"
-            onClick={() => setDialogOpen(true)}
-            className="gap-2 cursor-pointer"
-          >
+          <Button variant="primary" onClick={() => setDialogOpen(true)} className="gap-2 cursor-pointer">
             <Plus className="size-4" />
             <span>{t("dispatch_add", locale)}</span>
           </Button>
@@ -171,12 +151,8 @@ export function DispatchClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t("dispatch_today_total", locale)}
             </span>
-            <div className="text-lg font-bold text-foreground font-mono">
-              {formatMoney(stats.todayTotal)}
-            </div>
-            <span className="text-2xs text-muted-foreground">
-              {stats.todayCount} ta operatsiya
-            </span>
+            <div className="text-lg font-bold text-foreground font-mono">{formatMoney(stats.todayTotal)}</div>
+            <span className="text-2xs text-muted-foreground">{stats.todayCount} ta operatsiya</span>
           </div>
           <div className="size-10 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <Truck className="size-5" />
@@ -188,12 +164,8 @@ export function DispatchClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t("dispatch_total_revenue", locale)}
             </span>
-            <div className="text-lg font-bold text-primary font-mono">
-              {formatMoney(stats.allTotal)}
-            </div>
-            <span className="text-2xs text-muted-foreground">
-              Jami {stats.totalCount} ta yuk chiqarilgan
-            </span>
+            <div className="text-lg font-bold text-primary font-mono">{formatMoney(stats.allTotal)}</div>
+            <span className="text-2xs text-muted-foreground">Jami {stats.totalCount} ta yuk chiqarilgan</span>
           </div>
           <div className="size-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <Layers className="size-5" />
@@ -205,12 +177,8 @@ export function DispatchClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t("nav_teraks", locale)}
             </span>
-            <div className="text-lg font-bold text-foreground font-mono">
-              {teraks.length} ta
-            </div>
-            <span className="text-2xs text-muted-foreground">
-              Omborida mahsulot mavjud
-            </span>
+            <div className="text-lg font-bold text-foreground font-mono">{teraks.length} ta</div>
+            <span className="text-2xs text-muted-foreground">Omborida mahsulot mavjud</span>
           </div>
           <div className="size-10 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <TreePine className="size-5" />
@@ -222,9 +190,7 @@ export function DispatchClient({
       <Card className="p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <label className="text-2xs font-semibold text-muted-foreground">
-              {t("work_terak", locale)}
-            </label>
+            <label className="text-2xs font-semibold text-muted-foreground">{t("work_terak", locale)}</label>
             <select
               value={selectedTerakId}
               onChange={(e) => setSelectedTerakId(e.target.value)}
@@ -240,9 +206,7 @@ export function DispatchClient({
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-semibold text-muted-foreground">
-              {t("work_material", locale)}
-            </label>
+            <label className="text-2xs font-semibold text-muted-foreground">{t("work_material", locale)}</label>
             <select
               value={selectedMaterialId}
               onChange={(e) => setSelectedMaterialId(e.target.value)}
@@ -258,9 +222,7 @@ export function DispatchClient({
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-semibold text-muted-foreground">
-              Qidiruv (Mijoz / Telefon / Mashina)
-            </label>
+            <label className="text-2xs font-semibold text-muted-foreground">Qidiruv (Mijoz / Telefon / Mashina)</label>
             <div className="relative">
               <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -317,13 +279,9 @@ export function DispatchClient({
 
                     {/* Material */}
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-semibold text-foreground">
-                        {d.materialName}
-                      </div>
+                      <div className="font-semibold text-foreground">{d.materialName}</div>
                       {d.enteredUnit === "cube" && (
-                        <span className="text-2xs text-muted-foreground">
-                          Kiritilgan: {d.enteredQty} m³
-                        </span>
+                        <span className="text-2xs text-muted-foreground">Kiritilgan: {d.enteredQty} m³</span>
                       )}
                     </td>
 
@@ -333,17 +291,13 @@ export function DispatchClient({
                         {d.quantity} {d.materialUnit}
                       </div>
                       {d.volumeTotalM3 && (
-                        <div className="text-2xs text-muted-foreground font-mono">
-                          {d.volumeTotalM3} m³
-                        </div>
+                        <div className="text-2xs text-muted-foreground font-mono">{d.volumeTotalM3} m³</div>
                       )}
                     </td>
 
                     {/* Summa */}
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="font-mono font-bold text-primary text-sm">
-                        {formatMoney(d.totalAmount)}
-                      </span>
+                      <span className="font-mono font-bold text-primary text-sm">{formatMoney(d.totalAmount)}</span>
                     </td>
 
                     {/* Mijoz */}
@@ -361,15 +315,11 @@ export function DispatchClient({
                             </div>
                           )}
                           {d.address && (
-                            <div className="text-2xs text-muted-foreground truncate max-w-xs">
-                              {d.address}
-                            </div>
+                            <div className="text-2xs text-muted-foreground truncate max-w-xs">{d.address}</div>
                           )}
                         </div>
                       ) : (
-                        <span className="text-muted-foreground italic text-2xs">
-                          Ko'rsatilmagan
-                        </span>
+                        <span className="text-muted-foreground italic text-2xs">Ko'rsatilmagan</span>
                       )}
                     </td>
 
@@ -424,9 +374,7 @@ export function DispatchClient({
           title="Yuk chiqarishni bekor qilish"
         >
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {t("dispatch_delete_confirm", locale)}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("dispatch_delete_confirm", locale)}</p>
 
             <div className="p-3 bg-muted/40 rounded-control space-y-1 text-xs">
               <div className="flex justify-between">
@@ -436,31 +384,20 @@ export function DispatchClient({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Material:</span>
                 <span className="font-semibold">
-                  {deleteTarget.materialName} ({deleteTarget.quantity}{" "}
-                  {deleteTarget.materialUnit})
+                  {deleteTarget.materialName} ({deleteTarget.quantity} {deleteTarget.materialUnit})
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Summa:</span>
-                <span className="font-mono font-bold text-primary">
-                  {formatMoney(deleteTarget.totalAmount)}
-                </span>
+                <span className="font-mono font-bold text-primary">{formatMoney(deleteTarget.totalAmount)}</span>
               </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="ghost"
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-              >
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 {t("action_cancel", locale)}
               </Button>
-              <Button
-                variant="danger"
-                onClick={handleDelete}
-                disabled={deleting}
-              >
+              <Button variant="danger" onClick={handleDelete} disabled={deleting}>
                 {deleting ? t("status_loading", locale) : t("action_delete", locale)}
               </Button>
             </div>

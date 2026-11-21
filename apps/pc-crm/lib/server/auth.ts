@@ -38,11 +38,7 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   const user = await requireUser();
-  const [account] = await getDb()
-    .select({ role: users.role })
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1);
+  const [account] = await getDb().select({ role: users.role }).from(users).where(eq(users.id, user.id)).limit(1);
   if (account?.role !== "admin") {
     throw new AuthorizationError("Bu amal uchun admin huquqi kerak");
   }

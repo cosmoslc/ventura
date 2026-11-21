@@ -85,9 +85,7 @@ function AddSizeDialogInner({
         )}
 
         <div className="flex items-center justify-between pb-1">
-          <span className="text-caption font-bold text-foreground">
-            {t("materials_dimensions", locale)}
-          </span>
+          <span className="text-caption font-bold text-foreground">{t("materials_dimensions", locale)}</span>
           <div className="flex items-center gap-1 bg-muted p-0.5 rounded-btn border border-border text-2xs font-semibold">
             {(["mm", "sm", "m"] as const).map((u) => (
               <button
@@ -155,12 +153,7 @@ function AddSizeDialogInner({
         )}
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={submitting}>

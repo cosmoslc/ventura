@@ -152,9 +152,7 @@ function ProductsCatalogContent() {
           (category === "sovutish-tizimi" && item.categorySlug === "sovutish");
 
         // 2. Brend filtri
-        const matchBrand =
-          selectedBrand === "all" ||
-          item.brandName?.toLowerCase() === selectedBrand.toLowerCase();
+        const matchBrand = selectedBrand === "all" || item.brandName?.toLowerCase() === selectedBrand.toLowerCase();
 
         // 3. Matnli qidiruv filtri
         const matchSearch =
@@ -163,9 +161,7 @@ function ProductsCatalogContent() {
           item.brandName?.toLowerCase().includes(searchQuery.toLowerCase().trim());
 
         // 4. Faqat chegirmadagilar
-        const matchDiscount =
-          !onlyDiscount ||
-          (item.discountPercent !== undefined && item.discountPercent > 0);
+        const matchDiscount = !onlyDiscount || (item.discountPercent !== undefined && item.discountPercent > 0);
 
         return matchCategory && matchBrand && matchSearch && matchDiscount;
       })
@@ -201,7 +197,7 @@ function ProductsCatalogContent() {
       (p) =>
         p.categorySlug === slug ||
         (slug === "sovutish" && p.categorySlug === "sovutish-tizimi") ||
-        (slug === "sovutish-tizimi" && p.categorySlug === "sovutish")
+        (slug === "sovutish-tizimi" && p.categorySlug === "sovutish"),
     ).length;
   };
 
@@ -233,9 +229,7 @@ function ProductsCatalogContent() {
                   ({CATEGORIES.find((c) => c.slug === category)?.name})
                 </span>
               )}
-              {searchQuery && (
-                <span className="ml-1 text-primary">«{searchQuery}» soʻrovi boʻyicha</span>
-              )}
+              {searchQuery && <span className="ml-1 text-primary">«{searchQuery}» soʻrovi boʻyicha</span>}
             </p>
           </div>
 
@@ -251,9 +245,7 @@ function ProductsCatalogContent() {
 
             {/* Brend filtri (Headerda) */}
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">
-                Brend:
-              </span>
+              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">Brend:</span>
               <select
                 aria-label="Brend boʻyicha filter"
                 tabIndex={-1}
@@ -283,9 +275,7 @@ function ProductsCatalogContent() {
 
             {/* Saralash */}
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">
-                Saralash:
-              </span>
+              <span className="text-xs font-bold text-muted-foreground hidden sm:inline">Saralash:</span>
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger aria-label="Saralash tartibi" className="w-auto min-w-44 text-xs h-(--control-h)">
                   <SelectValue placeholder="Ommabopligi boʻyicha" />
@@ -308,9 +298,7 @@ function ProductsCatalogContent() {
             {/* Kategoriyalar */}
             <div className="rounded-card border border-border bg-card p-4 shadow-control">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
-                  Kategoriyalar
-                </h3>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">Kategoriyalar</h3>
                 {category !== "all" && (
                   <button
                     type="button"
@@ -324,8 +312,7 @@ function ProductsCatalogContent() {
               <div className="flex flex-col gap-1 text-xs">
                 {CATEGORIES.map((cat) => {
                   const isSelected =
-                    category === cat.slug ||
-                    (cat.slug === "sovutish-tizimi" && category === "sovutish");
+                    category === cat.slug || (cat.slug === "sovutish-tizimi" && category === "sovutish");
                   const count = getCategoryCount(cat.slug);
 
                   return (
@@ -359,10 +346,7 @@ function ProductsCatalogContent() {
             <div className="rounded-card border border-border bg-card p-4 shadow-control">
               <label className="flex items-center justify-between cursor-pointer text-xs font-semibold">
                 <span>Faqat chegirmadagilar</span>
-                <Checkbox
-                  checked={onlyDiscount}
-                  onCheckedChange={(checked) => setOnlyDiscount(checked === true)}
-                />
+                <Checkbox checked={onlyDiscount} onCheckedChange={(checked) => setOnlyDiscount(checked === true)} />
               </label>
             </div>
           </aside>
@@ -419,9 +403,7 @@ function ProductsCatalogContent() {
 
               {/* Mobil Kategoriyalar */}
               <div className="mb-6">
-                <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2">
-                  Kategoriyalar
-                </h3>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-muted-foreground mb-2">Kategoriyalar</h3>
                 <div className="flex flex-col gap-1 text-xs">
                   {CATEGORIES.map((cat) => (
                     <button
@@ -467,10 +449,7 @@ function ProductsCatalogContent() {
               <div className="pt-2 border-t border-border">
                 <label className="flex items-center justify-between text-xs font-semibold py-2">
                   <span>Faqat chegirmadagilar</span>
-                  <Checkbox
-                    checked={onlyDiscount}
-                    onCheckedChange={(checked) => setOnlyDiscount(checked === true)}
-                  />
+                  <Checkbox checked={onlyDiscount} onCheckedChange={(checked) => setOnlyDiscount(checked === true)} />
                 </label>
               </div>
 

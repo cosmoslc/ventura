@@ -1,13 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Search,
-  ShieldCheck,
-  User,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Search, ShieldCheck, User } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -71,12 +65,8 @@ export function AuditClient({ initialEvents, locale }: AuditClientProps) {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("audit_title", locale)}
-          </h1>
-          <p className="text-body text-muted-foreground">
-            {t("audit_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("audit_title", locale)}</h1>
+          <p className="text-body text-muted-foreground">{t("audit_subtitle", locale)}</p>
         </div>
 
         <Button
@@ -113,9 +103,7 @@ export function AuditClient({ initialEvents, locale }: AuditClientProps) {
                   Jami tekshirilgan havolalar: {verdict.count} ta yozuv
                 </div>
               )}
-              {!verdict.ok && verdict.error && (
-                <div className="text-2xs opacity-90 font-mono">{verdict.error}</div>
-              )}
+              {!verdict.ok && verdict.error && <div className="text-2xs opacity-90 font-mono">{verdict.error}</div>}
             </div>
           </div>
         </Card>
@@ -170,12 +158,8 @@ export function AuditClient({ initialEvents, locale }: AuditClientProps) {
 
                   return (
                     <tr key={e.id} className="hover:bg-muted/20 transition-colors">
-                      <td className="p-3 font-mono text-caption text-muted-foreground">
-                        #{e.seq}
-                      </td>
-                      <td className="p-3 font-mono text-caption text-muted-foreground whitespace-nowrap">
-                        {dateStr}
-                      </td>
+                      <td className="p-3 font-mono text-caption text-muted-foreground">#{e.seq}</td>
+                      <td className="p-3 font-mono text-caption text-muted-foreground whitespace-nowrap">{dateStr}</td>
                       <td className="p-3">
                         <div className="flex items-center gap-1.5 font-medium text-foreground">
                           <User className="size-3.5 text-muted-foreground" />
@@ -198,9 +182,7 @@ export function AuditClient({ initialEvents, locale }: AuditClientProps) {
                         )}
                       </td>
                       <td className="p-3 text-2xs font-mono text-muted-foreground max-w-xs truncate">
-                        {Object.keys(e.metadata).length > 0
-                          ? JSON.stringify(e.metadata)
-                          : "-"}
+                        {Object.keys(e.metadata).length > 0 ? JSON.stringify(e.metadata) : "-"}
                       </td>
                       <td className="p-3 text-right font-mono text-2xs text-muted-foreground">
                         <span title={e.hash}>{e.hash.slice(0, 8)}...</span>

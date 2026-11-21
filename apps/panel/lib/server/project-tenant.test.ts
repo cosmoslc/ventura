@@ -9,7 +9,9 @@ const live = Boolean(process.env.VENTURA_MASTER_KEY_FILE && process.env.PANEL_DA
 
 describe.skipIf(!live)("project-tenant director management", () => {
   it("fetches director info and resets password for Supabase tenant", async () => {
-    const db = createPanelDb(process.env.PANEL_DATABASE_URL || "postgres://ventura_app:svjVhAShSnkUHhtfmUBA8WBn@localhost:5432/ventura_panel");
+    const db = createPanelDb(
+      process.env.PANEL_DATABASE_URL || "postgres://ventura_app:svjVhAShSnkUHhtfmUBA8WBn@localhost:5432/ventura_panel",
+    );
     const [p] = await db.select().from(projects).where(eq(projects.slug, "kun-uz"));
     if (!p) throw new Error("kun-uz not found");
 
@@ -52,21 +54,30 @@ describe.skipIf(!live)("project-tenant director management", () => {
     const LINK_PREFIX = "tg-link:";
 
     await tenantDb!.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
-    const [inserted] = await tenantDb!.insert(verifications).values({
-      identifier: LINK_PREFIX + info!.id,
-      value: token,
-      expiresAt: new Date(Date.now() + 10 * 60_000),
-    }).returning();
+    const [inserted] = await tenantDb!
+      .insert(verifications)
+      .values({
+        identifier: LINK_PREFIX + info!.id,
+        value: token,
+        expiresAt: new Date(Date.now() + 10 * 60_000),
+      })
+      .returning();
     expect(inserted).toBeDefined();
     expect(inserted?.tenantId).toBe("kun-uz");
     expect(inserted?.value).toBe(token);
 
-    const [selected] = await tenantDb!.select().from(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
+    const [selected] = await tenantDb!
+      .select()
+      .from(verifications)
+      .where(eq(verifications.identifier, LINK_PREFIX + info!.id));
     expect(selected).toBeDefined();
     expect(selected?.value).toBe(token);
 
     await tenantDb!.delete(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
-    const [afterDel] = await tenantDb!.select().from(verifications).where(eq(verifications.identifier, LINK_PREFIX + info!.id));
+    const [afterDel] = await tenantDb!
+      .select()
+      .from(verifications)
+      .where(eq(verifications.identifier, LINK_PREFIX + info!.id));
     expect(afterDel).toBeUndefined();
 
     // Verify Telegram bot getMe()
@@ -80,7 +91,9 @@ describe.skipIf(!live)("project-tenant director management", () => {
   }, 25000);
 
   it("fetches admin info for PC-CRM tenant", async () => {
-    const db = createPanelDb(process.env.PANEL_DATABASE_URL || "postgres://ventura_app:svjVhAShSnkUHhtfmUBA8WBn@localhost:5432/ventura_panel");
+    const db = createPanelDb(
+      process.env.PANEL_DATABASE_URL || "postgres://ventura_app:svjVhAShSnkUHhtfmUBA8WBn@localhost:5432/ventura_panel",
+    );
     const [p] = await db.select().from(projects).where(eq(projects.slug, "quadra-mi"));
     if (!p) return;
 

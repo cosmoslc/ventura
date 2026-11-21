@@ -7,22 +7,12 @@ import { useCart } from "@/lib/cart-context";
 import { formatMoney } from "@/lib/format";
 
 export function CartDrawer() {
-  const {
-    items,
-    isCartDrawerOpen,
-    setIsCartDrawerOpen,
-    updateQty,
-    removeItem,
-    subtotal,
-    shipping,
-    total,
-  } = useCart();
+  const { items, isCartDrawerOpen, setIsCartDrawerOpen, updateQty, removeItem, subtotal, shipping, total } = useCart();
 
   if (!isCartDrawerOpen) return null;
 
   const freeShippingTarget = 1_000_000n;
-  const remainingForFreeShipping =
-    subtotal < freeShippingTarget ? freeShippingTarget - subtotal : 0n;
+  const remainingForFreeShipping = subtotal < freeShippingTarget ? freeShippingTarget - subtotal : 0n;
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -59,7 +49,8 @@ export function CartDrawer() {
             <div className="mt-3 rounded-card border border-primary/20 bg-primary/5 p-3 text-xs space-y-2">
               {remainingForFreeShipping > 0n ? (
                 <p className="text-muted-foreground leading-snug">
-                  Yana <span className="font-bold text-primary">{formatMoney(remainingForFreeShipping)}</span> xarid qiling va <span className="font-semibold text-foreground">bepul yetkazib berish</span>ga ega boʻling!
+                  Yana <span className="font-bold text-primary">{formatMoney(remainingForFreeShipping)}</span> xarid
+                  qiling va <span className="font-semibold text-foreground">bepul yetkazib berish</span>ga ega boʻling!
                 </p>
               ) : (
                 <p className="font-bold text-(--success-fg) flex items-center gap-1.5">
@@ -97,19 +88,13 @@ export function CartDrawer() {
                 {/* Rasm */}
                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-control border border-border/80 bg-media p-1">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    className="h-full w-full object-contain"
-                  />
+                  <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain" />
                 </div>
 
                 {/* Ma'lumotlar */}
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-foreground line-clamp-1">{item.name}</p>
-                  {item.colorName && (
-                    <p className="text-caption text-muted-foreground">Rang: {item.colorName}</p>
-                  )}
+                  {item.colorName && <p className="text-caption text-muted-foreground">Rang: {item.colorName}</p>}
                   <p className="mt-1 font-black text-foreground">{formatMoney(item.price)}</p>
 
                   {/* Miqdor hisoblagich (+/-) */}
@@ -158,11 +143,7 @@ export function CartDrawer() {
               <div className="flex justify-between">
                 <span>Yetkazib berish:</span>
                 <span className="font-bold text-foreground">
-                  {shipping === 0n ? (
-                    <span className="text-(--success-fg)">Bepul</span>
-                  ) : (
-                    formatMoney(shipping)
-                  )}
+                  {shipping === 0n ? <span className="text-(--success-fg)">Bepul</span> : formatMoney(shipping)}
                 </span>
               </div>
               <div className="flex justify-between border-t border-border/70 pt-2 text-sm font-black text-foreground">
@@ -172,21 +153,13 @@ export function CartDrawer() {
             </div>
 
             <div className="grid grid-cols-2 gap-2 pt-1">
-              <Link
-                href="/cart"
-                onClick={() => setIsCartDrawerOpen(false)}
-                className="w-full"
-              >
+              <Link href="/cart" onClick={() => setIsCartDrawerOpen(false)} className="w-full">
                 <Button variant="ghost" size="sm" className="w-full text-xs font-semibold">
                   Savatchaga
                 </Button>
               </Link>
 
-              <Link
-                href="/checkout"
-                onClick={() => setIsCartDrawerOpen(false)}
-                className="w-full"
-              >
+              <Link href="/checkout" onClick={() => setIsCartDrawerOpen(false)} className="w-full">
                 <Button variant="primary" size="sm" className="w-full gap-1 text-xs font-bold shadow-card-hover">
                   Buyurtmaga <ArrowRight size={13} />
                 </Button>

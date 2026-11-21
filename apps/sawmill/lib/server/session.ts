@@ -63,7 +63,9 @@ export const currentSession = cache(async () => {
 
     const cookieStore = await cookies();
     const cookieLocale = cookieStore.get("sawmill_locale")?.value as SawmillLocale | undefined;
-    const finalLocale = (cookieLocale === "uz" || cookieLocale === "ru" ? cookieLocale : u.locale ?? "uz") as SawmillLocale;
+    const finalLocale = (
+      cookieLocale === "uz" || cookieLocale === "ru" ? cookieLocale : (u.locale ?? "uz")
+    ) as SawmillLocale;
 
     return {
       session: session.session,

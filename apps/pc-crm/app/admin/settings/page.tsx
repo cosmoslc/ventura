@@ -15,7 +15,9 @@ export default function AdminSettingsPage() {
   const [activeTab, setActiveTab] = useState<"finance" | "shipping" | "general" | "modules">("general");
   const [savedToast, setSavedToast] = useState(false);
   const [error, setError] = useState("");
-  const [shippingRates, setShippingRates] = useState<{ region: string; price: string; enabled: boolean; estimatedDays?: string }[]>([]);
+  const [shippingRates, setShippingRates] = useState<
+    { region: string; price: string; enabled: boolean; estimatedDays?: string }[]
+  >([]);
 
   // Doʻkon faoliyat rejimi
   const [storeMode, setStoreMode] = useState<"financial" | "inventory">(branding.storeMode ?? "financial");
@@ -36,11 +38,14 @@ export default function AdminSettingsPage() {
 
   const loadSettings = useCallback(async () => {
     const result = await getAdminSettingsAction();
-    if (!result.success) { setError(result.error ?? "Sozlamalarni yuklab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Sozlamalarni yuklab bo'lmadi");
+      return;
+    }
     setError("");
     const data = result.settings as Record<string, unknown>;
     const amount = (key: string, field: string, fallback: string) => {
-      const record = data[key] && typeof data[key] === "object" ? data[key] as Record<string, unknown> : {};
+      const record = data[key] && typeof data[key] === "object" ? (data[key] as Record<string, unknown>) : {};
       const value = record[field];
       return typeof value === "string" || typeof value === "number" ? String(value) : fallback;
     };
@@ -50,40 +55,59 @@ export default function AdminSettingsPage() {
     if (data.store_mode === "financial" || data.store_mode === "inventory") {
       setStoreMode(data.store_mode as "financial" | "inventory");
     }
-    const contacts = data.store_contacts && typeof data.store_contacts === "object" ? data.store_contacts as Record<string, unknown> : {};
+    const contacts =
+      data.store_contacts && typeof data.store_contacts === "object"
+        ? (data.store_contacts as Record<string, unknown>)
+        : {};
     setStoreName(typeof contacts.storeName === "string" ? contacts.storeName : "");
     setStorePhone(typeof contacts.storePhone === "string" ? contacts.storePhone : "");
     setStoreTelegram(typeof contacts.storeTelegram === "string" ? contacts.storeTelegram : "");
     setStoreAddress(typeof contacts.storeAddress === "string" ? contacts.storeAddress : "");
     const canonicalRegions = [
-      "Toshkent shahri", "Toshkent viloyati", "Samarqand viloyati", "Fargʻona vodiysi",
-      "Buxoro viloyati", "Qashqadaryo viloyati", "Boshqa viloyatlar",
+      "Toshkent shahri",
+      "Toshkent viloyati",
+      "Samarqand viloyati",
+      "Fargʻona vodiysi",
+      "Buxoro viloyati",
+      "Qashqadaryo viloyati",
+      "Boshqa viloyatlar",
     ];
     const storedRates = new Map(result.shippingRates.map((rate) => [rate.region, rate]));
-    setShippingRates(canonicalRegions.map((region) => {
-      const rate = storedRates.get(region);
-      return rate
-        ? { region, price: rate.price.toString(), enabled: rate.enabled, estimatedDays: rate.estimatedDays ?? "" }
-        : { region, price: "0", enabled: false, estimatedDays: "" };
-    }));
+    setShippingRates(
+      canonicalRegions.map((region) => {
+        const rate = storedRates.get(region);
+        return rate
+          ? { region, price: rate.price.toString(), enabled: rate.enabled, estimatedDays: rate.estimatedDays ?? "" }
+          : { region, price: "0", enabled: false, estimatedDays: "" };
+      }),
+    );
   }, []);
-  useEffect(() => { void loadSettings(); }, [loadSettings]);
+  useEffect(() => {
+    void loadSettings();
+  }, [loadSettings]);
 
   const handleSave = async () => {
     try {
       const values = [usdRate, taxPercent, freeShippingThreshold];
-      if (values.some((value) => !/^\d+(?:\.\d+)?$/.test(value)) || Number(taxPercent) > 100 || !Number.isInteger(Number(freeShippingThreshold))) {
+      if (
+        values.some((value) => !/^\d+(?:\.\d+)?$/.test(value)) ||
+        Number(taxPercent) > 100 ||
+        !Number.isInteger(Number(freeShippingThreshold))
+      ) {
         throw new Error("Moliya qiymatlari noto'g'ri: soliq 0–100%, chegaralar butun musbat son bo'lishi kerak");
       }
-      const [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult, modeResult] = await Promise.all([
-        saveSettingAction("usd_rate", { amount: Number(usdRate) }),
-        saveSettingAction("tax_percent", { percent: Number(taxPercent) }),
-        saveSettingAction("free_shipping_from", { amount: freeShippingThreshold }),
-        saveSettingAction("store_contacts", { storeName, storePhone, storeTelegram, storeAddress }),
-        saveShippingRatesAction(shippingRates.map((rate) => ({ ...rate, price: BigInt(rate.price || "0") }))),
-        saveSettingAction("store_mode", storeMode),
-      ]);
-      const failure = [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult, modeResult].find((result) => !result.success);
+      const [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult, modeResult] =
+        await Promise.all([
+          saveSettingAction("usd_rate", { amount: Number(usdRate) }),
+          saveSettingAction("tax_percent", { percent: Number(taxPercent) }),
+          saveSettingAction("free_shipping_from", { amount: freeShippingThreshold }),
+          saveSettingAction("store_contacts", { storeName, storePhone, storeTelegram, storeAddress }),
+          saveShippingRatesAction(shippingRates.map((rate) => ({ ...rate, price: BigInt(rate.price || "0") }))),
+          saveSettingAction("store_mode", storeMode),
+        ]);
+      const failure = [usdResult, taxResult, shippingThresholdResult, contactsResult, ratesResult, modeResult].find(
+        (result) => !result.success,
+      );
       if (failure) throw new Error(failure.error ?? "Sozlamalar saqlanmadi");
       setContextStoreMode(storeMode);
       setError("");
@@ -99,9 +123,7 @@ export default function AdminSettingsPage() {
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            Tizim sozlamalari
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">Tizim sozlamalari</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Valyuta kursi, soliq, yetkazib berish narxlari va faol modullar
           </p>
@@ -113,7 +135,14 @@ export default function AdminSettingsPage() {
         </Button>
       </div>
 
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Tablar navigatsiyasi */}
       <div className="flex border-b border-border text-xs font-semibold">
@@ -195,7 +224,9 @@ export default function AdminSettingsPage() {
                   onFocus={(e) => e.target.select()}
                   placeholder="12850"
                 />
-                <p className="text-caption text-muted-foreground">Kurs DBʼda saqlanadi; storefront valyuta almashtirishi hali yoʻq</p>
+                <p className="text-caption text-muted-foreground">
+                  Kurs DBʼda saqlanadi; storefront valyuta almashtirishi hali yoʻq
+                </p>
               </div>
 
               <div className="space-y-1.5">
@@ -255,14 +286,24 @@ export default function AdminSettingsPage() {
                       type="number"
                       min="0"
                       value={item.price}
-                      onChange={(event) => setShippingRates((previous) => previous.map((rate, index) => index === idx ? { ...rate, price: event.target.value } : rate))}
+                      onChange={(event) =>
+                        setShippingRates((previous) =>
+                          previous.map((rate, index) =>
+                            index === idx ? { ...rate, price: event.target.value } : rate,
+                          ),
+                        )
+                      }
                       onFocus={(e) => e.target.select()}
                       className="w-28 rounded border border-input bg-background px-2.5 py-1 text-right text-xs font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                     <span className="text-muted-foreground font-medium">soʻm</span>
                     <Switch
                       checked={item.enabled}
-                      onCheckedChange={(enabled) => setShippingRates((previous) => previous.map((rate, index) => index === idx ? { ...rate, enabled } : rate))}
+                      onCheckedChange={(enabled) =>
+                        setShippingRates((previous) =>
+                          previous.map((rate, index) => (index === idx ? { ...rate, enabled } : rate)),
+                        )
+                      }
                     />
                   </div>
                 </div>
@@ -286,11 +327,7 @@ export default function AdminSettingsPage() {
                 <Label htmlFor="storeName" className="text-xs font-semibold">
                   Doʻkon / Brend nomi
                 </Label>
-                <Input
-                  id="storeName"
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                />
+                <Input id="storeName" value={storeName} onChange={(e) => setStoreName(e.target.value)} />
               </div>
 
               <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
@@ -298,22 +335,14 @@ export default function AdminSettingsPage() {
                   <Label htmlFor="storePhone" className="text-xs font-semibold">
                     Telefon raqam
                   </Label>
-                  <Input
-                    id="storePhone"
-                    value={storePhone}
-                    onChange={(e) => setStorePhone(e.target.value)}
-                  />
+                  <Input id="storePhone" value={storePhone} onChange={(e) => setStorePhone(e.target.value)} />
                 </div>
 
                 <div className="space-y-1">
                   <Label htmlFor="storeTelegram" className="text-xs font-semibold">
                     Telegram operator username
                   </Label>
-                  <Input
-                    id="storeTelegram"
-                    value={storeTelegram}
-                    onChange={(e) => setStoreTelegram(e.target.value)}
-                  />
+                  <Input id="storeTelegram" value={storeTelegram} onChange={(e) => setStoreTelegram(e.target.value)} />
                 </div>
               </div>
 
@@ -321,11 +350,7 @@ export default function AdminSettingsPage() {
                 <Label htmlFor="storeAddress" className="text-xs font-semibold">
                   Jismoniy manzil va filial
                 </Label>
-                <Input
-                  id="storeAddress"
-                  value={storeAddress}
-                  onChange={(e) => setStoreAddress(e.target.value)}
-                />
+                <Input id="storeAddress" value={storeAddress} onChange={(e) => setStoreAddress(e.target.value)} />
               </div>
 
               {/* Doʻkon faoliyat rejimi tanlagichi */}
@@ -335,7 +360,8 @@ export default function AdminSettingsPage() {
                     Doʻkon faoliyat rejimi
                   </Label>
                   <p className="text-2xs text-muted-foreground mt-0.5">
-                    Tizim moliyaviy hisob-kitoblar bilan yoki moliyasiz faqat ombor va tovar aylanmasi bilan ishlashini belgilang:
+                    Tizim moliyaviy hisob-kitoblar bilan yoki moliyasiz faqat ombor va tovar aylanmasi bilan ishlashini
+                    belgilang:
                   </p>
                 </div>
 

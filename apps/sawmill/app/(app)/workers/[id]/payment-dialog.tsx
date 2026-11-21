@@ -16,12 +16,7 @@ interface PaymentDialogProps {
   locale: "uz" | "ru";
 }
 
-function InnerPaymentDialog({
-  open,
-  onOpenChange,
-  workerId,
-  locale,
-}: PaymentDialogProps) {
+function InnerPaymentDialog({ open, onOpenChange, workerId, locale }: PaymentDialogProps) {
   const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
   const [amount, setAmount] = React.useState<number | null>(null);
   const [note, setNote] = React.useState("");
@@ -56,11 +51,7 @@ function InnerPaymentDialog({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("payment_add", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("payment_add", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         {error && (
           <div className="p-3 text-caption text-destructive bg-destructive/10 rounded-control border border-destructive/20">
@@ -103,12 +94,7 @@ function InnerPaymentDialog({
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={loading}>

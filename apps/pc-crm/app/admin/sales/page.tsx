@@ -1,15 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import {
-  Boxes,
-  DollarSign,
-  Plus,
-  Receipt,
-  Search,
-  TrendingUp,
-  Undo2,
-} from "lucide-react";
+import { Boxes, DollarSign, Plus, Receipt, Search, TrendingUp, Undo2 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
@@ -31,9 +23,16 @@ export default function AdminSalesPage() {
     if (!saleResult.success) setError(saleResult.error ?? "Sotuvlarni yuklab bo'lmadi");
     else setSales(saleResult.sales);
     if (!productResult.success) setError(productResult.error ?? "Mahsulotlarni yuklab bo'lmadi");
-    else setProducts(productResult.products.filter((p) => p.isActive).map((p) => ({ id: p.id, name: p.name, costPrice: p.costPrice, sellPrice: p.sellPrice })));
+    else
+      setProducts(
+        productResult.products
+          .filter((p) => p.isActive)
+          .map((p) => ({ id: p.id, name: p.name, costPrice: p.costPrice, sellPrice: p.sellPrice })),
+      );
   }, []);
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
   const [searchQuery, setSearchQuery] = useState("");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
@@ -56,10 +55,7 @@ export default function AdminSalesPage() {
   const totalCost = activeSales.reduce((sum, s) => sum + s.costSnapshot, 0n);
   const totalProfit = activeSales.reduce((sum, s) => sum + s.profit, 0n);
   const totalUnits = activeSales.reduce((sum, s) => sum + s.qty, 0);
-  const avgMargin =
-    totalRevenue > 0n
-      ? Number(((Number(totalProfit) / Number(totalRevenue)) * 100).toFixed(2))
-      : 0;
+  const avgMargin = totalRevenue > 0n ? Number(((Number(totalProfit) / Number(totalRevenue)) * 100).toFixed(2)) : 0;
 
   const handleSaveSale = async (newSale: SaleItemData) => {
     const result = await saveSaleAction({
@@ -76,7 +72,10 @@ export default function AdminSalesPage() {
       profit: newSale.profit,
       soldAt: newSale.soldAt,
     });
-    if (!result.success) { setError(result.error ?? "Sotuvni saqlab bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Sotuvni saqlab bo'lmadi");
+      return;
+    }
     setModalOpen(false);
     await loadData();
   };
@@ -84,7 +83,10 @@ export default function AdminSalesPage() {
   const handleVoidSale = async (id: string) => {
     if (!confirm("Ushbu sotuvni qaytarmoqchimisiz? Ombor qoldigʻi qaytariladi.")) return;
     const result = await voidSaleAction(id);
-    if (!result.success) { setError(result.error ?? "Sotuvni bekor qilib bo'lmadi"); return; }
+    if (!result.success) {
+      setError(result.error ?? "Sotuvni bekor qilib bo'lmadi");
+      return;
+    }
     await loadData();
   };
 
@@ -104,7 +106,14 @@ export default function AdminSalesPage() {
         </Button>
       </div>
 
-      {error && <div role="alert" className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          className="rounded-control border border-(--danger-border) bg-(--danger-bg) p-3 text-sm text-(--danger-fg)"
+        >
+          {error}
+        </div>
+      )}
 
       {/* Statistika kartalari */}
       {isFinancial ? (
@@ -133,12 +142,7 @@ export default function AdminSalesPage() {
             valueClassName="whitespace-nowrap text-title"
           />
 
-          <StatCard
-            icon={<Receipt />}
-            label="Bitimlar soni"
-            value={`${activeSales.length} ta`}
-            tone={4}
-          />
+          <StatCard icon={<Receipt />} label="Bitimlar soni" value={`${activeSales.length} ta`} tone={4} />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -149,12 +153,7 @@ export default function AdminSalesPage() {
             tone={1}
           />
 
-          <StatCard
-            icon={<Boxes />}
-            label="Sotilgan tovarlar umumiy soni"
-            value={`${totalUnits} dona`}
-            tone={2}
-          />
+          <StatCard icon={<Boxes />} label="Sotilgan tovarlar umumiy soni" value={`${totalUnits} dona`} tone={2} />
         </div>
       )}
 
@@ -239,13 +238,9 @@ export default function AdminSalesPage() {
                         {item.source === "site" ? "Sayt" : "Oflayn"}
                       </span>
                     </td>
-                    <td className="p-3.5 text-center font-bold text-foreground">
-                      {item.qty} dona
-                    </td>
+                    <td className="p-3.5 text-center font-bold text-foreground">{item.qty} dona</td>
                     {isFinancial && (
-                      <td className="p-3.5 text-right font-black text-foreground">
-                        {formatMoney(item.soldPrice)}
-                      </td>
+                      <td className="p-3.5 text-right font-black text-foreground">{formatMoney(item.soldPrice)}</td>
                     )}
                     {isFinancial && (
                       <td className="p-3.5 text-right font-medium text-muted-foreground">

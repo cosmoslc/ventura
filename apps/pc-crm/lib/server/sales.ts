@@ -31,10 +31,7 @@ export interface SaleItemView {
 export async function getDbSales(): Promise<SaleItemView[]> {
   const db = getDb();
 
-  const salesRows = await db
-    .select()
-    .from(sales)
-    .orderBy(desc(sales.soldAt));
+  const salesRows = await db.select().from(sales).orderBy(desc(sales.soldAt));
 
   if (salesRows.length === 0) return [];
 
@@ -60,10 +57,15 @@ export async function getDbSales(): Promise<SaleItemView[]> {
 
   for (const s of salesRows) {
     const sItems = itemMap.get(s.id) ?? [];
-    const names = [...new Set(sItems.map(({ item, prod }) =>
-      item.nameSnapshot ?? ((prod?.name as I18nText)?.uz ?? "Kompyuter / Tovar")
-    ))];
-    const name = names.length > 2 ? `${names.slice(0, 2).join(", ")} va yana ${names.length - 2} ta` : names.join(", ") || "Kompyuter / Tovar";
+    const names = [
+      ...new Set(
+        sItems.map(({ item, prod }) => item.nameSnapshot ?? (prod?.name as I18nText)?.uz ?? "Kompyuter / Tovar"),
+      ),
+    ];
+    const name =
+      names.length > 2
+        ? `${names.slice(0, 2).join(", ")} va yana ${names.length - 2} ta`
+        : names.join(", ") || "Kompyuter / Tovar";
 
     const totalRevenue = Number(s.total);
     const profitNum = Number(s.profit);
@@ -121,26 +123,30 @@ export async function createDbSale(input: {
     const totalRevenue = input.soldPrice * BigInt(input.qty);
     const totalCost = costSnapshot * BigInt(input.qty);
     const netProfit = totalRevenue - totalCost;
-    const [newSale] = await tx.insert(sales).values({
-      source: input.source,
-      type: input.type,
-      buyerName: input.buyerName,
-      buyerPhone: input.buyerPhone,
-      soldAt: input.soldAt ? new Date(input.soldAt) : new Date(),
-      total: totalRevenue,
-      costTotal: totalCost,
-      profit: netProfit,
-    }).returning();
+    const [newSale] = await tx
+      .insert(sales)
+      .values({
+        source: input.source,
+        type: input.type,
+        buyerName: input.buyerName,
+        buyerPhone: input.buyerPhone,
+        soldAt: input.soldAt ? new Date(input.soldAt) : new Date(),
+        total: totalRevenue,
+        costTotal: totalCost,
+        profit: netProfit,
+      })
+      .returning();
     if (!newSale) throw new Error("Sotuv yozilmadi");
 
     if (product) {
-      const [updated] = await tx.update(products).set({
-        stock: sql`${products.stock} - ${input.qty}`,
-        soldCount: sql`${products.soldCount} + ${input.qty}`,
-      }).where(and(
-        eq(products.id, product.id),
-        sql`${products.stock} - ${products.reserved} >= ${input.qty}`,
-      )).returning({ id: products.id });
+      const [updated] = await tx
+        .update(products)
+        .set({
+          stock: sql`${products.stock} - ${input.qty}`,
+          soldCount: sql`${products.soldCount} + ${input.qty}`,
+        })
+        .where(and(eq(products.id, product.id), sql`${products.stock} - ${products.reserved} >= ${input.qty}`))
+        .returning({ id: products.id });
       if (!updated) throw new Error("Sotuv uchun qoldiq yetarli emas");
     }
     await tx.insert(saleItems).values({
@@ -153,13 +159,14 @@ export async function createDbSale(input: {
       costSnapshot,
       profit: netProfit,
     });
-    if (input.productId) await tx.insert(stockMovements).values({
-      productId: input.productId,
-      reason: "sale",
-      delta: -input.qty,
-      refType: "sale",
-      refId: newSale.id,
-    });
+    if (input.productId)
+      await tx.insert(stockMovements).values({
+        productId: input.productId,
+        reason: "sale",
+        delta: -input.qty,
+        refType: "sale",
+        refId: newSale.id,
+      });
     return newSale;
   });
 }
@@ -173,10 +180,13 @@ export async function voidDbSale(id: string) {
     const items = await tx.select().from(saleItems).where(eq(saleItems.saleId, id));
     for (const item of items) {
       if (!item.productId) continue;
-      await tx.update(products).set({
-        stock: sql`${products.stock} + ${item.qty}`,
-        soldCount: sql`GREATEST(0, ${products.soldCount} - ${item.qty})`,
-      }).where(eq(products.id, item.productId));
+      await tx
+        .update(products)
+        .set({
+          stock: sql`${products.stock} + ${item.qty}`,
+          soldCount: sql`GREATEST(0, ${products.soldCount} - ${item.qty})`,
+        })
+        .where(eq(products.id, item.productId));
       await tx.insert(stockMovements).values({
         productId: item.productId,
         reason: "return",
@@ -185,8 +195,11 @@ export async function voidDbSale(id: string) {
         refId: sale.id,
       });
     }
-    const [updated] = await tx.update(sales).set({ voidedAt: new Date() })
-      .where(and(eq(sales.id, id), sql`${sales.voidedAt} IS NULL`)).returning();
+    const [updated] = await tx
+      .update(sales)
+      .set({ voidedAt: new Date() })
+      .where(and(eq(sales.id, id), sql`${sales.voidedAt} IS NULL`))
+      .returning();
     return updated;
   });
 }

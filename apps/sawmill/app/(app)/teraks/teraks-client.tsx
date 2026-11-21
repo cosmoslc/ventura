@@ -2,14 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import {
-  ArrowRight,
-  Edit2,
-  Plus,
-  Trash2,
-  TreePine,
-  Undo2,
-} from "lucide-react";
+import { ArrowRight, Edit2, Plus, Trash2, TreePine, Undo2 } from "lucide-react";
 import { Badge } from "@ventura/ui/badge";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
@@ -127,12 +120,8 @@ export function TeraksClient({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("teraks_title", locale)}
-          </h1>
-          <p className="text-caption text-muted-foreground mt-0.5">
-            {t("teraks_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("teraks_title", locale)}</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">{t("teraks_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -196,27 +185,21 @@ export function TeraksClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               Jami sotuv (daromad)
             </span>
-            <div className="text-lg font-bold font-mono text-foreground">
-              {formatMoney(overall.revenueSum)}
-            </div>
+            <div className="text-lg font-bold font-mono text-foreground">{formatMoney(overall.revenueSum)}</div>
           </Card>
 
           <Card className="p-3.5 space-y-1">
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               Jami ombor qiymati
             </span>
-            <div className="text-lg font-bold font-mono text-foreground">
-              {formatMoney(overall.stockValueSum)}
-            </div>
+            <div className="text-lg font-bold font-mono text-foreground">{formatMoney(overall.stockValueSum)}</div>
           </Card>
 
           <Card className="p-3.5 space-y-1">
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               Jami xarajatlar
             </span>
-            <div className="text-lg font-bold font-mono text-foreground">
-              {formatMoney(overall.totalCostsSum)}
-            </div>
+            <div className="text-lg font-bold font-mono text-foreground">{formatMoney(overall.totalCostsSum)}</div>
           </Card>
         </div>
       )}
@@ -230,11 +213,7 @@ export function TeraksClient({
           <p className="text-body font-medium">
             {tab === "active" ? t("teraks_empty", locale) : t("teraks_trash_empty", locale)}
           </p>
-          {tab === "trash" && (
-            <p className="text-2xs text-muted-foreground mt-1">
-              {t("teraks_trash_hint", locale)}
-            </p>
-          )}
+          {tab === "trash" && <p className="text-2xs text-muted-foreground mt-1">{t("teraks_trash_hint", locale)}</p>}
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -252,15 +231,14 @@ export function TeraksClient({
                       </div>
                       <div>
                         <h3 className="font-bold text-base text-foreground">{trk.name}</h3>
-                        <p className="text-2xs text-muted-foreground font-mono">
-                          {trk.purchaseDate}
-                        </p>
+                        <p className="text-2xs text-muted-foreground font-mono">{trk.purchaseDate}</p>
                       </div>
                     </div>
 
                     {hasProfit && tab === "active" && (
                       <Badge tone={isPos ? "success" : "danger"} className="font-mono text-2xs">
-                        {isPos ? "+" : ""}{formatMoney(trk.profitEstimated ?? 0)}
+                        {isPos ? "+" : ""}
+                        {formatMoney(trk.profitEstimated ?? 0)}
                       </Badge>
                     )}
                   </div>
@@ -268,40 +246,35 @@ export function TeraksClient({
                   <div className="p-3 rounded-card bg-muted/50 space-y-1 text-xs">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">{t("teraks_purchase_price", locale)}:</span>
-                      <span className="font-bold font-mono text-foreground">
-                        {formatMoney(trk.purchasePrice)}
-                      </span>
+                      <span className="font-bold font-mono text-foreground">{formatMoney(trk.purchasePrice)}</span>
                     </div>
 
                     {trk.totalCosts !== undefined && trk.totalCosts > trk.purchasePrice && (
                       <div className="flex items-center justify-between text-2xs">
                         <span className="text-muted-foreground">Jami xarajat:</span>
-                        <span className="font-mono text-muted-foreground">
-                          {formatMoney(trk.totalCosts)}
-                        </span>
+                        <span className="font-mono text-muted-foreground">{formatMoney(trk.totalCosts)}</span>
                       </div>
                     )}
 
                     {trk.dispatchRevenue !== undefined && trk.dispatchRevenue > 0 && (
                       <div className="flex items-center justify-between text-2xs">
                         <span className="text-muted-foreground">Sotuv daromadi:</span>
-                        <span className="font-mono text-primary font-semibold">
-                          {formatMoney(trk.dispatchRevenue)}
-                        </span>
+                        <span className="font-mono text-primary font-semibold">{formatMoney(trk.dispatchRevenue)}</span>
                       </div>
                     )}
 
                     {trk.stockValue !== undefined && trk.stockValue > 0 && (
                       <div className="flex items-center justify-between text-2xs">
                         <span className="text-muted-foreground">Ombor qiymati:</span>
-                        <span className="font-mono text-foreground font-medium">
-                          {formatMoney(trk.stockValue)}
-                        </span>
+                        <span className="font-mono text-foreground font-medium">{formatMoney(trk.stockValue)}</span>
                       </div>
                     )}
 
                     {trk.note && (
-                      <p className="text-2xs text-muted-foreground truncate pt-0.5 border-t border-border/40 mt-1" title={trk.note}>
+                      <p
+                        className="text-2xs text-muted-foreground truncate pt-0.5 border-t border-border/40 mt-1"
+                        title={trk.note}
+                      >
                         {trk.note}
                       </p>
                     )}
@@ -310,76 +283,71 @@ export function TeraksClient({
 
                 <div className="flex items-center justify-between pt-3 mt-4 border-t border-border">
                   {tab === "active" ? (
-                  <>
-                    <div className="flex items-center gap-1">
+                    <>
+                      <div className="flex items-center gap-1">
+                        {canManage && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              onClick={() => handleEdit(trk)}
+                              className="h-8 px-2 text-caption"
+                              title={t("action_edit", locale)}
+                            >
+                              <Edit2 className="size-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              onClick={() => setTrashTargetId(trk.id)}
+                              className="h-8 px-2 text-caption text-muted-foreground hover:text-destructive"
+                              title={t("teraks_to_trash", locale)}
+                            >
+                              <Trash2 className="size-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+
+                      <Button asChild variant="subtle" className="h-8 px-3 text-caption gap-1">
+                        <Link href={`/teraks/${trk.id}`}>
+                          <span>Batafsil</span>
+                          <ArrowRight className="size-3.5" />
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
                       {canManage && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            onClick={() => handleEdit(trk)}
-                            className="h-8 px-2 text-caption"
-                            title={t("action_edit", locale)}
-                          >
-                            <Edit2 className="size-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            onClick={() => setTrashTargetId(trk.id)}
-                            className="h-8 px-2 text-caption text-muted-foreground hover:text-destructive"
-                            title={t("teraks_to_trash", locale)}
-                          >
-                            <Trash2 className="size-3.5" />
-                          </Button>
-                        </>
+                        <Button
+                          variant="ghost"
+                          onClick={() => setRestoreTargetId(trk.id)}
+                          className="h-8 px-2.5 text-caption gap-1 text-primary hover:text-primary"
+                        >
+                          <Undo2 className="size-3.5" />
+                          <span>{t("teraks_restore", locale)}</span>
+                        </Button>
+                      )}
+
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          onClick={() => setPermDeleteTargetId(trk.id)}
+                          className="h-8 px-2.5 text-caption text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="size-3.5 mr-1" />
+                          <span>{t("teraks_permanent_delete", locale)}</span>
+                        </Button>
                       )}
                     </div>
-
-                    <Button asChild variant="subtle" className="h-8 px-3 text-caption gap-1">
-                      <Link href={`/teraks/${trk.id}`}>
-                        <span>Batafsil</span>
-                        <ArrowRight className="size-3.5" />
-                      </Link>
-                    </Button>
-                  </>
-                ) : (
-                  <div className="flex items-center justify-between w-full">
-                    {canManage && (
-                      <Button
-                        variant="ghost"
-                        onClick={() => setRestoreTargetId(trk.id)}
-                        className="h-8 px-2.5 text-caption gap-1 text-primary hover:text-primary"
-                      >
-                        <Undo2 className="size-3.5" />
-                        <span>{t("teraks_restore", locale)}</span>
-                      </Button>
-                    )}
-
-                    {canDelete && (
-                      <Button
-                        variant="ghost"
-                        onClick={() => setPermDeleteTargetId(trk.id)}
-                        className="h-8 px-2.5 text-caption text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="size-3.5 mr-1" />
-                        <span>{t("teraks_permanent_delete", locale)}</span>
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            </Card>
-          );
-        })}
+                  )}
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
 
       {/* Terak Dialog */}
-      <TerakDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        terak={selectedTerak}
-        locale={locale}
-      />
+      <TerakDialog open={dialogOpen} onOpenChange={setDialogOpen} terak={selectedTerak} locale={locale} />
 
       {/* Confirm Trash Modal */}
       <ConfirmModal

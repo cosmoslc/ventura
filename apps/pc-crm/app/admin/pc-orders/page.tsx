@@ -46,7 +46,9 @@ import { type PcOrderItem } from "@/lib/pc-data";
 import { getAdminPcOrdersAction, updatePcOrderStatusAction } from "@/lib/server/actions";
 import { useFinancialMode } from "@/lib/store-context";
 
-const getStatusLabels = (isFinancial: boolean): Record<PcOrderItem["status"], { label: string; tone: "info" | "warning" | "success" | "neutral" | "danger" }> => ({
+const getStatusLabels = (
+  isFinancial: boolean,
+): Record<PcOrderItem["status"], { label: string; tone: "info" | "warning" | "success" | "neutral" | "danger" }> => ({
   new: { label: "Yangi zakaz", tone: "info" },
   reviewing: { label: "Koʻrib chiqilmoqda", tone: "warning" },
   quoted: { label: isFinancial ? "Narx taklif etildi" : "Kelishildi", tone: "info" },
@@ -57,14 +59,34 @@ const getStatusLabels = (isFinancial: boolean): Record<PcOrderItem["status"], { 
   cancelled: { label: "Bekor qilindi", tone: "danger" },
 });
 
-const getOrderTimelineSteps = (isFinancial: boolean): { status: PcOrderItem["status"]; title: string; desc: string }[] => [
+const getOrderTimelineSteps = (
+  isFinancial: boolean,
+): { status: PcOrderItem["status"]; title: string; desc: string }[] => [
   { status: "new", title: "1. Yangi zakaz", desc: "Mijoz konfigurator orqali zakaz qoldirdi" },
-  { status: "reviewing", title: "2. Koʻrib chiqilmoqda", desc: isFinancial ? "Operator qismlar mosligi va narxni tekshirmoqda" : "Operator qismlar mosligi va ombor qoldigʻini tekshirmoqda" },
-  { status: "quoted", title: isFinancial ? "3. Narx taklif etildi" : "3. Buyurtma kelishildi", desc: isFinancial ? "Mijozga yakuniy narx va yetkazish vaqti aytildi" : "Mijozga buyurtma tafsilotlari va yetkazish vaqti aytildi" },
+  {
+    status: "reviewing",
+    title: "2. Koʻrib chiqilmoqda",
+    desc: isFinancial
+      ? "Operator qismlar mosligi va narxni tekshirmoqda"
+      : "Operator qismlar mosligi va ombor qoldigʻini tekshirmoqda",
+  },
+  {
+    status: "quoted",
+    title: isFinancial ? "3. Narx taklif etildi" : "3. Buyurtma kelishildi",
+    desc: isFinancial
+      ? "Mijozga yakuniy narx va yetkazish vaqti aytildi"
+      : "Mijozga buyurtma tafsilotlari va yetkazish vaqti aytildi",
+  },
   { status: "confirmed", title: "4. Tasdiqlangan", desc: "Mijoz rozi boʻldi, qismlar omborda zaxiraga olindi" },
   { status: "assembling", title: "5. Yigʻilmoqda", desc: "Texnik usta PCni montaj qilib simlarni tartibga solmoqda" },
   { status: "ready", title: "6. Tayyor (Testda)", desc: "Stress-testdan oʻtkazildi, topshirishga tayyor" },
-  { status: "delivered", title: "7. Yetkazildi", desc: isFinancial ? "Mijozga topshirildi va toʻlov toʻliq qabul qilindi" : "Mijozga kompyuter muvaffaqiyatli topshirildi" },
+  {
+    status: "delivered",
+    title: "7. Yetkazildi",
+    desc: isFinancial
+      ? "Mijozga topshirildi va toʻlov toʻliq qabul qilindi"
+      : "Mijozga kompyuter muvaffaqiyatli topshirildi",
+  },
 ];
 
 export default function AdminPcOrdersPage() {
@@ -82,7 +104,9 @@ export default function AdminPcOrdersPage() {
     setOrders(result.orders);
   }, []);
 
-  useEffect(() => { void loadOrders(); }, [loadOrders]);
+  useEffect(() => {
+    void loadOrders();
+  }, [loadOrders]);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -118,7 +142,9 @@ export default function AdminPcOrdersPage() {
   // Statistik ko'rsatkichlar
   const stats = useMemo(() => {
     const newCount = orders.filter((o) => o.status === "new").length;
-    const inProgressCount = orders.filter((o) => ["reviewing", "quoted", "confirmed", "assembling"].includes(o.status)).length;
+    const inProgressCount = orders.filter((o) =>
+      ["reviewing", "quoted", "confirmed", "assembling"].includes(o.status),
+    ).length;
     const readyDeliveredCount = orders.filter((o) => ["ready", "delivered"].includes(o.status)).length;
     const totalRevenue = orders
       .filter((o) => o.status !== "cancelled")
@@ -205,9 +231,7 @@ export default function AdminPcOrdersPage() {
       {/* Sarlavha */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
-            PC Zakazlar
-          </h1>
+          <h1 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">PC Zakazlar</h1>
         </div>
       </div>
 
@@ -215,9 +239,20 @@ export default function AdminPcOrdersPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={<Layers />} label="Yangi zakazlar" value={`${stats.newCount} ta`} tone={1} />
         <StatCard icon={<Clock />} label="Jarayonda" value={`${stats.inProgressCount} ta`} tone={2} />
-        <StatCard icon={<CheckCircle2 />} label="Tayyor / Yetkazilgan" value={`${stats.readyDeliveredCount} ta`} tone={3} />
+        <StatCard
+          icon={<CheckCircle2 />}
+          label="Tayyor / Yetkazilgan"
+          value={`${stats.readyDeliveredCount} ta`}
+          tone={3}
+        />
         {isFinancial ? (
-          <StatCard icon={<Wrench />} label="Kutilayotgan umumiy qiymat" value={formatMoney(stats.totalRevenue)} tone={4} valueClassName="whitespace-nowrap text-title" />
+          <StatCard
+            icon={<Wrench />}
+            label="Kutilayotgan umumiy qiymat"
+            value={formatMoney(stats.totalRevenue)}
+            tone={4}
+            valueClassName="whitespace-nowrap text-title"
+          />
         ) : (
           <StatCard icon={<Wrench />} label="Jami buyurtmalar" value={`${orders.length} ta`} tone={4} />
         )}
@@ -314,7 +349,10 @@ export default function AdminPcOrdersPage() {
                         <span>{order.customerPhone}</span>
                       </a>
                       {order.deliveryAddress && (
-                        <p className="text-2xs text-muted-foreground/80 truncate max-w-[200px] mt-0.5" title={order.deliveryAddress}>
+                        <p
+                          className="text-2xs text-muted-foreground/80 truncate max-w-[200px] mt-0.5"
+                          title={order.deliveryAddress}
+                        >
                           {order.deliveryAddress}
                         </p>
                       )}
@@ -332,9 +370,7 @@ export default function AdminPcOrdersPage() {
                           {hasQuote ? (
                             formatMoney(order.quotedPrice!)
                           ) : (
-                            <span className="text-caption text-muted-foreground italic font-normal">
-                              Belgilanmagan
-                            </span>
+                            <span className="text-caption text-muted-foreground italic font-normal">Belgilanmagan</span>
                           )}
                         </td>
                       </>
@@ -362,14 +398,14 @@ export default function AdminPcOrdersPage() {
                                 order.status === "new" || order.status === "reviewing"
                                   ? "bg-amber-500"
                                   : order.status === "quoted"
-                                  ? "bg-blue-500"
-                                  : order.status === "confirmed" || order.status === "ready"
-                                  ? "bg-emerald-500"
-                                  : order.status === "assembling"
-                                  ? "bg-orange-500"
-                                  : order.status === "delivered"
-                                  ? "bg-slate-400"
-                                  : "bg-rose-500"
+                                    ? "bg-blue-500"
+                                    : order.status === "confirmed" || order.status === "ready"
+                                      ? "bg-emerald-500"
+                                      : order.status === "assembling"
+                                        ? "bg-orange-500"
+                                        : order.status === "delivered"
+                                          ? "bg-slate-400"
+                                          : "bg-rose-500"
                               }`}
                             />
                             <span className="text-foreground">{STATUS_LABELS[order.status].label}</span>
@@ -392,11 +428,7 @@ export default function AdminPcOrdersPage() {
                     <td className="p-3.5 text-right whitespace-nowrap">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="icon"
-                            size="icon-sm"
-                            aria-label="Amallar"
-                          >
+                          <Button variant="icon" size="icon-sm" aria-label="Amallar">
                             <MoreHorizontal />
                           </Button>
                         </DropdownMenuTrigger>
@@ -465,9 +497,9 @@ export default function AdminPcOrdersPage() {
                     </a>
                     <Link
                       href={`https://t.me/share/url?url=${encodeURIComponent(
-                        `Mijoz: ${selectedForDetail.customerName}, Tel: ${selectedForDetail.customerPhone}`
+                        `Mijoz: ${selectedForDetail.customerName}, Tel: ${selectedForDetail.customerPhone}`,
                       )}&text=${encodeURIComponent(
-                        `Assalomu alaykum ${selectedForDetail.customerName}! Ventura PC dan sizning zakazingiz (${selectedForDetail.orderNumber}) boʻyicha bogʻlanyapmiz.`
+                        `Assalomu alaykum ${selectedForDetail.customerName}! Ventura PC dan sizning zakazingiz (${selectedForDetail.orderNumber}) boʻyicha bogʻlanyapmiz.`,
                       )}`}
                       target="_blank"
                       className="text-body text-muted-foreground hover:text-primary flex items-center gap-1"
@@ -512,15 +544,11 @@ export default function AdminPcOrdersPage() {
                 {selectedForDetail.components.map((c, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 text-body hover:bg-muted/20">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-caption text-muted-foreground min-w-20">
-                        {c.roleNameUz}
-                      </span>
+                      <span className="font-semibold text-caption text-muted-foreground min-w-20">{c.roleNameUz}</span>
                       <span className="font-medium text-foreground">{c.productName}</span>
                     </div>
                     {isFinancial && (
-                      <span className="font-bold text-foreground whitespace-nowrap pl-2">
-                        {formatMoney(c.price)}
-                      </span>
+                      <span className="font-bold text-foreground whitespace-nowrap pl-2">{formatMoney(c.price)}</span>
                     )}
                   </div>
                 ))}
@@ -601,8 +629,12 @@ export default function AdminPcOrdersPage() {
             {/* Header ma'lumoti */}
             <div className="rounded-control bg-muted/40 p-3.5 flex items-center justify-between">
               <div>
-                <div className="font-bold text-foreground text-base">{selectedForTrack.pcName || "Custom PC Build"}</div>
-                <FieldHint className="mt-0.5">Mijoz: {selectedForTrack.customerName} ({selectedForTrack.customerPhone})</FieldHint>
+                <div className="font-bold text-foreground text-base">
+                  {selectedForTrack.pcName || "Custom PC Build"}
+                </div>
+                <FieldHint className="mt-0.5">
+                  Mijoz: {selectedForTrack.customerName} ({selectedForTrack.customerPhone})
+                </FieldHint>
               </div>
               <Badge tone={STATUS_LABELS[selectedForTrack.status].tone}>
                 {STATUS_LABELS[selectedForTrack.status].label}
@@ -630,12 +662,12 @@ export default function AdminPcOrdersPage() {
                       {isPassed ? <Check size={12} /> : idx + 1}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className={`text-body font-semibold ${isCurrent ? "text-primary font-bold" : isPassed ? "text-foreground" : "text-muted-foreground"}`}>
+                      <p
+                        className={`text-body font-semibold ${isCurrent ? "text-primary font-bold" : isPassed ? "text-foreground" : "text-muted-foreground"}`}
+                      >
                         {step.title}
                       </p>
-                      <FieldHint className="mt-0.5">
-                        {step.desc}
-                      </FieldHint>
+                      <FieldHint className="mt-0.5">{step.desc}</FieldHint>
                     </div>
                   </div>
                 );
@@ -680,84 +712,76 @@ export default function AdminPcOrdersPage() {
           </Button>
         }
       >
-        {selectedForProfit && (() => {
-          const quoted = selectedForProfit.quotedPrice ?? 0n;
-          const cost = selectedForProfit.costPrice;
-          const profit = quoted > 0n ? quoted - cost : 0n;
-          const margin = quoted > 0n ? calcMarginPercent(profit, quoted) : 0;
+        {selectedForProfit &&
+          (() => {
+            const quoted = selectedForProfit.quotedPrice ?? 0n;
+            const cost = selectedForProfit.costPrice;
+            const profit = quoted > 0n ? quoted - cost : 0n;
+            const margin = quoted > 0n ? calcMarginPercent(profit, quoted) : 0;
 
-          return (
-            <div className="space-y-4">
-              {/* Asosiy 4 ta karta */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <FieldHint className="mt-0">Tannarx (Kirim)</FieldHint>
-                  <div className="font-bold text-body text-foreground mt-0.5">
-                    {formatMoney(cost)}
+            return (
+              <div className="space-y-4">
+                {/* Asosiy 4 ta karta */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="rounded-control bg-muted/40 p-3 border border-border">
+                    <FieldHint className="mt-0">Tannarx (Kirim)</FieldHint>
+                    <div className="font-bold text-body text-foreground mt-0.5">{formatMoney(cost)}</div>
+                  </div>
+
+                  <div className="rounded-control bg-muted/40 p-3 border border-border">
+                    <FieldHint className="mt-0">Kelishilgan narx</FieldHint>
+                    <div className="font-bold text-body text-foreground mt-0.5">
+                      {quoted > 0n ? formatMoney(quoted) : "Belgilanmagan"}
+                    </div>
+                  </div>
+
+                  <div className="rounded-control bg-muted/40 p-3 border border-border">
+                    <FieldHint className="mt-0">Kutilayotgan sof foyda</FieldHint>
+                    <div
+                      className={`font-bold text-body mt-0.5 ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}
+                    >
+                      {profit >= 0n ? "+" : ""}
+                      {formatMoney(profit)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-control bg-muted/40 p-3 border border-border">
+                    <FieldHint className="mt-0">Rentabellik (Marja)</FieldHint>
+                    <div className="font-bold text-body text-primary mt-0.5">{margin}%</div>
                   </div>
                 </div>
 
-                <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <FieldHint className="mt-0">Kelishilgan narx</FieldHint>
-                  <div className="font-bold text-body text-foreground mt-0.5">
-                    {quoted > 0n ? formatMoney(quoted) : "Belgilanmagan"}
+                {/* Komponentlar bo'yicha tannarx va sotuv tahlili */}
+                <div>
+                  <div className="text-body font-semibold text-foreground mb-2">
+                    Komponentlar kesimida tannarx va hisob:
                   </div>
-                </div>
-
-                <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <FieldHint className="mt-0">Kutilayotgan sof foyda</FieldHint>
-                  <div className={`font-bold text-body mt-0.5 ${profit >= 0n ? "text-(--success-fg)" : "text-(--danger-fg)"}`}>
-                    {profit >= 0n ? "+" : ""}{formatMoney(profit)}
-                  </div>
-                </div>
-
-                <div className="rounded-control bg-muted/40 p-3 border border-border">
-                  <FieldHint className="mt-0">Rentabellik (Marja)</FieldHint>
-                  <div className="font-bold text-body text-primary mt-0.5">
-                    {margin}%
-                  </div>
-                </div>
-              </div>
-
-              {/* Komponentlar bo'yicha tannarx va sotuv tahlili */}
-              <div>
-                <div className="text-body font-semibold text-foreground mb-2">
-                  Komponentlar kesimida tannarx va hisob:
-                </div>
-                <div className="rounded-control border border-border overflow-hidden">
-                  <table className="w-full text-left text-body">
-                    <thead className="bg-muted/60 text-caption font-semibold text-muted-foreground border-b border-border">
-                      <tr>
-                        <th className="p-3">Qism</th>
-                        <th className="p-3">Mahsulot nomi</th>
-                        <th className="p-3 text-right">Tannarx</th>
-                        <th className="p-3 text-right">Katalog narxi</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {selectedForProfit.components.map((c, idx) => (
-                        <tr key={idx} className="hover:bg-muted/20">
-                          <td className="p-3 font-semibold text-caption text-muted-foreground">
-                            {c.roleNameUz}
-                          </td>
-                          <td className="p-3 font-medium text-foreground">
-                            {c.productName}
-                          </td>
-                          <td className="p-3 text-right text-muted-foreground">
-                            {formatMoney(c.costPrice ?? 0n)}
-                          </td>
-                          <td className="p-3 text-right font-bold text-foreground">
-                            {formatMoney(c.price)}
-                          </td>
+                  <div className="rounded-control border border-border overflow-hidden">
+                    <table className="w-full text-left text-body">
+                      <thead className="bg-muted/60 text-caption font-semibold text-muted-foreground border-b border-border">
+                        <tr>
+                          <th className="p-3">Qism</th>
+                          <th className="p-3">Mahsulot nomi</th>
+                          <th className="p-3 text-right">Tannarx</th>
+                          <th className="p-3 text-right">Katalog narxi</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {selectedForProfit.components.map((c, idx) => (
+                          <tr key={idx} className="hover:bg-muted/20">
+                            <td className="p-3 font-semibold text-caption text-muted-foreground">{c.roleNameUz}</td>
+                            <td className="p-3 font-medium text-foreground">{c.productName}</td>
+                            <td className="p-3 text-right text-muted-foreground">{formatMoney(c.costPrice ?? 0n)}</td>
+                            <td className="p-3 text-right font-bold text-foreground">{formatMoney(c.price)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
       </Modal>
     </div>
   );

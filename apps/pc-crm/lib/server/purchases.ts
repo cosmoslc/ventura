@@ -1,12 +1,6 @@
 import "server-only";
 import { and, eq, desc, ne, sql } from "drizzle-orm";
-import {
-  purchases,
-  products,
-  stockMovements,
-  type I18nText,
-  type PurchaseType,
-} from "@ventura/db/schema/pc-crm";
+import { purchases, products, stockMovements, type I18nText, type PurchaseType } from "@ventura/db/schema/pc-crm";
 import { getDb } from "../db";
 
 export interface PurchaseItemView {
@@ -66,18 +60,22 @@ export async function createDbPurchase(input: {
   }
   const unitCost = input.totalCost / BigInt(input.qty);
   return db.transaction(async (tx) => {
-    const [row] = await tx.insert(purchases).values({
-      productId: input.productId,
-      type: input.type,
-      qty: input.qty,
-      totalCost: input.totalCost,
-      unitCost,
-      supplier: input.supplier,
-      note: input.note,
-      purchasedAt: input.purchasedAt ? new Date(input.purchasedAt) : new Date(),
-    }).returning();
+    const [row] = await tx
+      .insert(purchases)
+      .values({
+        productId: input.productId,
+        type: input.type,
+        qty: input.qty,
+        totalCost: input.totalCost,
+        unitCost,
+        supplier: input.supplier,
+        note: input.note,
+        purchasedAt: input.purchasedAt ? new Date(input.purchasedAt) : new Date(),
+      })
+      .returning();
     if (!row) throw new Error("Kirim yozilmadi");
-    const [updated] = await tx.update(products)
+    const [updated] = await tx
+      .update(products)
       .set({ stock: sql`${products.stock} + ${input.qty}`, costPrice: unitCost })
       .where(eq(products.id, input.productId))
       .returning({ id: products.id });
@@ -98,21 +96,25 @@ export async function voidDbPurchase(id: string) {
   return db.transaction(async (tx) => {
     const [pur] = await tx.select().from(purchases).where(eq(purchases.id, id)).for("update");
     if (!pur || pur.voidedAt) return null;
-    const [updatedProduct] = await tx.update(products)
+    const [updatedProduct] = await tx
+      .update(products)
       .set({ stock: sql`${products.stock} - ${pur.qty}` })
       .where(and(eq(products.id, pur.productId), sql`${products.stock} - ${products.reserved} >= ${pur.qty}`))
       .returning({ id: products.id });
     if (!updatedProduct) throw new Error("Kirimni bekor qilib bo'lmaydi: mahsulotning bir qismi band yoki sotilgan");
-    const [updated] = await tx.update(purchases)
+    const [updated] = await tx
+      .update(purchases)
       .set({ voidedAt: new Date() })
       .where(and(eq(purchases.id, id), sql`${purchases.voidedAt} IS NULL`))
       .returning();
-    const [latestPurchase] = await tx.select({ unitCost: purchases.unitCost })
+    const [latestPurchase] = await tx
+      .select({ unitCost: purchases.unitCost })
       .from(purchases)
       .where(and(eq(purchases.productId, pur.productId), ne(purchases.id, pur.id), sql`${purchases.voidedAt} IS NULL`))
       .orderBy(desc(purchases.purchasedAt))
       .limit(1);
-    if (latestPurchase) await tx.update(products).set({ costPrice: latestPurchase.unitCost }).where(eq(products.id, pur.productId));
+    if (latestPurchase)
+      await tx.update(products).set({ costPrice: latestPurchase.unitCost }).where(eq(products.id, pur.productId));
     await tx.insert(stockMovements).values({
       productId: pur.productId,
       reason: "adjust",

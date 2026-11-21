@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import {
   getStorefrontNotificationsAction,
   markAllNotificationsReadAction,
@@ -87,9 +80,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Bitta bildirishnomani o'qilgan deb belgilash
   const markAsRead = async (id: string) => {
     // Optimistic UI: darhol holatni o'zgartirish
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
 
     // Mahalliy xotiraga saqlash
     const local = getLocalReadIds();

@@ -19,7 +19,7 @@ import {
 
 /*
  * Loyihani 100% avtomatik Supabase'ga ko'chirish dvigateli (ADR 0060).
- * 
+ *
  * 1. Supabase API orqali loyiha holati, API kalitlari va pooler sozlamalari tekshiriladi.
  * 2. Supabase PostgreSQL ulanish manzili yig'iladi va to'g'ridan-to'g'ri aloqa testi o'tkaziladi.
  * 3. Serverda sayt vaqtincha yopiladi (zero data loss).
@@ -202,7 +202,11 @@ export async function moveProjectToSupabase(
     // 5. Agar "full" bo'lsa — ma'lumotlarni ko'chirish
     if (opts.mode === "full") {
       const srcDb = dbNameFor(p.templateKey, p.slug, p.dbStrategy);
-      const pwOwner = dbPasswordOwner(p.dbStrategy === "shared_db" ? "shared" : "project", { serverId: server.id, projectId: p.id }, srcDb);
+      const pwOwner = dbPasswordOwner(
+        p.dbStrategy === "shared_db" ? "shared" : "project",
+        { serverId: server.id, projectId: p.id },
+        srcDb,
+      );
       const srcPassword = await readSecret(db, pwOwner.owner, pwOwner.name);
       if (!srcPassword || !DB_PASSWORD_RE.test(srcPassword)) {
         throw new Error("Manba VPS bazasining paroli topilmadi");

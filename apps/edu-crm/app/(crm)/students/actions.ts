@@ -361,8 +361,7 @@ export async function grantStudentLoginAction(input: unknown): Promise<ActionRes
     if (!s) return { ok: false, error: uz.common.gone };
     const problem = passwordProblem(v.data.password);
     if (problem) return { ok: false, error: problem };
-    if (!(await studentPhoneFree(ctx, s.phone, s.id)))
-      return { ok: false, error: uz.students.phoneTaken };
+    if (!(await studentPhoneFree(ctx, s.phone, s.id))) return { ok: false, error: uz.students.phoneTaken };
     const login = await grantStudentLogin(ctx, s, v.data.password);
     if (!login.ok) return { ok: false, error: login.error === "phone_taken" ? "Telefon band" : "Xatolik" };
     await ctx.audit("student.login.grant", { type: "student", id: s.id }, { userId: login.userId });

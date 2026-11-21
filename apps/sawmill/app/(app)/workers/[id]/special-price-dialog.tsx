@@ -58,11 +58,7 @@ function InnerSpecialPriceDialog({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("special_price_set", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("special_price_set", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         {error && (
           <div className="p-3 text-caption text-destructive bg-destructive/10 rounded-control border border-destructive/20">
@@ -96,18 +92,11 @@ function InnerSpecialPriceDialog({
             suffix="so'm"
             placeholder="0 kiritilsa maxsus narx o'chiriladi"
           />
-          <p className="text-2xs text-muted-foreground mt-1">
-            {t("special_price_hint", locale)}
-          </p>
+          <p className="text-2xs text-muted-foreground mt-1">{t("special_price_hint", locale)}</p>
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={loading}>
@@ -121,10 +110,5 @@ function InnerSpecialPriceDialog({
 
 export function SpecialPriceDialog(props: SpecialPriceDialogProps) {
   if (!props.open) return null;
-  return (
-    <InnerSpecialPriceDialog
-      key={props.workerId + "-" + (props.initialMaterialId ?? "new")}
-      {...props}
-    />
-  );
+  return <InnerSpecialPriceDialog key={props.workerId + "-" + (props.initialMaterialId ?? "new")} {...props} />;
 }

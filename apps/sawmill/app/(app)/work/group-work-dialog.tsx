@@ -54,9 +54,7 @@ function InnerGroupWorkDialog({
   locale,
 }: GroupWorkDialogProps) {
   // Workers selection
-  const [selectedWorkerIds, setSelectedWorkerIds] = React.useState<string[]>(
-    workers.slice(0, 2).map((w) => w.id),
-  );
+  const [selectedWorkerIds, setSelectedWorkerIds] = React.useState<string[]>(workers.slice(0, 2).map((w) => w.id));
   const [payFullToEach, setPayFullToEach] = React.useState(false);
   const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
   const [kind, setKind] = React.useState<"material" | "regular">("material");
@@ -223,11 +221,7 @@ function InnerGroupWorkDialog({
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("work_add_group", locale)}
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("work_add_group", locale)}>
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         {error && (
           <div className="p-3 text-caption text-destructive bg-destructive/10 rounded-control border border-destructive/20">
@@ -237,7 +231,9 @@ function InnerGroupWorkDialog({
 
         {/* Worker Multi-Selection */}
         <div className="space-y-1.5">
-          <Label>{t("work_workers_select", locale)} ({selectedWorkerIds.length} tanlandi)</Label>
+          <Label>
+            {t("work_workers_select", locale)} ({selectedWorkerIds.length} tanlandi)
+          </Label>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-2 border border-border rounded-control bg-surface">
             {workers.map((w) => {
               const selected = selectedWorkerIds.includes(w.id);
@@ -447,9 +443,7 @@ function InnerGroupWorkDialog({
 
             {payUnit === "cube" && cubeInputMode === "calculated" && (
               <div className="space-y-1.5">
-                <Label htmlFor="group-calc-qty">
-                  {t("work_quantity", locale)} (kub o'lchamidan hisoblanadi)
-                </Label>
+                <Label htmlFor="group-calc-qty">{t("work_quantity", locale)} (kub o'lchamidan hisoblanadi)</Label>
                 <Input
                   id="group-calc-qty"
                   type="number"
@@ -547,12 +541,8 @@ function InnerGroupWorkDialog({
         {/* Live Group Breakdown Card (K2, K15) */}
         <div className="p-4 bg-primary/5 rounded-card border border-primary/20 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-caption font-semibold text-foreground">
-              Jami hisoblangan:
-            </span>
-            <span className="text-title font-bold text-primary font-mono">
-              {formatMoney(groupCalc.totalAmount)}
-            </span>
+            <span className="text-caption font-semibold text-foreground">Jami hisoblangan:</span>
+            <span className="text-title font-bold text-primary font-mono">{formatMoney(groupCalc.totalAmount)}</span>
           </div>
 
           {kind === "material" && (
@@ -590,20 +580,13 @@ function InnerGroupWorkDialog({
         </div>
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>
             {t("action_cancel", locale)}
           </Button>
           <Button
             type="submit"
             disabled={
-              loading ||
-              selectedWorkerIds.length === 0 ||
-              (kind === "regular" && isSorting && remainingRes <= 0)
+              loading || selectedWorkerIds.length === 0 || (kind === "regular" && isSorting && remainingRes <= 0)
             }
           >
             {loading ? t("action_save", locale) + "..." : t("action_save", locale)}

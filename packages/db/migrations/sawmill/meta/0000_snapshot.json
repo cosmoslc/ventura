@@ -153,9 +153,7 @@
         "audit_events_seq_unique": {
           "name": "audit_events_seq_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "seq"
-          ]
+          "columns": ["seq"]
         }
       },
       "policies": {
@@ -163,9 +161,7 @@
           "name": "audit_events_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -245,18 +241,12 @@
         "branches_tenant_name_uq": {
           "name": "branches_tenant_name_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "name"
-          ]
+          "columns": ["tenant_id", "name"]
         },
         "branches_tenant_id_uq": {
           "name": "branches_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -264,9 +254,7 @@
           "name": "branches_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -322,12 +310,8 @@
           "name": "settings_updated_by_users_id_fk",
           "tableFrom": "settings",
           "tableTo": "users",
-          "columnsFrom": [
-            "updated_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["updated_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -335,10 +319,7 @@
       "compositePrimaryKeys": {
         "settings_tenant_id_key_pk": {
           "name": "settings_tenant_id_key_pk",
-          "columns": [
-            "tenant_id",
-            "key"
-          ]
+          "columns": ["tenant_id", "key"]
         }
       },
       "uniqueConstraints": {},
@@ -347,9 +328,7 @@
           "name": "settings_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -472,12 +451,8 @@
           "name": "accounts_user_id_users_id_fk",
           "tableFrom": "accounts",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -489,9 +464,7 @@
           "name": "accounts_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -609,12 +582,8 @@
           "name": "known_devices_user_id_users_id_fk",
           "tableFrom": "known_devices",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -622,12 +591,8 @@
           "name": "known_devices_blocked_by_users_id_fk",
           "tableFrom": "known_devices",
           "tableTo": "users",
-          "columnsFrom": [
-            "blocked_by"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["blocked_by"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -639,9 +604,7 @@
           "name": "known_devices_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -739,12 +702,8 @@
           "name": "sessions_user_id_users_id_fk",
           "tableFrom": "sessions",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -754,9 +713,7 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {
@@ -764,9 +721,7 @@
           "name": "sessions_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -853,12 +808,8 @@
           "name": "two_factors_user_id_users_id_fk",
           "tableFrom": "two_factors",
           "tableTo": "users",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -870,9 +821,7 @@
           "name": "two_factors_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1011,26 +960,17 @@
         "users_tenant_email_uq": {
           "name": "users_tenant_email_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "email"
-          ]
+          "columns": ["tenant_id", "email"]
         },
         "users_tenant_phone_uq": {
           "name": "users_tenant_phone_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "phone_number"
-          ]
+          "columns": ["tenant_id", "phone_number"]
         },
         "users_tenant_id_uq": {
           "name": "users_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -1038,9 +978,7 @@
           "name": "users_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1124,9 +1062,7 @@
           "name": "verifications_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1272,12 +1208,8 @@
           "name": "dispatches_terak_id_teraks_id_fk",
           "tableFrom": "dispatches",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1285,12 +1217,8 @@
           "name": "dispatches_material_id_materials_id_fk",
           "tableFrom": "dispatches",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1298,12 +1226,8 @@
           "name": "dispatches_truck_id_trucks_id_fk",
           "tableFrom": "dispatches",
           "tableTo": "trucks",
-          "columnsFrom": [
-            "truck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["truck_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1313,10 +1237,7 @@
         "dispatches_tenant_id_uq": {
           "name": "dispatches_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -1324,9 +1245,7 @@
           "name": "dispatches_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1391,10 +1310,7 @@
         "expense_categories_tenant_name_uq": {
           "name": "expense_categories_tenant_name_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "name"
-          ]
+          "columns": ["tenant_id", "name"]
         }
       },
       "policies": {
@@ -1402,9 +1318,7 @@
           "name": "expense_categories_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1506,12 +1420,8 @@
           "name": "general_expenses_category_id_expense_categories_id_fk",
           "tableFrom": "general_expenses",
           "tableTo": "expense_categories",
-          "columnsFrom": [
-            "category_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["category_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1523,9 +1433,7 @@
           "name": "general_expenses_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1617,12 +1525,8 @@
           "name": "material_sizes_material_id_materials_id_fk",
           "tableFrom": "material_sizes",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1632,10 +1536,7 @@
         "material_sizes_tenant_id_uq": {
           "name": "material_sizes_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -1643,9 +1544,7 @@
           "name": "material_sizes_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1737,18 +1636,12 @@
         "materials_tenant_name_uq": {
           "name": "materials_tenant_name_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "name"
-          ]
+          "columns": ["tenant_id", "name"]
         },
         "materials_tenant_id_uq": {
           "name": "materials_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -1756,9 +1649,7 @@
           "name": "materials_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -1881,12 +1772,8 @@
           "name": "orders_terak_id_teraks_id_fk",
           "tableFrom": "orders",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1894,12 +1781,8 @@
           "name": "orders_material_id_materials_id_fk",
           "tableFrom": "orders",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1911,9 +1794,7 @@
           "name": "orders_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2020,12 +1901,8 @@
           "name": "payments_worker_id_workers_id_fk",
           "tableFrom": "payments",
           "tableTo": "workers",
-          "columnsFrom": [
-            "worker_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["worker_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2037,9 +1914,7 @@
           "name": "payments_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2155,12 +2030,8 @@
           "name": "stock_movements_terak_id_teraks_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2168,12 +2039,8 @@
           "name": "stock_movements_material_id_materials_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2181,12 +2048,8 @@
           "name": "stock_movements_size_id_material_sizes_id_fk",
           "tableFrom": "stock_movements",
           "tableTo": "material_sizes",
-          "columnsFrom": [
-            "size_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["size_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2198,9 +2061,7 @@
           "name": "stock_movements_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2324,12 +2185,8 @@
           "name": "terak_costs_terak_id_teraks_id_fk",
           "tableFrom": "terak_costs",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2337,12 +2194,8 @@
           "name": "terak_costs_dispatch_id_dispatches_id_fk",
           "tableFrom": "terak_costs",
           "tableTo": "dispatches",
-          "columnsFrom": [
-            "dispatch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["dispatch_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2350,12 +2203,8 @@
           "name": "terak_costs_truck_id_trucks_id_fk",
           "tableFrom": "terak_costs",
           "tableTo": "trucks",
-          "columnsFrom": [
-            "truck_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["truck_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2367,9 +2216,7 @@
           "name": "terak_costs_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2496,12 +2343,8 @@
           "name": "terak_materials_terak_id_teraks_id_fk",
           "tableFrom": "terak_materials",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2509,12 +2352,8 @@
           "name": "terak_materials_material_id_materials_id_fk",
           "tableFrom": "terak_materials",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2524,11 +2363,7 @@
         "terak_materials_uq": {
           "name": "terak_materials_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "terak_id",
-            "material_id"
-          ]
+          "columns": ["tenant_id", "terak_id", "material_id"]
         }
       },
       "policies": {
@@ -2536,9 +2371,7 @@
           "name": "terak_materials_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2617,18 +2450,12 @@
         "teraks_tenant_name_uq": {
           "name": "teraks_tenant_name_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "name"
-          ]
+          "columns": ["tenant_id", "name"]
         },
         "teraks_tenant_id_uq": {
           "name": "teraks_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -2636,9 +2463,7 @@
           "name": "teraks_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2710,18 +2535,12 @@
         "trucks_tenant_name_uq": {
           "name": "trucks_tenant_name_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "name"
-          ]
+          "columns": ["tenant_id", "name"]
         },
         "trucks_tenant_id_uq": {
           "name": "trucks_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -2729,9 +2548,7 @@
           "name": "trucks_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -2831,12 +2648,8 @@
           "name": "wage_accruals_worker_id_workers_id_fk",
           "tableFrom": "wage_accruals",
           "tableTo": "workers",
-          "columnsFrom": [
-            "worker_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["worker_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -2844,12 +2657,8 @@
           "name": "wage_accruals_terak_id_teraks_id_fk",
           "tableFrom": "wage_accruals",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -2857,12 +2666,8 @@
           "name": "wage_accruals_work_entry_id_work_entries_id_fk",
           "tableFrom": "wage_accruals",
           "tableTo": "work_entries",
-          "columnsFrom": [
-            "work_entry_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_entry_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2872,12 +2677,7 @@
         "wage_accruals_period_uq": {
           "name": "wage_accruals_period_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "worker_id",
-            "period_start",
-            "period_end"
-          ]
+          "columns": ["tenant_id", "worker_id", "period_start", "period_end"]
         }
       },
       "policies": {
@@ -2885,9 +2685,7 @@
           "name": "wage_accruals_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -3059,12 +2857,8 @@
           "name": "work_entries_worker_id_workers_id_fk",
           "tableFrom": "work_entries",
           "tableTo": "workers",
-          "columnsFrom": [
-            "worker_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["worker_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3072,12 +2866,8 @@
           "name": "work_entries_terak_id_teraks_id_fk",
           "tableFrom": "work_entries",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3085,12 +2875,8 @@
           "name": "work_entries_work_type_id_work_types_id_fk",
           "tableFrom": "work_entries",
           "tableTo": "work_types",
-          "columnsFrom": [
-            "work_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3098,12 +2884,8 @@
           "name": "work_entries_group_id_work_groups_id_fk",
           "tableFrom": "work_entries",
           "tableTo": "work_groups",
-          "columnsFrom": [
-            "group_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["group_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3111,12 +2893,8 @@
           "name": "work_entries_material_id_materials_id_fk",
           "tableFrom": "work_entries",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3124,12 +2902,8 @@
           "name": "work_entries_size_id_material_sizes_id_fk",
           "tableFrom": "work_entries",
           "tableTo": "material_sizes",
-          "columnsFrom": [
-            "size_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["size_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3139,10 +2913,7 @@
         "work_entries_tenant_id_uq": {
           "name": "work_entries_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -3150,9 +2921,7 @@
           "name": "work_entries_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -3277,12 +3046,8 @@
           "name": "work_groups_terak_id_teraks_id_fk",
           "tableFrom": "work_groups",
           "tableTo": "teraks",
-          "columnsFrom": [
-            "terak_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["terak_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3290,12 +3055,8 @@
           "name": "work_groups_work_type_id_work_types_id_fk",
           "tableFrom": "work_groups",
           "tableTo": "work_types",
-          "columnsFrom": [
-            "work_type_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["work_type_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         },
@@ -3303,12 +3064,8 @@
           "name": "work_groups_material_id_materials_id_fk",
           "tableFrom": "work_groups",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -3318,10 +3075,7 @@
         "work_groups_tenant_id_uq": {
           "name": "work_groups_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -3329,9 +3083,7 @@
           "name": "work_groups_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -3399,18 +3151,12 @@
         "work_types_tenant_name_uq": {
           "name": "work_types_tenant_name_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "name"
-          ]
+          "columns": ["tenant_id", "name"]
         },
         "work_types_tenant_id_uq": {
           "name": "work_types_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -3418,9 +3164,7 @@
           "name": "work_types_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -3478,12 +3222,8 @@
           "name": "worker_material_prices_worker_id_workers_id_fk",
           "tableFrom": "worker_material_prices",
           "tableTo": "workers",
-          "columnsFrom": [
-            "worker_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["worker_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -3491,12 +3231,8 @@
           "name": "worker_material_prices_material_id_materials_id_fk",
           "tableFrom": "worker_material_prices",
           "tableTo": "materials",
-          "columnsFrom": [
-            "material_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["material_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3504,11 +3240,7 @@
       "compositePrimaryKeys": {
         "worker_material_prices_tenant_id_worker_id_material_id_pk": {
           "name": "worker_material_prices_tenant_id_worker_id_material_id_pk",
-          "columns": [
-            "tenant_id",
-            "worker_id",
-            "material_id"
-          ]
+          "columns": ["tenant_id", "worker_id", "material_id"]
         }
       },
       "uniqueConstraints": {},
@@ -3517,9 +3249,7 @@
           "name": "worker_material_prices_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }
@@ -3599,10 +3329,7 @@
         "workers_tenant_id_uq": {
           "name": "workers_tenant_id_uq",
           "nullsNotDistinct": false,
-          "columns": [
-            "tenant_id",
-            "id"
-          ]
+          "columns": ["tenant_id", "id"]
         }
       },
       "policies": {
@@ -3610,9 +3337,7 @@
           "name": "workers_tenant_isolation",
           "as": "PERMISSIVE",
           "for": "ALL",
-          "to": [
-            "public"
-          ],
+          "to": ["public"],
           "using": "tenant_id = current_setting('app.tenant_id', true)",
           "withCheck": "tenant_id = current_setting('app.tenant_id', true)"
         }

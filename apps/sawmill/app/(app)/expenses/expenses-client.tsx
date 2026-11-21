@@ -2,15 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import {
-  Calendar,
-  FolderPlus,
-  Plus,
-  Receipt,
-  Search,
-  Tag,
-  Trash2,
-} from "lucide-react";
+import { Calendar, FolderPlus, Plus, Receipt, Search, Tag, Trash2 } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Card } from "@ventura/ui/card";
 import { Input } from "@ventura/ui/input";
@@ -38,12 +30,7 @@ interface ExpensesClientProps {
   locale: Locale;
 }
 
-export function ExpensesClient({
-  initialExpenses,
-  categories,
-  canManage,
-  locale,
-}: ExpensesClientProps) {
+export function ExpensesClient({ initialExpenses, categories, canManage, locale }: ExpensesClientProps) {
   const router = useRouter();
 
   const [expenseDialogOpen, setExpenseDialogOpen] = React.useState(false);
@@ -92,29 +79,17 @@ export function ExpensesClient({
       {/* 1. Sarlavha va amallar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-foreground">
-            {t("expenses_title", locale)}
-          </h1>
-          <p className="text-xs text-muted-foreground">
-            {t("expenses_subtitle", locale)}
-          </p>
+          <h1 className="text-xl font-bold text-foreground">{t("expenses_title", locale)}</h1>
+          <p className="text-xs text-muted-foreground">{t("expenses_subtitle", locale)}</p>
         </div>
 
         {canManage && (
           <div className="flex items-center gap-2">
-            <Button
-              variant="subtle"
-              onClick={() => setCategoryDialogOpen(true)}
-              className="gap-1.5 cursor-pointer"
-            >
+            <Button variant="subtle" onClick={() => setCategoryDialogOpen(true)} className="gap-1.5 cursor-pointer">
               <FolderPlus className="size-4" />
               <span>{t("expenses_category_add", locale)}</span>
             </Button>
-            <Button
-              variant="primary"
-              onClick={() => setExpenseDialogOpen(true)}
-              className="gap-1.5 cursor-pointer"
-            >
+            <Button variant="primary" onClick={() => setExpenseDialogOpen(true)} className="gap-1.5 cursor-pointer">
               <Plus className="size-4" />
               <span>{t("expenses_add", locale)}</span>
             </Button>
@@ -129,12 +104,8 @@ export function ExpensesClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t("expenses_total", locale)}
             </span>
-            <div className="text-lg font-bold text-primary font-mono">
-              {formatMoney(totalAmount)}
-            </div>
-            <span className="text-2xs text-muted-foreground">
-              Umumiy foydadan ayriladi (K14)
-            </span>
+            <div className="text-lg font-bold text-primary font-mono">{formatMoney(totalAmount)}</div>
+            <span className="text-2xs text-muted-foreground">Umumiy foydadan ayriladi (K14)</span>
           </div>
           <div className="size-10 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center">
             <Receipt className="size-5" />
@@ -146,12 +117,8 @@ export function ExpensesClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               {t("expenses_category", locale)}
             </span>
-            <div className="text-lg font-bold text-foreground font-mono">
-              {categories.length} ta
-            </div>
-            <span className="text-2xs text-muted-foreground">
-              Faol xarajat toifalari
-            </span>
+            <div className="text-lg font-bold text-foreground font-mono">{categories.length} ta</div>
+            <span className="text-2xs text-muted-foreground">Faol xarajat toifalari</span>
           </div>
           <div className="size-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
             <Tag className="size-5" />
@@ -163,12 +130,8 @@ export function ExpensesClient({
             <span className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
               Xarajatlar soni
             </span>
-            <div className="text-lg font-bold text-foreground font-mono">
-              {initialExpenses.length} ta
-            </div>
-            <span className="text-2xs text-muted-foreground">
-              Barcha qayd etilgan xarajatlar
-            </span>
+            <div className="text-lg font-bold text-foreground font-mono">{initialExpenses.length} ta</div>
+            <span className="text-2xs text-muted-foreground">Barcha qayd etilgan xarajatlar</span>
           </div>
           <div className="size-10 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
             <Receipt className="size-5" />
@@ -180,9 +143,7 @@ export function ExpensesClient({
       <Card className="p-4 space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-2xs font-semibold text-muted-foreground">
-              {t("expenses_category", locale)}
-            </label>
+            <label className="text-2xs font-semibold text-muted-foreground">{t("expenses_category", locale)}</label>
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
@@ -198,9 +159,7 @@ export function ExpensesClient({
           </div>
 
           <div className="space-y-1">
-            <label className="text-2xs font-semibold text-muted-foreground">
-              {t("action_search", locale)}
-            </label>
+            <label className="text-2xs font-semibold text-muted-foreground">{t("action_search", locale)}</label>
             <div className="relative">
               <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -251,9 +210,7 @@ export function ExpensesClient({
                     <td className="py-3 px-4 font-mono font-bold text-red-600 dark:text-red-400 whitespace-nowrap text-sm">
                       {formatMoney(exp.amount)}
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground max-w-xs truncate">
-                      {exp.note || "-"}
-                    </td>
+                    <td className="py-3 px-4 text-muted-foreground max-w-xs truncate">{exp.note || "-"}</td>
                     {canManage && (
                       <td className="py-3 px-4 text-right whitespace-nowrap">
                         <Button
@@ -282,11 +239,7 @@ export function ExpensesClient({
       />
 
       {/* Toifa qo'shish modali */}
-      <CategoryDialog
-        open={categoryDialogOpen}
-        onOpenChange={setCategoryDialogOpen}
-        locale={locale}
-      />
+      <CategoryDialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen} locale={locale} />
 
       {/* O'chirish tasdiq modali */}
       {deleteTarget && (
@@ -296,9 +249,7 @@ export function ExpensesClient({
           title={t("expenses_delete_confirm", locale)}
         >
           <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Ushbu umumiy xarajatni o'chirmoqchimisiz?
-            </p>
+            <p className="text-sm text-muted-foreground">Ushbu umumiy xarajatni o'chirmoqchimisiz?</p>
 
             <div className="p-3 bg-muted/40 rounded-control space-y-1 text-xs">
               <div className="flex justify-between">
@@ -307,18 +258,12 @@ export function ExpensesClient({
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Summa:</span>
-                <span className="font-mono font-bold text-red-600">
-                  {formatMoney(deleteTarget.amount)}
-                </span>
+                <span className="font-mono font-bold text-red-600">{formatMoney(deleteTarget.amount)}</span>
               </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
-              <Button
-                variant="ghost"
-                onClick={() => setDeleteTarget(null)}
-                disabled={deleting}
-              >
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
                 {t("action_cancel", locale)}
               </Button>
               <Button variant="danger" onClick={handleDelete} disabled={deleting}>

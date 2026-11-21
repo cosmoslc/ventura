@@ -39,10 +39,7 @@ export async function getRemainingRes(
     .where(and(eq(terakCosts.terakId, terakId), eq(terakCosts.kind, "res")));
   const totalRes = costs.reduce((acc, c) => acc + Number(c.trips ?? 0), 0);
 
-  const sortingTypes = await db
-    .select({ id: workTypes.id })
-    .from(workTypes)
-    .where(eq(workTypes.kind, "sorting"));
+  const sortingTypes = await db.select({ id: workTypes.id }).from(workTypes).where(eq(workTypes.kind, "sorting"));
   if (sortingTypes.length === 0) return totalRes;
 
   const sortingIds = sortingTypes.map((t) => t.id);
@@ -52,23 +49,14 @@ export async function getRemainingRes(
     .select({ count: sql<number>`count(*)` })
     .from(workEntries)
     .where(
-      and(
-        eq(workEntries.terakId, terakId),
-        inArray(workEntries.workTypeId, sortingIds),
-        isNull(workEntries.groupId),
-      ),
+      and(eq(workEntries.terakId, terakId), inArray(workEntries.workTypeId, sortingIds), isNull(workEntries.groupId)),
     );
 
   // Group sorting jobs (har bir guruh bitta sartirofka hisoblanadi)
   const [groupCount] = await db
     .select({ count: sql<number>`count(distinct ${workGroups.id})` })
     .from(workGroups)
-    .where(
-      and(
-        eq(workGroups.terakId, terakId),
-        inArray(workGroups.workTypeId, sortingIds),
-      ),
-    );
+    .where(and(eq(workGroups.terakId, terakId), inArray(workGroups.workTypeId, sortingIds)));
 
   const sartirofkaSoni = Number(singleCount?.count ?? 0) + Number(groupCount?.count ?? 0);
   return Math.max(0, totalRes - sartirofkaSoni);
@@ -133,11 +121,7 @@ export async function createSingleWorkAction(formData: FormData): Promise<WorkAc
   } = parsed.data;
 
   // 1. Ishchi ma'lumotlarini tekshirish
-  const [worker] = await deps.db
-    .select()
-    .from(workers)
-    .where(eq(workers.id, workerId))
-    .limit(1);
+  const [worker] = await deps.db.select().from(workers).where(eq(workers.id, workerId)).limit(1);
   if (!worker) return { ok: false, error: "Ishchi topilmadi" };
 
   let amount = 0;
@@ -145,11 +129,7 @@ export async function createSingleWorkAction(formData: FormData): Promise<WorkAc
 
   // 2. Sartirofka va Res tekshiruvi
   if (workTypeId) {
-    const [wt] = await deps.db
-      .select()
-      .from(workTypes)
-      .where(eq(workTypes.id, workTypeId))
-      .limit(1);
+    const [wt] = await deps.db.select().from(workTypes).where(eq(workTypes.id, workTypeId)).limit(1);
 
     if (wt && wt.kind === "sorting") {
       if (!terakId) {
@@ -172,11 +152,7 @@ export async function createSingleWorkAction(formData: FormData): Promise<WorkAc
     if (!materialId) return { ok: false, error: "Material tanlanishi shart" };
 
     // Material bazaviy o'lchamlari
-    const [mat] = await deps.db
-      .select()
-      .from(materials)
-      .where(eq(materials.id, materialId))
-      .limit(1);
+    const [mat] = await deps.db.select().from(materials).where(eq(materials.id, materialId)).limit(1);
     if (!mat) return { ok: false, error: "Material topilmadi" };
 
     // Terakdagi material narxlari
@@ -210,11 +186,7 @@ export async function createSingleWorkAction(formData: FormData): Promise<WorkAc
     // O'lcham hajmi: agar sizeId bo'lsa o'lchamdan, aks holda materialdan
     let volumeM3: number | null = null;
     if (sizeId) {
-      const [sz] = await deps.db
-        .select()
-        .from(materialSizes)
-        .where(eq(materialSizes.id, sizeId))
-        .limit(1);
+      const [sz] = await deps.db.select().from(materialSizes).where(eq(materialSizes.id, sizeId)).limit(1);
       if (sz) {
         volumeM3 = pieceVolumeM3({
           thicknessCm: sz.thicknessCm ? Number(sz.thicknessCm) : null,
@@ -381,10 +353,7 @@ export async function createGroupWorkAction(formData: FormData): Promise<WorkAct
   } = parsed.data;
 
   // Ishchilarni bazadan olish
-  const workerRows = await deps.db
-    .select()
-    .from(workers)
-    .where(inArray(workers.id, workerIds));
+  const workerRows = await deps.db.select().from(workers).where(inArray(workers.id, workerIds));
 
   if (workerRows.length === 0) {
     return { ok: false, error: "Tanlangan ishchilar topilmadi" };
@@ -392,11 +361,7 @@ export async function createGroupWorkAction(formData: FormData): Promise<WorkAct
 
   // Sartirofka tekshiruvi
   if (workTypeId) {
-    const [wt] = await deps.db
-      .select()
-      .from(workTypes)
-      .where(eq(workTypes.id, workTypeId))
-      .limit(1);
+    const [wt] = await deps.db.select().from(workTypes).where(eq(workTypes.id, workTypeId)).limit(1);
 
     if (wt && wt.kind === "sorting") {
       if (!terakId) {
@@ -420,11 +385,7 @@ export async function createGroupWorkAction(formData: FormData): Promise<WorkAct
     if (!terakId) return { ok: false, error: "Material ishi uchun terak tanlanishi shart" };
     if (!materialId) return { ok: false, error: "Material tanlanishi shart" };
 
-    const [mat] = await deps.db
-      .select()
-      .from(materials)
-      .where(eq(materials.id, materialId))
-      .limit(1);
+    const [mat] = await deps.db.select().from(materials).where(eq(materials.id, materialId)).limit(1);
     if (!mat) return { ok: false, error: "Material topilmadi" };
 
     const [tm] = await deps.db
@@ -446,11 +407,7 @@ export async function createGroupWorkAction(formData: FormData): Promise<WorkAct
     }
 
     if (sizeId) {
-      const [sz] = await deps.db
-        .select()
-        .from(materialSizes)
-        .where(eq(materialSizes.id, sizeId))
-        .limit(1);
+      const [sz] = await deps.db.select().from(materialSizes).where(eq(materialSizes.id, sizeId)).limit(1);
       if (sz) {
         volumeM3 = pieceVolumeM3({
           thicknessCm: sz.thicknessCm ? Number(sz.thicknessCm) : null,
@@ -579,11 +536,7 @@ export async function deleteWorkAction(entryId: string): Promise<WorkActionResul
   if (!deps) return { ok: false, error: "Baza sozlanmagan" };
   if (!can(user.role, "work.manage")) return { ok: false, error: "Ruxsat etilmagan amal" };
 
-  const [entry] = await deps.db
-    .select()
-    .from(workEntries)
-    .where(eq(workEntries.id, entryId))
-    .limit(1);
+  const [entry] = await deps.db.select().from(workEntries).where(eq(workEntries.id, entryId)).limit(1);
 
   if (!entry) return { ok: false, error: "Ish topilmadi" };
 
@@ -605,10 +558,7 @@ export async function deleteWorkAction(entryId: string): Promise<WorkActionResul
               quantity: sql`${terakMaterials.quantity} - ${deltaNum}`,
             })
             .where(
-              and(
-                eq(terakMaterials.terakId, movement.terakId),
-                eq(terakMaterials.materialId, movement.materialId),
-              ),
+              and(eq(terakMaterials.terakId, movement.terakId), eq(terakMaterials.materialId, movement.materialId)),
             );
         }
         await deps.db.delete(stockMovements).where(eq(stockMovements.id, movement.id));
@@ -632,10 +582,7 @@ export async function deleteWorkAction(entryId: string): Promise<WorkActionResul
               quantity: sql`${terakMaterials.quantity} - ${deltaNum}`,
             })
             .where(
-              and(
-                eq(terakMaterials.terakId, movement.terakId),
-                eq(terakMaterials.materialId, movement.materialId),
-              ),
+              and(eq(terakMaterials.terakId, movement.terakId), eq(terakMaterials.materialId, movement.materialId)),
             );
         }
         await deps.db.delete(stockMovements).where(eq(stockMovements.id, movement.id));

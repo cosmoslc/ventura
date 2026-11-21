@@ -80,7 +80,9 @@ export default async function DatabasesPage() {
   }
 
   const allProjects: ProjectDatabaseInfo[] = projectRows.map((p) => {
-    const s = p.settings as { supabase?: { projectRef: string; projectName: string; projectUrl: string; mode: string } };
+    const s = p.settings as {
+      supabase?: { projectRef: string; projectName: string; projectUrl: string; mode: string };
+    };
     return {
       id: p.id,
       name: p.name,
@@ -170,7 +172,11 @@ export default async function DatabasesPage() {
 
   const supabaseBlock: SupabaseBlock = {
     hasToken: !!supaToken,
-    tokenPreview: supaToken ? (supaToken.length > 8 ? `${supaToken.slice(0, 4)}...${supaToken.slice(-4)}` : "••••••••") : null,
+    tokenPreview: supaToken
+      ? supaToken.length > 8
+        ? `${supaToken.slice(0, 4)}...${supaToken.slice(-4)}`
+        : "••••••••"
+      : null,
     projects: supabaseProjects,
     error: supabaseError,
   };

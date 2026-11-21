@@ -268,25 +268,29 @@ export async function getMaterialsCatalog(db: NonNullable<Awaited<ReturnType<typ
     sizesByMaterial.set(size.materialId, list);
   }
 
-  const active = allMaterials.filter((m) => !m.archivedAt).map((m) => ({
-    ...m,
-    sizes: sizesByMaterial.get(m.id) ?? [],
-    volumeM3: pieceVolumeM3({
-      thicknessCm: m.thicknessCm ? Number(m.thicknessCm) : null,
-      widthCm: m.widthCm ? Number(m.widthCm) : null,
-      lengthCm: m.lengthCm ? Number(m.lengthCm) : null,
-    }),
-  }));
+  const active = allMaterials
+    .filter((m) => !m.archivedAt)
+    .map((m) => ({
+      ...m,
+      sizes: sizesByMaterial.get(m.id) ?? [],
+      volumeM3: pieceVolumeM3({
+        thicknessCm: m.thicknessCm ? Number(m.thicknessCm) : null,
+        widthCm: m.widthCm ? Number(m.widthCm) : null,
+        lengthCm: m.lengthCm ? Number(m.lengthCm) : null,
+      }),
+    }));
 
-  const archived = allMaterials.filter((m) => !!m.archivedAt).map((m) => ({
-    ...m,
-    sizes: sizesByMaterial.get(m.id) ?? [],
-    volumeM3: pieceVolumeM3({
-      thicknessCm: m.thicknessCm ? Number(m.thicknessCm) : null,
-      widthCm: m.widthCm ? Number(m.widthCm) : null,
-      lengthCm: m.lengthCm ? Number(m.lengthCm) : null,
-    }),
-  }));
+  const archived = allMaterials
+    .filter((m) => !!m.archivedAt)
+    .map((m) => ({
+      ...m,
+      sizes: sizesByMaterial.get(m.id) ?? [],
+      volumeM3: pieceVolumeM3({
+        thicknessCm: m.thicknessCm ? Number(m.thicknessCm) : null,
+        widthCm: m.widthCm ? Number(m.widthCm) : null,
+        lengthCm: m.lengthCm ? Number(m.lengthCm) : null,
+      }),
+    }));
 
   return { active, archived };
 }

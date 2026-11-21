@@ -65,12 +65,7 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
   }
 
   return (
-    <Modal
-      open={open}
-      onOpenChange={onOpenChange}
-      title={t("terak_costs_add", locale)}
-      position="center"
-    >
+    <Modal open={open} onOpenChange={onOpenChange} title={t("terak_costs_add", locale)} position="center">
       <form onSubmit={handleSubmit} className="space-y-4 pt-2">
         {error && (
           <div className="p-3 text-caption text-destructive bg-destructive/10 border border-destructive/20 rounded-btn">
@@ -111,13 +106,7 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
 
         <div className="space-y-1.5">
           <Label htmlFor="cost-date">{t("cost_date", locale)} *</Label>
-          <Input
-            id="cost-date"
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-          />
+          <Input id="cost-date" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
         </div>
 
         {kind === "res" ? (
@@ -166,12 +155,7 @@ function CostDialogInner({ open, onOpenChange, terakId, locale }: CostDialogProp
         )}
 
         <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => onOpenChange(false)}
-            disabled={submitting}
-          >
+          <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
             {t("action_cancel", locale)}
           </Button>
           <Button type="submit" disabled={submitting}>

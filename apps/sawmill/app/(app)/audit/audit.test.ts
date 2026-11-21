@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createSawmillDb } from "@ventura/db";
 import { tenantAudit } from "@ventura/security";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("faoliyat jurnali (audit log) va xesh zanjiri (S6)", () => {
   it("audit yozuvlarini qayd etish va xesh zanjiri butunligini tekshirish to'g'ri ishlaydi", async () => {

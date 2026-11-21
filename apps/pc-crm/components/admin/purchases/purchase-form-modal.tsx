@@ -216,8 +216,8 @@ export function PurchaseFormModal({
             />
           </div>
 
-          {isFinancial && (
-            purchaseType === "piece" ? (
+          {isFinancial &&
+            (purchaseType === "piece" ? (
               <div>
                 <Label htmlFor="purchase-unit-cost">1 dona tannarxi (soʻm) *</Label>
                 <Input
@@ -239,8 +239,7 @@ export function PurchaseFormModal({
                   onFocus={(e) => e.target.select()}
                 />
               </div>
-            )
-          )}
+            ))}
 
           <div>
             <Label htmlFor="purchase-date">Xarid sanasi</Label>
@@ -258,16 +257,12 @@ export function PurchaseFormModal({
           <div className="flex items-center justify-between rounded-control border border-border bg-muted/20 p-3.5">
             <div>
               <FieldHint className="mt-0">Hisoblangan 1 dona tannarxi:</FieldHint>
-              <div className="text-body font-bold text-foreground">
-                {formatMoney(BigInt(unitCostStr || "0"))}
-              </div>
+              <div className="text-body font-bold text-foreground">{formatMoney(BigInt(unitCostStr || "0"))}</div>
             </div>
 
             <div className="text-right">
               <FieldHint className="mt-0">Jami toʻlangan summa:</FieldHint>
-              <div className="text-body font-bold text-primary">
-                {formatMoney(BigInt(totalCostStr || "0"))}
-              </div>
+              <div className="text-body font-bold text-primary">{formatMoney(BigInt(totalCostStr || "0"))}</div>
             </div>
           </div>
         )}
@@ -304,7 +299,8 @@ export function PurchaseFormModal({
             <div>
               <div className="text-body font-medium text-foreground">Katalogdagi tannarx yangilansin</div>
               <FieldHint className="mt-0.5">
-                Mahsulotning bazadagi tannarxi oxirgi kirim narxiga ({formatMoney(BigInt(unitCostStr || "0"))}) moslashtiriladi
+                Mahsulotning bazadagi tannarxi oxirgi kirim narxiga ({formatMoney(BigInt(unitCostStr || "0"))})
+                moslashtiriladi
               </FieldHint>
             </div>
             <Switch id="purchase-update-cost" checked={updateProductCost} onCheckedChange={setUpdateProductCost} />

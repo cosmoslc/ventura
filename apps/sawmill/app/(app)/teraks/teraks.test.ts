@@ -3,8 +3,7 @@ import { eq, isNull } from "drizzle-orm";
 import { createSawmillDb } from "@ventura/db";
 import { materials, terakCosts, terakMaterials, teraks } from "@ventura/db/schema/sawmill";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("teraks, stock and costs database operations", () => {
   it("terak yaratish, ombor narxlari, res xarajati va savat amallari to'liq ishlaydi", async () => {
@@ -28,10 +27,7 @@ describe("teraks, stock and costs database operations", () => {
       expect(trk.deletedAt).toBeNull();
 
       // 2. Faol materiallar ushbu terakka biriktirilishi
-      const activeMats = await db
-        .select()
-        .from(materials)
-        .where(isNull(materials.archivedAt));
+      const activeMats = await db.select().from(materials).where(isNull(materials.archivedAt));
 
       if (activeMats.length > 0) {
         const mat = activeMats[0]!;
@@ -84,21 +80,13 @@ describe("teraks, stock and costs database operations", () => {
       expect(cost.amount).toBe(600000);
 
       // 4. Savatga tashlash va tiklash (K8)
-      const [trashed] = await db
-        .update(teraks)
-        .set({ deletedAt: new Date() })
-        .where(eq(teraks.id, trk.id))
-        .returning();
+      const [trashed] = await db.update(teraks).set({ deletedAt: new Date() }).where(eq(teraks.id, trk.id)).returning();
 
       expect(trashed).toBeDefined();
       if (!trashed) throw new Error("Savatga tushmadi");
       expect(trashed.deletedAt).not.toBeNull();
 
-      const [restored] = await db
-        .update(teraks)
-        .set({ deletedAt: null })
-        .where(eq(teraks.id, trk.id))
-        .returning();
+      const [restored] = await db.update(teraks).set({ deletedAt: null }).where(eq(teraks.id, trk.id)).returning();
 
       expect(restored).toBeDefined();
       if (!restored) throw new Error("Savatdan chiqmadi");

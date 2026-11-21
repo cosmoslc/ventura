@@ -6,11 +6,7 @@ import { ConnectForm } from "./connect-form";
 
 export const metadata = { title: uz.auth.connectTitle };
 
-export default async function ConnectTelegramPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ next?: string }>;
-}) {
+export default async function ConnectTelegramPage({ searchParams }: { searchParams: Promise<{ next?: string }> }) {
   const staff = await getStaff();
   if (!staff) redirect("/login");
   if (staff.state === "must_change_password") redirect("/account/password");

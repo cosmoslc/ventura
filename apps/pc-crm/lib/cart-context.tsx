@@ -70,9 +70,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Agar foydalanuvchi tizimga kirsa va mehmon savatchasida mahsulot bo'lsa, ularni ko'chirish
         if (userId !== "guest") {
-          const guestStored =
-            localStorage.getItem("venturapc_cart_guest") ||
-            localStorage.getItem(CART_STORAGE_KEY);
+          const guestStored = localStorage.getItem("venturapc_cart_guest") || localStorage.getItem(CART_STORAGE_KEY);
           if (guestStored) {
             const parsed = JSON.parse(guestStored);
             if (Array.isArray(parsed) && parsed.length > 0) {

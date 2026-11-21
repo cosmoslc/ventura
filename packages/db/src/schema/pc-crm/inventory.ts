@@ -6,14 +6,7 @@ import { timestamps } from "./columns";
 export const PURCHASE_TYPES = ["piece", "bulk"] as const;
 export type PurchaseType = (typeof PURCHASE_TYPES)[number];
 
-export const STOCK_MOVEMENT_REASONS = [
-  "purchase",
-  "sale",
-  "reserve",
-  "release",
-  "return",
-  "adjust",
-] as const;
+export const STOCK_MOVEMENT_REASONS = ["purchase", "sale", "reserve", "release", "return", "adjust"] as const;
 export type StockMovementReason = (typeof STOCK_MOVEMENT_REASONS)[number];
 
 export const purchases = pgTable(
@@ -37,10 +30,7 @@ export const purchases = pgTable(
     voidedAt: timestamp("voided_at", { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [
-    index("purchases_product_id_idx").on(t.productId),
-    index("purchases_purchased_at_idx").on(t.purchasedAt),
-  ]
+  (t) => [index("purchases_product_id_idx").on(t.productId), index("purchases_purchased_at_idx").on(t.purchasedAt)],
 );
 
 export const stockMovements = pgTable(
@@ -61,5 +51,5 @@ export const stockMovements = pgTable(
   (t) => [
     index("stock_movements_product_id_idx").on(t.productId),
     index("stock_movements_created_at_idx").on(t.createdAt),
-  ]
+  ],
 );

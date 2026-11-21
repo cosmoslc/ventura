@@ -185,7 +185,11 @@ export function StudentsView({ rows }: { rows: KabinetStudent[] }) {
       <Modal
         open={!!passStudent}
         onOpenChange={(open) => !open && setPassStudent(null)}
-        title={passStudent ? `${passStudent.name} — ${passStudent.hasLogin ? "Parolni yangilash" : "Kirish paroli berish"}` : ""}
+        title={
+          passStudent
+            ? `${passStudent.name} — ${passStudent.hasLogin ? "Parolni yangilash" : "Kirish paroli berish"}`
+            : ""
+        }
       >
         <form onSubmit={handleSetPassword} className="space-y-4">
           <div>

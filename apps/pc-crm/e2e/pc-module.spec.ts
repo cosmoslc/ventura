@@ -66,7 +66,10 @@ test.describe("PC Modul: Tayyor kompyuterlar -> Batafsil -> Konfigurator", () =>
     await expect(page.getByText(/Tavsiya etilgan quvvat/i)).toBeVisible();
 
     // Videokarta bo'limiga o'tish
-    const gpuTabBtn = page.locator("main").getByRole("button", { name: /Videokarta/i }).first();
+    const gpuTabBtn = page
+      .locator("main")
+      .getByRole("button", { name: /Videokarta/i })
+      .first();
     await expect(gpuTabBtn).toBeVisible();
     await gpuTabBtn.click();
 

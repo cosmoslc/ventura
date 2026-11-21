@@ -1,44 +1,17 @@
 import { sql } from "drizzle-orm";
-import {
-  bigint,
-  index,
-  integer,
-  jsonb,
-  numeric,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from "drizzle-orm/pg-core";
+import { bigint, index, integer, jsonb, numeric, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 import { users } from "./auth";
 import { products, productVariants } from "./catalog";
 import { timestamps } from "./columns";
 import { pcBuilds } from "./pc";
 
-export const ORDER_STATUSES = [
-  "new",
-  "confirmed",
-  "shipping",
-  "delivered",
-  "cancelled",
-] as const;
+export const ORDER_STATUSES = ["new", "confirmed", "shipping", "delivered", "cancelled"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-export const PAYMENT_PROVIDERS = [
-  "cod_operator",
-  "mock",
-  "click",
-  "payme",
-] as const;
+export const PAYMENT_PROVIDERS = ["cod_operator", "mock", "click", "payme"] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
-export const PAYMENT_STATUSES = [
-  "pending",
-  "paid",
-  "failed",
-  "cancelled",
-  "refunded",
-] as const;
+export const PAYMENT_STATUSES = ["pending", "paid", "failed", "cancelled", "refunded"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
 export const SALE_SOURCES = ["site", "offline"] as const;
@@ -50,7 +23,9 @@ export type SaleType = (typeof SALE_TYPES)[number];
 // Savat
 export const carts = pgTable("carts", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").unique().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
   ...timestamps,
 });
 
@@ -67,7 +42,7 @@ export const cartItems = pgTable(
     qty: integer("qty").notNull().default(1),
     ...timestamps,
   },
-  (t) => [index("cart_items_cart_id_idx").on(t.cartId)]
+  (t) => [index("cart_items_cart_id_idx").on(t.cartId)],
 );
 
 // Buyurtmalar
@@ -85,9 +60,15 @@ export const orders = pgTable(
     lat: numeric("lat", { precision: 10, scale: 7 }),
     lng: numeric("lng", { precision: 10, scale: 7 }),
     subtotal: bigint("subtotal", { mode: "bigint" }).notNull(),
-    shipping: bigint("shipping", { mode: "bigint" }).notNull().default(sql`0`),
-    discount: bigint("discount", { mode: "bigint" }).notNull().default(sql`0`),
-    tax: bigint("tax", { mode: "bigint" }).notNull().default(sql`0`),
+    shipping: bigint("shipping", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
+    discount: bigint("discount", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
+    tax: bigint("tax", { mode: "bigint" })
+      .notNull()
+      .default(sql`0`),
     total: bigint("total", { mode: "bigint" }).notNull(),
     paymentMethod: text("payment_method", { enum: PAYMENT_PROVIDERS }).notNull().default("cod_operator"),
     note: text("note"),
@@ -97,7 +78,7 @@ export const orders = pgTable(
     index("orders_user_id_idx").on(t.userId),
     index("orders_status_idx").on(t.status),
     index("orders_created_at_idx").on(t.createdAt),
-  ]
+  ],
 );
 
 export const orderItems = pgTable(
@@ -116,7 +97,7 @@ export const orderItems = pgTable(
     qty: integer("qty").notNull(),
     ...timestamps,
   },
-  (t) => [index("order_items_order_id_idx").on(t.orderId)]
+  (t) => [index("order_items_order_id_idx").on(t.orderId)],
 );
 
 // To'lovlar
@@ -136,7 +117,7 @@ export const payments = pgTable(
     paidAt: timestamp("paid_at", { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [index("payments_order_id_idx").on(t.orderId)]
+  (t) => [index("payments_order_id_idx").on(t.orderId)],
 );
 
 // Sotuvlar (Sof foyda jurnali)
@@ -157,7 +138,7 @@ export const sales = pgTable(
     voidedAt: timestamp("voided_at", { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [index("sales_sold_at_idx").on(t.soldAt), index("sales_source_idx").on(t.source)]
+  (t) => [index("sales_sold_at_idx").on(t.soldAt), index("sales_source_idx").on(t.source)],
 );
 
 export const saleItems = pgTable(
@@ -178,5 +159,5 @@ export const saleItems = pgTable(
     profit: bigint("profit", { mode: "bigint" }).notNull(),
     ...timestamps,
   },
-  (t) => [index("sale_items_sale_id_idx").on(t.saleId)]
+  (t) => [index("sale_items_sale_id_idx").on(t.saleId)],
 );

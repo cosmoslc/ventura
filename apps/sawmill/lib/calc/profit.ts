@@ -36,14 +36,9 @@ export function calculateTerakProfit(inputs: TerakFinancialInputs): TerakProfitR
 
   const totalExpectedRevenue = revenue + stockVal;
   const marginEstimated =
-    totalExpectedRevenue > 0
-      ? Math.round((profitEstimated / totalExpectedRevenue) * 1000) / 10
-      : 0;
+    totalExpectedRevenue > 0 ? Math.round((profitEstimated / totalExpectedRevenue) * 1000) / 10 : 0;
 
-  const marginReal =
-    revenue > 0
-      ? Math.round((profitReal / revenue) * 1000) / 10
-      : 0;
+  const marginReal = revenue > 0 ? Math.round((profitReal / revenue) * 1000) / 10 : 0;
 
   return {
     totalCosts,
@@ -134,10 +129,7 @@ const DOW_RU = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 /**
  * K11: Oxirgi 7 kunlik yuk chiqarish grafigi ma'lumotlarini to'g'ri ajratib shakllantiradi.
  */
-export function calculateWeeklyChart(
-  dispatches: DispatchDayData[],
-  today: Date = new Date(),
-): WeeklyChartBar[] {
+export function calculateWeeklyChart(dispatches: DispatchDayData[], today: Date = new Date()): WeeklyChartBar[] {
   const bars: WeeklyChartBar[] = [];
 
   // Oxirgi 7 kun (6 kun avvaldan bugungacha)

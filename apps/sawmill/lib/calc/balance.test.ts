@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  calculateTerakProportionalBalance,
-  calculateWorkerBalance,
-} from "./balance";
+import { calculateTerakProportionalBalance, calculateWorkerBalance } from "./balance";
 
 describe("balance calculation module", () => {
   it("ishchi umumiy balansini to'g'ri hisoblaydi", () => {

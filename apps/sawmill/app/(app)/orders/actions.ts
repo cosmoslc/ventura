@@ -3,19 +3,10 @@
 import { and, desc, eq, isNotNull, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import {
-  materials,
-  orders,
-  terakMaterials,
-  teraks,
-} from "@ventura/db/schema/sawmill";
+import { materials, orders, terakMaterials, teraks } from "@ventura/db/schema/sawmill";
 import { tenantAudit } from "@ventura/security";
 import { can } from "@/lib/auth/roles";
-import {
-  getOrderStatus,
-  isOrderDueSoon,
-  type OrderStatus,
-} from "@/lib/calc/orders";
+import { getOrderStatus, isOrderDueSoon, type OrderStatus } from "@/lib/calc/orders";
 import { pieceVolumeM3 } from "@/lib/calc/units";
 import { currentDeps, requireUser } from "@/lib/server/session";
 
@@ -35,9 +26,7 @@ const createOrderSchema = z.object({
   dueDate: z.string().optional().nullable(),
 });
 
-export async function createOrderAction(
-  formData: FormData,
-): Promise<OrderActionResult> {
+export async function createOrderAction(formData: FormData): Promise<OrderActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "orders.manage")) {
     return { ok: false, error: "Zakaz qo'shish uchun ruxsat yo'q" };
@@ -63,15 +52,7 @@ export async function createOrderAction(
     return { ok: false, error: "Ma'lumotlar to'liq kiritilmadi" };
   }
 
-  const {
-    terakId,
-    materialId,
-    quantity,
-    customerName,
-    phone,
-    address,
-    dueDate,
-  } = parsed.data;
+  const { terakId, materialId, quantity, customerName, phone, address, dueDate } = parsed.data;
 
   const [newOrder] = await deps.db
     .insert(orders)
@@ -104,10 +85,7 @@ export async function createOrderAction(
   return { ok: true, id: newOrder.id };
 }
 
-export async function updateOrderAction(
-  orderId: string,
-  formData: FormData,
-): Promise<OrderActionResult> {
+export async function updateOrderAction(orderId: string, formData: FormData): Promise<OrderActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "orders.manage")) {
     return { ok: false, error: "Zakazni tahrirlash uchun ruxsat yo'q" };
@@ -155,9 +133,7 @@ export async function updateOrderAction(
   return { ok: true };
 }
 
-export async function toggleOrderCompletionAction(
-  orderId: string,
-): Promise<OrderActionResult> {
+export async function toggleOrderCompletionAction(orderId: string): Promise<OrderActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "orders.manage")) {
     return { ok: false, error: "Ruxsat yo'q" };
@@ -199,9 +175,7 @@ export async function toggleOrderCompletionAction(
   return { ok: true };
 }
 
-export async function deleteOrderAction(
-  orderId: string,
-): Promise<OrderActionResult> {
+export async function deleteOrderAction(orderId: string): Promise<OrderActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "orders.manage")) {
     return { ok: false, error: "Zakazni o'chirish uchun ruxsat yo'q" };
@@ -238,10 +212,7 @@ export async function deleteOrderAction(
   return { ok: true };
 }
 
-export async function markOrderNotifiedAction(
-  orderId: string,
-  type: "ready" | "due_soon",
-): Promise<OrderActionResult> {
+export async function markOrderNotifiedAction(orderId: string, type: "ready" | "due_soon"): Promise<OrderActionResult> {
   const { user } = await requireUser();
   if (!can(user.role, "orders.manage")) {
     return { ok: false, error: "Ruxsat yo'q" };
@@ -259,10 +230,7 @@ export async function markOrderNotifiedAction(
     updateFields.dueNotifiedAt = new Date();
   }
 
-  await deps.db
-    .update(orders)
-    .set(updateFields)
-    .where(eq(orders.id, orderId));
+  await deps.db.update(orders).set(updateFields).where(eq(orders.id, orderId));
 
   revalidatePath("/orders");
   return { ok: true };
@@ -314,10 +282,7 @@ export async function getOrdersList(
     .innerJoin(materials, eq(materials.id, orders.materialId))
     .leftJoin(
       terakMaterials,
-      and(
-        eq(terakMaterials.terakId, orders.terakId),
-        eq(terakMaterials.materialId, orders.materialId),
-      ),
+      and(eq(terakMaterials.terakId, orders.terakId), eq(terakMaterials.materialId, orders.materialId)),
     )
     .where(conditions.length > 0 ? and(...conditions) : undefined)
     .orderBy(desc(orders.createdAt));
@@ -327,10 +292,7 @@ export async function getOrdersList(
   return rows.map((r) => {
     const qty = Number(r.quantity);
     const stockQty = Number(r.stockQuantity ?? 0);
-    const status: OrderStatus = getOrderStatus(
-      { quantity: qty, completedAt: r.completedAt },
-      stockQty,
-    );
+    const status: OrderStatus = getOrderStatus({ quantity: qty, completedAt: r.completedAt }, stockQty);
     const dueSoon = isOrderDueSoon(r.dueDate, today);
 
     const vol = pieceVolumeM3({

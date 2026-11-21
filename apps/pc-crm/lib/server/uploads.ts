@@ -43,7 +43,7 @@ export function getMimeType(filename: string): string {
 export async function saveUploadedBuffer(
   buffer: Buffer,
   originalName: string,
-  forcedExt?: string
+  forcedExt?: string,
 ): Promise<{ url: string; filename: string; size: number }> {
   const uploadsDir = getUploadsDir();
   const filename = sanitizeFilename(originalName, forcedExt);
@@ -60,7 +60,7 @@ export async function saveUploadedBuffer(
 
 export async function saveBase64Image(
   dataUrl: string,
-  preferredName = "product-clean.webp"
+  preferredName = "product-clean.webp",
 ): Promise<{ url: string; filename: string; size: number }> {
   const match = dataUrl.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
   if (!match) {

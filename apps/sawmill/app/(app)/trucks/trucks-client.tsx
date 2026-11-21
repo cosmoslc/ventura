@@ -24,12 +24,7 @@ interface TrucksClientProps {
   locale: Locale;
 }
 
-export function TrucksClient({
-  activeTrucks,
-  archivedTrucks,
-  canManage,
-  locale,
-}: TrucksClientProps) {
+export function TrucksClient({ activeTrucks, archivedTrucks, canManage, locale }: TrucksClientProps) {
   const [tab, setTab] = React.useState<"active" | "archived">("active");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedTruck, setSelectedTruck] = React.useState<TruckData | null>(null);
@@ -64,12 +59,8 @@ export function TrucksClient({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("trucks_title", locale)}
-          </h1>
-          <p className="text-caption text-muted-foreground mt-0.5">
-            {t("trucks_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("trucks_title", locale)}</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">{t("trucks_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -134,11 +125,7 @@ export function TrucksClient({
 
               {canManage && (
                 <div className="flex items-center justify-end gap-1.5 pt-3 mt-4 border-t border-border">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleEdit(tr)}
-                    className="h-8 px-2.5 text-caption"
-                  >
+                  <Button variant="ghost" onClick={() => handleEdit(tr)} className="h-8 px-2.5 text-caption">
                     <Edit2 className="size-3.5 mr-1" />
                     {t("action_edit", locale)}
                   </Button>
@@ -167,12 +154,7 @@ export function TrucksClient({
       )}
 
       {/* Edit / Add Dialog */}
-      <TruckDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        truck={selectedTruck}
-        locale={locale}
-      />
+      <TruckDialog open={dialogOpen} onOpenChange={setDialogOpen} truck={selectedTruck} locale={locale} />
 
       {/* Confirm Archive Modal */}
       <ConfirmModal

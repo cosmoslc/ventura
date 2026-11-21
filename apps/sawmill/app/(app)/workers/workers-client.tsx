@@ -28,12 +28,7 @@ interface WorkersClientProps {
   locale: Locale;
 }
 
-export function WorkersClient({
-  activeWorkers,
-  archivedWorkers,
-  canManage,
-  locale,
-}: WorkersClientProps) {
+export function WorkersClient({ activeWorkers, archivedWorkers, canManage, locale }: WorkersClientProps) {
   const [tab, setTab] = React.useState<"active" | "archived">("active");
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedWorker, setSelectedWorker] = React.useState<WorkerData | null>(null);
@@ -89,12 +84,8 @@ export function WorkersClient({
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {t("workers_title", locale)}
-          </h1>
-          <p className="text-caption text-muted-foreground mt-0.5">
-            {t("workers_subtitle", locale)}
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">{t("workers_title", locale)}</h1>
+          <p className="text-caption text-muted-foreground mt-0.5">{t("workers_subtitle", locale)}</p>
         </div>
 
         {canManage && (
@@ -152,9 +143,7 @@ export function WorkersClient({
                     >
                       {w.name}
                     </Link>
-                    <p className="text-caption text-muted-foreground font-mono">
-                      {w.phone ?? "Telefon kiritilmagan"}
-                    </p>
+                    <p className="text-caption text-muted-foreground font-mono">{w.phone ?? "Telefon kiritilmagan"}</p>
                   </div>
                   <Badge tone={salaryTones[w.salaryType] ?? "neutral"}>
                     {salaryLabels[w.salaryType] ?? w.salaryType}
@@ -162,19 +151,13 @@ export function WorkersClient({
                 </div>
 
                 {w.salaryType !== "piecework" && (
-                  <div className="text-caption font-semibold text-foreground pt-1">
-                    {formatMoney(w.wageAmount)}
-                  </div>
+                  <div className="text-caption font-semibold text-foreground pt-1">{formatMoney(w.wageAmount)}</div>
                 )}
               </div>
 
               {canManage && (
                 <div className="flex items-center justify-end gap-1.5 pt-3 mt-3 border-t border-border">
-                  <Button
-                    variant="ghost"
-                    onClick={() => handleEdit(w)}
-                    className="h-8 px-2.5 text-caption"
-                  >
+                  <Button variant="ghost" onClick={() => handleEdit(w)} className="h-8 px-2.5 text-caption">
                     <Edit2 className="size-3.5 mr-1" />
                     {t("action_edit", locale)}
                   </Button>
@@ -203,12 +186,7 @@ export function WorkersClient({
       )}
 
       {/* Add / Edit Dialog */}
-      <WorkerDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        worker={selectedWorker}
-        locale={locale}
-      />
+      <WorkerDialog open={dialogOpen} onOpenChange={setDialogOpen} worker={selectedWorker} locale={locale} />
 
       {/* Confirm Archive Modal */}
       <ConfirmModal

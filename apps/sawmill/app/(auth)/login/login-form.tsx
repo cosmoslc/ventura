@@ -13,17 +13,14 @@ import { type FormState, loginAction } from "./actions";
 export function LoginForm({ initialLocale = "uz" }: { initialLocale?: Locale }) {
   const router = useRouter();
   const [locale, setLocale] = useState<Locale>(initialLocale);
-  const [state, formAction, isPending] = useActionState<FormState, FormData>(
-    async (prev, formData) => {
-      const res = await loginAction(prev, formData);
-      if (res.next) {
-        router.push(res.next);
-        router.refresh();
-      }
-      return res;
-    },
-    {},
-  );
+  const [state, formAction, isPending] = useActionState<FormState, FormData>(async (prev, formData) => {
+    const res = await loginAction(prev, formData);
+    if (res.next) {
+      router.push(res.next);
+      router.refresh();
+    }
+    return res;
+  }, {});
   const [phone, setPhone] = useState("");
 
   return (

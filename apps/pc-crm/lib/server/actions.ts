@@ -6,7 +6,15 @@ import { AuthorizationError, getServerSession, requireAdmin, requireUser } from 
 import { createDbProduct, updateDbProduct, deleteDbProduct, getDbProducts } from "./products";
 import { createDbPurchase, voidDbPurchase, getDbPurchases } from "./purchases";
 import { createDbSale, voidDbSale, getDbSales } from "./sales";
-import { createDbPcOrder, getDbPcBuilds, getDbPcOrders, getDbConfiguratorParts, saveDbPcBuild, sellDbPcBuild, updateDbPcOrderStatus } from "./pcs";
+import {
+  createDbPcOrder,
+  getDbPcBuilds,
+  getDbPcOrders,
+  getDbConfiguratorParts,
+  saveDbPcBuild,
+  sellDbPcBuild,
+  updateDbPcOrderStatus,
+} from "./pcs";
 import { getDbUsers, toggleDbUserActive } from "./users";
 import { getDbSettings, getDbShippingRates, saveDbShippingRates, updateDbSetting } from "./settings";
 import type { OrderStatus, PurchaseType, SaleSource, SaleType, PcOrderStatus } from "@ventura/db/schema/pc-crm";
@@ -22,7 +30,10 @@ const orderInputSchema = z.object({
   address: z.string().trim().min(5).max(500),
   paymentMethod: z.enum(["cod_operator"]),
   note: z.string().trim().max(1000).optional(),
-  items: z.array(z.object({ productId: idSchema, qty: z.number().int().min(1).max(100) })).min(1).max(100),
+  items: z
+    .array(z.object({ productId: idSchema, qty: z.number().int().min(1).max(100) }))
+    .min(1)
+    .max(100),
 });
 
 function actionError(err: unknown, fallback: string) {
@@ -65,7 +76,10 @@ export async function getMyOrdersAction() {
 export async function updateOrderStatusAction(orderId: string, status: OrderStatus) {
   try {
     await requireAdmin();
-    if (!idSchema.safeParse(orderId).success || !["new", "confirmed", "shipping", "delivered", "cancelled"].includes(status)) {
+    if (
+      !idSchema.safeParse(orderId).success ||
+      !["new", "confirmed", "shipping", "delivered", "cancelled"].includes(status)
+    ) {
       return { success: false, error: "Buyurtma ma'lumotlari noto'g'ri" };
     }
     await updateDbOrderStatus(orderId, status);
@@ -102,21 +116,39 @@ export async function saveProductAction(input: {
 }) {
   try {
     await requireAdmin();
-    const specs = z.array(z.object({
-      key: z.string().trim().min(1).max(100),
-      title: z.string().trim().min(1).max(200),
-      value: z.string().trim().max(1000),
-      helpText: z.string().trim().max(1000).optional(),
-    })).max(100).safeParse(input.specs ?? []);
+    const specs = z
+      .array(
+        z.object({
+          key: z.string().trim().min(1).max(100),
+          title: z.string().trim().min(1).max(200),
+          value: z.string().trim().max(1000),
+          helpText: z.string().trim().max(1000).optional(),
+        }),
+      )
+      .max(100)
+      .safeParse(input.specs ?? []);
     if (!specs.success) return { success: false, error: "Mahsulot xususiyatlari noto'g'ri" };
     if (input.id && !idSchema.safeParse(input.id).success) return { success: false, error: "Mahsulot ID noto'g'ri" };
-    if (input.nameUz.trim().length < 2 || input.nameUz.length > 200 || (input.nameRu?.length ?? 0) > 200 ||
-        input.categorySlug.trim().length < 1 || input.categorySlug.length > 120 || (input.brandName?.length ?? 0) > 120 ||
-        (input.sku?.length ?? 0) > 120 || (input.imageUrl?.length ?? 0) > 2000 || input.costPrice < 0n || input.sellPrice < 0n ||
-        !Number.isInteger(input.discountPercent ?? 0) || (input.discountPercent ?? 0) < 0 || (input.discountPercent ?? 0) > 100 ||
-        !Number.isInteger(input.stock ?? 0) || (input.stock ?? 0) < 0 ||
-        !Number.isInteger(input.minStock ?? 2) || (input.minStock ?? 2) < 0 ||
-        (input.isActive !== undefined && typeof input.isActive !== "boolean")) {
+    if (
+      input.nameUz.trim().length < 2 ||
+      input.nameUz.length > 200 ||
+      (input.nameRu?.length ?? 0) > 200 ||
+      input.categorySlug.trim().length < 1 ||
+      input.categorySlug.length > 120 ||
+      (input.brandName?.length ?? 0) > 120 ||
+      (input.sku?.length ?? 0) > 120 ||
+      (input.imageUrl?.length ?? 0) > 2000 ||
+      input.costPrice < 0n ||
+      input.sellPrice < 0n ||
+      !Number.isInteger(input.discountPercent ?? 0) ||
+      (input.discountPercent ?? 0) < 0 ||
+      (input.discountPercent ?? 0) > 100 ||
+      !Number.isInteger(input.stock ?? 0) ||
+      (input.stock ?? 0) < 0 ||
+      !Number.isInteger(input.minStock ?? 2) ||
+      (input.minStock ?? 2) < 0 ||
+      (input.isActive !== undefined && typeof input.isActive !== "boolean")
+    ) {
       return { success: false, error: "Mahsulot ma'lumotlari noto'g'ri" };
     }
     if (input.id) {
@@ -185,8 +217,15 @@ export async function savePurchaseAction(input: {
 }) {
   try {
     await requireAdmin();
-    if (!idSchema.safeParse(input.productId).success || !Number.isInteger(input.qty) || input.qty < 1 || input.qty > 100000 ||
-        input.totalCost < 0n || input.unitCost < 0n) return { success: false, error: "Kirim ma'lumotlari noto'g'ri" };
+    if (
+      !idSchema.safeParse(input.productId).success ||
+      !Number.isInteger(input.qty) ||
+      input.qty < 1 ||
+      input.qty > 100000 ||
+      input.totalCost < 0n ||
+      input.unitCost < 0n
+    )
+      return { success: false, error: "Kirim ma'lumotlari noto'g'ri" };
     await createDbPurchase(input);
     revalidatePath("/admin/purchases");
     revalidatePath("/admin/products");
@@ -231,8 +270,16 @@ export async function saveSaleAction(input: {
 }) {
   try {
     await requireAdmin();
-    if (input.productId && !idSchema.safeParse(input.productId).success) return { success: false, error: "Mahsulot ID noto'g'ri" };
-    if (!Number.isInteger(input.qty) || input.qty < 1 || input.qty > 100000 || input.listPrice < 0n || input.soldPrice < 0n || input.costSnapshot < 0n) {
+    if (input.productId && !idSchema.safeParse(input.productId).success)
+      return { success: false, error: "Mahsulot ID noto'g'ri" };
+    if (
+      !Number.isInteger(input.qty) ||
+      input.qty < 1 ||
+      input.qty > 100000 ||
+      input.listPrice < 0n ||
+      input.soldPrice < 0n ||
+      input.costSnapshot < 0n
+    ) {
       return { success: false, error: "Sotuv ma'lumotlari noto'g'ri" };
     }
     await createDbSale(input);
@@ -268,13 +315,18 @@ export async function savePcOrderAction(input: {
 }) {
   try {
     const user = await requireUser();
-    const schema = z.object({
-      customerName: z.string().trim().min(2).max(120),
-      customerPhone: z.string().trim().min(9).max(24),
-      deliveryAddress: z.string().trim().min(5).max(500),
-      customerNote: z.string().trim().max(1000).optional(),
-      componentIds: z.array(z.object({ role: z.enum(PC_COMPONENT_ROLES), productId: idSchema })).min(1).max(8),
-    }).safeParse(input);
+    const schema = z
+      .object({
+        customerName: z.string().trim().min(2).max(120),
+        customerPhone: z.string().trim().min(9).max(24),
+        deliveryAddress: z.string().trim().min(5).max(500),
+        customerNote: z.string().trim().max(1000).optional(),
+        componentIds: z
+          .array(z.object({ role: z.enum(PC_COMPONENT_ROLES), productId: idSchema }))
+          .min(1)
+          .max(8),
+      })
+      .safeParse(input);
     if (!schema.success) return { success: false, error: "PC buyurtmasi ma'lumotlari noto'g'ri" };
     const order = await createDbPcOrder({ ...schema.data, userId: user.id });
     revalidatePath("/admin/pc-orders");
@@ -288,15 +340,20 @@ export async function updatePcOrderStatusAction(
   id: string,
   status: PcOrderStatus,
   quotedPrice?: bigint,
-  operatorNote?: string
+  operatorNote?: string,
 ) {
   try {
     await requireAdmin();
-    if (!idSchema.safeParse(id).success || !["new", "reviewing", "quoted", "confirmed", "assembling", "ready", "delivered", "cancelled"].includes(status)) {
+    if (
+      !idSchema.safeParse(id).success ||
+      !["new", "reviewing", "quoted", "confirmed", "assembling", "ready", "delivered", "cancelled"].includes(status)
+    ) {
       return { success: false, error: "PC buyurtmasi ma'lumotlari noto'g'ri" };
     }
-    if ((quotedPrice !== undefined && (quotedPrice < 0n || quotedPrice > 1_000_000_000_000_000n)) ||
-        (operatorNote !== undefined && (typeof operatorNote !== "string" || operatorNote.length > 2000))) {
+    if (
+      (quotedPrice !== undefined && (quotedPrice < 0n || quotedPrice > 1_000_000_000_000_000n)) ||
+      (operatorNote !== undefined && (typeof operatorNote !== "string" || operatorNote.length > 2000))
+    ) {
       return { success: false, error: "Taklif narxi yoki operator izohi noto'g'ri" };
     }
     await updateDbPcOrderStatus(id, status, quotedPrice, operatorNote);
@@ -416,17 +473,40 @@ export async function savePcBuildAction(input: {
 }) {
   try {
     await requireAdmin();
-    const schema = z.object({
-      id: idSchema.optional(),
-      slug: z.string().trim().min(2).max(180).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
-      name: z.string().trim().min(2).max(200),
-      images: z.array(z.string().trim().min(1).max(2000)).max(10),
-      sellPrice: z.bigint().min(0n).max(1_000_000_000_000_000n),
-      discountPercent: z.number().int().min(0).max(100),
-      status: z.enum(["available", "hidden"]),
-      components: z.array(z.object({ role: z.enum(PC_COMPONENT_ROLES), productId: idSchema, qty: z.number().int().min(1).max(100) })).min(1).max(40),
-      specs: z.array(z.object({ key: z.string().trim().min(1).max(100), title: z.string().trim().min(1).max(200), value: z.string().trim().max(1000), filterable: z.boolean().optional(), helpTitle: z.string().max(200).optional(), helpText: z.string().max(1000).optional() })).max(100),
-    }).safeParse(input);
+    const schema = z
+      .object({
+        id: idSchema.optional(),
+        slug: z
+          .string()
+          .trim()
+          .min(2)
+          .max(180)
+          .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+        name: z.string().trim().min(2).max(200),
+        images: z.array(z.string().trim().min(1).max(2000)).max(10),
+        sellPrice: z.bigint().min(0n).max(1_000_000_000_000_000n),
+        discountPercent: z.number().int().min(0).max(100),
+        status: z.enum(["available", "hidden"]),
+        components: z
+          .array(
+            z.object({ role: z.enum(PC_COMPONENT_ROLES), productId: idSchema, qty: z.number().int().min(1).max(100) }),
+          )
+          .min(1)
+          .max(40),
+        specs: z
+          .array(
+            z.object({
+              key: z.string().trim().min(1).max(100),
+              title: z.string().trim().min(1).max(200),
+              value: z.string().trim().max(1000),
+              filterable: z.boolean().optional(),
+              helpTitle: z.string().max(200).optional(),
+              helpText: z.string().max(1000).optional(),
+            }),
+          )
+          .max(100),
+      })
+      .safeParse(input);
     if (!schema.success) return { success: false, error: "PC build ma'lumotlari noto'g'ri" };
     await saveDbPcBuild(schema.data);
     revalidatePath("/admin/pcs");
@@ -441,12 +521,14 @@ export async function savePcBuildAction(input: {
 export async function sellPcBuildAction(input: { id: string; buyerName: string; buyerPhone: string; soldAt: string }) {
   try {
     await requireAdmin();
-    const schema = z.object({
-      id: idSchema,
-      buyerName: z.string().trim().min(2).max(120),
-      buyerPhone: z.string().trim().min(9).max(24),
-      soldAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-    }).safeParse(input);
+    const schema = z
+      .object({
+        id: idSchema,
+        buyerName: z.string().trim().min(2).max(120),
+        buyerPhone: z.string().trim().min(9).max(24),
+        soldAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      })
+      .safeParse(input);
     if (!schema.success) return { success: false, error: "PC sotuv ma'lumotlari noto'g'ri" };
     await sellDbPcBuild(schema.data);
     revalidatePath("/admin/pcs");
@@ -478,15 +560,21 @@ export async function getAdminSettingsAction() {
   }
 }
 
-export async function saveShippingRatesAction(rates: { region: string; price: bigint; enabled: boolean; estimatedDays?: string }[]) {
+export async function saveShippingRatesAction(
+  rates: { region: string; price: bigint; enabled: boolean; estimatedDays?: string }[],
+) {
   try {
     await requireAdmin();
-    const schema = z.array(z.object({
-      region: z.string().trim().min(2).max(120),
-      price: z.bigint().min(0n).max(1_000_000_000_000n),
-      enabled: z.boolean(),
-      estimatedDays: z.string().trim().max(60).optional(),
-    })).max(200);
+    const schema = z
+      .array(
+        z.object({
+          region: z.string().trim().min(2).max(120),
+          price: z.bigint().min(0n).max(1_000_000_000_000n),
+          enabled: z.boolean(),
+          estimatedDays: z.string().trim().max(60).optional(),
+        }),
+      )
+      .max(200);
     const parsed = schema.safeParse(rates);
     if (!parsed.success) return { success: false, error: "Yetkazib berish tariflari noto'g'ri" };
     await saveDbShippingRates(parsed.data);
@@ -532,9 +620,37 @@ export async function getStorefrontPcBuildsAction() {
     const builds = await getDbPcBuilds({ status: "available" });
     return {
       success: true,
-      builds: builds.map(({ id, slug, name, images, sellPrice, discountPercent, status, ratingAvg, ratingCount, cpu, gpu, ram, storage }) => ({
-        id, slug, name, images, sellPrice, discountPercent, status, ratingAvg, ratingCount, cpu, gpu, ram, storage,
-      })),
+      builds: builds.map(
+        ({
+          id,
+          slug,
+          name,
+          images,
+          sellPrice,
+          discountPercent,
+          status,
+          ratingAvg,
+          ratingCount,
+          cpu,
+          gpu,
+          ram,
+          storage,
+        }) => ({
+          id,
+          slug,
+          name,
+          images,
+          sellPrice,
+          discountPercent,
+          status,
+          ratingAvg,
+          ratingCount,
+          cpu,
+          gpu,
+          ram,
+          storage,
+        }),
+      ),
     };
   } catch (err) {
     console.error("getStorefrontPcBuildsAction error:", err);
@@ -547,9 +663,20 @@ export async function getStorefrontConfiguratorPartsAction() {
     const parts = await getDbConfiguratorParts();
     return {
       success: true,
-      parts: parts.filter((part) => part.stock > 0).map(({ id, role, roleLabel, name, brand, price, stock, imageUrl, specsSummary, tdpWatts }) => ({
-        id, role, roleLabel, name, brand, price, stock, imageUrl, specsSummary, tdpWatts,
-      })),
+      parts: parts
+        .filter((part) => part.stock > 0)
+        .map(({ id, role, roleLabel, name, brand, price, stock, imageUrl, specsSummary, tdpWatts }) => ({
+          id,
+          role,
+          roleLabel,
+          name,
+          brand,
+          price,
+          stock,
+          imageUrl,
+          specsSummary,
+          tdpWatts,
+        })),
     };
   } catch (err) {
     console.error("getStorefrontConfiguratorPartsAction error:", err);

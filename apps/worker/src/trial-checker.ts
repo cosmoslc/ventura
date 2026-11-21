@@ -41,11 +41,7 @@ async function findDirectorChatId(
   }
 }
 
-export async function checkTrialExpirations(
-  db: PanelDb,
-  notify: (html: string) => Promise<void>,
-  telegram?: Telegram,
-) {
+export async function checkTrialExpirations(db: PanelDb, notify: (html: string) => Promise<void>, telegram?: Telegram) {
   try {
     const activeProjects = await db
       .select({

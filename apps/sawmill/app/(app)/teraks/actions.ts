@@ -43,15 +43,15 @@ export async function createTerakAction(formData: FormData): Promise<TerakAction
   if (!can(user.role, "teraks.manage")) return { ok: false, error: "Ruxsat etilmagan amal" };
 
   let inputName = formData.get("name") ? String(formData.get("name")).trim() : "";
-  const purchaseDate = formData.get("purchaseDate") ? String(formData.get("purchaseDate")) : new Date().toISOString().slice(0, 10);
+  const purchaseDate = formData.get("purchaseDate")
+    ? String(formData.get("purchaseDate"))
+    : new Date().toISOString().slice(0, 10);
   const purchasePrice = formData.get("purchasePrice") ? Number(formData.get("purchasePrice")) : 0;
   const note = formData.get("note") ? String(formData.get("note")).trim() : null;
 
   // Standart nom berish: "Terak N"
   if (!inputName) {
-    const [countRow] = await deps.db
-      .select({ count: sql<number>`count(*)` })
-      .from(teraks);
+    const [countRow] = await deps.db.select({ count: sql<number>`count(*)` }).from(teraks);
     const num = Number(countRow?.count ?? 0) + 1;
     inputName = `Terak ${num}`;
   }
@@ -172,10 +172,7 @@ export async function trashTerakAction(terakId: string): Promise<TerakActionResu
   if (!can(user.role, "teraks.manage")) return { ok: false, error: "Ruxsat etilmagan amal" };
 
   try {
-    await deps.db
-      .update(teraks)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
-      .where(eq(teraks.id, terakId));
+    await deps.db.update(teraks).set({ deletedAt: new Date(), updatedAt: new Date() }).where(eq(teraks.id, terakId));
 
     await tenantAudit.record(deps.db, {
       actor: { type: "user", id: user.id, name: user.name },
@@ -197,10 +194,7 @@ export async function restoreTerakAction(terakId: string): Promise<TerakActionRe
   if (!can(user.role, "teraks.manage")) return { ok: false, error: "Ruxsat etilmagan amal" };
 
   try {
-    await deps.db
-      .update(teraks)
-      .set({ deletedAt: null, updatedAt: new Date() })
-      .where(eq(teraks.id, terakId));
+    await deps.db.update(teraks).set({ deletedAt: null, updatedAt: new Date() }).where(eq(teraks.id, terakId));
 
     await tenantAudit.record(deps.db, {
       actor: { type: "user", id: user.id, name: user.name },
@@ -510,11 +504,7 @@ export async function getTerakDetail(
   db: NonNullable<Awaited<ReturnType<typeof currentDeps>>["deps"]>["db"],
   terakId: string,
 ) {
-  const [terak] = await db
-    .select()
-    .from(teraks)
-    .where(eq(teraks.id, terakId))
-    .limit(1);
+  const [terak] = await db.select().from(teraks).where(eq(teraks.id, terakId)).limit(1);
 
   if (!terak) return null;
 
@@ -578,15 +568,10 @@ export async function getTerakDetail(
 
   // Res va Sartirofka hisobi (SAWMILL-TAHLIL 8-qism)
   // resSoni = sum(trips where kind='res' and trips > 0)
-  const totalRes = costs
-    .filter((c) => c.kind === "res")
-    .reduce((acc, c) => acc + Number(c.trips ?? 0), 0);
+  const totalRes = costs.filter((c) => c.kind === "res").reduce((acc, c) => acc + Number(c.trips ?? 0), 0);
 
   // sartirofkaSoni = workType='Sartirofka' (kind='sorting') entries soni
-  const sortingWorkTypes = await db
-    .select({ id: workTypes.id })
-    .from(workTypes)
-    .where(eq(workTypes.kind, "sorting"));
+  const sortingWorkTypes = await db.select({ id: workTypes.id }).from(workTypes).where(eq(workTypes.kind, "sorting"));
 
   const sortingTypeIds = sortingWorkTypes.map((wt) => wt.id);
 
@@ -657,10 +642,7 @@ export async function getTerakDetail(
     .where(eq(dispatches.terakId, terakId))
     .orderBy(desc(dispatches.date), desc(dispatches.createdAt));
 
-  const totalDispatchedAmount = dispatchRows.reduce(
-    (acc, d) => acc + Number(d.totalAmount),
-    0,
-  );
+  const totalDispatchedAmount = dispatchRows.reduce((acc, d) => acc + Number(d.totalAmount), 0);
 
   const dispatchesList = dispatchRows.map((d) => {
     const vol = pieceVolumeM3({
@@ -714,10 +696,7 @@ export async function getTerakDetail(
   const ordersList = orderRows.map((o) => {
     const qty = Number(o.quantity);
     const stockQty = stockByMatId.get(o.materialId) ?? 0;
-    const status: OrderStatus = getOrderStatus(
-      { quantity: qty, completedAt: o.completedAt },
-      stockQty,
-    );
+    const status: OrderStatus = getOrderStatus({ quantity: qty, completedAt: o.completedAt }, stockQty);
     const dueSoon = isOrderDueSoon(o.dueDate, today);
 
     const vol = pieceVolumeM3({

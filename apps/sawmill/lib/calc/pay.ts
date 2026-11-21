@@ -23,11 +23,7 @@ export interface WorkerCubePriceInput {
  * Agar ishchi maoshli bo'lsa (kunlik/haftalik/oylik), ishiga qarab narx 0 bo'ladi.
  * Maxsus narx bo'lsa, u ustun turadi. Aks holda terakdagi bazaviy narx olinadi.
  */
-export function resolveWorkerPrice({
-  salaryType,
-  baseWorkerPrice,
-  specialPrice,
-}: WorkerPriceInput): number {
+export function resolveWorkerPrice({ salaryType, baseWorkerPrice, specialPrice }: WorkerPriceInput): number {
   if (salaryType !== "piecework") return 0;
   if (specialPrice !== undefined && specialPrice !== null && specialPrice > 0) {
     return specialPrice;
@@ -39,10 +35,7 @@ export function resolveWorkerPrice({
  * Ishchining material bo'yicha kub narxini aniqlaydi.
  * Agar ishchi maoshli bo'lsa, 0. Aks holda terakdagi bazaviy kub narxi.
  */
-export function resolveWorkerCubePrice({
-  salaryType,
-  baseCubeWorkerPrice,
-}: WorkerCubePriceInput): number {
+export function resolveWorkerCubePrice({ salaryType, baseCubeWorkerPrice }: WorkerCubePriceInput): number {
   if (salaryType !== "piecework") return 0;
   return baseCubeWorkerPrice && baseCubeWorkerPrice > 0 ? baseCubeWorkerPrice : 0;
 }
@@ -68,9 +61,7 @@ export interface SingleWorkCalculationResult {
 /**
  * Yakka ish uchun ish haqi summasi va omborga qo'shiladigan miqdorni hisoblaydi.
  */
-export function calculateSingleWork(
-  input: SingleWorkCalculationInput,
-): SingleWorkCalculationResult {
+export function calculateSingleWork(input: SingleWorkCalculationInput): SingleWorkCalculationResult {
   if (input.kind === "regular") {
     return {
       amount: Math.max(0, Math.round(input.manualAmount ?? 0)),
@@ -151,9 +142,7 @@ export interface GroupWorkCalculationResult {
  * Guruh ishi uchun jami summa, ombor miqdori (faqat 1 marta qo'shiladi)
  * va ishchilar orasida taqsimotni hisoblaydi (K2, K15 qarorlari).
  */
-export function calculateGroupWork(
-  input: GroupWorkCalculationInput,
-): GroupWorkCalculationResult {
+export function calculateGroupWork(input: GroupWorkCalculationInput): GroupWorkCalculationResult {
   const { workers, payFullToEach } = input;
   if (workers.length === 0) {
     return { totalAmount: 0, stockDelta: 0, distributions: [] };

@@ -3,8 +3,7 @@ import { eq, sql } from "drizzle-orm";
 import { createSawmillDb } from "@ventura/db";
 import { expenseCategories, generalExpenses } from "@ventura/db/schema/sawmill";
 
-const DB_URL =
-  "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
+const DB_URL = "postgres://ventura:5XWBxJfHkvKkSLLT87q9NqMn@localhost:5432/edu_dev?options=-csearch_path%3Dsawmill";
 
 describe("umumiy xarajatlar (general expenses) database operations (S5 - K14)", () => {
   it("toifa yaratish, umumiy xarajat qo'shish, hisoblash va tozalash to'g'ri ishlaydi", async () => {
@@ -53,17 +52,20 @@ describe("umumiy xarajatlar (general expenses) database operations (S5 - K14)", 
 
       // 4. Xarajatni o'chirish
       await db.delete(generalExpenses).where(eq(generalExpenses.id, exp!.id));
-      const [deletedExp] = await db
-        .select()
-        .from(generalExpenses)
-        .where(eq(generalExpenses.id, exp!.id));
+      const [deletedExp] = await db.select().from(generalExpenses).where(eq(generalExpenses.id, exp!.id));
       expect(deletedExp).toBeUndefined();
     } finally {
       if (expenseId) {
-        await db.delete(generalExpenses).where(eq(generalExpenses.id, expenseId)).catch(() => {});
+        await db
+          .delete(generalExpenses)
+          .where(eq(generalExpenses.id, expenseId))
+          .catch(() => {});
       }
       if (categoryId) {
-        await db.delete(expenseCategories).where(eq(expenseCategories.id, categoryId)).catch(() => {});
+        await db
+          .delete(expenseCategories)
+          .where(eq(expenseCategories.id, categoryId))
+          .catch(() => {});
       }
     }
   });

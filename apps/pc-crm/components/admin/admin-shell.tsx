@@ -62,9 +62,8 @@ function activeFor(pathname: string) {
   let bestLength = 0;
   for (const section of NAV) {
     for (const item of section.items) {
-      const matches = item.id === "/admin"
-        ? pathname === item.id
-        : pathname === item.id || pathname.startsWith(`${item.id}/`);
+      const matches =
+        item.id === "/admin" ? pathname === item.id : pathname === item.id || pathname.startsWith(`${item.id}/`);
       if (matches && item.id.length > bestLength) {
         activeId = item.id;
         bestLength = item.id.length;
@@ -82,35 +81,38 @@ export function AdminShell({ children }: AdminShellProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const navSections: NavSection[] = useMemo(() => [
-    {
-      title: "Boshqaruv",
-      items: [
-        { id: "/admin", label: "Boshqaruv paneli", icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
-        { id: "/admin/products", label: "Mahsulotlar", icon: Boxes, color: "var(--nav-hue-violet)" },
-        {
-          id: "/admin/purchases",
-          label: isFinancial ? "Kirimlar (Ombor)" : "Ombor kirimlari",
-          icon: PackagePlus,
-          color: "var(--nav-hue-green)",
-        },
-        {
-          id: "/admin/sales",
-          label: isFinancial ? "Sotuvlar & Foyda" : "Sotuvlar",
-          icon: Receipt,
-          color: "var(--nav-hue-amber)",
-        },
-        { id: "/admin/pcs", label: "PClar (Tayyor)", icon: Monitor, color: "var(--nav-hue-sky)" },
-        { id: "/admin/pc-orders", label: "PC Zakazlar", icon: Wrench, color: "var(--nav-hue-teal)" },
-        { id: "/admin/orders", label: "Buyurtmalar", icon: ShoppingCart, color: "var(--nav-hue-pink)" },
-        { id: "/admin/users", label: "Foydalanuvchilar", icon: Users, color: "var(--nav-hue-orange)" },
-      ],
-    },
-    {
-      title: "Tizim",
-      items: [{ id: "/admin/settings", label: "Sozlamalar", icon: Settings, color: "var(--nav-hue-slate)" }],
-    },
-  ], [isFinancial]);
+  const navSections: NavSection[] = useMemo(
+    () => [
+      {
+        title: "Boshqaruv",
+        items: [
+          { id: "/admin", label: "Boshqaruv paneli", icon: LayoutDashboard, color: "var(--nav-hue-blue)" },
+          { id: "/admin/products", label: "Mahsulotlar", icon: Boxes, color: "var(--nav-hue-violet)" },
+          {
+            id: "/admin/purchases",
+            label: isFinancial ? "Kirimlar (Ombor)" : "Ombor kirimlari",
+            icon: PackagePlus,
+            color: "var(--nav-hue-green)",
+          },
+          {
+            id: "/admin/sales",
+            label: isFinancial ? "Sotuvlar & Foyda" : "Sotuvlar",
+            icon: Receipt,
+            color: "var(--nav-hue-amber)",
+          },
+          { id: "/admin/pcs", label: "PClar (Tayyor)", icon: Monitor, color: "var(--nav-hue-sky)" },
+          { id: "/admin/pc-orders", label: "PC Zakazlar", icon: Wrench, color: "var(--nav-hue-teal)" },
+          { id: "/admin/orders", label: "Buyurtmalar", icon: ShoppingCart, color: "var(--nav-hue-pink)" },
+          { id: "/admin/users", label: "Foydalanuvchilar", icon: Users, color: "var(--nav-hue-orange)" },
+        ],
+      },
+      {
+        title: "Tizim",
+        items: [{ id: "/admin/settings", label: "Sozlamalar", icon: Settings, color: "var(--nav-hue-slate)" }],
+      },
+    ],
+    [isFinancial],
+  );
 
   const activeId = useMemo(() => {
     let active = "/admin";
@@ -118,9 +120,7 @@ export function AdminShell({ children }: AdminShellProps) {
     for (const section of navSections) {
       for (const item of section.items) {
         const matches =
-          item.id === "/admin"
-            ? pathname === item.id
-            : pathname === item.id || pathname.startsWith(`${item.id}/`);
+          item.id === "/admin" ? pathname === item.id : pathname === item.id || pathname.startsWith(`${item.id}/`);
         if (matches && item.id.length > bestLength) {
           active = item.id;
           bestLength = item.id.length;
@@ -218,9 +218,7 @@ export function AdminShell({ children }: AdminShellProps) {
             </Link>
           }
         />
-        <main className="min-w-0 flex-1 animate-[page-in_480ms_var(--ease-ios)] p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        <main className="min-w-0 flex-1 animate-[page-in_480ms_var(--ease-ios)] p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
     </div>
   );

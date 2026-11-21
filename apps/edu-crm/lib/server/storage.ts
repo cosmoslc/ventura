@@ -292,7 +292,9 @@ export async function executeCleanup(
 
   for (const row of hwRows) {
     if (!row.attachments || row.attachments.length === 0) continue;
-    const remaining = (row.attachments as HomeworkAttachment[]).filter((a: HomeworkAttachment) => !urlsToDelete.has(a.url));
+    const remaining = (row.attachments as HomeworkAttachment[]).filter(
+      (a: HomeworkAttachment) => !urlsToDelete.has(a.url),
+    );
     if (remaining.length !== row.attachments.length) {
       await db
         .update(groupHomeworks)
@@ -309,7 +311,9 @@ export async function executeCleanup(
 
   for (const row of subRows) {
     if (!row.attachments || row.attachments.length === 0) continue;
-    const remaining = (row.attachments as HomeworkAttachment[]).filter((a: HomeworkAttachment) => !urlsToDelete.has(a.url));
+    const remaining = (row.attachments as HomeworkAttachment[]).filter(
+      (a: HomeworkAttachment) => !urlsToDelete.has(a.url),
+    );
     if (remaining.length !== row.attachments.length) {
       await db
         .update(homeworkSubmissions)

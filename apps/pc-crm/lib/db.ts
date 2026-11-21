@@ -12,11 +12,7 @@ declare global {
 export function getDb(): PcCrmDb {
   if (!global.__pcCrmDb) {
     const secret = defaultTenantSecret();
-    const url =
-      process.env.DATABASE_URL ??
-      process.env.PC_CRM_DATABASE_URL ??
-      secret?.databaseUrl ??
-      DEFAULT_DB_URL;
+    const url = process.env.DATABASE_URL ?? process.env.PC_CRM_DATABASE_URL ?? secret?.databaseUrl ?? DEFAULT_DB_URL;
 
     global.__pcCrmDb = createPcCrmDb(url, { max: 10, idleTimeoutSec: 0, maxLifetimeSec: 0 });
   }

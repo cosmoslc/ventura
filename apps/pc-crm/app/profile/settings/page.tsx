@@ -2,15 +2,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@ventura/ui/select";
 
 import { useEffect, useState } from "react";
-import {
-  Camera,
-  CheckCircle2,
-  KeyRound,
-  Lock,
-  MapPin,
-  Save,
-  User,
-} from "lucide-react";
+import { Camera, CheckCircle2, KeyRound, Lock, MapPin, Save, User } from "lucide-react";
 import { Button } from "@ventura/ui/button";
 import { Input } from "@ventura/ui/input";
 import { Label } from "@ventura/ui/label";
@@ -163,9 +155,7 @@ export default function ProfileSettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Ism *
-                </Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Ism *</Label>
                 <Input
                   required
                   value={firstName}
@@ -175,9 +165,7 @@ export default function ProfileSettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Familiya *
-                </Label>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Familiya *</Label>
                 <Input
                   required
                   value={lastName}
@@ -316,19 +304,12 @@ export default function ProfileSettingsPage() {
         title="Parolni oʻzgartirish"
         footer={
           passwordSuccess ? (
-            <Button
-              variant="ghost"
-              onClick={() => setIsPasswordModalOpen(false)}
-            >
+            <Button variant="ghost" onClick={() => setIsPasswordModalOpen(false)}>
               Yopish
             </Button>
           ) : (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setIsPasswordModalOpen(false)}
-              >
+              <Button type="button" variant="ghost" onClick={() => setIsPasswordModalOpen(false)}>
                 Bekor qilish
               </Button>
               <Button type="submit" form="change-password-form" variant="primary">
@@ -346,9 +327,7 @@ export default function ProfileSettingsPage() {
         ) : (
           <form id="change-password-form" onSubmit={handleChangePassword} className="space-y-4 text-xs sm:text-sm">
             <div>
-              <Label htmlFor="old-password">
-                Joriy parol *
-              </Label>
+              <Label htmlFor="old-password">Joriy parol *</Label>
               <Input
                 id="old-password"
                 type="password"
@@ -359,9 +338,7 @@ export default function ProfileSettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="new-password">
-                Yangi parol *
-              </Label>
+              <Label htmlFor="new-password">Yangi parol *</Label>
               <Input
                 id="new-password"
                 type="password"
@@ -372,9 +349,7 @@ export default function ProfileSettingsPage() {
             </div>
 
             <div>
-              <Label htmlFor="confirm-password">
-                Yangi parolni tasdiqlang *
-              </Label>
+              <Label htmlFor="confirm-password">Yangi parolni tasdiqlang *</Label>
               <Input
                 id="confirm-password"
                 type="password"

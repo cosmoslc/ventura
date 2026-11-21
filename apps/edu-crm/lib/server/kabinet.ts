@@ -265,9 +265,7 @@ export async function kabinetHomeworks(
   const allowedGroupIds = new Set(teacherGroups.map((g) => g.id));
   const groupMap = new Map(teacherGroups.map((g) => [g.id, g]));
 
-  const targetGroupIds = groupId
-    ? (allowedGroupIds.has(groupId) ? [groupId] : [])
-    : [...allowedGroupIds];
+  const targetGroupIds = groupId ? (allowedGroupIds.has(groupId) ? [groupId] : []) : [...allowedGroupIds];
 
   if (!targetGroupIds.length) return [];
 
@@ -320,10 +318,7 @@ export async function kabinetHomeworks(
 }
 
 /** Uy vazifasiga kelgan barcha o'quvchilar javoblari */
-export async function loadHomeworkSubmissions(
-  db: TenantDb,
-  homeworkId: string,
-): Promise<HomeworkSubmissionItem[]> {
+export async function loadHomeworkSubmissions(db: TenantDb, homeworkId: string): Promise<HomeworkSubmissionItem[]> {
   const rows = await db
     .select({
       id: homeworkSubmissions.id,

@@ -34,13 +34,7 @@ interface PcCardProps {
   className?: string;
 }
 
-export function PcCard({
-  pc,
-  onAddToCart,
-  onToggleLike,
-  isLiked = false,
-  className = "",
-}: PcCardProps) {
+export function PcCard({ pc, onAddToCart, onToggleLike, isLiked = false, className = "" }: PcCardProps) {
   const isAvailable = pc.isAvailable !== false;
 
   return (
@@ -72,7 +66,9 @@ export function PcCard({
         >
           <Heart
             size={16}
-            className={isLiked ? "fill-(--danger-fg) text-(--danger-fg)" : "text-muted-foreground hover:text-(--danger-fg)"}
+            className={
+              isLiked ? "fill-(--danger-fg) text-(--danger-fg)" : "text-muted-foreground hover:text-(--danger-fg)"
+            }
           />
         </Button>
 
@@ -108,25 +104,37 @@ export function PcCard({
       {(pc.cpu || pc.gpu || pc.ram || pc.storage) && (
         <div className="mb-3 grid grid-cols-2 gap-1.5 text-2xs">
           {pc.cpu && (
-            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.cpu}>
+            <div
+              className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate"
+              title={pc.cpu}
+            >
               <Cpu size={12} className="text-primary shrink-0" />
               <span className="truncate">{pc.cpu.replace(/^Intel\s+|^AMD\s+/i, "")}</span>
             </div>
           )}
           {pc.gpu && (
-            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.gpu}>
+            <div
+              className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate"
+              title={pc.gpu}
+            >
               <Monitor size={12} className="text-primary shrink-0" />
               <span className="truncate">{pc.gpu.replace(/^NVIDIA\s+|^GeForce\s+/i, "")}</span>
             </div>
           )}
           {pc.ram && (
-            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.ram}>
+            <div
+              className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate"
+              title={pc.ram}
+            >
               <MemoryStick size={12} className="text-primary shrink-0" />
               <span className="truncate">{pc.ram.split(" ")[0]}</span>
             </div>
           )}
           {pc.storage && (
-            <div className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate" title={pc.storage}>
+            <div
+              className="flex items-center gap-1.5 rounded-control bg-secondary/50 px-2 py-1 text-muted-foreground truncate"
+              title={pc.storage}
+            >
               <HardDrive size={12} className="text-primary shrink-0" />
               <span className="truncate">{pc.storage.split(" ")[0]}</span>
             </div>

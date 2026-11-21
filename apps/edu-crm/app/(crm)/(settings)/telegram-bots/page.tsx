@@ -17,10 +17,7 @@ export default async function TelegramBotsPage() {
   await requireStaff();
   const db = getTenantDb(tenant);
 
-  const [config, stats] = await Promise.all([
-    getTelegramBotsConfig(db),
-    getTelegramBotsStats(db),
-  ]);
+  const [config, stats] = await Promise.all([getTelegramBotsConfig(db), getTelegramBotsStats(db)]);
 
   return <TelegramBotsView config={config} stats={stats} tenantName={tenant.name} tenantSlug={tenant.slug} />;
 }

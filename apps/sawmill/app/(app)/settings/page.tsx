@@ -12,12 +12,5 @@ export default async function SettingsPage() {
   const canManage = can(user.role, "settings.manage");
   const locale = user.locale ?? "uz";
 
-  return (
-    <SettingsClient
-      initialSettings={settings}
-      workTypes={workTypes}
-      canManage={canManage}
-      locale={locale}
-    />
-  );
+  return <SettingsClient initialSettings={settings} workTypes={workTypes} canManage={canManage} locale={locale} />;
 }

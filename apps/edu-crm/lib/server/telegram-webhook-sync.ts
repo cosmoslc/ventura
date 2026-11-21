@@ -32,7 +32,10 @@ export async function syncTenantBotWebhooks(tenant: Tenant): Promise<void> {
     const bot: SingleBotSettings = config[BOT_KEYS[role]];
     if (!bot.token || !bot.enabled) continue;
     try {
-      await createTelegram(bot.token).setWebhook(botWebhookUrl(tenant, role), getBotWebhookSecret(bot, deps.secret, role));
+      await createTelegram(bot.token).setWebhook(
+        botWebhookUrl(tenant, role),
+        getBotWebhookSecret(bot, deps.secret, role),
+      );
     } catch (e) {
       // Token yoki tarmoq xatosi bitta botni to'xtatadi, qolganlarini emas (token logga yozilmaydi)
       console.warn(`[telegram-webhook-sync] ${tenant.slug}/${role}:`, e instanceof Error ? e.message : "xato");
